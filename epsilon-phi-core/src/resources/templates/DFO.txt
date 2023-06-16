@@ -1,0 +1,97 @@
+Public Function QueryDS() As Variant
+
+    ReDim requestData(0) As Variant
+    Dim requestRowData(20) As Variant
+    Dim data As Variant
+    Dim results As Variant
+   
+
+    requestRowData(0) = "TSL"
+    requestRowData(1) = "RCNHM"
+    requestRowData(2) = "@AAPL"
+    requestRowData(3) = "PI"
+    requestRowData(4) = "31/12/2009"
+    requestRowData(5) = "31/12/2012"
+    requestRowData(6) = "Daily"
+    requestRowData(7) = ""
+    requestRowData(8) = 7
+   
+    requestData(0) = requestRowData
+   
+    results = ExternalDispatcher.Invoke.ProcessTableRequestSync(requestData)
+    data = results(0)
+
+    Dim i As Integer
+    Dim j As Integer
+    Dim k As Integer
+    Dim a As Integer
+    Dim rowNum As Long
+    Dim responseData As Variant
+    Dim displayData As Variant
+    Dim errorData As String
+    Dim rowDataInfo As RowData
+    Dim currentRowData As RowData
+    Dim requestType As String
+    Dim firstRowData As RowData
+    Dim rowsCollection As Object
+    Dim isRowValid  As Boolean
+    Dim dataDimension As Long
+    isRowValid = True
+    Dim comment As String
+
+    dataDimension = getDimension(data)
+   
+    For a = 0 To UBound(data, 1)
+        'reset isRowValid for every row
+        isRowValid = True
+            If dataDimension > 1 Then
+                If data(a, 0, 0) = RESPONSE_LABEL Then
+                    responseData = data(a, 0, 1)
+                ElseIf data(a, 0, 0) = VALIDATION_ERROR Then
+                    isRowValid = False
+                    errorData = data(a, 0, 1)
+                    rowNum = data(a, 0, 2)
+                ElseIf data(a, 0, 0) = CANCEL_ERROR Then
+                    isRowValid = False
+                    errorData = data(a, 0, 0)
+                    rowNum = data(a, 0, 2)
+                End If
+            Else
+                If data(0) = RESPONSE_LABEL Then
+                    responseData = data(1)
+                ElseIf data(0) = VALIDATION_ERROR Then
+                    isRowValid = False
+                    errorData = data(1)
+                    rowNum = data(2)
+                ElseIf data(0) = CANCEL_ERROR Then
+                    isRowValid = False
+                    errorData = data(0)
+                    rowNum = data(2)
+                End If
+            End If
+           
+           
+            If isRowValid Then
+                For i = 0 To UBound(responseData, 1)
+                    For j = 0 To UBound(responseData, 2)
+                        For k = 0 To UBound(responseData, 3)
+                            If k = 0 Then
+                                If responseData(i, j, k) = RESPONSE_ROW_LABEL Then
+                                    rowNum = responseData(i, j, k + 1)
+                                ElseIf responseData(i, j, k) = RESPONSE_DATA_LABEL Then
+                                    displayData = responseData(i, j, k + 1)
+                                ElseIf responseData(i, j, k) = RESPONSE_ERROR_LABEL Then
+                                    errorData = responseData(i, j, k + 1)
+                                ElseIf responseData(i, j, k) = RESPONSE_COMMENT_LABEL Then
+                                    comment = responseData(i, j, k + 1)
+                                ElseIf responseData(i, j, k) = RESPONSE_LINKS_LABEL Then
+                                    linksData = responseData(i, j, k + 1)
+                                End If
+                            End If
+                        Next k
+                    Next j
+                Next i
+            End If
+        Next a
+    QueryDS = displayData
+End Function

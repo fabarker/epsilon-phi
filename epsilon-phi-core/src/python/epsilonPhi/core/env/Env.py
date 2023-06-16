@@ -20,8 +20,7 @@ GSQ_CLIENT_SECRET = None
 GSQ_GUID = None
 
 class Env(object):
-    #_config_file = '/config/env.ini'
-    _config_file = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/config/env.ini'
+    _config_file = r'C:\Users\fabar\Repos\epsilon-phi\epsilon-phi-core\src\resources\config\env.ini'
 
     @staticmethod
     def is_dev():
