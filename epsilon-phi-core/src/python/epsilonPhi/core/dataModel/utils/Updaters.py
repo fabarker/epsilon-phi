@@ -273,3 +273,10 @@ class interest_rates(Bloomberg):
                 print('Error - could not add time series spec info for ticker {}'.format(tmp.get('TICKER')))
             finally:
                 session.close()
+
+
+if __name__ == "__main__":
+
+    from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+    session = SessionMgr().getSessionFactory()
+
