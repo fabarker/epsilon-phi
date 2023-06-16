@@ -4,6 +4,7 @@ from epsilonPhi.logging import logMessage as __, logger
 
 APPDEV = 'APPDEV'
 env = 'DEV'
+ROOT = os.environ.get('IDE_PROJECT_ROOTS')
 
 DB_HOSTNAME = None
 DB_USERNAME = None
@@ -20,7 +21,7 @@ GSQ_CLIENT_SECRET = None
 GSQ_GUID = None
 
 class Env(object):
-    _config_file = r'C:\Users\fabar\Repos\epsilon-phi\epsilon-phi-core\src\resources\config\env.ini'
+    _config_file = os.path.join(ROOT, r'src\resources\config\env.ini')
 
     @staticmethod
     def is_dev():

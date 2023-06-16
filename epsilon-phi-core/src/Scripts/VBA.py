@@ -47,7 +47,6 @@ class pyDFO(object):
     path = r'C:\Users\fabar\Repos\epsilon-phi\epsilon-phi-core\src\resources\templates\DFORequest.xlsm'
     refinitive_run = r'"C:\Users\fabar\AppData\Local\Refinitiv\Refinitiv Workspace\RefinitivWorkspace.exe" --excel'
 
-    requestData = list()
     def __init__(self):
 
         subprocess.run(pyDFO.refinitive_run, shell=True)
@@ -56,10 +55,14 @@ class pyDFO(object):
         time.sleep(20)
 
         workbook = win32.GetObject(pyDFO.path)
-        workbook.Application.Visible = False
+        workbook.Application.Visible = True
         self.app = win32.Dispatch("Excel.Application")
         self.workbook = self.app.ActiveWorkbook
         self.app.DisplayAlerts = False
+        self.reset_requests()
+
+    def reset_requests(self):
+        self.requestData = list()
 
     def append_requests(self, requests):
         if isinstance(requests, request):
@@ -81,23 +84,32 @@ class pyDFO(object):
             return pd.DataFrame()
 
 
-import glob
-folder_path = r'C:\Users\fabar\Repos\epsilon-phi\epsilon-phi-core\src\resources\data\bonds\bbg\Bloomberg Barclays.xlsm'
-#walk = glob.glob(folder_path+ '/**/*', recursive=True)
-df_info = pd.read_excel(folder_path,sheet_name='tickers')
-tickers = list(df_info.Tickers)
+date_path = r'C:\\Users\\fabar\\Repos\\epsilon-phi\\epsilon-phi-core\\src\\resources\\data'
+folder_path = 'rates'
+path_to_folder = os.path.join(date_path, folder_path)
+workbook_name = 'Financial Times.xlsx'
+
+df_info = pd.read_excel(os.path.join(path_to_folder, workbook_name), 'Cash Rates')
+
+# < 2009 and Alive only
+# series = alive[alive['Hist.'] <= 2010]
+FIELDS = ['RI','IB','IR','IO','TR']
 
 ds = pyDFO()
-
-all_df = pd.DataFrame()
-for f in tickers:
+for f in df_info['Symbol'].to_list():
      print(f)
-     r = request(f, ['DM','DRI','IN','RY','CX'], start_date='31/12/1969', freq='Daily')
-     ds.requestData = list()
-     ds.append_requests(r)
-     res = ds.query()
-     all_df = pd.concat((all_df, res), axis=1)
-all_df.dropna(how='all', axis=0).to_csv(r'C:\Users\fabar\Repos\epsilon-phi\epsilon-phi-core\src\resources\data\bonds\bbg\Data.csv')
+
+     save_path = os.path.join(path_to_folder, 'Data', f.replace('.', '') + '.csv')
+     if not os.path.isfile(save_path):
+
+         r = request(f, FIELDS, start_date='31/12/1969', freq='Daily')
+         ds.requestData = list()
+         ds.append_requests(r)
+         res = ds.query()
+
+         if res.size > 0:
+            save_path = os.path.join(path_to_folder, 'Data', f.replace('.','') + '.csv')
+            res.dropna(how='all', axis=0).to_csv(save_path)
 
 # for f in walk:
 #     print(f)
