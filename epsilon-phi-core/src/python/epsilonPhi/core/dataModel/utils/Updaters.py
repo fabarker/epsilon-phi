@@ -2,6 +2,7 @@ from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg, ISO_to_re
 from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
 import os
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
+from epsilonPhi.core.dataModel.alchemist.SessionManager import *
 from datetime import datetime
 import numpy as np
 from dateutil import parser
@@ -277,6 +278,5 @@ class interest_rates(Bloomberg):
 
 if __name__ == "__main__":
 
-    from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
     session = SessionMgr().getSessionFactory()
 
