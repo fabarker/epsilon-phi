@@ -48,6 +48,35 @@ class TimeSeries(Base):
     __mapper_args__ = {'polymorphic_identity': 'time_series'}
 
 
+@auto_repr
+class BondIndexSpec(TimeSeriesSpec):
+    __tablename__ = 'bond_index_spec'
+
+    uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+    pricing_currency = Column(String(3), nullable=False, index=True)
+
+    sector = Column(String(20), nullable=False)
+    rating = Column(String(10), nullable=False)
+    maturity_band = Column(String(20), nullable=False)
+
+    __mapper_args__ = {'polymorphic_identity': 'bond_index_spec'}
+
+@auto_repr
+class BondIndex(TimeSeries):
+    __tablename__ = 'bond_index'
+
+    uid = Column(Integer, ForeignKey('bond_index_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+
+    DM = Column(FloatOrNone, nullable=True)
+    RI = Column(FloatOrNone, nullable=True)
+    RY = Column(FloatOrNone, nullable=True)
+    CX = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'bond_index'}
+    _spec = relationship("BondIndexSpec", foreign_keys=[uid])
+
+
 ############### FX Rates ##############
 
 @auto_repr

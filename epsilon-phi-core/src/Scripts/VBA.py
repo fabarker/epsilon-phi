@@ -55,7 +55,7 @@ class pyDFO(object):
         time.sleep(20)
 
         workbook = win32.GetObject(pyDFO.path)
-        workbook.Application.Visible = True
+        workbook.Application.Visible = False
         self.app = win32.Dispatch("Excel.Application")
         self.workbook = self.app.ActiveWorkbook
         self.app.DisplayAlerts = False
@@ -84,19 +84,19 @@ class pyDFO(object):
             return pd.DataFrame()
 
 
-date_path = r'C:\\Users\\fabar\\Repos\\epsilon-phi\\epsilon-phi-core\\src\\resources\\data'
-folder_path = 'rates'
+date_path = r'C:\Users\fabar\Documents\data\bonds'
+folder_path = 'ML'
 path_to_folder = os.path.join(date_path, folder_path)
-workbook_name = 'Financial Times.xlsx'
+workbook_name = 'Bank of America ML.xlsx'
 
-df_info = pd.read_excel(os.path.join(path_to_folder, workbook_name), 'Cash Rates')
-
+df_info = pd.read_excel(os.path.join(path_to_folder, workbook_name), 'For Python')
+tickers = pd.DataFrame(df_info.values.flatten()).dropna().values.flatten()
 # < 2009 and Alive only
 # series = alive[alive['Hist.'] <= 2010]
-FIELDS = ['RI','IB','IR','IO','TR']
+FIELDS = ['DM','RI','RY','CX']
 
 ds = pyDFO()
-for f in df_info['Symbol'].to_list():
+for f in tickers:
      print(f)
 
      save_path = os.path.join(path_to_folder, 'Data', f.replace('.', '') + '.csv')
