@@ -6,6 +6,12 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import datetime as dt
+import time, os
+import win32com.client as win32
+import subprocess
+from epsilonPhi.core.lib.Decorators import SingletonDecorator
+
+_DATA_PATH = os.path.join(os.environ.get('HOMEDRIVE'), os.environ.get('HOMEPATH'), 'Documents', 'Data')
 
 class Freq(object):
 
@@ -76,11 +82,130 @@ class pyDatastream(object):
     def get_region(tickers):
         pass
 
+class closeExcel:
+    @staticmethod
+    def kill_all_excel_instances():
+        subprocess.call(["taskkill", "/f", "/im", "EXCEL.EXE"])
+
+
+class request(object):
+    def __init__(self,
+                 tickers,
+                 datatypes,
+                 start_date="",
+                 end_date="",
+                 freq=""):
+
+        self.requestData = [None] * 10
+        self.requestData[0] = 'TSL'
+        self.requestData[1] = 'RCF:MNEM,DATATYPE,NAME,SECD,ISIN,CODON,ISOCUR'
+
+        self.set_tickers(tickers)
+        self.set_datatypes(datatypes)
+
+        self.requestData[4] = start_date
+        self.requestData[5] = end_date
+        self.requestData[6] = freq
+        self.requestData[7] = ""
+        self.requestData[8] = 7
+
+    def set_tickers(self, tickers):
+        if isinstance(tickers, str):
+            self.requestData[2] = tickers
+        else:
+            self.requestData[2] = ','.join(list(tickers))
+
+    def set_datatypes(self, datatypes):
+        if isinstance(datatypes, str):
+            self.requestData[3] = datatypes
+        else:
+            self.requestData[3] = ','.join(list(datatypes))
+
+
+dfo_path = r'C:\Users\fabar\Repos\epsilon-phi\epsilon-phi-core\src\resources\templates\DFORequest.xlsm'
+refinitive_run = r'"C:\Users\fabar\AppData\Local\Refinitiv\Refinitiv Workspace\RefinitivWorkspace.exe" --excel'
+
+@SingletonDecorator
+class pyDatastreamFO(object):
+    _cache = []
+
+    def __init__(self, requests=None):
+
+        subprocess.run(refinitive_run, shell=True)
+        time.sleep(5)
+        subprocess.run(dfo_path, shell=True)
+        time.sleep(20)
+
+        workbook = win32.GetObject(dfo_path)
+        workbook.Application.Visible = False
+        self.app = win32.Dispatch("Excel.Application")
+        self.workbook = self.app.ActiveWorkbook
+        self.app.DisplayAlerts = False
+        self.reset_requests()
+
+        if requests:
+            self.append_requests(requests)
+
+
+    def reset_requests(self):
+        self.requestData = list()
+
+    def append_requests(self, requests):
+        if isinstance(requests, request):
+            requests = [requests]
+        for req in requests:
+            self.requestData.extend([req.requestData])
+
+    def query(self):
+        res = [pd.DataFrame()]
+        for req in self.requestData:
+            res.extend([self.post(req)])
+        return pd.concat(res, axis=1)
+
+    def post(self, request):
+        try:
+            df = pd.DataFrame(self.app.Run('QueryDS', [request.requestData]))
+            return df.set_index(0, drop=True).replace('=NA()', np.nan).replace('', np.nan)
+        except:
+            return pd.DataFrame()
+
+    @staticmethod
+    def query_with_data_dump(request, save_folder=None):
+
+        if save_folder is None:
+           save_folder = os.path.join(_DATA_PATH, 'Data Repository')
+
+        if not os.path.isdir(save_folder):
+            os.makedirs(save_folder)
+
+        save_path = request.requestData[2].replace(',','|')
+        fullfile_save = os.path.join(save_folder, save_path + '.csv')
+
+        pydfo = pyDatastreamFO()
+        res = pydfo.post(request)
+
+        if res.size > 0:
+            res.dropna(how='all', axis=0).to_csv(fullfile_save)
+            print('Data saved for for tickers {}'.format(request.requestData[2].replace(',','|')))
+        else:
+            print('No data returned for tickers {}'.format(request.requestData[2].replace(',','|')))
+
 
 if __name__ == "__main__":
 
-    usage = pyDatastream.get_usage()
+    datafields = ['RI','NAV']
 
-    df = pyDatastream.fetch(['MSUSAML','MSUTDKL'],
-                       from_date=dt.date(day=31, month=12, year=1990),
-                       frequency='M')
+    # Hedge Funds
+    folder_name = 'hedge funds'
+    info_workbook_name = 'Hedge Fund Info.xlsx'
+    info_sheetname = 'Hedge Funds'
+    save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
+
+    df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
+    Tickers = df_info['Symbol'].values.flatten()
+
+    for ticker in Tickers:
+        r = request(ticker, datafields, start_date='31/12/1969', freq='Monthly')
+        pyDatastreamFO().query_with_data_dump(r, save_folder)
+
+    closeExcel.kill_all_excel_instances()

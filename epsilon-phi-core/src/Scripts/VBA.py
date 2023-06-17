@@ -84,13 +84,12 @@ class pyDFO(object):
             return pd.DataFrame()
 
 
-date_path = r'C:\Users\fabar\Documents\data\bonds'
-folder_path = 'ML'
-path_to_folder = os.path.join(date_path, folder_path)
+date_path = r'C:\Users\fabar\Documents'
+path_to_folder = os.path.join(date_path)
 workbook_name = 'Bank of America ML.xlsx'
 
-df_info = pd.read_excel(os.path.join(path_to_folder, workbook_name), 'For Python')
-tickers = pd.DataFrame(df_info.values.flatten()).dropna().values.flatten()
+df_info = pd.read_excel(os.path.join(path_to_folder, workbook_name), 'Info')
+tickers = pd.DataFrame(df_info.ticker.values.flatten()).dropna().values.flatten()
 # < 2009 and Alive only
 # series = alive[alive['Hist.'] <= 2010]
 FIELDS = ['DM','RI','RY','CX']

@@ -21,7 +21,8 @@ GSQ_CLIENT_SECRET = None
 GSQ_GUID = None
 
 class Env(object):
-    _config_file = os.path.join(ROOT, 'src', 'resources', 'config', 'env.ini')
+    _config_file = os.path.join(os.path.dirname(__file__)[:os.path.dirname(__file__).find('python')],
+                                'resources', 'config', 'env.ini')
 
     @staticmethod
     def is_dev():
