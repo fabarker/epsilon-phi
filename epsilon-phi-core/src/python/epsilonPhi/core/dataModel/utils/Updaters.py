@@ -1,3 +1,5 @@
+import pandas as pd
+
 from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg, ISO_to_region
 from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
 import os
@@ -278,5 +280,75 @@ class interest_rates(Bloomberg):
 
 if __name__ == "__main__":
 
+    from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg
     session = SessionMgr().getSessionFactory()
+
+    data_path = r'C:\Users\fabar\Documents\data\bonds\ML'
+    info_path = 'Bank of America ML.xlsx'
+    raw_data_path = os.path.join(data_path, 'data')
+    info = pd.read_excel(os.path.join(data_path, info_path), sheet_name='Info')
+    info = info.set_index('ticker')
+
+    contents = os.listdir(raw_data_path)
+
+    for ticker, row in info.iterrows():
+        df = pd.read_csv(os.path.join(raw_data_path, ticker + '.csv'), index_col=0, header=[1,2,3,4,5])
+        df.columns = df.columns.get_level_values('DATATYPE')
+        df = df.applymap(lambda x: np.nan if isinstance(x, str) and '$$ER:' in x else x).dropna(how='all', axis=0)
+        df.index = pd.to_datetime(df.index)
+        df.index.name = 'date'
+
+        if not Bloomberg.is_ticker_in_database(ticker):
+            try:
+                bond_spec = BondIndexSpec()
+                bond_spec.category = 'Fixed Income'
+                bond_spec.datasource = row.datasource
+                bond_spec.name = row.longname
+                bond_spec.maturity_band = row.maturity_band
+                bond_spec.pricing_currency = row.pricing_currency
+                bond_spec.provider = row.provider
+                bond_spec.rating = row.rating
+                bond_spec.region = row.region
+                bond_spec.sector = row.sector
+                bond_spec.ticker = ticker
+                bond_spec.uid = Bloomberg.get_max_uid() + 1
+
+                session.add_all([bond_spec])
+                session.commit()
+            except:
+                session.rollback()
+                print('Error - could not add time series spec info for ticker {}'.format(ticker))
+            finally:
+                session.close()
+
+        df['uid'] = Bloomberg.get_uid_from_ticker(ticker)
+        df = df.reset_index(drop=False)
+        df['date'] = pd.to_datetime(df['date'].values)
+
+        df_prime = pd.read_sql('SELECT date FROM bond_index where uid ="' +
+                               str(Bloomberg.get_uid_from_ticker(ticker)) + '"',
+                               SessionMgr().getEngine())
+
+        sqldates = np.setdiff1d(pd.to_datetime(df['date'].values), pd.to_datetime(df_prime['date']))
+        if len(sqldates) > 0:
+            df_sql = df[df['date'].isin(sqldates)]
+            df_sql.to_sql(name='bond_index',
+                          con=SessionMgr().getEngine(),
+                          if_exists='append',
+                          index=False)
+            print('Data appended to table bond_index for time series with ticker {}'.format(ticker))
+        else:
+            print('No data for add for time series with ticker {}'.format(ticker))
+
+
+
+
+
+
+
+
+
+
+
+
 
