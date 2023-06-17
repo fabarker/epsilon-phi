@@ -193,19 +193,19 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    datafields = ['RI','NAV']
+    datafields = ['DM','IN','YTW','CX']
 
     # Hedge Funds
-    folder_name = 'hedge funds'
-    info_workbook_name = 'Hedge Fund Info.xlsx'
-    info_sheetname = 'Hedge Funds'
+    folder_name = 'bonds\Bloomberg'
+    info_workbook_name = 'Bloomberg Barclays.xlsm'
+    info_sheetname = 'tickers'
     save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
 
     df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
-    Tickers = df_info['Symbol'].values.flatten()
+    Tickers = df_info['ticker'].values.flatten()
 
     for ticker in Tickers:
-        r = request(ticker, datafields, start_date='31/12/1969', freq='Monthly')
+        r = request(ticker, datafields, start_date='31/12/1969', freq='Daily')
         pyDatastreamFO().query_with_data_dump(r, save_folder)
 
     closeExcel.kill_all_excel_instances()
