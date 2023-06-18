@@ -58,6 +58,7 @@ class BondIndexSpec(TimeSeriesSpec):
     sector = Column(String(20), nullable=False)
     rating = Column(String(10), nullable=False)
     maturity_band = Column(String(20), nullable=False)
+    maturity = Column(Integer, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'bond_index_spec'}
 
@@ -72,6 +73,8 @@ class BondIndex(TimeSeries):
     RI = Column(FloatOrNone, nullable=True)
     RY = Column(FloatOrNone, nullable=True)
     CX = Column(FloatOrNone, nullable=True)
+    IN = Column(FloatOrNone, nullable=True)
+    YTW = Column(FloatOrNone, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'bond_index'}
     _spec = relationship("BondIndexSpec", foreign_keys=[uid])
