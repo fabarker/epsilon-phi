@@ -13,6 +13,23 @@ from epsilonPhi.core.lib.Decorators import SingletonDecorator
 
 _DATA_PATH = os.path.join(os.environ.get('HOMEDRIVE'), os.environ.get('HOMEPATH'), 'Documents', 'Data')
 
+class DatatypeMapper(object):
+
+    @staticmethod
+    def datasource_to_database_mapping(source_datatype):
+        if source_datatype.upper() in ['YTM','RY','YTW','IY','RA']:
+            return 'RY'
+        if source_datatype.upper() in ['RI']:
+            return 'RI'
+        if source_datatype.upper() in ['IN']:
+            return 'IN'
+        if source_datatype.upper() in ['CX']:
+            return 'CX'
+        if source_datatype.upper() in ['DM','DU']:
+            return 'DM'
+        else:
+            raise ValueError('Error - datafield {} not supported')
+
 class Freq(object):
 
     freq = dict()
@@ -131,6 +148,7 @@ class pyDatastreamFO(object):
 
     def __init__(self, requests=None):
 
+        closeExcel.kill_all_excel_instances()
         subprocess.run(refinitive_run, shell=True)
         time.sleep(5)
         subprocess.run(dfo_path, shell=True)
@@ -193,12 +211,12 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    datafields = ['DM','IN','YTW','CX']
+    datafields = ['']
 
     # Hedge Funds
-    folder_name = 'bonds\Bloomberg'
-    info_workbook_name = 'Bloomberg Barclays.xlsm'
-    info_sheetname = 'tickers'
+    folder_name = 'rates\short rates'
+    info_workbook_name = 'RFR Info.xlsx'
+    info_sheetname = 'Policy Rates'
     save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
 
     df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)

@@ -18,6 +18,17 @@ class FloatOrNone(TypeDecorator):
                 return None
         return value
 
+class DatatypeMapper(object):
+
+    @staticmethod
+    def datasource_to_database_mapping(source_datatype):
+        if source_datatype.upper() in ['YTM','RY','YTW','IY','RA']:
+            return 'RY'
+        if source_datatype.upper() in ['DM','DU']:
+            return 'DM'
+        else:
+            return source_datatype
+
 @auto_repr
 class TimeSeriesSpec(Base):
     __tablename__ = 'time_series_spec'
@@ -163,7 +174,43 @@ class FXRate(TimeSeries):
         query_string = query.statement.compile(compile_kwargs={"literal_binds": True}).string
         return pd.read_sql(text(query_string), con=session.get_bind(), index_col=index_col)
 
-############### Deposit Rates ##############
+############### Yield Curves ##############
+
+@auto_repr
+class YieldCurveSpec(TimeSeriesSpec):
+       __tablename__ = 'yield_curve_spec'
+
+       uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+       currency = Column(String(3), nullable=False, index=True)
+       maturity = Column(String(10), nullable=False)
+       type = Column(String(10), nullable=False)
+
+       __mapper_args__ = {'polymorphic_identity': 'yield_curve_spec'}
+
+@auto_repr
+class YieldCurve(TimeSeries):
+    __tablename__ = 'yield_curve'
+
+    uid = Column(Integer, ForeignKey('yield_curve_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+    RY = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'yield_curve'}
+    _spec = relationship("YieldCurveSpec", foreign_keys=[uid])
+
+    @property
+    def currency(self):
+        return self._spec.currency
+
+    @property
+    def maturity(self):
+        return self._spec.maturity
+
+    @property
+    def type(self):
+        return self._spec.type
+
+############### Interest Rates ##############
 
 @auto_repr
 class InterestRateSpec(TimeSeriesSpec):
@@ -179,17 +226,17 @@ class InterestRateSpec(TimeSeriesSpec):
 
 @auto_repr
 class InterestRate(TimeSeries):
-    __tablename__ = 'interest_rates'
+    __tablename__ = 'interest_rate'
 
     uid = Column(Integer, ForeignKey('interest_rate_spec.uid'), index=True, primary_key=True)
     date = Column(DateTime, primary_key=True)
 
-    bid = Column(FloatOrNone, nullable=True)
-    mid = Column(FloatOrNone, nullable=True)
-    ask = Column(FloatOrNone, nullable=True)
-    last = Column(FloatOrNone, nullable=True)
+    IB = Column(FloatOrNone, nullable=True)
+    RI = Column(FloatOrNone, nullable=True)
+    IR = Column(FloatOrNone, nullable=True)
+    IO = Column(FloatOrNone, nullable=True)
 
-    __mapper_args__ = {'polymorphic_identity': 'interest_rates'}
+    __mapper_args__ = {'polymorphic_identity': 'interest_rate'}
     _spec = relationship("InterestRateSpec", foreign_keys=[uid])
 
     @property
