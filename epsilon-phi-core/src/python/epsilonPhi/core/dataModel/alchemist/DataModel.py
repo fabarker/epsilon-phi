@@ -298,6 +298,12 @@ class ImpliedVolatility(TimeSeries):
         df.columns = ['date','bid','mid','ask']
         return df.set_index('date', drop=True).sort_index()
 
+class PrivatAssetConfig(Base):
+    __tablename__ = 'private_asset_config'
+
+    uid = Column(Integer, primary_key=True, index=True)
+    __mapper_args__ = {'polymorphic_identity': 'private_asset_config'}
+
 
 
 if __name__ == "__main__":
