@@ -142,6 +142,14 @@ class FXRate(TimeSeries):
         return self._spec.domestic_currency
 
     @property
+    def base_currency(self):
+        return self.foreign_currency
+
+    @property
+    def counter_currency(self):
+        return self.domestic_currency
+
+    @property
     def maturity(self):
         return self._spec.maturity
 
@@ -160,19 +168,28 @@ class FXRate(TimeSeries):
 
     @classmethod
     def get_spec_df_from_uids(cls, uids, index_col='uid'):
-        from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
-        session = SessionMgr().getSessionFactory()
+
+        session = FXRate.get_session_factory()
         query = session.query(FXRateSpec.uid, FXRateSpec.bbid, FXRateSpec.maturity, FXRateSpec.provider).filter(FXRateSpec.uid.in_(uids))
         query_string = query.statement.compile(compile_kwargs={"literal_binds": True}).string
         return pd.read_sql(text(query_string), con=session.get_bind(), index_col=index_col)
 
     @classmethod
     def get_spec_df_from_bbids(cls, bbids, index_col='uid'):
-        from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
-        session = SessionMgr().getSessionFactory()
+
+        session = FXRate.get_session_factory()
         query = session.query(FXRateSpec.uid, FXRateSpec.bbid, FXRateSpec.maturity, FXRateSpec.provider).filter(FXRateSpec.bbid.in_(bbids))
         query_string = query.statement.compile(compile_kwargs={"literal_binds": True}).string
         return pd.read_sql(text(query_string), con=session.get_bind(), index_col=index_col)
+
+    @staticmethod
+    def get_session_factory():
+
+        from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+        return SessionMgr().getSessionFactory()
+
+
+
 
 ############### Yield Curves ##############
 
@@ -240,7 +257,7 @@ class InterestRate(TimeSeries):
     _spec = relationship("InterestRateSpec", foreign_keys=[uid])
 
     @property
-    def currency(self):
+    def pricing_currency(self):
         return self._spec.currency
 
     @property
@@ -251,6 +268,48 @@ class InterestRate(TimeSeries):
     def type(self):
         return self._spec.type
 
+    @property
+    def exposure_currency(self):
+        return self.currency
+
+@auto_repr
+class HedgeFundIndexSpec(TimeSeriesSpec):
+       __tablename__ = 'hedge_fund_index_spec'
+
+       uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+
+       pricing_currency = Column(String(3), nullable=False, index=True)
+       exposure_currency = Column(String(3), nullable=False, index=True)
+       hedge_ratio = Column(FloatOrNone, nullable=True)
+       strategy_type = Column(String(150), nullable=False, index=True)
+
+       __mapper_args__ = {'polymorphic_identity': 'hedge_fund_spec'}
+@auto_repr
+class HedgeFundIndex(TimeSeries):
+    __tablename__ = 'hedge_fund_index'
+
+    uid = Column(Integer, ForeignKey('hedge_fund_index_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+    RI = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'hedge_fund_index'}
+    _spec = relationship("HedgeFundIndexSpec", foreign_keys=[uid])
+
+    @property
+    def pricing_currency(self):
+        return self._spec.pricing_currency
+
+    @property
+    def hedge_ratio(self):
+        return self._spec.hedge_ratio
+
+    @property
+    def strategy_type(self):
+        return self._spec.strategy_type
+
+    @property
+    def exposure_currency(self):
+        return self.exposure_currency
 
 # ############### Implied Volatility ################
 #
@@ -298,18 +357,51 @@ class ImpliedVolatility(TimeSeries):
         df.columns = ['date','bid','mid','ask']
         return df.set_index('date', drop=True).sort_index()
 
-class PrivatAssetConfig(Base):
-    __tablename__ = 'private_asset_config'
 
-    uid = Column(Integer, primary_key=True, index=True)
-    __mapper_args__ = {'polymorphic_identity': 'private_asset_config'}
+@auto_repr
+class PrivatAssetFlowConfig(Base):
+    __tablename__ = 'private_asset_flow_config'
+
+    asOfDate = Column(DateTime, primary_key=True)
+    strategy = Column(String(50), primary_key=True)
+    year = Column(Integer, nullable=False, primary_key=True)
+    type = Column(String(1), nullable=False, primary_key=True)
+    value = Column(Float, nullable=False)
+    info = Column(String(50), nullable=False)
+
+    __mapper_args__ = {'polymorphic_identity': 'private_asset_flow_config'}
 
 
 
 if __name__ == "__main__":
 
+    import datetime
+
     from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
     session = SessionMgr().getSessionFactory()
+
+    dict_df = pd.read_excel(r'C:\Users\fabar\Documents\Data\private markets\Cash-Flow Assumptions.xlsx', sheet_name=None, index_col=0)
+    for sheet in dict_df.keys():
+        info = dict_df.get(sheet)
+
+        for strategy, row in info.iterrows():
+            df_sql = row.copy().reset_index(drop=False)
+            df_sql['type'] = sheet
+            df_sql['strategy'] = strategy
+            df_sql['asOfDate'] = datetime.datetime.now().strftime('%d-%m-%y')
+
+            if sheet.upper() == 'C':
+                df_sql['info'] = 'Percent of Committed Capital'
+            else:
+                df_sql['info'] = 'Percent of Remaining NAV'
+
+            df_sql.columns = ['year','value','type','strategy','asOfDate','info']
+            df_sql.to_sql(name='private_asset_flow_config',
+                          con=SessionMgr().getEngine(),
+                          if_exists='append',
+                          index=False)
+
+
 
     info = session.query(TimeSeriesSpec).all()
     for row in info:
