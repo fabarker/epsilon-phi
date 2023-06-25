@@ -73,6 +73,17 @@ class GSQuantManager(object):
 
 if __name__ == "__main__":
     gsq = GSQuantManager()
+    ds = Dataset('EDRVOL_PERCENT_INTERNAL')
+    cov = gsq._get_coverage(ds)
+
+    import datetime
+    import pandas as pd
+    from gs_quant.api.gs.assets import GsAssetApi
+    ticker = 'MA4B66MW5E27U8P32SB'
+    assets = GsAssetApi.get_many_assets(["id"], limit=10000, id=[ticker])
+    data = ds.get_data(datetime.date(2019, 6, 3), assetId=[ticker], limit=50)
+    print(data.head())  # peek at first few rows of data
+
 
     import datetime
     import pandas as pd
@@ -94,51 +105,3 @@ if __name__ == "__main__":
     # ds = Dataset('EDRVOL_PERCENT_INTERNAL')
     # data = ds.get_data(datetime.date(2004, 3, 1), assetId=["MA4B66MW5E27UADJ5FE", "MAKEKJNSGN4H5V2T", "MA4B66MW5E27UAN26Y8"], limit=50)
     # print(data.head())  # peek at first few rows of data
-
-from datetime import datetime, date
-import pandas as pd
-from gs_quant.instrument import FXOption, FXForward
-from gs_quant.common import BuySell, OptionType, AggregationLevel
-from gs_quant.backtests.triggers import PeriodicTrigger, PeriodicTriggerRequirements
-from gs_quant.backtests.actions import AddTradeAction, HedgeAction
-from gs_quant.backtests.generic_engine import GenericEngine
-from gs_quant.backtests.strategy import Strategy
-from gs_quant.risk import Price, FXDelta
-
-# Define backtest dates
-start_date = date(2021, 6, 1)
-end_date = datetime.today().date()
-
-# Define instrument for strategy
-
-# FX Option
-put = FXOption(buy_sell=BuySell.Buy,
-                option_type=OptionType.Call,
-                pair='EURUSD',
-                strike_price='ATMF',
-                expiration_date='1w',
-                notional_amount=1000000,
-                name='1w_put')
-
-# Risk Trigger: based on frequency threshold, delta hedge by Forward trade
-
-# Define frequency for adding trade
-freq_add = '1b'
-trig_req = PeriodicTriggerRequirements(start_date=start_date, end_date=end_date, frequency=freq_add)
-action_add = AddTradeAction(put, freq_add)
-
-# Define trade to hedge FX Delta
-freq_hedge = '1b'
-fwd_hedge = FXForward(pair='EURUSD', settlement_date='1w', name='1w_forward')
-hedge_risk = FXDelta(currency='USD', aggregation_level='Type')
-action_hedge = HedgeAction(hedge_risk, fwd_hedge, freq_hedge)
-
-# starting with empty portfolio (first arg to Strategy), apply actions in order on trig_req
-triggers = PeriodicTrigger(trig_req, [action_add, action_hedge])
-strategy = Strategy(None, triggers)
-
-# run backtest daily
-GE = GenericEngine()
-backtest = GE.run_backtest(strategy, start=start_date, end=end_date, frequency='1b', show_progress=True)
-
-pd.DataFrame({'Generic backtester': backtest.result_summary['Cumulative Cash'] + backtest.result_summary[Price]}).plot(figsize=(10, 6), title='Performance')
