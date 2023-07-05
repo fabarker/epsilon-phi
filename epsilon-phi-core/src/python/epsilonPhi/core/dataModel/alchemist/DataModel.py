@@ -26,8 +26,15 @@ class DatatypeMapper(object):
             return 'RY'
         if source_datatype.upper() in ['DM','DU']:
             return 'DM'
+        if source_datatype.upper() in ['NAV']:
+            return 'RI'
+        if source_datatype.upper() in ['DSRI']:
+            return 'RI'
+        if source_datatype.upper() in ['DSDY']:
+            return 'DY'
         else:
             return source_datatype
+
 
 @auto_repr
 class TimeSeriesSpec(Base):
@@ -40,8 +47,15 @@ class TimeSeriesSpec(Base):
     name = Column(String(255), nullable=True)
     category = Column(String(50), nullable=True)
     datasource = Column(String(50), nullable=True)
+    symbol = Column(String(50), nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'time_series_spec'}
+
+    category_table_map = {'FX:fx_rates', 'Interest Rate', }
+
+    @classmethod
+    def category_to_table(cls, category):
+        return cls.category_table_map.get(category, None)
 
 
 @auto_repr
@@ -89,6 +103,57 @@ class BondIndex(TimeSeries):
 
     __mapper_args__ = {'polymorphic_identity': 'bond_index'}
     _spec = relationship("BondIndexSpec", foreign_keys=[uid])
+
+############### Equity Indicies ##############
+@auto_repr
+class EquityIndexSpec(TimeSeriesSpec):
+    __tablename__ = 'equity_index_spec'
+
+    uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+    denominated_currency = Column(String(3), nullable=False, index=True)
+    exposure_currency = Column(String(3), nullable=False, index=True)
+    hedge_ratio = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'equity_index_spec'}
+
+@auto_repr
+class EquityIndex(TimeSeries):
+    __tablename__ = 'equity_index'
+
+    uid = Column(Integer, ForeignKey('equity_index_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+
+    DY = Column(FloatOrNone, nullable=True)
+    RI = Column(FloatOrNone, nullable=True)
+    PI = Column(FloatOrNone, nullable=True)
+    MV = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'equity_index'}
+    _spec = relationship("EquityIndexSpec", foreign_keys=[uid])
+
+############### Commodity Indicies ##############
+@auto_repr
+class CommodityIndexSpec(TimeSeriesSpec):
+    __tablename__ = 'commodity_index_spec'
+
+    uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+    denominated_currency = Column(String(3), nullable=False, index=True)
+    exposure_currency = Column(String(3), nullable=False, index=True)
+    hedge_ratio = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'commodity_index_spec'}
+
+@auto_repr
+class CommodityIndex(TimeSeries):
+    __tablename__ = 'commodity_index'
+
+    uid = Column(Integer, ForeignKey('commodity_index_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+
+    X = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'commodity_index'}
+    _spec = relationship("CommodityIndexSpec", foreign_keys=[uid])
 
 
 ############### FX Rates ##############
@@ -272,13 +337,14 @@ class InterestRate(TimeSeries):
     def exposure_currency(self):
         return self.currency
 
+############### Hedge Funds ##############
 @auto_repr
 class HedgeFundIndexSpec(TimeSeriesSpec):
        __tablename__ = 'hedge_fund_index_spec'
 
        uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
 
-       pricing_currency = Column(String(3), nullable=False, index=True)
+       denominated_currency = Column(String(3), nullable=False, index=True)
        exposure_currency = Column(String(3), nullable=False, index=True)
        hedge_ratio = Column(FloatOrNone, nullable=True)
        strategy_type = Column(String(150), nullable=False, index=True)
@@ -312,8 +378,7 @@ class HedgeFundIndex(TimeSeries):
         return self.exposure_currency
 
 # ############### Implied Volatility ################
-#
-#
+
 @auto_repr
 class ImpliedVolatility(TimeSeries):
     __tablename__ = 'implied_volatility'
@@ -321,21 +386,19 @@ class ImpliedVolatility(TimeSeries):
     uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
     date = Column(DateTime, primary_key=True)
 
-    pricing_location = Column(String(3), nullable=True)
-    pricing_time = Column(DateTime, nullable=True)
-
-    strike_reference = Column(String(10), nullable=True)
+    pricing_location = Column(String(6), primary_key=True)
+    strike_reference = Column(String(20), nullable=True)
+    relative_strike = Column(String(20), nullable=True)
     tenor = Column(String(9), nullable=False, index=True)
 
     bid = Column(FloatOrNone, nullable=True)
     mid = Column(FloatOrNone, nullable=True)
     ask = Column(FloatOrNone, nullable=True)
 
-    domestic_currency = Column(String(3), nullable=False, index=True)
-    foreign_currency = Column(String(3), nullable=False, index=True)
-    currency = Column(String(6), nullable=False, index=True)
+    security = Column(String(100), nullable=False, index=True)
 
     __mapper_args__ = {'polymorphic_identity': 'implied_volatility'}
+    _spec = relationship("TimeSeriesSpec", foreign_keys=[uid])
 
     @property
     def expiry(self):
@@ -379,6 +442,12 @@ if __name__ == "__main__":
 
     from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
     session = SessionMgr().getSessionFactory()
+
+    res = session.query(ImpliedVolatility).filter(ImpliedVolatility.underlier == 'EURUSD',
+                                                  ImpliedVolatility.tenor == '1d',
+                                                  ImpliedVolatility.pricing_location == 'LDN').all()
+
+    _df = pd.read_sql_table('implied_volatility_old', con=session.get_bind())
 
     dict_df = pd.read_excel(r'C:\Users\fabar\Documents\Data\private markets\Cash-Flow Assumptions.xlsx', sheet_name=None, index_col=0)
     for sheet in dict_df.keys():

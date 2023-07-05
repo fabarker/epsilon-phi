@@ -84,21 +84,21 @@ class pyDFO(object):
             return pd.DataFrame()
 
 
-date_path = r'C:\Users\fabar\Documents'
+date_path = r'C:\Users\fabar\Documents\Data\equity index'
 path_to_folder = os.path.join(date_path)
-workbook_name = 'Bank of America ML.xlsx'
+workbook_name = 'Info.xlsx'
 
 df_info = pd.read_excel(os.path.join(path_to_folder, workbook_name), 'Info')
 tickers = pd.DataFrame(df_info.ticker.values.flatten()).dropna().values.flatten()
 # < 2009 and Alive only
 # series = alive[alive['Hist.'] <= 2010]
-FIELDS = ['DM','RI','RY','CX']
+FIELDS = ['DY','RI','PI','MV']
 
 ds = pyDFO()
 for f in tickers:
      print(f)
 
-     save_path = os.path.join(path_to_folder, 'Data', f.replace('.', '') + '.csv')
+     save_path = os.path.join(path_to_folder, 'Data Repository', f.replace('.', '') + '.csv')
      if not os.path.isfile(save_path):
 
          r = request(f, FIELDS, start_date='31/12/1969', freq='Daily')

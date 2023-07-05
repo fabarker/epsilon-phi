@@ -14,6 +14,7 @@ class GlobalDataSource(object):
     def __init__(self):
         self.initialize()
 
+
     def initialize(self):
         self._fx_curve = FXCurve()
 
@@ -30,6 +31,19 @@ class GlobalDataSource(object):
 
     def get_fx_carry(self, currency_pairs, maturities, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, maturities, price_quotes)
+
+    def getTimeSeriesFromTickersSAA(self):
+        pass
+
+    def get_time_series_from_ticker(ticker):
+        pass
+
+    def get_dataframe_from_tickers(tickers):
+        pass
+
+    def get_dataframe_from_uids(self, uid, ):
+        pass
+
 
 
     # Methods associated with interest rates

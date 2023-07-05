@@ -49,6 +49,7 @@ class pyDatastream(object):
     _CREDENTIALS.extend([('ZGOL433','ATLAS802'),
                          ('ZGSC304','TORCH863'),
                          ('ZGOL188','YOUNG902'),
+                         ('ZGOL865','SOUTH366'),
                          ('ZGOL865','SOUTH366')])
 
     @staticmethod
@@ -211,12 +212,14 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    datafields = ['']
+
+    datafields = ['DY','RI','PI','MV','DSRI','DSDY']
+
 
     # Hedge Funds
-    folder_name = 'rates\short rates'
-    info_workbook_name = 'RFR Info.xlsx'
-    info_sheetname = 'Policy Rates'
+    folder_name = 'equity index'
+    info_workbook_name = 'REITs.xlsx'
+    info_sheetname = 'INFO'
     save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
 
     df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)

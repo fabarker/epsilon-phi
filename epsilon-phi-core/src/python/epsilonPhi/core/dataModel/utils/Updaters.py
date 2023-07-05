@@ -285,9 +285,12 @@ if __name__ == "__main__":
     from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg
     session = SessionMgr().getSessionFactory()
 
-    folder_name = 'bonds\Refinitiv'
-    info_workbook_name = 'Refinitiv Gvt Yields.xlsx'
-    info_sheetname = 'Refinitiv Gvt Yields'
+    data_table_name = 'implied_volatility'
+    spec_table_name = 'implied_volatility_spec'
+
+    folder_name = 'gsquant'
+    info_workbook_name = 'IVol Info.xlsx'
+    info_sheetname = 'Sheet3'
     data_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
 
     df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
@@ -295,61 +298,77 @@ if __name__ == "__main__":
 
     for ticker, row in df_info.iterrows():
 
-        dta_path = os.path.join(data_folder, ticker)
+        dta_path = os.path.join(data_folder, ticker + '.csv')
         if os.path.isfile(dta_path):
 
-            df = pd.read_csv(os.path.join(data_folder, ticker), index_col=0, header=[1,2,3,4,5,6,7,8])
-            df.columns = df.columns.get_level_values('DATATYPE')
-            df = df.applymap(lambda x: np.nan if isinstance(x, str) and '$$ER:' in x else x).dropna(how='all', axis=0)
-            df.index = pd.to_datetime(df.index)
-            df.index.name = 'date'
-            df.columns = [DatatypeMapper.datasource_to_database_mapping(x) for x in df.columns]
+            df_raw = pd.read_csv(dta_path, index_col=0, header=[1,2,3,4,5])
+            keep_cols = np.array(['ERROR' not in x for x in df_raw.columns.get_level_values('Name')])
+            df = df_raw.iloc[:, keep_cols].dropna()
+            if df.size > 0:
 
-            if not Bloomberg.is_ticker_in_database(ticker):
-                try:
-                    yc_spec = YieldCurveSpec()
-                    yc_spec.category = row.category
-                    yc_spec.currency = row.currency
-                    yc_spec.datasource = row.datasource
-                    yc_spec.maturity = row.maturity
-                    yc_spec.name = row.long_name
-                    yc_spec.provider = row.provider
-                    yc_spec.region = row.region
-                    yc_spec.ticker = ticker
-                    yc_spec.type = row.type
-                    yc_spec.uid = Bloomberg.get_max_uid() + 1
-                    session.add_all([yc_spec])
-                    session.commit()
-                except:
-                    session.rollback()
-                    print('Error - could not add time series spec info for ticker {}'.format(ticker))
-                finally:
-                    session.close()
+                df.columns = df.columns.get_level_values('DATATYPE')
+                df = df.applymap(lambda x: np.nan if isinstance(x, str) and '$$ER:' in x else x).dropna(how='all',axis=0)
+
+                if 'ISOCUR' in df.index:
+                    df = df.drop(index='ISOCUR')
+
+                if 'DSRI' in df.columns:
+                    if 'RI' in df.columns:
+                        df = df.drop(columns='DSRI')
+
+                if 'DSDY' in df.columns:
+                    if 'DY' in df.columns:
+                        df = df.drop(columns='DSDY')
+
+                df.index = pd.to_datetime(df.index)
+                df.index.name = 'date'
+                df.columns = [DatatypeMapper.datasource_to_database_mapping(x) for x in df.columns]
+
+                if not Bloomberg.is_ticker_in_database(ticker):
+                    try:
+                        spec = CommodityIndexSpec()
+                        spec.category = row.category
+                        spec.denominated_currency = row.denominated_currency
+                        spec.exposure_currency = row.exposure_currency
+                        spec.datasource = row.datasource
+                        spec.name = row.full_name
+                        spec.provider = row.provider
+                        spec.region = row.region
+                        spec.ticker = ticker
+                        spec.hedge_ratio = row.hedge_ratio
+                        spec.uid = Bloomberg.get_max_uid() + 1
+                        session.add_all([spec])
+                        session.commit()
+                    except:
+                        session.rollback()
+                        print('Error - could not add time series spec info for ticker {}'.format(ticker))
+                    finally:
+                        session.close()
 
 
-            uid = Bloomberg.get_uid_from_ticker(ticker)
-            if uid:
-                df['uid'] = uid
-                df = df.reset_index(drop=False)
-                df['date'] = pd.to_datetime(df['date'].values)
+                uid = Bloomberg.get_uid_from_ticker(ticker)
+                if uid:
+                    df['uid'] = uid
+                    df = df.reset_index(drop=False)
+                    df['date'] = pd.to_datetime(df['date'].values)
 
-                df_prime = pd.read_sql('SELECT date FROM yield_curve where uid ="' +
-                                       str(Bloomberg.get_uid_from_ticker(ticker)) + '"',
-                                       SessionMgr().getEngine())
+                    df_prime = pd.read_sql('SELECT date FROM ' + data_table_name + ' where uid ="' +
+                                           str(Bloomberg.get_uid_from_ticker(ticker)) + '"',
+                                           SessionMgr().getEngine())
 
-                sqldates = np.setdiff1d(pd.to_datetime(df['date'].values), pd.to_datetime(df_prime['date']))
-                if len(sqldates) > 0:
-                    df_sql = df[df['date'].isin(sqldates)]
+                    sqldates = np.setdiff1d(pd.to_datetime(df['date'].values), pd.to_datetime(df_prime['date']))
+                    if len(sqldates) > 0:
+                        df_sql = df[df['date'].isin(sqldates)]
 
-                    df_sql = df_sql.dropna(how='all', axis=1)
-                    if df_sql.size > 0:
-                        df_sql.to_sql(name='yield_curve',
-                                      con=SessionMgr().getEngine(),
-                                      if_exists='append',
-                                      index=False)
-                        print('Data appended to table yield_curve for time series with ticker {}'.format(ticker))
-                else:
-                    print('No data for add for time yield_curve with ticker {}'.format(ticker))
+                        df_sql = df_sql.dropna(how='all', axis=1)
+                        if df_sql.size > 0:
+                            df_sql.to_sql(name=data_table_name,
+                                          con=SessionMgr().getEngine(),
+                                          if_exists='append',
+                                          index=False)
+                            print('Data appended to table ' + data_table_name + ' for time series with ticker {}'.format(ticker))
+                    else:
+                        print('No data for add for time hedge_fund_index with ticker {}'.format(ticker))
 
 
 

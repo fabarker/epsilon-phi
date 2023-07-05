@@ -1,5 +1,8 @@
+import time
 from enum import Enum
 from functools import lru_cache
+
+import pandas as pd
 from gs_quant.data import Dataset
 from gs_quant.session import GsSession, Environment
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
@@ -72,36 +75,35 @@ class GSQuantManager(object):
 
 
 if __name__ == "__main__":
-    gsq = GSQuantManager()
-    ds = Dataset('EDRVOL_PERCENT_INTERNAL')
-    cov = gsq._get_coverage(ds)
 
-    import datetime
-    import pandas as pd
-    from gs_quant.api.gs.assets import GsAssetApi
-    ticker = 'MA4B66MW5E27U8P32SB'
-    assets = GsAssetApi.get_many_assets(["id"], limit=10000, id=[ticker])
-    data = ds.get_data(datetime.date(2019, 6, 3), assetId=[ticker], limit=50)
-    print(data.head())  # peek at first few rows of data
+    import os
+    import datetime, os
+    import numpy as np
 
+    def _nest_list(flat_list, nested_size):
+        return [flat_list[i:i + nested_size] for i in range(0, len(flat_list), nested_size)]
 
-    import datetime
-    import pandas as pd
-    # ds = Dataset('FXIVOL_V2_PREMIUM')
-    # cov = gsq._get_coverage(ds)
-    # coverage = pd.DataFrame([x.split() for x in cov.name])
-    # coverage.columns = ['type','currency','tenor','delta','putcall']
-    # coverage['assetID'] = cov.assetId
-    # coverage.drop(columns='type')
-    # coverage = coverage.set_index('assetID')
-    #
-    # from gs_quant.api.gs.assets import GsAssetApi
-    # assets = GsAssetApi.get_many_assets(["id"], limit=10000, id=['MA000H1QRPSBXH8S'])
-    #
-    # data = ds.get_data(datetime.date(2019, 6, 3), assetId=["MA569C4VG2TC7Y8V", "MAG88ES0BEWNQCHV", "MA4XVXGQ63957V6F"], limit=50)
-    # print(data.head())  # peek at first few rows of data
-    #
-    #
-    # ds = Dataset('EDRVOL_PERCENT_INTERNAL')
-    # data = ds.get_data(datetime.date(2004, 3, 1), assetId=["MA4B66MW5E27UADJ5FE", "MAKEKJNSGN4H5V2T", "MA4B66MW5E27UAN26Y8"], limit=50)
-    # print(data.head())  # peek at first few rows of data
+    ds = Dataset('FXFORWARDPOINTS_V2_PREMIUM')
+    cov = GSQuantManager()._get_coverage(ds)
+    cov = cov.rename(columns={'name':'names'})
+
+    save_dir = r'C:\Users\fabar\Documents\Data\gsquant\fx_spot_fwds'
+
+    USD_list = list()
+    for idx, row in cov.iterrows():
+        if 'USD' in row.names:
+           USD_list.extend([row.assetId])
+
+    chunks = _nest_list(USD_list, nested_size=20)
+    frames = [pd.DataFrame()]
+    print("Reading Data:", end=" ")
+    for ch in chunks:
+        print("#", end="")
+        res = ds.get_data(start=datetime.date(year=1980, month=12, day=31), end=datetime.date.today(), assetId=ch, pricing_location=['LDN','NYC'])
+        con_pd = res.reset_index(drop=False).set_index('assetId')
+        uniqueIDs = np.unique(con_pd.index)
+
+        for id in uniqueIDs:
+            save_path = os.path.join(save_dir, id + '.csv')
+            con_pd.loc[id].reset_index(drop=False).set_index('date').to_csv(save_path)
+

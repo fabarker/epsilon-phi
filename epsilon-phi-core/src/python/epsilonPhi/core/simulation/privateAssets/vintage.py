@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     vy = vintage(strategy_type=PrivateAsset.BUYOUT,
                  commitment_size=100,
-                 commitment_year=0,
+                 fund_age=0,
                  cash_flow_frequency=1)
 
 
