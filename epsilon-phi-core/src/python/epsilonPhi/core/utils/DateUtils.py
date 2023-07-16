@@ -23,12 +23,16 @@ class DateUtils(object):
         return np.array([isinstance(x, datetime) for x in arr])
 
     @staticmethod
-    def get_date_range():
-        pass
+    def get_date_range(start_date,
+                       end_date,
+                       periodicity):
+        return pd.date_range(start_date, end_date, freq=periodicity)
+
 
     @staticmethod
-    def get_daily_dates():
-        pass
+    def get_daily_dates(start_date,
+                        end_date):
+        return pd.date_range(start_date, end_date)
 
     @staticmethod
     def Rdate_to_mat(Rdate):
@@ -113,4 +117,28 @@ class DateUtils(object):
             return np.round((pd.to_datetime(to_date) - pd.to_datetime(from_date))/np.timedelta64(1, 'D') / DateUtils.days_per_year, 10)
         else:
             return (pd.to_datetime(to_date) - pd.to_datetime(from_date))/np.timedelta64(1, 'D')
+
+    @staticmethod
+    def get_daterange_frequency(date_range):
+
+        N = len(date_range)
+        if N < 2:
+           return None
+
+        minDateDiff = np.min(np.diff(date_range))
+        if minDateDiff == 1:
+            return 'D'
+        elif 5 <= minDateDiff and minDateDiff <= 7:
+            return 'W'
+        elif 25 <= minDateDiff and minDateDiff <= 35:
+            return 'M'
+        elif 80 <= minDateDiff and minDateDiff <= 100:
+            return 'Q'
+        elif 350 <= minDateDiff and minDateDiff <= 370:
+            return 'A'
+        else:
+            return ''
+
+
+
 

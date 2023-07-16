@@ -33,6 +33,8 @@ class GlobalDataSource(object):
         return self._fx_curve.get_forward_prices(currency_pairs, maturities, price_quotes)
 
     # Method Associated with DataFrames
+    def get_risk_free_rate(self, currency, frequency):
+        pass
 
     def get_dataframe_from_ticker(self, ticker: str, cols=None, index_col=None):
         uid = self._session_mgr.get_uid_from_ticker(ticker)

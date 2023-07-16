@@ -53,15 +53,12 @@ class CTimeSeries(pd.DataFrame):
         return self.columns.size
     @property
     def frequency(self):
-        if ts.index.index:
+        if ts.index.freq:
             return ts.index.freq
         else:
             return ts.index.inferred_freq
 
     #%% setter functions
-
-
-
 
     #%% getter functions
 
@@ -86,6 +83,21 @@ class CTimeSeries(pd.DataFrame):
         return self.select_subset_labels(self.columns[columns])
     def select_subset_labels(self, labels):
         return self.get(labels).copy()
+    def select_subset_attribute(self, attribute_name, attribute_values):
+        pass
+
+    def select_subset_year(self, year):
+        pass
+
+    def select_subset_month(self, month):
+        pass
+
+    def select_subset_month_year(self, month, year):
+        pass
+
+    def insert_dates(self, dates):
+        pass
+
     def intersect_over_dates(self, df):
         common_dates = np.intersect1d(self.dates, df.index)
         return self.select_subset_dates(common_dates), df.loc[common_dates].copy()
@@ -93,10 +105,79 @@ class CTimeSeries(pd.DataFrame):
         common_dates = np.intersect1d(self.dates, df.index)
         return self[np.min(common_dates):np.max(common_dates)], df[np.min(common_dates):np.max(common_dates)]
 
-    def get_period_levels(self, period):
+    def get_periodic_levels(self, period):
         pass
 
-    def get_period_returns(self, period):
+    def get_periodic_returns(self, period):
+        pass
+
+    def get_period_ends(self, frequency):
+        pass
+
+    def get_week_ends(self):
+        return self.get_period_ends('W')
+
+    def get_month_ends(self):
+        return self.get_period_ends('M')
+
+    def get_quarter_ends(self):
+        return self.get_period_ends('Q')
+
+    def get_year_ends(self):
+        return self.get_period_ends('Y')
+
+    def get_weekly_levels(self):
+        pass
+    def get_weekly_returns(self):
+        pass
+    def get_monthly_levels(self):
+        pass
+    def get_monthly_returns(self):
+        pass
+    def get_quarterly_levels(self):
+        pass
+    def get_quarterly_returns(self):
+        pass
+    def get_annual_levels(self):
+        pass
+    def get_annual_returns(self):
+        pass
+
+    #%% Methods assocaited with attributes
+    def reset_attributes(self):
+        self._attributes = pd.DataFrame()
+
+    def set_attributes(self, attributes: pd.DataFrame):
+        self._attributes = attributes
+
+    def set_attribute(self, attribute_name, attribute_vals):
+        pass
+
+    def add_attributes(self, attributes):
+        pass
+
+    def add_attribute(self, attribute_name, attribute_vals):
+        pass
+
+    def append_attributes(self, new_attribute):
+        pass
+
+    def get_attribute(self, attribute_name):
+        pass
+
+    def sort_by_attribute(self, attribute_name, sort_ascending=False):
+        pass
+
+    def merge(self, time_series):
+        pass
+
+    def isLevels(self):
+        pass
+
+    def isReturns(self):
+        pass
+
+    def ind(self, ind_value):
         pass
 
     #%% Protected Methods
@@ -106,6 +187,36 @@ class CTimeSeries(pd.DataFrame):
 
     def _backfill_returns(self, df):
         pass
+
+    def _frontfill_levels(self, df):
+        pass
+    def _frontfill_returns(self, df):
+        pass
+    @staticmethod
+    def concatenate(d1, d2, cutoff_date=None):
+        pass
+    def remove_empty_leading_rows(self):
+        pass
+    def remove_empty_trailing_rows(self):
+        pass
+    def remove_empty_leading_trailing_rows(self):
+        pass
+
+    def multiply(self, df):
+        pass
+
+    def divide(self, df):
+        pass
+
+    def subtract(self, df):
+        pass
+
+    def add(self, df):
+        pass
+
+
+
+
 
     #%% Private Methods
 

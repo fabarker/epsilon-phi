@@ -1,7 +1,7 @@
-import datetime
-import random
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.DateUtils import DateUtils
+import datetime
+import random
 
 __author__ = 'Francis Barker'
 __date__ = '01/07/2023'
@@ -10,11 +10,13 @@ class CContext(object):
 
     def __init__(self, currency: str,
                        frequency: Frequency,
+                       data_version: int,
                        start_date: datetime.date,
                        end_date: datetime.date):
 
         self.__currency = currency
         self.__frequency = frequency
+        self.__data_version = data_version
         self.__start_date = start_date
         self.__end_date = end_date
         self.__dates = None
@@ -43,11 +45,19 @@ class CContext(object):
 
     def _setup(self):
         self.load_dates()
+        self.load_configs()
+        self.load_asset_manager()
+
+    def load_configs(self):
+        pass
 
     def load_dates(self):
         self.__dates = DateUtils.get_date_range(self.start_date,
-                                               self.end_date,
-                                               self.frequency)
+                                                self.end_date,
+                                                self.frequency)
+
+    def load_asset_manager(self):
+        pass
 
     #%% Setter Methods
     def set_risk_factor_panels(self):
