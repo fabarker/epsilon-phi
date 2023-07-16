@@ -44,7 +44,9 @@ class AbstractBootstrapper(object):
         pass
 
 class TimeSeriesBootstrapper(AbstractBootstrapper):
-    def __init__(self, df: pd.DataFrame, N, q):
+    def __init__(self, df, N, q):
+        super(TimeSeriesBootstrapper, self).__init__()
+
         self._df = df.copy()
         self._bootstrap_df()
 
@@ -65,10 +67,6 @@ class _Bootstrapper(AbstractBootstrapper):
 
         self._function_apply = function_apply
         self._sample = sample
-        self.apply()
-
-
-
 
 
 

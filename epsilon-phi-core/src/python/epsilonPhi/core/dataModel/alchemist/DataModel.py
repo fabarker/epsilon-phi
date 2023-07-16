@@ -18,23 +18,6 @@ class FloatOrNone(TypeDecorator):
                 return None
         return value
 
-class DatatypeMapper(object):
-
-    @staticmethod
-    def datasource_to_database_mapping(source_datatype):
-        if source_datatype.upper() in ['YTM','RY','YTW','IY','RA']:
-            return 'RY'
-        if source_datatype.upper() in ['DM','DU']:
-            return 'DM'
-        if source_datatype.upper() in ['NAV']:
-            return 'RI'
-        if source_datatype.upper() in ['DSRI']:
-            return 'RI'
-        if source_datatype.upper() in ['DSDY']:
-            return 'DY'
-        else:
-            return source_datatype
-
 class CategoryTableMapping(Base):
     __tablename__ = 'category_table_mapping'
 
