@@ -282,60 +282,62 @@ class interest_rates(Bloomberg):
 
 if __name__ == "__main__":
 
+
     from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg
     session = SessionMgr().getSessionFactory()
 
-    data_table_name = 'implied_volatility'
-    spec_table_name = 'implied_volatility_spec'
+    data_table_name = 'interest_rate'
+    spec_table_name = 'interest_rate_spec'
 
-    folder_name = 'gsquant'
-    info_workbook_name = 'IVol Info.xlsx'
-    info_sheetname = 'Sheet3'
+    folder_name = r'rates\short rates'
+    info_workbook_name = 'Spec.xlsx'
+    info_sheetname = 'Spec'
     data_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
 
     df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
     df_info = df_info.set_index('ticker', drop=True)
+    dir_list = os.listdir(os.path.join(_DATA_PATH, folder_name, 'Data Repository'))
 
-    for ticker, row in df_info.iterrows():
+    for dir_name in dir_list:
 
-        dta_path = os.path.join(data_folder, ticker + '.csv')
+        dta_path = os.path.join(data_folder, dir_name)
         if os.path.isfile(dta_path):
 
             df_raw = pd.read_csv(dta_path, index_col=0, header=[1,2,3,4,5])
             keep_cols = np.array(['ERROR' not in x for x in df_raw.columns.get_level_values('Name')])
-            df = df_raw.iloc[:, keep_cols].dropna()
+            df = df_raw.iloc[:, keep_cols].dropna(how='all', axis=0)
             if df.size > 0:
+
+                ticker = df.columns.get_level_values('MNEM').unique()[0]
+                row = df_info.loc[ticker]
 
                 df.columns = df.columns.get_level_values('DATATYPE')
                 df = df.applymap(lambda x: np.nan if isinstance(x, str) and '$$ER:' in x else x).dropna(how='all',axis=0)
-
-                if 'ISOCUR' in df.index:
-                    df = df.drop(index='ISOCUR')
-
-                if 'DSRI' in df.columns:
-                    if 'RI' in df.columns:
-                        df = df.drop(columns='DSRI')
-
-                if 'DSDY' in df.columns:
-                    if 'DY' in df.columns:
-                        df = df.drop(columns='DSDY')
-
                 df.index = pd.to_datetime(df.index)
                 df.index.name = 'date'
-                df.columns = [DatatypeMapper.datasource_to_database_mapping(x) for x in df.columns]
 
                 if not Bloomberg.is_ticker_in_database(ticker):
                     try:
-                        spec = CommodityIndexSpec()
+                        spec = EquitySpec()
+                        spec.ISIN = row['ISIN CODE']
+                        spec.SEDOL = row['SEDOL CODE']
                         spec.category = row.category
-                        spec.denominated_currency = row.denominated_currency
-                        spec.exposure_currency = row.exposure_currency
                         spec.datasource = row.datasource
-                        spec.name = row.full_name
+                        spec.denominated_currency = row.Currency
+                        spec.exchange = row.Exchange
+                        spec.exchange_code = row['BOURSE CODE']
+                        spec.exchange_mnemonic = row['BOURSE MNEMONIC']
+                        spec.exposure_currency = row.Currency
+                        spec.hedge_ratio = 0
+                        spec.industry = row.Industry
+                        spec.industry_group = row['Industry Group']
+                        spec.name = row.long_name
                         spec.provider = row.provider
                         spec.region = row.region
+                        spec.sector = row.Sector
+                        spec.sub_industry = row['Sub Industry']
+                        spec.symbol = row.ticker
                         spec.ticker = ticker
-                        spec.hedge_ratio = row.hedge_ratio
                         spec.uid = Bloomberg.get_max_uid() + 1
                         session.add_all([spec])
                         session.commit()
@@ -374,6 +376,14 @@ if __name__ == "__main__":
 
 
     session = SessionMgr().getSessionFactory()
+
+
+
+
+
+
+
+
 
 
 

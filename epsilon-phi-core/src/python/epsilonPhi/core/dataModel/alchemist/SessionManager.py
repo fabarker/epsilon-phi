@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.env.Env import DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DRIVER, DB_DATABASE_NAME
 from contextlib import contextmanager
+import pandas as pd
 
 @SingletonDecorator
 class SessionMgr(object):
@@ -86,6 +87,46 @@ class SessionMgr(object):
             conn.execute(stmt)
             conn.close()
 
+    def fetch_model_class_from_table_name(self, table_name):
+        for mapper in Base.registry.mappers:
+            if hasattr(mapper, 'class_') and mapper.class_.__tablename__ == table_name.lower():
+                return mapper.class_
+
+    def get_ticker_table_mapping(self, tickers: list):
+        return pd.DataFrame(self.getSessionFactory().query(TimeSeriesSpec.ticker, CategoryTableMapping.table_name)\
+            .join(CategoryTableMapping, TimeSeriesSpec.category == CategoryTableMapping.category)\
+            .filter(TimeSeriesSpec.ticker.in_(tickers))\
+            .all()).set_index('table_name', drop=True)
+
+    def get_table_name_from_ticker(self, ticker):
+        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().table_name
+
+    def get_table_name_from_uid(self, uid):
+        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first().table_name
+
+    def get_ticker_from_uid(self, uid: int) -> str:
+        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first().ticker
+
+    def get_uid_from_ticker(self, ticker: str) -> int:
+        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().uid
+
+    def fetch_model_class_from_uid(self, uid: int):
+        table_name = self.get_table_name_from_uid(uid)
+        return self.fetch_model_class_from_table_name(table_name)
+
+    def fetch_model_class_from_ticker(self, ticker: str):
+        table_name = self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().table_name
+        return self.fetch_model_class_from_table_name(table_name)
+    @staticmethod
+    def query_format_df(query):
+        q = query.statement.compile(compile_kwargs={"literal_binds": True}).string
+        return pd.read_sql(q.replace('"',''), query.session.get_bind())
+    def get_dataframe_from_uid(self, uid: int):
+        class_ = self.fetch_model_class_from_uid(uid)
+        query = self.getSessionFactory().query(class_).filter(class_.uid.in_([uid]))
+        return self.query_format_df(query)
+
+
 @contextmanager
 def session_scope():
     scoped_session = SessionMgr().getSessionFactory()
@@ -102,5 +143,6 @@ def session_scope():
 if __name__ == "__main__":
 
     mgr = SessionMgr()
+    mgr.get_table_name_from_ticker('MLCC3AL')
     session = mgr.getSessionFactory()
     eng = mgr.getEngine()

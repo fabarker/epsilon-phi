@@ -8,12 +8,12 @@ from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 @SingletonDecorator
 class GlobalDataSource(object):
 
-    _session = SessionMgr().getSessionFactory()
+    _session_mgr = SessionMgr()
+    _session = _session_mgr.getSessionFactory()
     _cache = dict()
 
     def __init__(self):
         self.initialize()
-
 
     def initialize(self):
         self._fx_curve = FXCurve()
@@ -32,19 +32,22 @@ class GlobalDataSource(object):
     def get_fx_carry(self, currency_pairs, maturities, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, maturities, price_quotes)
 
-    def getTimeSeriesFromTickersSAA(self):
-        pass
+    # Method Associated with DataFrames
 
-    def get_time_series_from_ticker(ticker):
-        pass
+    def get_dataframe_from_ticker(self, ticker: str, cols=None, index_col=None):
+        uid = self._session_mgr.get_uid_from_ticker(ticker)
+        return self.get_dataframe_from_uid(uid, cols, index_col)
 
-    def get_dataframe_from_tickers(tickers):
-        pass
+    def get_dataframe_from_uid(self, uid: int, cols=None, index_col=None):
+        df = self._session_mgr.get_dataframe_from_uid(uid)
 
-    def get_dataframe_from_uids(self, uid, ):
-        pass
+        if index_col is not None and index_col in df.columns:
+            df = df.set_index(index_col, drop=True)
 
-
+        if cols is not None:
+           return df.get(cols, pd.DataFrame()).dropna(how='all')
+        else:
+            return df.copy().dropna(how='all')
 
     # Methods associated with interest rates
 
@@ -89,7 +92,7 @@ class GlobalDataSource(object):
 if __name__ == "__main__":
 
     self = GlobalDataSource()
-    self.get_private_equity_cash_flow_assumptions(PrivateAsset.BUYOUT)
+    df = self.get_dataframe_from_ticker('UKPRATE.', cols=['IR'], index_col='date')
 
 
 

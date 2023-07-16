@@ -151,12 +151,12 @@ class pyDatastreamFO(object):
 
         closeExcel.kill_all_excel_instances()
         subprocess.run(refinitive_run, shell=True)
-        time.sleep(5)
+        time.sleep(10)
         subprocess.run(dfo_path, shell=True)
-        time.sleep(20)
+        time.sleep(10)
 
         workbook = win32.GetObject(dfo_path)
-        workbook.Application.Visible = False
+        workbook.Application.Visible = True
         self.app = win32.Dispatch("Excel.Application")
         self.workbook = self.app.ActiveWorkbook
         self.app.DisplayAlerts = False
@@ -197,7 +197,7 @@ class pyDatastreamFO(object):
         if not os.path.isdir(save_folder):
             os.makedirs(save_folder)
 
-        save_path = request.requestData[2].replace(',','|')
+        save_path = request.requestData[2].replace(':','_')
         fullfile_save = os.path.join(save_folder, save_path + '.csv')
 
         pydfo = pyDatastreamFO()
@@ -212,21 +212,31 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
+    from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg, ISO_to_region
+    def run_updates():
+        datafields = ['X','RI','IO','IB','IR']
 
-    datafields = ['DY','RI','PI','MV','DSRI','DSDY']
+        # Hedge Funds
+        folder_name = r'C:\Users\fabar\Documents\Data\rates\short rates'
+        info_workbook_name = 'Spec.xlsx'
+        info_sheetname = 'Spec'
+        save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
+
+        df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
+        Tickers = df_info['ticker'].values.flatten()
+
+        ctr = 0
+        for ticker in Tickers:
+            if ctr == 300:
+                pyDatastreamFO.cleanup()
+                closeExcel.kill_all_excel_instances()
+                time.sleep(30)
+                ctr = 0
+
+            if not os.path.isfile(os.path.join(save_folder, ticker.replace(':','_') + '.csv')):
+                r = request(ticker, datafields, start_date='BDATE', freq='Daily')
+                pyDatastreamFO().query_with_data_dump(r, save_folder)
+                ctr += 1
+    run_updates()
 
 
-    # Hedge Funds
-    folder_name = 'equity index'
-    info_workbook_name = 'REITs.xlsx'
-    info_sheetname = 'INFO'
-    save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
-
-    df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
-    Tickers = df_info['ticker'].values.flatten()
-
-    for ticker in Tickers:
-        r = request(ticker, datafields, start_date='31/12/1969', freq='Daily')
-        pyDatastreamFO().query_with_data_dump(r, save_folder)
-
-    closeExcel.kill_all_excel_instances()

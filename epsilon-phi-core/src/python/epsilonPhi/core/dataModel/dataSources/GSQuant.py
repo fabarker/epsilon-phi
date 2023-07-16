@@ -83,7 +83,7 @@ if __name__ == "__main__":
     def _nest_list(flat_list, nested_size):
         return [flat_list[i:i + nested_size] for i in range(0, len(flat_list), nested_size)]
 
-    ds = Dataset('FXFORWARDPOINTS_V2_PREMIUM')
+    ds = Dataset('FXSPOT_V2_PREMIUM')
     cov = GSQuantManager()._get_coverage(ds)
     cov = cov.rename(columns={'name':'names'})
 

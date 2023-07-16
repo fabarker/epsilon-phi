@@ -35,6 +35,14 @@ class DatatypeMapper(object):
         else:
             return source_datatype
 
+class CategoryTableMapping(Base):
+    __tablename__ = 'category_table_mapping'
+
+    category = Column(String(50), nullable=True, primary_key=True)
+    spec_table_name = Column(String(50), nullable=True)
+    table_name = Column(String(50), nullable=True)
+    spec_table_ORM = Column(String(50), nullable=True)
+    table_ORM = Column(String(50), nullable=True)
 
 @auto_repr
 class TimeSeriesSpec(Base):
@@ -45,17 +53,19 @@ class TimeSeriesSpec(Base):
     ticker = Column(String(50), nullable=True)
     region = Column(String(100), nullable=True)
     name = Column(String(255), nullable=True)
-    category = Column(String(50), nullable=True)
+    category = Column(String(50), ForeignKey('CategoryTableMapping.category'), nullable=False)
     datasource = Column(String(50), nullable=True)
     symbol = Column(String(50), nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'time_series_spec'}
+    __map = relationship("CategoryTableMapping", foreign_keys=[category], primaryjoin='TimeSeriesSpec.category == CategoryTableMapping.category')
 
-    category_table_map = {'FX:fx_rates', 'Interest Rate', }
-
-    @classmethod
-    def category_to_table(cls, category):
-        return cls.category_table_map.get(category, None)
+    @property
+    def table_name(self):
+        if hasattr(self, '_TimeSeriesSpec__map'):
+            return self._TimeSeriesSpec__map.table_name
+        else:
+            return None
 
 
 @auto_repr
@@ -84,6 +94,7 @@ class BondIndexSpec(TimeSeriesSpec):
     rating = Column(String(10), nullable=False)
     maturity_band = Column(String(20), nullable=False)
     maturity = Column(Integer, nullable=True)
+
 
     __mapper_args__ = {'polymorphic_identity': 'bond_index_spec'}
 
@@ -167,6 +178,7 @@ class FXRateSpec(TimeSeriesSpec):
     domestic_currency = Column(String(3), nullable=False, index=True)
     bbid = Column(String(6), nullable=False)
     maturity = Column(String(10), nullable=False)
+    type = Column(String(1), nullable=False)
 
     __mapper_args__ = {'polymorphic_identity': 'fx_rate_spec'}
 
@@ -317,6 +329,7 @@ class InterestRate(TimeSeries):
     RI = Column(FloatOrNone, nullable=True)
     IR = Column(FloatOrNone, nullable=True)
     IO = Column(FloatOrNone, nullable=True)
+    x = Column(FloatOrNone, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'interest_rate'}
     _spec = relationship("InterestRateSpec", foreign_keys=[uid])
@@ -420,6 +433,147 @@ class ImpliedVolatility(TimeSeries):
         df.columns = ['date','bid','mid','ask']
         return df.set_index('date', drop=True).sort_index()
 
+@auto_repr
+class EquitySpec(TimeSeriesSpec):
+      __tablename__ = 'equity_spec'
+
+      uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+
+      ISIN = Column(String(100), nullable=False, index=True)
+      SEDOL = Column(String(100), nullable=False, index=True)
+
+      exchange = Column(String(100), nullable=False, index=True)
+      exchange_code = Column(String(20), nullable=False, index=True)
+      exchange_mnemonic = Column(String(20), nullable=False, index=True)
+
+      sector = Column(String(255), nullable=False, index=True)
+      industry_group = Column(String(255), nullable=False, index=True)
+      industry = Column(String(255), nullable=False, index=True)
+      sub_industry = Column(String(255), nullable=False, index=True)
+
+      denominated_currency = Column(String(3), nullable=False, index=True)
+      exposure_currency = Column(String(3), nullable=False, index=True)
+      hedge_ratio = Column(FloatOrNone, nullable=True)
+
+      __mapper_args__ = {'polymorphic_identity': 'equity_spec'}
+
+@auto_repr
+class Equity(TimeSeries):
+    __tablename__ = 'equity'
+
+    uid = Column(Integer, ForeignKey('equity_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+
+    PI = Column(FloatOrNone, nullable=True)
+    RI = Column(FloatOrNone, nullable=True)
+    DY = Column(FloatOrNone, nullable=True)
+    MV = Column(FloatOrNone, nullable=True)
+
+    PE = Column(FloatOrNone, nullable=True)
+    EPS = Column(FloatOrNone, nullable=True)
+    PTBV = Column(FloatOrNone, nullable=True)
+    VO = Column(FloatOrNone, nullable=True)
+    EPS_Est_12M = Column('EPS1FD12', FloatOrNone, nullable=True)
+    NOSH = Column(FloatOrNone, nullable=True)
+    SALES = Column('WC01001', FloatOrNone, nullable=True)
+    APC = Column(FloatOrNone, nullable=True)
+    EY_Est_12M = Column('529E', FloatOrNone, nullable=True)
+    EPS_Est_12M_DS = Column('DIEP', FloatOrNone, nullable=True)
+    PE_Est_12M = Column('DIPE', FloatOrNone, nullable=True)
+
+    ASK = Column('PA', FloatOrNone, nullable=True)
+    BID = Column('PB', FloatOrNone, nullable=True)
+    LOW = Column('PL', FloatOrNone, nullable=True)
+    HIGH = Column('PH', FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'equity'}
+    _spec = relationship("EquitySpec", foreign_keys=[uid])
+
+@auto_repr
+class ETFSpec(TimeSeriesSpec):
+      __tablename__ = 'etf_spec'
+
+      uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+
+      ISIN = Column(String(100), nullable=False, index=True)
+      SEDOL = Column(String(100), nullable=False, index=True)
+
+      exchange = Column(String(100), nullable=False, index=True)
+      exchange_code = Column(String(20), nullable=False, index=True)
+      exchange_mnemonic = Column(String(20), nullable=False, index=True)
+
+      denominated_currency = Column(String(3), nullable=False, index=True)
+      exposure_currency = Column(String(3), nullable=False, index=True)
+      hedge_ratio = Column(FloatOrNone, nullable=True)
+
+      __mapper_args__ = {'polymorphic_identity': 'etf_spec'}
+
+@auto_repr
+class ETF(TimeSeries):
+    __tablename__ = 'etf'
+
+    uid = Column(Integer, ForeignKey('etf_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+
+    PI = Column(FloatOrNone, nullable=True)
+    RI = Column(FloatOrNone, nullable=True)
+    DY = Column(FloatOrNone, nullable=True)
+    MV = Column(FloatOrNone, nullable=True)
+
+    VO = Column(FloatOrNone, nullable=True)
+    NOSH = Column(FloatOrNone, nullable=True)
+
+    ASK = Column('PA', FloatOrNone, nullable=True)
+    BID = Column('PB', FloatOrNone, nullable=True)
+    LOW = Column('PL', FloatOrNone, nullable=True)
+    HIGH = Column('PH', FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'etf'}
+    _spec = relationship("ETFSpec", foreign_keys=[uid])
+
+
+@auto_repr
+class FutureSpec(TimeSeriesSpec):
+      __tablename__ = 'future_spec'
+
+      uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+
+      start_date = Column(DateTime, nullable=True)
+      tick_size = Column(FloatOrNone,  index=True)
+      tick_value = Column(FloatOrNone,  index=True)
+      cycle = Column(String(100))
+
+      exchange = Column(String(100), nullable=False, index=True)
+      exchange_name = Column(String(100), nullable=False, index=True)
+
+      security = Column(String(100), nullable=False, index=True)
+      security_name = Column(String(100), nullable=False, index=True)
+      security_type = Column(String(100), nullable=False, index=True)
+      security_unit = Column(String(100), nullable=False, index=True)
+
+      denominated_currency = Column(String(3), nullable=False, index=True)
+      exposure_currency = Column(String(3), nullable=False, index=True)
+      hedge_ratio = Column(FloatOrNone, nullable=True)
+
+      __mapper_args__ = {'polymorphic_identity': 'future_spec'}
+
+@auto_repr
+class Future(TimeSeries):
+    __tablename__ = 'future'
+
+    uid = Column(Integer, ForeignKey('future_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+
+    L = Column(FloatOrNone, nullable=True)
+    OI = Column(FloatOrNone, nullable=True)
+    PH = Column(FloatOrNone, nullable=True)
+    PL = Column(FloatOrNone, nullable=True)
+    PO = Column(FloatOrNone, nullable=True)
+    PS = Column(FloatOrNone, nullable=True)
+    VM = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'future'}
+    _spec = relationship("FutureSpec", foreign_keys=[uid])
 
 @auto_repr
 class PrivatAssetFlowConfig(Base):
@@ -435,59 +589,8 @@ class PrivatAssetFlowConfig(Base):
     __mapper_args__ = {'polymorphic_identity': 'private_asset_flow_config'}
 
 
-
 if __name__ == "__main__":
 
     import datetime
-
     from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
     session = SessionMgr().getSessionFactory()
-
-    res = session.query(ImpliedVolatility).filter(ImpliedVolatility.underlier == 'EURUSD',
-                                                  ImpliedVolatility.tenor == '1d',
-                                                  ImpliedVolatility.pricing_location == 'LDN').all()
-
-    _df = pd.read_sql_table('implied_volatility_old', con=session.get_bind())
-
-    dict_df = pd.read_excel(r'C:\Users\fabar\Documents\Data\private markets\Cash-Flow Assumptions.xlsx', sheet_name=None, index_col=0)
-    for sheet in dict_df.keys():
-        info = dict_df.get(sheet)
-
-        for strategy, row in info.iterrows():
-            df_sql = row.copy().reset_index(drop=False)
-            df_sql['type'] = sheet
-            df_sql['strategy'] = strategy
-            df_sql['asOfDate'] = datetime.datetime.now().strftime('%d-%m-%y')
-
-            if sheet.upper() == 'C':
-                df_sql['info'] = 'Percent of Committed Capital'
-            else:
-                df_sql['info'] = 'Percent of Remaining NAV'
-
-            df_sql.columns = ['year','value','type','strategy','asOfDate','info']
-            df_sql.to_sql(name='private_asset_flow_config',
-                          con=SessionMgr().getEngine(),
-                          if_exists='append',
-                          index=False)
-
-
-
-    info = session.query(TimeSeriesSpec).all()
-    for row in info:
-        if row.provider == 'BBG':
-           row.datasource = 'Bloomberg'
-        else:
-           row.datasource = 'Datastream'
-        session.commit()
-
-        try:
-            session.commit()
-        except:
-            session.rollback()
-            raise
-        finally:
-            session.close()
-
-
-
-
