@@ -4,6 +4,28 @@ import numpy as np
 from datetime import datetime
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 
+class Offsets(object):
+    @staticmethod
+    def getOffset(frequency, periods):
+        if isinstance(frequency, Frequency):
+            frequency = frequency.value
+
+        if frequency.lower() in ['d']:
+            return pd.tseries.offsets.Day(periods)
+        if frequency.lower() in ['bd']:
+            return pd.tseries.offsets.BDay(periods)
+        if frequency.lower() in ['w']:
+            return pd.tseries.offsets.Week(periods)
+        if frequency.lower() in ['m']:
+            return pd.tseries.offsets.MonthEnd(periods)
+        if frequency.lower() in ['bm']:
+            return pd.tseries.offsets.BMonthEnd(periods)
+        if frequency.lower() in ['q']:
+            return pd.tseries.offsets.QuarterEnd(periods)
+        if frequency.lower() in ['bq']:
+            return pd.tseries.offsets.BQuarterEnd(periods)
+        if frequency.lower() in ['y','a']:
+            return pd.tseries.offsets.YearEnd(periods)
 
 class DateUtils(object):
 
@@ -22,6 +44,10 @@ class DateUtils(object):
     @staticmethod
     def is_date(arr: np.array) -> np.array:
         return np.array([isinstance(x, datetime) for x in arr])
+
+    @staticmethod
+    def shift_date(date, offset, periods):
+        return date + Offsets.getOffset(offset, periods)
 
     @staticmethod
     def get_date_range(start_date, end_date, periodicity):

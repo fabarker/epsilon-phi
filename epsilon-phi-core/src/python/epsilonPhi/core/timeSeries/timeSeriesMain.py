@@ -1,5 +1,5 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
@@ -27,7 +27,8 @@ class CTimeSeries(pd.DataFrame):
     def __init__(self,
                  dataframe: pd.DataFrame,
                  ts_type: TimeSeriesType = TimeSeriesType.LEVELS,
-                 attributes: pd.DataFrame = None):
+                 attributes: pd.DataFrame = None,
+                 returns_type: ReturnsType = ReturnsType.simple):
 
         super(CTimeSeries, self).__init__(dataframe)
 
@@ -38,6 +39,7 @@ class CTimeSeries(pd.DataFrame):
             self.reset_attributes()
 
         self.__setattr__('_type', ts_type)
+        self.__setattr__('_returns_type', returns_type)
         self.validate()
 
     # check we have time series data
@@ -73,29 +75,57 @@ class CTimeSeries(pd.DataFrame):
     @property
     def type(self):
         return self.__getattr__('_type')
+    @property
+    def returns_type(self):
+        return self.__getattr__('_returns_type')
 
     #%% setter functions
 
     #%% getter functions
 
     def get_levels(self):
+
         if self.type == TimeSeriesType.LEVELS:
             return self.copy()
-        else:
-            levels = np.cumprod((1+self._constructor(self, TimeSeriesType.LEVELS, self.attributes)))
 
-        pd.tseries.offsets.DateOffset(1)
+        newObj = self._constructor(self, TimeSeriesType.LEVELS, self.attributes)
+        if self.returns_type in [ReturnsType.simple,
+                                 ReturnsType.simple.value]:
+            lvlObj = (1+newObj).cumprod(axis=0)
+        elif self.returns_type in [ReturnsType.log, ReturnsType.log.value,
+                                   ReturnsType.difference, ReturnsType.difference.value]:
+            lvlObj = newObj.sum(axis=0)
+
+        for col in lvlObj.columns:
+            pass
+
+        new_date = DateUtils.shift_date(lvlObj.index[0], lvlObj.frequency, -1)
+        lvlObj.insert_date(new_date)
+        lvlObj.loc[new_date, lvlObj.columns[0]] = 1
+        return lvlObj
+
+
+
 
 
     def get_returns(self, return_type='simple'):
-        if self.type == TimeSeriesType.LEVELS:
+
+        if self.type == TimeSeriesType.RETURNS:
             return self.pct_change().copy()
-        else:
-            return self.copy()
+
+        if return_type == 'simple':
+            newObj = self.pct_change(axis=0)
+        elif return_type == 'log':
+            newObj = np.log(self).diff(axis=0)
+        elif return_type == 'diff':
+            newObj = self.diff(axis=0)
+        return newObj
+
 
     #%% public methods
     def select_subset_dates(self, dates):
         return self.loc[dates].copy()
+
     def insert_and_select_subset_dates(self, dates, fill_na=False):
 
         reindexed = self.reindex(self.index.append(dates).unique())
@@ -106,8 +136,10 @@ class CTimeSeries(pd.DataFrame):
 
     def select_subset_columns(self, columns):
         return self.select_subset_labels(self.columns[columns])
+
     def select_subset_labels(self, labels):
         return self.get(labels).copy()
+
     def select_subset_attribute(self, attribute_name, attribute_values):
         idx = self.attributes.loc[attribute_name].isin([attribute_values]).values
         return self.iloc[:, idx]
@@ -122,8 +154,15 @@ class CTimeSeries(pd.DataFrame):
         return self.loc[np.logical_and(self.index.month == month,
                                        self.index.year == year)]
 
+    def insert_date(self, date):
+        if not DateUtils.is_iterable(date):
+            date = pd.DatetimeIndex([date])
+
+        insert_dates = pd.to_datetime(date)
+        self.insert_dates(insert_dates)
+
     def insert_dates(self, dates):
-        self._cast_derived_class(self.reindex(self.index.append(dates).unique()))
+        self._cast_derived_class(self.reindex(self.index.append(dates).unique()).sort_index())
 
     def intersect_over_dates(self, df):
         common_dates = np.intersect1d(self.dates, df.index)
@@ -263,11 +302,14 @@ class CTimeSeries(pd.DataFrame):
 
     #%% Static Methods
     @staticmethod
-    def get_timeseries_from_ticker(ticker, fields=None):
+    def get_timeseries_from_ticker(ticker, fields=None, ts_type=None):
         df = GlobalDataSource().get_dataframe_from_ticker(ticker,
                                                           cols=fields,
                                                           index_col='date')
-        return CTimeSeries(df)
+        if ts_type is None:
+            return CTimeSeries(df)
+        else:
+            return CTimeSeries(df, ts_type=ts_type)
 
 
 if __name__ == "__main__":
@@ -279,12 +321,9 @@ if __name__ == "__main__":
         def _constructor(self):
             return test_class
 
-
-    df = test_class([2, 4])
-    df.__added_property = 'test'
-
-    self = CTimeSeries.get_timeseries_from_ticker('UKPRATE.', fields='x')
+    self = CTimeSeries.get_timeseries_from_ticker('UKPRATE.', fields='x', ts_type=TimeSeriesType.RETURNS)
     self = self / 100
+    rtns = self.get_levels()
 
 
 
