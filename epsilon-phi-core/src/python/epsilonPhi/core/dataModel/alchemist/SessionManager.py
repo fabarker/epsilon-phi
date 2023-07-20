@@ -3,7 +3,6 @@ from sqlalchemy import create_engine
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
-from epsilonPhi.core.dataModel.alchemist.Configs import *
 from contextlib import contextmanager
 import pandas as pd
 

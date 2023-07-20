@@ -38,7 +38,9 @@ class GlobalDataSource(object):
 
     def get_dataframe_from_ticker(self, ticker: str, cols=None, index_col=None):
         uid = self._session_mgr.get_uid_from_ticker(ticker)
-        return self.get_dataframe_from_uid(uid, cols, index_col)
+        df_ = self.get_dataframe_from_uid(uid, cols, index_col)
+        df_.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in df_.columns.get_level_values(1)])
+        return df_.copy()
 
     def get_dataframe_from_uid(self, uid: int, cols=None, index_col=None):
         df = self._session_mgr.get_dataframe_from_uid(uid)
@@ -47,9 +49,15 @@ class GlobalDataSource(object):
             df = df.set_index(index_col, drop=True)
 
         if cols is not None:
-           return df.get(cols, pd.DataFrame()).dropna(how='all')
+           df = df.get(cols, pd.DataFrame()).dropna(how='all')
         else:
-            return df.copy().dropna(how='all')
+           df = df.copy().dropna(how='all')
+
+        if isinstance(df, pd.Series):
+           df = df.to_frame()
+
+        df.columns = pd.MultiIndex.from_tuples(list(zip([uid] * df.shape[1], df.columns)))
+        return df
 
     # Methods associated with interest rates
 

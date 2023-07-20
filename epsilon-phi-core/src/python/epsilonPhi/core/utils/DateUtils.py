@@ -2,6 +2,7 @@ import collections, re, six
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 
 
 class DateUtils(object):
@@ -23,11 +24,11 @@ class DateUtils(object):
         return np.array([isinstance(x, datetime) for x in arr])
 
     @staticmethod
-    def get_date_range(start_date,
-                       end_date,
-                       periodicity):
-        return pd.date_range(start_date, end_date, freq=periodicity)
-
+    def get_date_range(start_date, end_date, periodicity):
+        if isinstance(periodicity, Frequency):
+            return pd.date_range(start_date, end_date, freq=periodicity.value)
+        else:
+            return pd.date_range(start_date, end_date, freq=periodicity)
 
     @staticmethod
     def get_daily_dates(start_date,

@@ -217,7 +217,7 @@ if __name__ == "__main__":
         datafields = ['X','RI','IO','IB','IR']
 
         # Hedge Funds
-        folder_name = r'C:\Users\fabar\Documents\Data\rates\short rates'
+        folder_name = r'C:\Users\fabar\Documents\Data\rates\short rates\Regional'
         info_workbook_name = 'Spec.xlsx'
         info_sheetname = 'Spec'
         save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')

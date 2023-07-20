@@ -13,7 +13,7 @@ class AbstractBootstrapper(object):
         nRands = T * N
         R = np.random.RandomState(AbstractBootstrapper._state)
         blockLocations = R.choice(range(0, T), size=(nRands, 1), replace=True)
-        blockLengths = np.maximum(R.geometric(q, (nRands,1)), T)
+        blockLengths = np.maximum(R.geometric(q, (nRands, 1)), T)
 
         block_locs_list = list()
         L = 0
