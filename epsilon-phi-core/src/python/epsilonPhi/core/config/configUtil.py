@@ -32,8 +32,33 @@ class CBaseConfig(object):
         config = OrderedDict()
         self._catalog[config_name] = config
 
-    def add_param_to_config(self, config_name, params):
-        pass
+        if params is not None:
+            i = 0
+            pdict = OrderedDict()
+            for p in params:
+                pdict[p] = i
+                i += 1
+
+        self._param_catalog[config_name] = pdict
+        if input_is_class and output_is_class:
+            self._type_catalog = ('class', 'class')
+        elif input_is_class and not output_is_class:
+            self._type_catalog = ('class', 'list')
+        elif not input_is_class and not output_is_class:
+            self._type_catalog = ('list', 'list')
+        else:
+            raise Exception('Error - input as list and output as class is not supported')
+
+        self._keys[config_name] = keys
+
+        if access_type is not None:
+            self._access_type[config_name] = access_type
+        if access_methods is not None:
+            self._access_methods[config_name] = access_methods
+        return config
+
+    def add_param_to_config(self, config_name, keys, values):
+        self._catalog[config_name][keys] = values
 
     def update_config(self, config_name, keys, values):
         pass
@@ -106,7 +131,10 @@ class CConfigUtil(CBaseConfig):
             name = config_name[0].upper() + config_name[1:]
 
         res = super(CConfigUtil, self).load_config(name)
-        self.create_config(config_name, None, keys, access_methods, access_type, input_is_class, output_is_class)
+        for r in res:
+            self.create_config(config_name, r.__dict__.keys(), keys, access_methods, access_type, input_is_class, output_is_class)
+            self.add_param_to_config(name, tuple([r.__dict__.get(x) for x in keys]), r)
+
         SessionMgr.instance.getSessionFactory().expunge_all()
 
     def get_config(self, config_name, config_keys):

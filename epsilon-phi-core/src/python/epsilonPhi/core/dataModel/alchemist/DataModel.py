@@ -558,19 +558,6 @@ class Future(TimeSeries):
     __mapper_args__ = {'polymorphic_identity': 'future'}
     _spec = relationship("FutureSpec", foreign_keys=[uid])
 
-@auto_repr
-class PrivatAssetFlowConfig(Base):
-    __tablename__ = 'private_asset_flow_config'
-
-    asOfDate = Column(DateTime, primary_key=True)
-    strategy = Column(String(50), primary_key=True)
-    year = Column(Integer, nullable=False, primary_key=True)
-    type = Column(String(1), nullable=False, primary_key=True)
-    value = Column(Float, nullable=False)
-    info = Column(String(50), nullable=False)
-
-    __mapper_args__ = {'polymorphic_identity': 'private_asset_flow_config'}
-
 
 if __name__ == "__main__":
 

@@ -103,7 +103,11 @@ class ContextCreator:
                                 self._start_date,
                                 self._end_date)
 
-schema = ContextCreator(currency='USD').create_context()
+if __name__ == "__main__":
+
+    schema = ContextCreator(start_date='31-Dec-1999',
+                            end_date='31-Dec-2022').create_context()
+
 
 
 

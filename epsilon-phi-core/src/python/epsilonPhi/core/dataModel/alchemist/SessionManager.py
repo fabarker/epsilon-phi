@@ -98,21 +98,26 @@ class SessionMgr(object):
                 return mapper.class_
 
     def get_ticker_table_mapping(self, tickers: list):
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec, CategoryTableMapping
         return pd.DataFrame(self.getSessionFactory().query(TimeSeriesSpec.ticker, CategoryTableMapping.table_name)\
             .join(CategoryTableMapping, TimeSeriesSpec.category == CategoryTableMapping.category)\
             .filter(TimeSeriesSpec.ticker.in_(tickers))\
             .all()).set_index('table_name', drop=True)
 
     def get_table_name_from_ticker(self, ticker):
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
         return self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().table_name
 
     def get_table_name_from_uid(self, uid):
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
         return self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first().table_name
 
     def get_ticker_from_uid(self, uid: int) -> str:
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
         return self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first().ticker
 
     def get_uid_from_ticker(self, ticker: str) -> int:
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
         return self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().uid
 
     def fetch_model_class_from_uid(self, uid: int):
@@ -120,6 +125,7 @@ class SessionMgr(object):
         return self.fetch_model_class_from_table_name(table_name)
 
     def fetch_model_class_from_ticker(self, ticker: str):
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
         table_name = self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().table_name
         return self.fetch_model_class_from_table_name(table_name)
     @staticmethod
@@ -147,7 +153,16 @@ def session_scope():
 
 if __name__ == "__main__":
 
-    mgr = SessionMgr()
-    mgr.get_table_name_from_ticker('MLCC3AL')
-    session = mgr.getSessionFactory()
-    eng = mgr.getEngine()
+    mgr = SessionMgr().getSessionFactory()
+
+    config = CurrencyConfig()
+    config.uid = 1
+    config.risk_free_ticker = 'USD'
+    config.risk_free_ticker = 'FFRF'
+    config.risk_free_rate = 0.025
+    config.inflation_ticker = 'USCPI'
+    config.inflation_rate = 0.02
+    config.frequency = 'M'
+    config.dataversion = 1
+    mgr.add(config)
+    mgr.commit()
