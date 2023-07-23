@@ -3,8 +3,13 @@ from sqlalchemy import create_engine
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
+from epsilonPhi.core.dataModel.alchemist.Configs import *
 from contextlib import contextmanager
 import pandas as pd
+
+tblToEngine = {
+    'AssetConfig': 'PWM_DEFAULT_ENGINE',
+    'AssetCurrencyConfig': 'PWM_DEFAULT_ENGINE'}
 
 @SingletonDecorator
 class SessionMgr(object):

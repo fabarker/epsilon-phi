@@ -5,6 +5,7 @@ from epsilonPhi.logging import logMessage as __, logger
 APPDEV = 'APPDEV'
 env = 'DEV'
 ROOT = os.environ.get('IDE_PROJECT_ROOTS')
+SCHEMA = None
 
 DB_HOSTNAME = None
 DB_USERNAME = None
@@ -12,6 +13,7 @@ DB_PASSWORD = None
 DBL_PORT = None
 DB_DRIVER = None
 DB_DATABASE_NAME = None
+DATAVERSION = None
 
 DS_USERNAME = None
 DS_PASSWORD = None
@@ -58,6 +60,9 @@ class Env(object):
     @staticmethod
     def _initalize():
 
+        global SCHEMA
+        global DATAVERSION
+
         global DB_HOSTNAME
         global DB_USERNAME
         global DB_PASSWORD
@@ -74,6 +79,9 @@ class Env(object):
 
         currEnv = Env.get_env()
         _config = Env.read_config()
+
+        SCHEMA = _config.get('SCHEMA', 'SCHEMA')
+        DATAVERSION = _config.get(currEnv, 'DATAVERSION')
 
         DB_HOSTNAME = _config.get(currEnv, 'HOSTNAME')
         DB_USERNAME = _config.get(currEnv, 'USERNAME')

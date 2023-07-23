@@ -8,6 +8,6 @@ class TimeSeriesType(Enum):
 
 class ReturnsType(Enum):
 
-    simple = 'simple'
-    log = 'log'
-    difference = 'difference'
+    SIMPLE = 'simple'
+    LOG = 'log'
+    DIFFERENCE = 'difference'

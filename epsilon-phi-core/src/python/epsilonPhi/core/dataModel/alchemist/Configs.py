@@ -1,17 +1,9 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, TypeDecorator, text
-from sqlalchemy.orm import relationship, declarative_base, declared_attr
+from sqlalchemy import Column, Integer, String, DateTime, BigInteger, Float
 from epsilonPhi.core.lib.Decorators import auto_repr
-from epsilonPhi.core.utils.DateUtils import DateUtils
-from decimal import Decimal
-from typing import Any
-import pandas as pd
-import numpy as np
-import math
-
-Base = declarative_base()
+from epsilonPhi.core.dataModel.alchemist.BaseData import Base, TemporalMixIn
 
 @auto_repr
-class CurrencyConfig(Base):
+class CurrencyConfig(Base, TemporalMixIn):
     __tablename__ = 'currency_config'
 
     uid = Column(Integer, nullable=True, primary_key=True)
@@ -32,7 +24,7 @@ class CurrencyConfig(Base):
 
 @auto_repr
 class PrivatAssetFlowConfig(Base):
-    __tablename__ = 'private_asset_flow_config'
+    __tablename__ = 'private_asset_flow_config_new'
 
     asOfDate = Column(DateTime, primary_key=True)
     strategy = Column(String(50), primary_key=True)
@@ -41,33 +33,49 @@ class PrivatAssetFlowConfig(Base):
     value = Column(Float, nullable=False)
     info = Column(String(50), nullable=False)
 
-    __mapper_args__ = {'polymorphic_identity': 'private_asset_flow_config'}
+    __mapper_args__ = {'polymorphic_identity': 'private_asset_flow_config_new'}
+@auto_repr
+class EstimationConfig(Base, TemporalMixIn):
+    __tablename__ = 'estimation_config'
 
+    currency = Column(String(64))
+    uid = Column(Integer, nullable=True, primary_key=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'estimation_config'}
+
+class CrisisConfig(Base, TemporalMixIn):
+    __tablename__ = 'crises_config'
+
+    crisis_id = Column(BigInteger, index=True, primary_key=True)
+    crisis_name = Column(String(128))
+    crisis_start_date = Column(DateTime)
+    crisis_end_date = Column(DateTime)
+    __mapper_args__ = {'polymorphic_identity': 'crises'}
 
 @auto_repr
-class SimulationConfig(Base):
+class SimulationConfig(Base, TemporalMixIn):
     __tablename__ = 'simulation_config'
 
     asOfDate = Column(DateTime, primary_key=True)
     currency = Column(String(64))
 
-    shortHorizon = Column(Float, server_default='NULL')
-    midHorizon = Column(Float, server_default='NULL')
-    longHorizon = Column(Float, server_default='NULL')
+    shortHorizon = Column(Float, nullable=True)
+    midHorizon = Column(Float, nullable=True)
+    longHorizon = Column(Float, nullable=True)
 
-    number_of_bstraps = Column(Float, server_default='NULL')
-    q = Column(Float, server_default='NULL')
+    number_of_bstraps = Column(Float, nullable=True)
+    q = Column(Float, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'simulation_config'}
 
 @auto_repr
-class FactorConfig(Base):
+class FactorConfig(Base, TemporalMixIn):
     __tablename__ = 'factor_config'
     asOfDate = Column(DateTime, primary_key=True)
 
 @auto_repr
-class RiskModel(Base):
-    __tablename__ = 'risk_model'
+class RiskModelConfig(Base, TemporalMixIn):
+    __tablename__ = 'risk_model_config'
 
     uid = Column(DateTime, primary_key=True)
     factor = Column(String(100), primary_key=True)
@@ -76,8 +84,8 @@ class RiskModel(Base):
     __mapper_args__ = {'polymorphic_identity': 'risk_model'}
 
 @auto_repr
-class ReturnModel(Base):
-    __tablename__ = 'return_model'
+class ReturnModelConfig(Base, TemporalMixIn):
+    __tablename__ = 'return_model_config'
 
     uid = Column(DateTime, primary_key=True)
     factor = Column(String(100), primary_key=True)

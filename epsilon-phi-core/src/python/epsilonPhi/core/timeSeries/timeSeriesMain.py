@@ -3,6 +3,7 @@ from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsTy
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
+from pandas.core.internals.managers import SingleBlockManager
 import numpy as np
 import datetime as datetime
 import dateutil
@@ -12,6 +13,7 @@ class CTimeSeries(pd.DataFrame):
 
     _datasource = GlobalDataSource()
     _metadata = ["_added_attributes", "_type"]
+
     @property
     def _constructor(self):
         """This is the key to letting Pandas know how to keep
@@ -21,26 +23,32 @@ class CTimeSeries(pd.DataFrame):
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finlaize__` every time."""
         def _c(*args, **kwargs):
-            return CTimeSeries(*args).__finalize__(self)
+            return CTimeSeries(*args, **kwargs).__finalize__(self)
         return _c
 
+    @property
+    def _constructor_sliced(self):
+        def _cs(*args, **kwargs):
+            return super(CTimeSeries, self)._constructor_sliced(*args, **kwargs)
+        return _cs
+
     def __init__(self,
-                 dataframe: pd.DataFrame,
-                 ts_type: TimeSeriesType = TimeSeriesType.LEVELS,
+                 data=None,
+                 index=None,
+                 columns=None,
                  attributes: pd.DataFrame = None,
-                 returns_type: ReturnsType = ReturnsType.simple):
+                 ts_type: TimeSeriesType = TimeSeriesType.LEVELS,
+                 returns_type: ReturnsType = ReturnsType.SIMPLE,
+                 **kwargs):
 
-        super(CTimeSeries, self).__init__(dataframe)
-
+        super(CTimeSeries, self).__init__(data, index, columns, **kwargs)
         # Set attributes in object
         if isinstance(attributes, pd.DataFrame):
             self.set_attributes(attributes)
         else:
-            self.reset_attributes()
-
+            self.__setattr__('_added_attributes', pd.DataFrame())
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
-        self.validate()
 
     # check we have time series data
     def validate(self):
@@ -48,7 +56,16 @@ class CTimeSeries(pd.DataFrame):
             'Error - index must be pd.DatetimeIndex'
 
     def _cast_derived_class(self, klass):
-        self.__init__(klass, klass._type, klass.attributes)
+        self.__init__(klass,
+                      ts_type=klass._type,
+                      attributes=klass.attributes,
+                      returns_type=klass.returns_type)
+
+    def _deepcopy(self):
+        return self.__class__(self,
+                              ts_type=self._type,
+                              attributes=self.attributes,
+                              returns_type=self.returns_type)
 
     #%% Properties
     @property
@@ -71,7 +88,7 @@ class CTimeSeries(pd.DataFrame):
             return self.index.inferred_freq
     @property
     def attributes(self):
-        return self.__getattr__('_added_attributes').get(self.columns)
+        return self.__getattr__('_added_attributes').get(self.columns, pd.DataFrame())
     @property
     def type(self):
         return self.__getattr__('_type')
@@ -79,48 +96,47 @@ class CTimeSeries(pd.DataFrame):
     def returns_type(self):
         return self.__getattr__('_returns_type')
 
-    #%% setter functions
+    @property
+    def isLevels(self):
+        return self.type == TimeSeriesType.LEVELS
+    @property
+    def isReturns(self):
+        return self.type in [TimeSeriesType.RETURNS,
+                             TimeSeriesType.GROWTH]
 
     #%% getter functions
 
+    #TODO Reindex the time series to start from 1 for each independant
     def get_levels(self):
-
-        if self.type == TimeSeriesType.LEVELS:
+        if self.isLevels:
             return self.copy()
 
-        newObj = self._constructor(self, TimeSeriesType.LEVELS, self.attributes)
-        if self.returns_type in [ReturnsType.simple,
-                                 ReturnsType.simple.value]:
-            lvlObj = (1+newObj).cumprod(axis=0)
-        elif self.returns_type in [ReturnsType.log, ReturnsType.log.value,
-                                   ReturnsType.difference, ReturnsType.difference.value]:
-            lvlObj = newObj.sum(axis=0)
+        newObj = self._constructor(self, ts_type=TimeSeriesType.LEVELS, attributes=self.attributes)
+        if self.returns_type in [ReturnsType.SIMPLE,
+                                 ReturnsType.SIMPLE.value]:
+            return (1+newObj).cumprod(axis=0)
+        else:
+            return newObj.cumsum(axis=0)
 
-        for col in lvlObj.columns:
-            pass
+    def get_returns(self, return_type=ReturnsType.SIMPLE):
 
-        new_date = DateUtils.shift_date(lvlObj.index[0], lvlObj.frequency, -1)
-        lvlObj.insert_date(new_date)
-        lvlObj.loc[new_date, lvlObj.columns[0]] = 1
-        return lvlObj
-
-
-
-
-
-    def get_returns(self, return_type='simple'):
-
-        if self.type == TimeSeriesType.RETURNS:
+        if self.isReturns:
             return self.pct_change().copy()
 
-        if return_type == 'simple':
-            newObj = self.pct_change(axis=0)
-        elif return_type == 'log':
-            newObj = np.log(self).diff(axis=0)
-        elif return_type == 'diff':
-            newObj = self.diff(axis=0)
-        return newObj
+        if self.returns_type in [ReturnsType.SIMPLE,
+                                 ReturnsType.SIMPLE.value]:
+            newObj = self.apply(lambda x: x.dropna().pct_change())
+        elif return_type in [ReturnsType.LOG,
+                             ReturnsType.LOG.value]:
+            newObj = self.apply(lambda x: np.log(x.dropna()).diff())
+        elif return_type in [ReturnsType.DIFFERENCE,
+                             ReturnsType.DIFFERENCE.value]:
+            newObj = self.apply(lambda x: x.dropna().diff())
+        else:
+            raise ValueError('Error - must specify returns type')
 
+        newObj.__setattr__('_returns_type', return_type)
+        return newObj.copy()
 
     #%% public methods
     def select_subset_dates(self, dates):
@@ -128,7 +144,7 @@ class CTimeSeries(pd.DataFrame):
 
     def insert_and_select_subset_dates(self, dates, fill_na=False):
 
-        reindexed = self.reindex(self.index.append(dates).unique())
+        reindexed = self.reindex(self.index.append(dates).unique()).sort_index()
         if fill_na:
            return reindexed.ffill().reindex(dates).copy()
         else:
@@ -172,65 +188,59 @@ class CTimeSeries(pd.DataFrame):
         return self[np.min(common_dates):np.max(common_dates)], \
             df[np.min(common_dates):np.max(common_dates)]
 
-    def get_periodic_levels(self, period):
-        pass
+    def get_periodic_levels(self, periods):
+        return self.get_levels().get_period_ends(periods)
 
-    def get_periodic_returns(self, period):
-        pass
+    def get_periodic_returns(self, periods):
+        return self.get_levels().get_period_ends(periods).get_returns()
 
     def get_period_ends(self, frequency):
-        period_dates = DateUtils.get_date_range(np.min(self.dates), np.max(self.dates), periodicity=frequency)
-        return self.select_subset_dates(period_dates)
+        period_dates = DateUtils.get_date_range(np.min(self.dates),
+                                                np.max(self.dates),
+                                                periodicity=frequency)
+        return self.insert_and_select_subset_dates(period_dates, fill_na=True)
 
     def get_week_ends(self):
         return self.get_period_ends(Frequency.WEEKLY)
-
     def get_month_ends(self):
         return self.get_period_ends(Frequency.MONTHLY)
-
     def get_quarter_ends(self):
         return self.get_period_ends(Frequency.QUARTERLY)
-
     def get_year_ends(self):
         return self.get_period_ends(Frequency.YEARLY)
-
     def get_weekly_levels(self):
-        pass
+        return self.get_periodic_levels(Frequency.WEEKLY)
     def get_weekly_returns(self):
-        pass
+        return self.get_periodic_returns(Frequency.WEEKLY)
     def get_monthly_levels(self):
-        pass
+        return self.get_periodic_levels(Frequency.MONTHLY)
     def get_monthly_returns(self):
-        pass
+        return self.get_periodic_returns(Frequency.MONTHLY)
     def get_quarterly_levels(self):
-        pass
+        return self.get_periodic_levels(Frequency.QUARTERLY)
     def get_quarterly_returns(self):
-        pass
+        return self.get_periodic_returns(Frequency.QUARTERLY)
     def get_annual_levels(self):
-        pass
+        return self.get_periodic_levels(Frequency.YEARLY)
     def get_annual_returns(self):
-        pass
+        return self.get_periodic_returns(Frequency.YEARLY)
+    def shift_to_period_ends(self, period):
+        period_dates = DateUtils.get_date_range(np.min(self.dates),
+                                                np.max(self.dates),
+                                                periodicity=period)
+        period_lvls = self.get_levels().insert_and_select_subset_dates(period_dates, fill_na=True)
+        if self.isLevels:
+            return period_lvls.copy()
+        else:
+            return period_lvls.get_returns().copy()
 
     #%% Methods assocaited with attributes
     def reset_attributes(self):
-        self.set_attributes(pd.DataFrame(columns=self.columns))
+        self.set_attributes(pd.DataFrame())
 
     def set_attributes(self, attributes: pd.DataFrame):
         self.__setattr__('_added_attributes',
-                         attributes.get(self.columns, pd.DataFrame(columns=self.columns)))
-
-    def set_attribute(self, attribute_name, attribute_vals):
-
-        if not FrameUtils.is_iterable(attribute_vals):
-            attribute_vals = [attribute_vals]
-
-        N = len(attribute_vals)
-        if N == 1:
-            attribute_vals = [attribute_vals] * self.number_of_cols
-
-        if len(attribute_vals) == self.number_of_cols:
-            new_att = pd.DataFrame(attribute_vals, columns=self.columns, index=[attribute_name])
-            self.append_attributes(new_att)
+                         attributes.get(self.columns, pd.DataFrame()))
 
     def add_attributes(self, attributes: pd.DataFrame):
         self.append_attributes(attributes)
@@ -261,16 +271,12 @@ class CTimeSeries(pd.DataFrame):
     def concat(self, time_series):
         assert self.type == time_series.type, 'ERROR - timeseries must be of the same type to concat'
         new_atts = pd.concat((self.attributes, time_series.attributes), axis=1)
-        return CTimeSeries(pd.concat((self, time_series), axis=1), self.type, new_atts)
-
-    def isLevels(self):
-        return self.type == TimeSeriesType.LEVELS
-
-    def isReturns(self):
-        return self.type == TimeSeriesType.RETURNS or self.type == TimeSeriesType.GROWTH
+        return self.__class__(pd.concat((self, time_series), axis=1), ts_type=self.type, attributes=new_atts)
 
     def ind(self, ind_value):
-        pass
+        if self.isLevels:
+           self._cast_derived_class(
+               self.apply(lambda x: ind_value*(x/x.loc[x.first_valid_index()])))
 
     #%% Protected Methods
 
@@ -287,6 +293,10 @@ class CTimeSeries(pd.DataFrame):
     def remove_empty_trailing_rows(self):
         pass
     def remove_empty_leading_trailing_rows(self):
+        pass
+    def _apply_operation(self, values: np.array):
+        assert values.size == self.size, 'Incompatible sizes'
+    def _get_array_for_operation(self, value):
         pass
     def multiply(self, value):
         return self.copy() * value
@@ -321,9 +331,16 @@ if __name__ == "__main__":
         def _constructor(self):
             return test_class
 
-    self = CTimeSeries.get_timeseries_from_ticker('UKPRATE.', fields='x', ts_type=TimeSeriesType.RETURNS)
-    self = self / 100
-    rtns = self.get_levels()
+    s1 = CTimeSeries.get_timeseries_from_ticker('UKPRATE.', fields='x', ts_type=TimeSeriesType.RETURNS)
+    s1 = s1 / 1200
+
+    s2 = CTimeSeries.get_timeseries_from_ticker('BBCHF2M', fields='x', ts_type=TimeSeriesType.RETURNS)
+    s2 = s2 / 252000
+
+    s3 = s1.concat(s2)
+    s3.get_monthly_returns()
+
+    rtns = s3.get_levels()
 
 
 

@@ -12,7 +12,7 @@ class Offsets(object):
 
         if frequency.lower() in ['d']:
             return pd.tseries.offsets.Day(periods)
-        if frequency.lower() in ['bd']:
+        if frequency.lower() in ['bd','b']:
             return pd.tseries.offsets.BDay(periods)
         if frequency.lower() in ['w']:
             return pd.tseries.offsets.Week(periods)

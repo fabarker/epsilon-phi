@@ -2,13 +2,13 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Typ
 from typing import Any
 from epsilonPhi.core.lib.Decorators import auto_repr
 from sqlalchemy.orm import relationship, declarative_base, declared_attr
+from epsilonPhi.core.dataModel.alchemist.BaseData import Base
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from decimal import Decimal
 import numpy as np
 import pandas as pd
 import math
 
-Base = declarative_base()
 
 class FloatOrNone(TypeDecorator):
     impl = Float
