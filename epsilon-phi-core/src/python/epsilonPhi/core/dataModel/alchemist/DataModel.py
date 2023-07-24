@@ -181,10 +181,10 @@ class FXRate(TimeSeries):
     uid = Column(Integer, ForeignKey('fx_rates_spec.uid'), index=True, primary_key=True)
     date = Column(DateTime, primary_key=True)
 
-    bid = Column(FloatOrNone, nullable=True)
-    mid = Column(FloatOrNone, nullable=True)
-    ask = Column(FloatOrNone, nullable=True)
-    last = Column(FloatOrNone, nullable=True)
+    EB = Column(FloatOrNone, nullable=True)
+    ER = Column(FloatOrNone, nullable=True)
+    EO = Column(FloatOrNone, nullable=True)
+    X = Column(FloatOrNone, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'fx_rates'}
     _spec = relationship("FXRateSpec", foreign_keys=[uid])

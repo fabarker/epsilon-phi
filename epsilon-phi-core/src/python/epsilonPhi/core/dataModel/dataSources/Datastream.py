@@ -209,6 +209,11 @@ class pyDatastreamFO(object):
         else:
             print('No data returned for tickers {}'.format(request.requestData[2].replace(',','|')))
 
+    @staticmethod
+    def query_datastream(request):
+        pydfo = pyDatastreamFO()
+        return pydfo.post(request)
+
 
 if __name__ == "__main__":
 

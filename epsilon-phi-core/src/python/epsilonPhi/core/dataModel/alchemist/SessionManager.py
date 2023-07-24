@@ -71,9 +71,10 @@ class SessionMgr(object):
 
     def get_all_tables_in_database(self):
         session = self.getSessionFactory()
-        return [x[0] for x in session.execute(text("SHOW TABLES IN DEV")).fetchall()]
+        return [x[0] for x in session.execute(text("SHOW TABLES")).fetchall()]
 
     def get_all_columns_in_table(self, table_name):
+        session = self.getSessionFactory()
         if self.is_table_in_database(table_name):
             return [x[0] for x in session.execute(text("SHOW COLUMNS IN " + table_name)).fetchall()]
         else:

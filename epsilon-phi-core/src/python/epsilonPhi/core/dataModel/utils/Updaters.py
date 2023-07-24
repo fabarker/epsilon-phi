@@ -1,6 +1,6 @@
 import pandas as pd
-
 from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg, ISO_to_region
+from epsilonPhi.core.utils.ListUtils import ListUtils
 from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
 import os
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
@@ -279,12 +279,119 @@ class interest_rates(Bloomberg):
             finally:
                 session.close()
 
+from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg
+class Updater:
+
+    _DATASTREAM_DATATYPES = ['529E', 'APC', 'CX', 'DIEP', 'DIPE', 'DM', 'DY', 'EB', 'EO', 'EPS', 'EPS1FD12', 'ER', 'IB', 'IN', 'IO',
+                'IR', 'ISIN', 'L', 'MV', 'NOSH', 'OI', 'PA', 'PB', 'PE', 'PH', 'PI', 'PL', 'PO', 'PS', 'PTBV',
+                'RI', 'RY', 'SEDOL', 'VM', 'VO', 'WC01001', 'X', 'YTW', 'x']
+
+    _session = SessionMgr()
+    _session_factory = _session.getSessionFactory()
+
+    @staticmethod
+    def _get_bind():
+        return Updater._session.getSessionFactory().get_bind()
+
+    @staticmethod
+    def update_table_data(table_name):
+        from sqlalchemy import distinct
+        table_obj = Updater._session.fetch_model_class_from_table_name(table_name)
+
+        uids = [x[0] for x in Updater._session_factory.query(distinct(table_obj.uid)).all()]
+        unique_sources = Updater._session_factory.query(distinct(TimeSeriesSpec.datasource)).filter(TimeSeriesSpec.uid.in_(uids)).all()
+        for source in unique_sources:
+            Updater._update_table_data_single_datasource(table_obj, source[0])
+
+    @staticmethod
+    def _update_table_data_single_datasource(table, datasource):
+        if datasource.lower() == 'datastream':
+            Updater._update_table_data_datastream(table)
+        elif datasource.lower() == 'gs':
+            Updater._update_table_data_gs(table)
+        elif datasource.lower() == 'bbg':
+            Updater._update_table_data_bbg(table)
+        else:
+            raise ValueError('Error - datasource {} not recognised')
+
+    @staticmethod
+    def _update_table_data_datastream(table):
+
+        from epsilonPhi.core.dataModel.dataSources.Datastream import pyDatastreamFO, request
+        from sqlalchemy import distinct
+
+        tbl_cols = Updater._session.get_all_columns_in_table(table.__table__.name)
+        flds = np.intersect1d(Updater._DATASTREAM_DATATYPES, tbl_cols)
+        uids = [x[0] for x in Updater._session_factory.query(distinct(table.uid)).all()]
+        series_specs = pd.DataFrame(Updater._session_factory.query(TimeSeriesSpec.uid,
+                                                                   TimeSeriesSpec.symbol).filter(TimeSeriesSpec.datasource
+                                                                                                 == 'Datastream',
+                                                                                                 TimeSeriesSpec.uid.in_(uids)).all())
+        series_specs = series_specs.set_index('symbol', drop=True)
+        _nested_list = ListUtils._nest_list(series_specs.index, 10)
+        for list in _nested_list:
+
+            r = request(list, flds, start_date='31/12/2022', freq='Daily')
+            r.requestData[1] = 'RF:MNEM,DATATYPE'
+            pydfo = pyDatastreamFO()
+            res = pydfo.post(r)
+
+            loc = np.max(np.where(np.isin(res.index, ['DATATYPE','MNEM'])))
+            df_cols = pd.MultiIndex.from_arrays(res.loc[['MNEM', 'DATATYPE']].values)
+
+            idx = pd.to_datetime([ x.strftime('%Y-%m-%d') for x in res.index[loc+1:]])
+            df_ = pd.DataFrame(res.values[loc+1:],
+                               columns=df_cols,
+                               index=idx)
+            del res
+
+            df_dtbs = pd.DataFrame()
+            for symbol in list:
+
+                tmp = df_.get(symbol).copy()
+                tmp['uid'] = series_specs.loc[symbol].uid
+                tmp.index.name = 'date'
+                tmp = tmp.reset_index(drop=False)
+                tmp['date'] = pd.to_datetime(tmp['date'].values)
+
+                cols = np.setdiff1d(tbl_cols, tmp.columns)
+                for col in cols:
+                    _txt = 'SELECT DISTINCT(' + col + ') FROM ' + table.__table__.name + ' WHERE uid = ' + str(series_specs.loc[symbol].uid)
+                    tmp[col] = Updater._session_factory.execute(text(_txt)).first()[0]
+                tmp = tmp.set_index('date', drop=True)
+
+                uid = int(series_specs.loc[symbol].uid)
+                dbs_dates = pd.to_datetime([x[0] for x in Updater._session_factory.query(FXRate.date).filter(FXRate.uid == uid).all()])
+                keep_dates = np.setdiff1d(pd.to_datetime(tmp.index), dbs_dates)
+
+                df_dbs = tmp.loc[keep_dates].reset_index(drop=False)
+                df_dtbs = pd.concat((df_dtbs, df_dbs), axis=0)
+
+            if df_dtbs.size > 0:
+                df_sql = df_dtbs.dropna(how='all', axis=1)
+                if df_sql.size > 0:
+                   df_sql.to_sql(name=table.__table__.name,
+                                 con=Updater._session.getEngine(),
+                                 if_exists='append',
+                                 index=False)
+                   print('Data appended to table ' + table.__table__.name)
+                else:
+                    print('No data for add for time series ' + table.__table__.name)
+            else:
+                print('No data for add for time ' + table.__table__.name)
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
 
 
-    from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg
-    session = SessionMgr().getSessionFactory()
+    Updater.update_table_data('fx_rates')
 
     data_table_name = 'interest_rate'
     spec_table_name = 'interest_rate_spec'

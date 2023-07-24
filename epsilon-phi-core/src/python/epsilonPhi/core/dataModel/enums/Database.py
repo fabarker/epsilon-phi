@@ -12,4 +12,3 @@ class Category(Enum):
     FIXED_INCOME = 11
     COMMODITY = 9
     HEDGE_FUND = 10
-
