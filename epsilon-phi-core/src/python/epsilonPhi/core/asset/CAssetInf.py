@@ -6,6 +6,11 @@ __date__ = '01/07/2023'
 class CAssetInf(ABC):
 
     @abstractmethod
+    @property
+    def name(self):
+        pass
+
+    @abstractmethod
     def get_historical_risk_premium(self):
         pass
     @abstractmethod

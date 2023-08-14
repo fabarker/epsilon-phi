@@ -1,5 +1,7 @@
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
-from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurveMgr import FXCurveManager
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
+from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import pandas as pd
@@ -9,11 +11,24 @@ import copy
 
 @SingletonDecorator
 class FXCurve(object):
-    _fx_cache = pd.DataFrame()
-    _SUPPORTED_PROVIDERS = dict()
 
-    def __init__(self):
-        self._session = SessionMgr().getSessionFactory()
+    _fx_cache = pd.DataFrame()
+    _DEFAULT_PRICING_LOCATION = PricingLocation.LONDON
+    _DEFAULT_PROVIDERS = (Provider.WMR, Provider.REFINITIV, Provider.BBI)
+
+    def __init__(self, provider=None, pricing_location=None):
+
+        self._fxCurveMgr = FXCurveManager()
+        if provider is not None:
+           self.set_provider(provider)
+        else:
+            self.set_provider(self._DEFAULT_PROVIDERS)
+
+        if pricing_location is not None:
+            self.set_pricing_location(pricing_location)
+        else:
+            self.set_pricing_location(self._DEFAULT_PRICING_LOCATION)
+
 
     @staticmethod
     def parse_reverse_currency_pair(bbid):
@@ -25,6 +40,30 @@ class FXCurve(object):
             return list(np.unique(self._fx_cache.columns.get_level_values('bbid')))
         else:
             return self._fx_cache.columns
+    @property
+    def provider(self):
+        return [x.value for x in self.__provider]
+
+    @property
+    def pricing_location(self):
+        return self.__pricing_location
+
+    def reset_cache(self):
+        self._fx_cache = pd.DataFrame()
+
+    def set_provider(self, provider):
+
+        if not DateUtils.is_iterable(provider):
+           provider = [provider]
+        self.__provider = tuple(provider)
+        self.reset_cache()
+
+    def set_pricing_location(self, pricing_location):
+        if isinstance(pricing_location, PricingLocation):
+            self.__pricing_location = pricing_location.value
+        else:
+            self.__pricing_location = pricing_location
+        self.reset_cache()
 
     def __get_fx_curve(self, bbid):
         return self._fx_cache.iloc[:, self._fx_cache.columns.get_level_values('bbid') == bbid].dropna(how='all')
@@ -46,7 +85,7 @@ class FXCurve(object):
             return self.__get_fx_curve(bbid)
         elif self.parse_reverse_currency_pair(bbid) in self.cached_bbids:
             rvs_df = 1 / self.__get_fx_curve(self.parse_reverse_currency_pair(bbid))
-            rvs_df = rvs_df.rename(columns={'ask': 'bid', 'bid': 'ask'}, level='quote')
+            rvs_df = rvs_df.rename(columns={PriceQuote.ASK.value: PriceQuote.BID.value, PriceQuote.BID.value:  PriceQuote.ASK.value}, level='quote')
             rvs_df = rvs_df.rename(columns={self.parse_reverse_currency_pair(bbid): bbid}, level='bbid')
             return rvs_df.copy()
         else:
@@ -75,59 +114,65 @@ class FXCurve(object):
         cross_df.columns.names = copy.deepcopy(curve_1.columns.names)
         return cross_df.copy()
 
+    def __load_fx_curve_single_currency_USD_cross(self, bbid: str):
+
+        rvs_bbid = self.parse_reverse_currency_pair(bbid)
+        bbid_spec = pd.concat((self._fxCurveMgr.get_bbid_spec(bbid, self.provider),
+                               self._fxCurveMgr.get_bbid_spec(rvs_bbid, self.provider)), axis=0).\
+                               set_index('maturity', drop=True)
+        self._fxCurveMgr.cache_fx_curve_data_single_currency_pair(bbid)
+
+
+        if bbid_spec.size == 0:
+            raise ValueError(
+                'Error - currency pair {} or {} not in database and curve cannot be constructed'.format(bbid, rvs_bbid))
+
+        unique_mats = np.unique(bbid_spec.index)
+
+        curve_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+        for mat in unique_mats:
+            mat_spec = bbid_spec.loc[[mat]].set_index('uid', drop=True)
+
+            mat_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+            for uid in mat_spec.index:
+                uid_spec = mat_spec.loc[uid]
+                _rates = self._fxCurveMgr.get_fx_time_series_from_uid(uid, pricing_location=self.pricing_location)
+
+                # shift provider to level 0 in the columns
+                _rates.columns = \
+                    _rates.columns.reorder_levels(['provider'] + list(np.setdiff1d(_rates.columns.names, 'provider')))
+
+                if uid_spec.bbid == self.parse_reverse_currency_pair(bbid):
+                    _rates = 1 / _rates
+                    _rates = _rates.rename(columns={PriceQuote.ASK.value: PriceQuote.BID.value, PriceQuote.BID.value: PriceQuote.ASK.value, uid_spec.bbid: bbid})
+
+                mat_df = mat_df.concat(_rates)
+
+            for provider in self.provider:
+                tmp = mat_df.get(provider, pd.DataFrame(columns=mat_df.columns))
+                tmp.columns = tmp.columns.droplevel('uid')
+                df_p = tmp.groupby(lambda x: x, axis=1).first().dropna(how='all', axis=0)
+                curve_df = curve_df.combine_left(df_p)
+
+        curve_df.columns = pd.MultiIndex.from_tuples(curve_df.columns)
+        curve_df.columns.names = ['bbid', 'maturity', 'pricing_location', 'quote']
+        self._fx_cache = pd.concat((self._fx_cache, curve_df), axis=1)
+        self._fxCurveMgr.reset_cache()
+
+
     def __load_fx_curve_single_currency(self, bbid: str):
+
         bbid = bbid.replace('/', '')
-        if bbid not in self.cached_bbids:
+        if bbid.find('USD') < 0:
+            bse = bbid[0:3] + 'USD'
+            ctr = 'USD' + bbid[3:]
 
-            if bbid.find('USD') < 0:
-                bse = bbid[0:3] + 'USD'
-                ctr = 'USD' + bbid[3:]
-
-                bse_fx = self.get_fx_curve_single_currency(bse)
-                ctr_fx = self.get_fx_curve_single_currency(ctr)
-                curve_df = self.multiply_curves(bse_fx, ctr_fx)
-                self._fx_cache = pd.concat((self._fx_cache, curve_df), axis=1)
-                return
-
-            # LOAD RAW DATA FROM DATABASE
-            fx_info = FXRate.get_spec_df_from_bbids([bbid, self.parse_reverse_currency_pair(bbid)], index_col='uid')
-            if fx_info.size == 0:
-                raise ValueError('Error - currency pair {} or {} not in database and curve cannot be constructed'.format(bbid, self.parse_reverse_currency_pair(bbid)))
-
-            fx_df = FXRate.getDataframe(uids=fx_info.index, index_col='uid')
-
-            curve_df = pd.DataFrame()
-            unique_mats = np.unique(fx_info.maturity)
-            for mat in unique_mats:
-                df_info = fx_info[fx_info.maturity == mat]
-
-                mat_df = pd.DataFrame()
-                for uid in df_info.index:
-                    if df_info.loc[uid].bbid == self.parse_reverse_currency_pair(bbid):
-                        rates = 1 / fx_df.loc[uid].set_index('date', drop=True)
-                        rates = rates.rename(columns={'ask': 'bid', 'bid': 'ask'})
-                    else:
-                        rates = fx_df.loc[uid].set_index('date', drop=True)
-                    rates.columns = pd.MultiIndex.from_tuples(
-                        [(bbid, mat, df_info.loc[uid].provider) + (x,) for x in rates.columns])
-                    rates.columns.names = df_info.columns.append(pd.Index(['quote']))
-                    mat_df = pd.concat((mat_df, rates), axis=1)
-
-                provider_rank = ['WM/Refinitiv', 'Refinitiv', 'Barclays Bank PLC', 'GTIS - FTID/TR']
-                providers = [x for x in provider_rank if x in mat_df.columns.get_level_values('provider')]
-                fx_rates = pd.DataFrame()
-
-                if len(providers) > 0:
-                    for provider in providers:
-                        df_temp = mat_df.iloc[:, mat_df.columns.get_level_values('provider') == provider].dropna(how='all')
-                        df_temp.columns = df_temp.columns.droplevel('provider')
-                        df_p = df_temp.groupby(lambda x: x, axis=1).first()
-                        fx_rates = fx_rates.combine_first(df_p)
-                    fx_rates.columns = pd.MultiIndex.from_tuples(fx_rates.columns)
-                    fx_rates.columns.names = mat_df.columns.droplevel('provider').names
-
-                curve_df = pd.concat((curve_df, fx_rates), axis=1).sort_index()
+            bse_fx = self.get_fx_curve_single_currency(bse)
+            ctr_fx = self.get_fx_curve_single_currency(ctr)
+            curve_df = self.multiply_curves(bse_fx, ctr_fx)
             self._fx_cache = pd.concat((self._fx_cache, curve_df), axis=1)
+        else:
+            self.__load_fx_curve_single_currency_USD_cross(bbid)
 
     def get_spot_rates(self, bbids, quote='mid'):
         if isinstance(bbids, str):
@@ -185,8 +230,8 @@ class FXCurve(object):
                 fwd_curve = np.exp(np.log(sorted_df.iloc[:, idxs].interpolate(method='linear', axis=1)))
 
                 # Extract the observations we need
-                locs = list(zip(pricing_dates, itertools.product([ccy], tau, [type])))
-                fwds = pd.DataFrame([fwd_curve.loc[x] for x in locs], index=pricing_dates)
+                locs = list(zip(pricing_date, itertools.product([ccy], tau, [type])))
+                fwds = pd.DataFrame([fwd_curve.loc[x] for x in locs], index=pricing_date)
                 fwds.columns = pd.MultiIndex.from_tuples([(ccy, type)])
 
                 interp_df = pd.concat((interp_df, fwds), axis=1).ffill()
@@ -212,11 +257,13 @@ class FXCurve(object):
 
 if __name__ == "__main__":
 
-    curve = FXCurve()
-    pricing_dates = pd.date_range('31-Dec-2021', '30-Dec-2022')
-    maturity_dates = pd.to_datetime(['30-Dec-2022'] * pricing_dates.__len__())
+    curve = FXCurve(provider=Provider.GS, pricing_location=PricingLocation.NEW_YORK)
+    df_ = curve.get_fx_curves('EUR/GBP')
 
-    fwds = curve.get_forward_prices(['GBPUSD','EURUSD'], pricing_dates, maturity_dates, quote=['mid'])
-    spts = curve.get_spot_rates('GBPUSD')
+    #pricing_dates = pd.date_range('31-Dec-2021', '30-Dec-2022')
+    #maturity_dates = pd.to_datetime(['30-Dec-2022'] * pricing_dates.__len__())
 
-    spt_fwd = pd.concat((spts.reindex(fwds.index).ffill(), fwds), axis=0)
+    #fwds = curve.get_forward_prices(['GBPUSD','EURUSD'], pricing_dates, maturity_dates, quote=['mid'])
+    #spts = curve.get_spot_rates('GBPUSD')
+
+    #spt_fwd = pd.concat((spts.reindex(fwds.index).ffill(), fwds), axis=0)

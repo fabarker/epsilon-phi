@@ -1,19 +1,22 @@
-import pandas as pd
-from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg, ISO_to_region
-from epsilonPhi.core.utils.ListUtils import ListUtils
-from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
-import os
-from epsilonPhi.core.dataModel.alchemist.DataModel import *
+from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg, ISO_to_region
 from epsilonPhi.core.dataModel.alchemist.SessionManager import *
+from epsilonPhi.core.dataModel.alchemist.DataModel import *
+from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
+from epsilonPhi.core.utils.ListUtils import ListUtils
+from sqlalchemy import distinct
 from datetime import datetime
-import numpy as np
 from dateutil import parser
+import pandas as pd
+import numpy as np
+import os
+
 
 nan = pd.pandas._libs.tslibs.nattype.NaTType
 session = SessionMgr().getSessionFactory()
 
 _DATA_PATH = os.path.join(os.environ.get('HOMEDRIVE'), os.environ.get('HOMEPATH'), 'Documents', 'Data')
-
+_ERROR_PATH_DS = r'C:\Users\fabar\Documents\Data\Errors\DS'
+_ERROR_PATH_GS = r'C:\Users\fabar\Documents\Data\Errors\GS'
 
 class implied_volatility(Bloomberg):
 
@@ -279,12 +282,7 @@ class interest_rates(Bloomberg):
             finally:
                 session.close()
 
-from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg
 class Updater:
-
-    _DATASTREAM_DATATYPES = ['529E', 'APC', 'CX', 'DIEP', 'DIPE', 'DM', 'DY', 'EB', 'EO', 'EPS', 'EPS1FD12', 'ER', 'IB', 'IN', 'IO',
-                'IR', 'ISIN', 'L', 'MV', 'NOSH', 'OI', 'PA', 'PB', 'PE', 'PH', 'PI', 'PL', 'PO', 'PS', 'PTBV',
-                'RI', 'RY', 'SEDOL', 'VM', 'VO', 'WC01001', 'X', 'YTW', 'x']
 
     _session = SessionMgr()
     _session_factory = _session.getSessionFactory()
@@ -298,6 +296,10 @@ class Updater:
         from sqlalchemy import distinct
         table_obj = Updater._session.fetch_model_class_from_table_name(table_name)
 
+        if table_obj is None:
+            print('No table {} in database'.format(table_name))
+            return
+
         uids = [x[0] for x in Updater._session_factory.query(distinct(table_obj.uid)).all()]
         unique_sources = Updater._session_factory.query(distinct(TimeSeriesSpec.datasource)).filter(TimeSeriesSpec.uid.in_(uids)).all()
         for source in unique_sources:
@@ -306,195 +308,171 @@ class Updater:
     @staticmethod
     def _update_table_data_single_datasource(table, datasource):
         if datasource.lower() == 'datastream':
-            Updater._update_table_data_datastream(table)
+            DATASTREAM_UPDATER(table).run()
         elif datasource.lower() == 'gs':
-            Updater._update_table_data_gs(table)
-        elif datasource.lower() == 'bbg':
-            Updater._update_table_data_bbg(table)
+            GSQUANT_UPDATER(table)
         else:
             raise ValueError('Error - datasource {} not recognised')
 
     @staticmethod
-    def _update_table_data_datastream(table):
-
-        from epsilonPhi.core.dataModel.dataSources.Datastream import pyDatastreamFO, request
-        from sqlalchemy import distinct
-
-        tbl_cols = Updater._session.get_all_columns_in_table(table.__table__.name)
-        flds = np.intersect1d(Updater._DATASTREAM_DATATYPES, tbl_cols)
+    def _get_time_series_spec_for_table_datasource(table, datasource):
         uids = [x[0] for x in Updater._session_factory.query(distinct(table.uid)).all()]
         series_specs = pd.DataFrame(Updater._session_factory.query(TimeSeriesSpec.uid,
-                                                                   TimeSeriesSpec.symbol).filter(TimeSeriesSpec.datasource
-                                                                                                 == 'Datastream',
+                                                                   TimeSeriesSpec.symbol).filter(TimeSeriesSpec.datasource == datasource,
                                                                                                  TimeSeriesSpec.uid.in_(uids)).all())
-        series_specs = series_specs.set_index('symbol', drop=True)
-        _nested_list = ListUtils._nest_list(series_specs.index, 10)
-        for list in _nested_list:
+        return series_specs.set_index('symbol', drop=True)
 
-            r = request(list, flds, start_date='31/12/2022', freq='Daily')
-            r.requestData[1] = 'RF:MNEM,DATATYPE'
-            pydfo = pyDatastreamFO()
-            res = pydfo.post(r)
+class GSQUANT_UPDATER(Updater):
 
-            loc = np.max(np.where(np.isin(res.index, ['DATATYPE','MNEM'])))
-            df_cols = pd.MultiIndex.from_arrays(res.loc[['MNEM', 'DATATYPE']].values)
+    _datasource = 'GS'
 
-            idx = pd.to_datetime([ x.strftime('%Y-%m-%d') for x in res.index[loc+1:]])
-            df_ = pd.DataFrame(res.values[loc+1:],
-                               columns=df_cols,
-                               index=idx)
-            del res
+    def __init__(self, table):
+        super(GSQUANT_UPDATER, self).__init__()
+        self._table = table
+        self._table_name = self._table.__table__.name
+        self._tbl_cols = Updater._session.get_all_columns_in_table(table.__table__.name)
+        self._setup()
+
+    def _setup(self):
+        self._spec = self._get_time_series_spec_for_table_datasource(self._table, self._datasource)
+        self._nested_list = ListUtils._nest_list(self._spec.index, 100)
+        self._error_dir = os.path.join(_ERROR_PATH_GS, self._table_name)
+        if not os.path.isdir(self._error_dir):
+            os.mkdir(self._error_dir)
+
+
+class DATASTREAM_UPDATER(Updater):
+    _DATASTREAM_DATATYPES = ['529E', 'APC', 'CX', 'DIEP', 'DIPE', 'DM', 'DY', 'EB', 'EO', 'EPS', 'EPS1FD12', 'ER', 'IB',
+                             'IN', 'IO', 'IR', 'ISIN', 'L', 'MV', 'NOSH', 'OI', 'PA', 'PB', 'PE', 'PH', 'PI', 'PL', 'PO', 'PS',
+                             'PTBV', 'RI', 'RY', 'SEDOL', 'VM', 'VO', 'WC01001', 'X', 'YTW', 'x']
+
+    _datasource = 'Datastream'
+    _use_API = True
+
+    def __init__(self, table, chunk_size=100, start_date=None):
+        super(DATASTREAM_UPDATER, self).__init__()
+        self._table = table
+        self._table_name = self._table.__table__.name
+        self._tbl_cols = Updater._session.get_all_columns_in_table(table.__table__.name)
+        self._flds = np.intersect1d(DATASTREAM_UPDATER._DATASTREAM_DATATYPES, self._tbl_cols)
+        self._freq = 'D'
+
+        if self._table_name == 'equity_index':
+           self._flds = np.append(self._flds, ['DSDY','DSRI'])
+           self._freq = 'M'
+
+        self._chunk_size = chunk_size
+        if not start_date:
+            self._start_date = datetime(year=datetime.today().year - 1, month=12, day=1) + pd.tseries.offsets.BMonthEnd(1)
+        self._setup()
+
+    def _setup(self):
+        self._spec = self._get_time_series_spec_for_table_datasource(self._table,
+                                                                     self._datasource)
+        self._nested_list = ListUtils._nest_list(self._spec.index, self._chunk_size)
+
+        self._error_dir = os.path.join(_ERROR_PATH_DS, self._table_name)
+        if not os.path.isdir(self._error_dir):
+            os.mkdir(self._error_dir)
+
+
+    def _query_datastream(self, query):
+
+        from epsilonPhi.core.dataModel.dataSources.vendor.Datastream import pyDatastream
+        return pyDatastream.fetch(query,
+                                 fields=list(self._flds),
+                                 from_date=self._start_date,
+                                 frequency=self._freq)
+
+    def _process_frame(self, df, symbol):
+
+        # drop any rows that are all names
+        df_ = df.dropna(how='all', axis=0)
+
+        # rename the index to match the date col of the table
+        df_.index.name = 'date'
+        df_.index = pd.to_datetime(df_.index)
+
+        # add the series uid to the table
+        uid = int(self._spec.loc[symbol].uid)
+        df_['uid'] = uid
+        df_ = df_.reset_index(drop=False)
+
+        cols = np.setdiff1d(self._tbl_cols, df_.columns)
+        for col in cols:
+            _txt = 'SELECT DISTINCT(' + col + ') FROM ' + self._table_name + ' WHERE uid = ' + str(
+                self._spec.loc[symbol].uid)
+            df_[col] = self._session_factory.execute(text(_txt)).first()[0]
+
+        # now drop any columns with all nans
+        tbl_df = df_.dropna(how='all', axis=1)
+
+        # Check if we have DSRI, DSDY in the frame
+        if 'DSRI' in tbl_df.columns:
+            if 'RI' in tbl_df.columns:
+                tbl_df = tbl_df.drop(columns='DSRI')
+            else:
+                tbl_df = tbl_df.rename(columns={'DSRI': 'RI'})
+
+        if 'DSDY' in tbl_df.columns:
+            if 'DY' in tbl_df.columns:
+                tbl_df = tbl_df.drop(columns='DSDY')
+            else:
+                tbl_df = tbl_df.rename(columns={'DSDY': 'DY'})
+
+        tmp = tbl_df.set_index('date', drop=True)
+        q_dts = Updater._session_factory.query(self._table.date).filter(self._table.uid == uid)
+        dbs_dates = Updater._session.query_format_df(q_dts)
+
+        keep_dates = np.setdiff1d(pd.to_datetime(tmp.index),
+                                  pd.to_datetime(dbs_dates.values.flatten()))
+        df_dbs = tmp.loc[keep_dates].reset_index(drop=False)
+        if df_dbs.size == 0:
+                pd.DataFrame([symbol + ' NOT UPDATED']).to_csv(os.path.join(self._error_dir, symbol.replace(':', '_') + datetime.now().strftime(" %m%d%Y %H%M%S%z")))
+        return df_dbs.copy()
+
+    def insert(self, df):
+        try:
+            df.to_sql(name=self._table_name, con=Updater._session.getEngine(), if_exists='append', index=False)
+            print('Data appended to table ' + self._table_name)
+        except:
+            print('Error adding data to database {}'.format(df.columns))
+            df.to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
+
+    def run(self):
+
+        ctr = 1
+        for list in self._nested_list:
+            print(len(self._nested_list) - ctr)
+            ctr += 1
+
+            df_ = self._query_datastream(list)
 
             df_dtbs = pd.DataFrame()
-            for symbol in list:
+            unique_tickers = df_.index.get_level_values(0).unique()
+            for symbol in unique_tickers:
+                processed = self._process_frame(df_.loc[symbol], symbol)
+                df_dtbs = pd.concat((df_dtbs, processed), axis=0)
 
-                tmp = df_.get(symbol).copy()
-                tmp['uid'] = series_specs.loc[symbol].uid
-                tmp.index.name = 'date'
-                tmp = tmp.reset_index(drop=False)
-                tmp['date'] = pd.to_datetime(tmp['date'].values)
-
-                cols = np.setdiff1d(tbl_cols, tmp.columns)
-                for col in cols:
-                    _txt = 'SELECT DISTINCT(' + col + ') FROM ' + table.__table__.name + ' WHERE uid = ' + str(series_specs.loc[symbol].uid)
-                    tmp[col] = Updater._session_factory.execute(text(_txt)).first()[0]
-                tmp = tmp.set_index('date', drop=True)
-
-                uid = int(series_specs.loc[symbol].uid)
-                dbs_dates = pd.to_datetime([x[0] for x in Updater._session_factory.query(FXRate.date).filter(FXRate.uid == uid).all()])
-                keep_dates = np.setdiff1d(pd.to_datetime(tmp.index), dbs_dates)
-
-                df_dbs = tmp.loc[keep_dates].reset_index(drop=False)
-                df_dtbs = pd.concat((df_dtbs, df_dbs), axis=0)
 
             if df_dtbs.size > 0:
-                df_sql = df_dtbs.dropna(how='all', axis=1)
+                df_sql = df_dtbs.reset_index(drop=True).dropna(how='all', axis=1)
                 if df_sql.size > 0:
-                   df_sql.to_sql(name=table.__table__.name,
-                                 con=Updater._session.getEngine(),
-                                 if_exists='append',
-                                 index=False)
-                   print('Data appended to table ' + table.__table__.name)
+                   self.insert(df_sql)
                 else:
-                    print('No data for add for time series ' + table.__table__.name)
+                    pd.DataFrame(list).to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
+                    print('No data for add for time series ' + self._table_name)
             else:
-                print('No data for add for time ' + table.__table__.name)
-
-
-
-
-
-
+                pd.DataFrame(list).to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
+                print('No data for add for time series ' + self._table_name)
 
 
 
 if __name__ == "__main__":
 
-
-    Updater.update_table_data('fx_rates')
-
-    data_table_name = 'interest_rate'
-    spec_table_name = 'interest_rate_spec'
-
-    folder_name = r'rates\short rates'
-    info_workbook_name = 'Spec.xlsx'
-    info_sheetname = 'Spec'
-    data_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
-
-    df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
-    df_info = df_info.set_index('ticker', drop=True)
-    dir_list = os.listdir(os.path.join(_DATA_PATH, folder_name, 'Data Repository'))
-
-    for dir_name in dir_list:
-
-        dta_path = os.path.join(data_folder, dir_name)
-        if os.path.isfile(dta_path):
-
-            df_raw = pd.read_csv(dta_path, index_col=0, header=[1,2,3,4,5])
-            keep_cols = np.array(['ERROR' not in x for x in df_raw.columns.get_level_values('Name')])
-            df = df_raw.iloc[:, keep_cols].dropna(how='all', axis=0)
-            if df.size > 0:
-
-                ticker = df.columns.get_level_values('MNEM').unique()[0]
-                row = df_info.loc[ticker]
-
-                df.columns = df.columns.get_level_values('DATATYPE')
-                df = df.applymap(lambda x: np.nan if isinstance(x, str) and '$$ER:' in x else x).dropna(how='all',axis=0)
-                df.index = pd.to_datetime(df.index)
-                df.index.name = 'date'
-
-                if not Bloomberg.is_ticker_in_database(ticker):
-                    try:
-                        spec = EquitySpec()
-                        spec.ISIN = row['ISIN CODE']
-                        spec.SEDOL = row['SEDOL CODE']
-                        spec.category = row.category
-                        spec.datasource = row.datasource
-                        spec.denominated_currency = row.Currency
-                        spec.exchange = row.Exchange
-                        spec.exchange_code = row['BOURSE CODE']
-                        spec.exchange_mnemonic = row['BOURSE MNEMONIC']
-                        spec.exposure_currency = row.Currency
-                        spec.hedge_ratio = 0
-                        spec.industry = row.Industry
-                        spec.industry_group = row['Industry Group']
-                        spec.name = row.long_name
-                        spec.provider = row.provider
-                        spec.region = row.region
-                        spec.sector = row.Sector
-                        spec.sub_industry = row['Sub Industry']
-                        spec.symbol = row.ticker
-                        spec.ticker = ticker
-                        spec.uid = Bloomberg.get_max_uid() + 1
-                        session.add_all([spec])
-                        session.commit()
-                    except:
-                        session.rollback()
-                        print('Error - could not add time series spec info for ticker {}'.format(ticker))
-                    finally:
-                        session.close()
-
-
-                uid = Bloomberg.get_uid_from_ticker(ticker)
-                if uid:
-                    df['uid'] = uid
-                    df = df.reset_index(drop=False)
-                    df['date'] = pd.to_datetime(df['date'].values)
-
-                    df_prime = pd.read_sql('SELECT date FROM ' + data_table_name + ' where uid ="' +
-                                           str(Bloomberg.get_uid_from_ticker(ticker)) + '"',
-                                           SessionMgr().getEngine())
-
-                    sqldates = np.setdiff1d(pd.to_datetime(df['date'].values), pd.to_datetime(df_prime['date']))
-                    if len(sqldates) > 0:
-                        df_sql = df[df['date'].isin(sqldates)]
-
-                        df_sql = df_sql.dropna(how='all', axis=1)
-                        if df_sql.size > 0:
-                            df_sql.to_sql(name=data_table_name,
-                                          con=SessionMgr().getEngine(),
-                                          if_exists='append',
-                                          index=False)
-                            print('Data appended to table ' + data_table_name + ' for time series with ticker {}'.format(ticker))
-                    else:
-                        print('No data for add for time hedge_fund_index with ticker {}'.format(ticker))
-
-
-
-
-    session = SessionMgr().getSessionFactory()
-
-
-
-
-
-
-
-
-
-
-
-
+    table_names = ['bond_index', 'commodity_index', 'equity_index', 'etf', 'future', 'hedge_fund_index', 'interest_rate', 'yield_curve']
+    for table in table_names:
+        Updater.update_table_data(table)
 
 
 

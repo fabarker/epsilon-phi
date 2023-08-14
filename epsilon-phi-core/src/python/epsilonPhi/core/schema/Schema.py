@@ -8,6 +8,8 @@ __author__ = 'Francis Barker'
 __date__ = '01/07/2023'
 
 _Env = Env.get_env()
+_START_DATE = None
+_END_DATE = None
 
 class CContext(object):
 
@@ -23,9 +25,6 @@ class CContext(object):
         self.__start_date = start_date
         self.__end_date = end_date
         self.__dates = None
-
-        # setup schema
-        self._setup()
 
 
     @property
@@ -75,10 +74,16 @@ class CContext(object):
     def get_risk_free_rate(self, currency):
         pass
 
+    def get_risk_free_asset(self, currency):
+        pass
+
     def get_risk_free_rate_name(self, currency):
         pass
 
     def get_asset_by_name(self, asset_name):
+        pass
+
+    def get_fx_curve(self):
         pass
 
 class ContextCreator:

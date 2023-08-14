@@ -111,7 +111,8 @@ class SessionMgr(object):
 
     def get_table_name_from_uid(self, uid):
         from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
-        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first().table_name
+        ts_info = self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first()
+        return ts_info._TimeSeriesSpec__map.table_name
 
     def get_ticker_from_uid(self, uid: int) -> str:
         from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
@@ -129,15 +130,34 @@ class SessionMgr(object):
         from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
         table_name = self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().table_name
         return self.fetch_model_class_from_table_name(table_name)
+
     @staticmethod
     def query_format_df(query):
         q = query.statement.compile(compile_kwargs={"literal_binds": True}).string
-        return pd.read_sql(q.replace('"',''), query.session.get_bind())
+        return pd.read_sql(q.replace('"', ''), query.session.get_bind())
+
     def get_dataframe_from_uid(self, uid: int):
         class_ = self.fetch_model_class_from_uid(uid)
         query = self.getSessionFactory().query(class_).filter(class_.uid.in_([uid]))
         return self.query_format_df(query)
 
+    def get_time_series_spec_from_uid(self, uid: str, return_df=False):
+
+        q = self.getSessionFactory().query(TimeSeriesSpec).filter(TimeSeriesSpec.uid == uid)
+
+        if return_df:
+           return self.query_format_df(q)
+        else:
+           return q.first()
+
+    def get_time_series_spec_from_ticker(self, ticker: str, return_df=False):
+
+        q = self.getSessionFactory().query(TimeSeriesSpec).filter(TimeSeriesSpec.ticker == ticker)
+
+        if return_df:
+           return self.query_format_df(q)
+        else:
+           return q.first()
 
 @contextmanager
 def session_scope():
@@ -154,16 +174,42 @@ def session_scope():
 
 if __name__ == "__main__":
 
-    mgr = SessionMgr().getSessionFactory()
+    session = SessionMgr().getSessionFactory()
 
-    config = CurrencyConfig()
-    config.uid = 1
-    config.risk_free_ticker = 'USD'
-    config.risk_free_ticker = 'FFRF'
-    config.risk_free_rate = 0.025
-    config.inflation_ticker = 'USCPI'
-    config.inflation_rate = 0.02
-    config.frequency = 'M'
-    config.dataversion = 1
-    mgr.add(config)
-    mgr.commit()
+    SQL_1 = "SELECT * FROM `epsilon-phi-dev`.time_series_spec where name like '%Spot%' and provider = 'GS' and category = 'Implied Volatility'"
+    SQL_2 = "SELECT * FROM `epsilon-phi-dev`.time_series_spec where name like '%ATMF%' and provider = 'GS' and category = 'Implied Volatility'"
+
+    df_ATM = pd.read_sql(SQL_2, session.get_bind())
+    df_Spt = pd.read_sql(SQL_2, session.get_bind())
+    df = pd.concat((df_ATM, df_Spt), axis=0)
+
+    table_name = '`epsilon-phi-dev`.implied_volatility'
+    unique_uids = df_ATM.uid.unique()
+    N = len(unique_uids)
+
+    ctr = 0
+    for uid in df_ATM.uid.unique():
+
+        print(N-ctr)
+        READ_STATEMENT = f"SELECT * FROM {table_name} WHERE uid = {uid};"
+        df_data = pd.read_sql(READ_STATEMENT, session.get_bind())
+        df_data.relative_strike = '100'
+
+        DELETE_STATEMENT = f"DELETE FROM {table_name} WHERE uid = {uid};"
+        with session.get_bind().begin() as conn:
+            conn.execute(text(DELETE_STATEMENT))
+
+        df_data.to_sql('implied_volatility', session.get_bind(), if_exists='append', index=False)
+        ctr = ctr + 1
+
+
+    try:
+        session.query(ImpliedVolatility).filter(ImpliedVolatility.relative_strike.in_(['Spot', 'ATMF'])).update(
+            {"relative_strike": "100"})
+        session.commit()
+        print("UPDATE successful.")
+    except Exception as e:
+        session.rollback()
+        print("Error occurred during UPDATE:", str(e))
+    finally:
+        session.close()
