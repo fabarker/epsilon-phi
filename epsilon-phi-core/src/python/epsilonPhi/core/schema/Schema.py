@@ -45,6 +45,19 @@ class CContext(object):
             self.load_dates()
         return self.__dates
 
+    @property
+    def currency(self):
+        return self.__currency
+
+    @property
+    def risk_free_rate(self):
+        return self.get_risk_free_rate(self.currency,
+                                              self.frequency)
+
+    @staticmethod
+    def get_risk_free_rate(currency, frequency):
+        pass
+
     def _setup(self):
         self.load_configs()
         self.load_dates()
@@ -68,23 +81,19 @@ class CContext(object):
     def set_return_factor_panels(self):
         pass
 
-    def set_risk_free_rate(self, currency, asset_name):
-        pass
-
-    def get_risk_free_rate(self, currency):
-        pass
-
-    def get_risk_free_asset(self, currency):
-        pass
-
-    def get_risk_free_rate_name(self, currency):
-        pass
-
     def get_asset_by_name(self, asset_name):
         pass
 
+    def get_risk_free_asset(self):
+        return self.get_asset_by_name(self.risk_free_rate)
+
     def get_fx_curve(self):
         pass
+
+    def get_currency_config(self):
+        return CAppConfig._configUtil.get_currency_config(self.currency,
+                                                          self.frequency)
+
 
 class ContextCreator:
 
@@ -102,16 +111,19 @@ class ContextCreator:
         self._end_date = end_date
 
     def create_context(self):
-        self._schema = CContext(self._currency,
+        schema = CContext(self._currency,
                                 self._frequency,
                                 self._dataversion,
                                 self._start_date,
                                 self._end_date)
+        schema._setup()
+        return schema
 
 if __name__ == "__main__":
 
-    schema = ContextCreator(start_date='31-Dec-1999',
+    self = ContextCreator(start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
+    self.get_currency_config()
 
 
 

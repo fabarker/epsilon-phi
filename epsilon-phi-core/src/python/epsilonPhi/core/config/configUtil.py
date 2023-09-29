@@ -138,7 +138,7 @@ class CConfigUtil(CBaseConfig):
         SessionMgr.instance.getSessionFactory().expunge_all()
 
     def get_config(self, config_name, config_keys):
-        if config_name not in self._catalog:
+        if config_name not in self._catalog.keys():
             self.load_config(config_name)
         return self._catalog.get(config_name)
 
