@@ -1,9 +1,7 @@
-import pandas as pd
-import numpy as np
-import os, sys
+import os
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
-from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg
+from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg
 
 session = SessionMgr().getSessionFactory()
 

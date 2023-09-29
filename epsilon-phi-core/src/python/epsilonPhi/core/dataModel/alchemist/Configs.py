@@ -1,21 +1,13 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, TypeDecorator, text
-from sqlalchemy.orm import relationship, declarative_base, declared_attr
+from sqlalchemy import Column, Integer, String, DateTime, BigInteger, Float
 from epsilonPhi.core.lib.Decorators import auto_repr
-from epsilonPhi.core.utils.DateUtils import DateUtils
-from decimal import Decimal
-from typing import Any
-import pandas as pd
-import numpy as np
-import math
-
-Base = declarative_base()
+from epsilonPhi.core.dataModel.alchemist.BaseData import Base, TemporalMixIn
 
 @auto_repr
-class CurrencyConfig(Base):
+class CurrencyConfig(Base, TemporalMixIn):
     __tablename__ = 'currency_config'
 
     uid = Column(Integer, nullable=True, primary_key=True)
-    currency = Column(String(3), nullable=True)
+    currency = Column(String(3), nullable=True, primary_key=True)
 
     risk_free_ticker = Column(String(50), nullable=True)
     risk_free_rate = Column(Float, nullable=False)
@@ -23,15 +15,13 @@ class CurrencyConfig(Base):
     inflation_ticker = Column(String(50), nullable=True)
     inflation_rate = Column(Float, nullable=False)
 
-    frequency = Column(String(50), nullable=True)
-    dataversion = Column(Float, nullable=False)
-
-    update_time = Column(DateTime, nullable=False)
+    frequency = Column(String(50), nullable=True, primary_key=True)
+    dataversion = Column(Float, nullable=False, primary_key=True)
 
     __mapper_args__ = {'polymorphic_identity': 'currency_config'}
 
 @auto_repr
-class PrivatAssetFlowConfig(Base):
+class PrivatAssetFlowConfig(Base, TemporalMixIn):
     __tablename__ = 'private_asset_flow_config'
 
     asOfDate = Column(DateTime, primary_key=True)
@@ -42,23 +32,42 @@ class PrivatAssetFlowConfig(Base):
     info = Column(String(50), nullable=False)
 
     __mapper_args__ = {'polymorphic_identity': 'private_asset_flow_config'}
-
-
 @auto_repr
-class SimulationConfig(Base):
-    __tablename__ = 'simulation_config'
+class EstimationConfig(Base, TemporalMixIn):
+    __tablename__ = 'estimation_config'
 
-    asOfDate = Column(DateTime, primary_key=True)
+    uid = Column(Integer, nullable=True, primary_key=True)
     currency = Column(String(64))
 
-    shortHorizon = Column(Float, server_default='NULL')
-    midHorizon = Column(Float, server_default='NULL')
-    longHorizon = Column(Float, server_default='NULL')
+    __mapper_args__ = {'polymorphic_identity': 'estimation_config'}
 
-    number_of_bstraps = Column(Float, server_default='NULL')
-    q = Column(Float, server_default='NULL')
+@auto_repr
+class CrisisConfig(Base, TemporalMixIn):
+    __tablename__ = 'crises_config'
+
+    crisis_id = Column(BigInteger, index=True, primary_key=True)
+    crisis_name = Column(String(128))
+    crisis_start_date = Column(DateTime)
+    crisis_end_date = Column(DateTime)
+    __mapper_args__ = {'polymorphic_identity': 'crises'}
+
+@auto_repr
+class SimulationConfig(Base, TemporalMixIn):
+    __tablename__ = 'simulation_config'
+
+    uid = Column(Integer, nullable=True, primary_key=True)
+
+    currency = Column(String(64))
+    dataversion = Column(Float, nullable=False, primary_key=True)
+
+    shortHorizon = Column(Float, nullable=True)
+    midHorizon = Column(Float, nullable=True)
+    longHorizon = Column(Float, nullable=True)
+    number_of_bstraps = Column(Float, nullable=True)
+    q = Column(Float, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'simulation_config'}
+
 
 #'@auto_repr
 #class FactorConfig(Base):
@@ -84,3 +93,34 @@ class SimulationConfig(Base):
 #    frequency = Column(String(100), primary_key=True)
 
 #   __mapper_args__ = {'polymorphic_identity': 'return_model'}
+
+#@auto_repr
+#class FactorConfig(Base, TemporalMixIn):
+#    __tablename__ = 'factor_config'
+#    asOfDate = Column(DateTime, primary_key=True)
+
+#@auto_repr
+#class RiskModelConfig(Base, TemporalMixIn):
+#    __tablename__ = 'risk_model_config'
+
+#    uid = Column(DateTime, primary_key=True)
+#    factor = Column(String(100), primary_key=True)
+#    frequency = Column(String(100), primary_key=True)
+
+#    __mapper_args__ = {'polymorphic_identity': 'risk_model'}
+
+#@auto_repr
+#class ReturnModelConfig(Base, TemporalMixIn):
+#    __tablename__ = 'return_model_config'
+
+#    uid = Column(DateTime, primary_key=True)
+#    factor = Column(String(100), primary_key=True)
+#    frequency = Column(String(100), primary_key=True)
+
+#    __mapper_args__ = {'polymorphic_identity': 'return_model'}
+
+
+if __name__ == "__main__":
+
+    from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+    mgr = SessionMgr.instance

@@ -1,7 +1,6 @@
 import time
 from enum import Enum
 from functools import lru_cache
-
 import pandas as pd
 from gs_quant.data import Dataset
 from gs_quant.session import GsSession, Environment
@@ -30,7 +29,7 @@ class GSQuantManager(object):
         GsSession.use(Environment.PROD,
                       GSQ_CLIENT_ID,
                       GSQ_CLIENT_SECRET,
-                      ('read_product_data','run_analytics',))
+                      ('read_product_data'))
 
     @staticmethod
     def getDataset(DatasetEnum):
@@ -80,10 +79,32 @@ if __name__ == "__main__":
     import datetime, os
     import numpy as np
 
-    def _nest_list(flat_list, nested_size):
-        return [flat_list[i:i + nested_size] for i in range(0, len(flat_list), nested_size)]
+    _SAVE_PATH = r'C:\Users\fabar\Documents\Data\gsquant\equity\SPX'
 
-    ds = Dataset('FXSPOT_V2_PREMIUM')
+    ds = Dataset('EDRVOL_PERCENT_INTERNAL')
+    gsq = GSQuantManager()
+
+    tenors = ['1y']
+    relative_strike = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+
+    for tenor in tenors:
+        for strike in relative_strike:
+            res_1 = ds.get_data(start=datetime.date(year=2001, month=1, day=1), end=datetime.date(year=2010, month=1, day=1),
+                              assetId='MA4B66MW5E27U8P32SB',
+                              strikeReference='delta',
+                              tenor=tenor,
+                              relativeStrike=strike)
+            res_2 = ds.get_data(start=datetime.date(year=2010, month=1, day=1), end=datetime.date.today(),
+                              assetId='MA4B66MW5E27U8P32SB',
+                              strikeReference='delta',
+                              tenor=tenor,
+                              relativeStrike=strike)
+            res = pd.concat((res_1, res_2), axis=0)
+            _FULL_FILE_SAVE = os.path.join(_SAVE_PATH, 'SPX_' + tenor + '_' + str(int(strike*100)) + '.csv')
+            res.to_csv(_FULL_FILE_SAVE)
+
+
+
     cov = GSQuantManager()._get_coverage(ds)
     cov = cov.rename(columns={'name':'names'})
 

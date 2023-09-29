@@ -7,12 +7,16 @@ from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 class Offsets(object):
     @staticmethod
     def getOffset(frequency, periods):
+
         if isinstance(frequency, Frequency):
             frequency = frequency.value
 
+        if isinstance(frequency, pd.DateOffset):
+            frequency = frequency.name
+
         if frequency.lower() in ['d']:
             return pd.tseries.offsets.Day(periods)
-        if frequency.lower() in ['bd']:
+        if frequency.lower() in ['bd','b']:
             return pd.tseries.offsets.BDay(periods)
         if frequency.lower() in ['w']:
             return pd.tseries.offsets.Week(periods)

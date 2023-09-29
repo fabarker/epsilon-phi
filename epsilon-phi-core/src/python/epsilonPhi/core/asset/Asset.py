@@ -1,12 +1,12 @@
 from epsilonPhi.core.asset.CAssetInf import CAssetInf
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
 from epsilonPhi.core.schema.Schema import CContext
 from datetime import datetime
 import pandas as pd
 import numpy as np
 import math
 
-class CAsset(CTimeSeries, CAssetInf):
+class CAsset(CSlice, CAssetInf):
     def __init__(self,
                  ticker: str,
                  currency: str,
@@ -27,8 +27,8 @@ class CAsset(CTimeSeries, CAssetInf):
     def currency(self):
         return self._currency
     @property
-    def asset_name(self):
-        pass
+    def name(self):
+        return self._ticker
 
     def get_alpha(self):
         pass

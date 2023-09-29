@@ -50,14 +50,14 @@ class pyDatastream(object):
                          ('ZGSC304','TORCH863'),
                          ('ZGOL188','YOUNG902'),
                          ('ZGOL865','SOUTH366'),
-                         ('ZGOL865','SOUTH366')])
+                         ('ZGDP339','ALPHA198')])
 
     @staticmethod
-    def pyds():
+    def pyds(raise_on_error=True):
         return pyds(username=DS_USERNAME,
                     password=DS_PASSWORD,
                     proxy=None,
-                    raise_on_error=True)
+                    raise_on_error=raise_on_error)
 
     @staticmethod
     def get_usage(months=12):
@@ -68,18 +68,18 @@ class pyDatastream(object):
               fields: Optional[Union[list, np.array, str]] = None,
               from_date: Optional[dt.date] = None,
               to_date: Optional[dt.date] = None,
-              frequency: Optional[Frequency] = None) -> pd.DataFrame:
+              frequency: Optional[str] = None) -> pd.DataFrame:
 
-        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), int(np.floor(100/len(fields))))
         frames = pd.DataFrame()
         for chunk in chunks:
             try:
-                res = pyDatastream.pyds().fetch(chunk,
-                                                fields = fields,
-                                                date_from= from_date,
-                                                date_to = to_date,
-                                                freq = frequency,
-                                                always_multiindex=False).reset_index()
+                res = pyDatastream.pyds(raise_on_error=False).fetch(chunk,
+                                                                    fields=fields,
+                                                                    date_from=from_date,
+                                                                    date_to=to_date,
+                                                                    freq=frequency,
+                                                                    always_multiindex=False)
                 frames = pd.concat((frames, res))
             except:
                 pass
@@ -140,7 +140,7 @@ class request(object):
             self.requestData[3] = ','.join(list(datatypes))
 
 
-dfo_path = r'C:\Users\fabar\Repos\epsilon-phi\epsilon-phi-core\src\resources\templates\DFORequest.xlsm'
+dfo_path = r'/src/resources/templates/DFORequest.xlsm'
 refinitive_run = r'"C:\Users\fabar\AppData\Local\Refinitiv\Refinitiv Workspace\RefinitivWorkspace.exe" --excel'
 
 @SingletonDecorator
@@ -209,15 +209,22 @@ class pyDatastreamFO(object):
         else:
             print('No data returned for tickers {}'.format(request.requestData[2].replace(',','|')))
 
+    @staticmethod
+    def query_datastream(request):
+        pydfo = pyDatastreamFO()
+        return pydfo.post(request)
+
 
 if __name__ == "__main__":
 
-    from epsilonPhi.core.dataModel.dataSources.Bloomberg import Bloomberg, ISO_to_region
+    ds = pyDatastream.fetch('BBAUD2F')
+
+
     def run_updates():
-        datafields = ['X','RI','IO','IB','IR']
+        datafields = ['EB','ER','EO']
 
         # Hedge Funds
-        folder_name = r'C:\Users\fabar\Documents\Data\rates\short rates\Regional'
+        folder_name = r'C:\Users\fabar\Documents\Data\fx'
         info_workbook_name = 'Spec.xlsx'
         info_sheetname = 'Spec'
         save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
@@ -227,7 +234,7 @@ if __name__ == "__main__":
 
         ctr = 0
         for ticker in Tickers:
-            if ctr == 300:
+            if ctr == 500:
                 pyDatastreamFO.cleanup()
                 closeExcel.kill_all_excel_instances()
                 time.sleep(30)

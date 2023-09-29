@@ -1,14 +1,14 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, TypeDecorator, text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, TypeDecorator, text, Boolean
 from typing import Any
 from epsilonPhi.core.lib.Decorators import auto_repr
 from sqlalchemy.orm import relationship, declarative_base, declared_attr
+from epsilonPhi.core.dataModel.alchemist.BaseData import Base
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from decimal import Decimal
 import numpy as np
 import pandas as pd
 import math
 
-Base = declarative_base()
 
 class FloatOrNone(TypeDecorator):
     impl = Float
@@ -32,11 +32,11 @@ class TimeSeriesSpec(Base):
     __tablename__ = 'time_series_spec'
 
     uid = Column(Integer, primary_key=True, index=True)
-    provider = Column(String(50), nullable=True)
+    provider = Column(String(250), nullable=True)
     ticker = Column(String(50), nullable=True)
     region = Column(String(100), nullable=True)
     name = Column(String(255), nullable=True)
-    category = Column(String(50), ForeignKey('CategoryTableMapping.category'), nullable=False)
+    category = Column(String(50), ForeignKey('category_table_mapping.category'), nullable=False)
     datasource = Column(String(50), nullable=True)
     symbol = Column(String(50), nullable=True)
 
@@ -45,7 +45,7 @@ class TimeSeriesSpec(Base):
 
     @property
     def table_name(self):
-        if hasattr(self, '_TimeSeriesSpec__map'):
+        if hasattr(self, '_TimeSeriesSpec__map.table_name'):
             return self._TimeSeriesSpec__map.table_name
         else:
             return None
@@ -165,14 +165,6 @@ class FXRateSpec(TimeSeriesSpec):
 
     __mapper_args__ = {'polymorphic_identity': 'fx_rate_spec'}
 
-    @classmethod
-    def get_fx_specs(cls, index_col='uid'):
-        from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
-        session = SessionMgr().getSessionFactory()
-        query = session.query(FXRateSpec.uid, FXRateSpec.bbid, FXRateSpec.maturity, FXRateSpec.provider)
-        query_string = query.statement.compile(compile_kwargs={"literal_binds": True}).string
-        return pd.read_sql(text(query_string), con=session.get_bind(), index_col=index_col)
-
 
 @auto_repr
 class FXRate(TimeSeries):
@@ -181,10 +173,11 @@ class FXRate(TimeSeries):
     uid = Column(Integer, ForeignKey('fx_rates_spec.uid'), index=True, primary_key=True)
     date = Column(DateTime, primary_key=True)
 
-    bid = Column(FloatOrNone, nullable=True)
-    mid = Column(FloatOrNone, nullable=True)
-    ask = Column(FloatOrNone, nullable=True)
-    last = Column(FloatOrNone, nullable=True)
+    pricing_location = Column(String(6), primary_key=True)
+    EB = Column(FloatOrNone, nullable=True)
+    ER = Column(FloatOrNone, nullable=True)
+    EO = Column(FloatOrNone, nullable=True)
+    X = Column(FloatOrNone, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'fx_rates'}
     _spec = relationship("FXRateSpec", foreign_keys=[uid])
@@ -212,44 +205,6 @@ class FXRate(TimeSeries):
     @property
     def maturity(self):
         return self._spec.maturity
-
-    @classmethod
-    def getDataframe(cls, bbids=None, uids=None, index_col='date'):
-
-        from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
-        session = SessionMgr().getSessionFactory()
-
-        if bbids is None:
-            query = session.query(cls).join(FXRateSpec, cls.uid == FXRateSpec.uid).filter(FXRateSpec.uid.in_(uids))
-        else:
-            query = session.query(cls).join(FXRateSpec, cls.uid == FXRateSpec.uid).filter(FXRateSpec.bbid.in_(bbids), FXRateSpec.provider != 'BBG')
-        query_string = query.statement.compile(compile_kwargs={"literal_binds": True}).string
-        return pd.read_sql(text(query_string), con=session.get_bind(), index_col=index_col)
-
-    @classmethod
-    def get_spec_df_from_uids(cls, uids, index_col='uid'):
-
-        session = FXRate.get_session_factory()
-        query = session.query(FXRateSpec.uid, FXRateSpec.bbid, FXRateSpec.maturity, FXRateSpec.provider).filter(FXRateSpec.uid.in_(uids))
-        query_string = query.statement.compile(compile_kwargs={"literal_binds": True}).string
-        return pd.read_sql(text(query_string), con=session.get_bind(), index_col=index_col)
-
-    @classmethod
-    def get_spec_df_from_bbids(cls, bbids, index_col='uid'):
-
-        session = FXRate.get_session_factory()
-        query = session.query(FXRateSpec.uid, FXRateSpec.bbid, FXRateSpec.maturity, FXRateSpec.provider).filter(FXRateSpec.bbid.in_(bbids))
-        query_string = query.statement.compile(compile_kwargs={"literal_binds": True}).string
-        return pd.read_sql(text(query_string), con=session.get_bind(), index_col=index_col)
-
-    @staticmethod
-    def get_session_factory():
-
-        from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
-        return SessionMgr().getSessionFactory()
-
-
-
 
 ############### Yield Curves ##############
 
@@ -312,7 +267,7 @@ class InterestRate(TimeSeries):
     RI = Column(FloatOrNone, nullable=True)
     IR = Column(FloatOrNone, nullable=True)
     IO = Column(FloatOrNone, nullable=True)
-    x = Column(FloatOrNone, nullable=True)
+    X = Column(FloatOrNone, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'interest_rate'}
     _spec = relationship("InterestRateSpec", foreign_keys=[uid])
@@ -352,7 +307,7 @@ class HedgeFundIndex(TimeSeries):
 
     uid = Column(Integer, ForeignKey('hedge_fund_index_spec.uid'), index=True, primary_key=True)
     date = Column(DateTime, primary_key=True)
-    RI = Column(FloatOrNone, nullable=True)
+    X = Column(FloatOrNone, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'hedge_fund_index'}
     _spec = relationship("HedgeFundIndexSpec", foreign_keys=[uid])
@@ -559,17 +514,29 @@ class Future(TimeSeries):
     _spec = relationship("FutureSpec", foreign_keys=[uid])
 
 @auto_repr
-class PrivatAssetFlowConfig(Base):
-    __tablename__ = 'private_asset_flow_config'
+class EconomicSpec(TimeSeriesSpec):
+      __tablename__ = 'economic_spec'
 
-    asOfDate = Column(DateTime, primary_key=True)
-    strategy = Column(String(50), primary_key=True)
-    year = Column(Integer, nullable=False, primary_key=True)
-    type = Column(String(1), nullable=False, primary_key=True)
-    value = Column(Float, nullable=False)
-    info = Column(String(50), nullable=False)
+      uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
 
-    __mapper_args__ = {'polymorphic_identity': 'private_asset_flow_config'}
+      history = Column(Integer,  index=True, nullable=True)
+      seasonal_adjustment = Column(Boolean, nullable=False)
+      sector = Column(String(100))
+      indicator = Column(String(100))
+      real = Column(Boolean, nullable=False)
+
+      __mapper_args__ = {'polymorphic_identity': 'economic_spec'}
+
+@auto_repr
+class Economic(TimeSeries):
+    __tablename__ = 'economic'
+
+    uid = Column(Integer, ForeignKey('economic_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+    X = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'economic'}
+    _spec = relationship("EconomicSpec", foreign_keys=[uid])
 
 
 if __name__ == "__main__":
@@ -577,3 +544,14 @@ if __name__ == "__main__":
     import datetime
     from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
     session = SessionMgr().getSessionFactory()
+
+    try:
+        session.query(ImpliedVolatility).filter(ImpliedVolatility.relative_strike.in_(['Spot', 'ATMF'])).update(
+            {"relative_strike": "100"})
+        session.commit()
+        print("UPDATE successful.")
+    except Exception as e:
+        session.rollback()
+        print("Error occurred during UPDATE:", str(e))
+    finally:
+        session.close()
