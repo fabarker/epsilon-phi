@@ -60,27 +60,27 @@ class SimulationConfig(Base):
 
     __mapper_args__ = {'polymorphic_identity': 'simulation_config'}
 
-@auto_repr
-class FactorConfig(Base):
-    __tablename__ = 'factor_config'
-    asOfDate = Column(DateTime, primary_key=True)
+#'@auto_repr
+#class FactorConfig(Base):
+#    __tablename__ = 'factor_config'
+#    asOfDate = Column(DateTime, primary_key=True)
 
-@auto_repr
-class RiskModel(Base):
-    __tablename__ = 'risk_model'
+#@auto_repr
+#class RiskModel(Base):
+#    __tablename__ = 'risk_model'
 
-    uid = Column(DateTime, primary_key=True)
-    factor = Column(String(100), primary_key=True)
-    frequency = Column(String(100), primary_key=True)
+#    uid = Column(DateTime, primary_key=True)
+#    factor = Column(String(100), primary_key=True)
+#    frequency = Column(String(100), primary_key=True)
 
-    __mapper_args__ = {'polymorphic_identity': 'risk_model'}
+#    __mapper_args__ = {'polymorphic_identity': 'risk_model'}
 
-@auto_repr
-class ReturnModel(Base):
-    __tablename__ = 'return_model'
+#@auto_repr
+#class ReturnModel(Base):
+#    __tablename__ = 'return_model'
 
-    uid = Column(DateTime, primary_key=True)
-    factor = Column(String(100), primary_key=True)
-    frequency = Column(String(100), primary_key=True)
+#    uid = Column(DateTime, primary_key=True)
+#    factor = Column(String(100), primary_key=True)
+#    frequency = Column(String(100), primary_key=True)
 
-    __mapper_args__ = {'polymorphic_identity': 'return_model'}
+#   __mapper_args__ = {'polymorphic_identity': 'return_model'}
