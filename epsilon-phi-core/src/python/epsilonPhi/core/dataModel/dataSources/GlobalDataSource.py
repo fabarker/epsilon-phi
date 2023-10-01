@@ -12,7 +12,8 @@ class GlobalDataSource(object):
     _session = _session_mgr.getSessionFactory()
 
     # Cache Time Series Objects
-    _cache = dict()
+    _cache_df = dict()
+    _cache_ts = dict()
 
 
     def __init__(self):
@@ -30,8 +31,15 @@ class GlobalDataSource(object):
         df_.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in df_.columns.get_level_values(1)])
         return df_.copy()
 
+    def load_dataframe_from_uid(self, uid: int):
+        if uid not in self._cache_df.keys():
+            self._cache_df[uid] = self._session_mgr.get_dataframe_from_uid(uid)
+
     def get_dataframe_from_uid(self, uid: int, cols=None, index_col=None):
-        df = self._session_mgr.get_dataframe_from_uid(uid)
+
+        if uid not in self._cache_df.keys():
+            self.load_dataframe_from_uid(uid)
+        df = self._cache_df.get(uid)
 
         if index_col is not None and index_col in df.columns:
             df = df.set_index(index_col, drop=True)
@@ -47,9 +55,16 @@ class GlobalDataSource(object):
         return df
 
     # Methods associated with loading raw time series
+    def load_time_series_data_from_uid(self, uid):
+        df = self.get_dataframe_from_uid(uid, index_col='date')
+        spec = self._session_mgr.get_time_series_spec_from_uid(uid, True).set_index('uid', drop=True)
+        self._cache_ts[uid] = CTimeSeries(df, ts_type=None, attributes=spec.T)
 
     def get_time_series_data_from_uid(self, uid, cols='X', ts_type=None):
-        df = self.get_dataframe_from_uid(uid, cols=cols, index_col='date')
+        if uid not in self._cache_ts:
+            self.load_time_series_data_from_uid(uid)
+        ts = self._cache_ts[uid]
+
         spec = self._session_mgr.get_time_series_spec_from_uid(uid, True).set_index('uid', drop=True)
         return CTimeSeries(df, ts_type=ts_type, attributes=spec.T)
 
