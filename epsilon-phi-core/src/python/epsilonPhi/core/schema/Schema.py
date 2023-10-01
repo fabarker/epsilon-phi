@@ -1,3 +1,4 @@
+from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.config.appConfig import CAppConfig
@@ -26,6 +27,9 @@ class CContext(object):
         self.__end_date = end_date
         self.__dates = None
 
+    @property
+    def dataverson(self):
+        return self.__data_version
 
     @property
     def start_date(self):
@@ -51,17 +55,19 @@ class CContext(object):
 
     @property
     def risk_free_rate(self):
-        return self.get_risk_free_rate(self.currency,
-                                              self.frequency)
+        return CContext.get_risk_free_rate(self.currency,
+                                           self.frequency,
+                                           self.dataverson)
 
     @staticmethod
-    def get_risk_free_rate(currency, frequency):
-        pass
+    def get_risk_free_rate(currency, frequency, dataversion):
+        return CAppConfig._configUtil.get_currency_config(currency,
+                                                          frequency,
+                                                          dataversion).risk_free_ticker
 
     def _setup(self):
         self.load_configs()
         self.load_dates()
-        self.load_asset_manager()
 
     def load_configs(self):
         CAppConfig.setup(app=_Env)
@@ -71,28 +77,17 @@ class CContext(object):
                                                 self.end_date,
                                                 self.frequency)
 
-    def load_asset_manager(self):
-        pass
-
-    #%% Setter Methods
-    def set_risk_factor_panels(self):
-        pass
-
-    def set_return_factor_panels(self):
-        pass
-
-    def get_asset_by_name(self, asset_name):
-        pass
-
-    def get_risk_free_asset(self):
-        return self.get_asset_by_name(self.risk_free_rate)
-
-    def get_fx_curve(self):
-        pass
 
     def get_currency_config(self):
         return CAppConfig._configUtil.get_currency_config(self.currency,
-                                                          self.frequency)
+                                                          self.frequency,
+                                                          self.dataverson)
+
+    def get_simulation_config(self):
+        return CAppConfig._configUtil.get(self.currency,
+                                                          self.frequency,
+                                                          self.dataverson)
+
 
 
 class ContextCreator:
@@ -123,7 +118,7 @@ if __name__ == "__main__":
 
     self = ContextCreator(start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
-    self.get_currency_config()
+    config = self.risk_free_rate
 
 
 

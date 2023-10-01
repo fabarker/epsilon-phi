@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import time, os
-import win32com.client as win32
 import subprocess
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 
@@ -155,6 +154,7 @@ class pyDatastreamFO(object):
         subprocess.run(dfo_path, shell=True)
         time.sleep(10)
 
+        import win32com.client as win32
         workbook = win32.GetObject(dfo_path)
         workbook.Application.Visible = True
         self.app = win32.Dispatch("Excel.Application")

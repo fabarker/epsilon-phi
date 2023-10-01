@@ -81,7 +81,7 @@ class Env(object):
         _config = Env.read_config()
 
         SCHEMA = _config.get('SCHEMA', 'SCHEMA')
-        DATAVERSION = _config.get(currEnv, 'DATAVERSION')
+        DATAVERSION = int(_config.get(currEnv, 'DATAVERSION'))
 
         DB_HOSTNAME = _config.get(currEnv, 'HOSTNAME')
         DB_USERNAME = _config.get(currEnv, 'USERNAME')

@@ -1,6 +1,21 @@
 from sqlalchemy import Column, Integer, String, DateTime, BigInteger, Float
 from epsilonPhi.core.lib.Decorators import auto_repr
 from epsilonPhi.core.dataModel.alchemist.BaseData import Base, TemporalMixIn
+from sqlalchemy.types import TypeDecorator, String
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+
+class FrequencyType(TypeDecorator):
+    impl = String
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return value.value
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        return Frequency(value)
+
 
 @auto_repr
 class CurrencyConfig(Base, TemporalMixIn):
@@ -15,8 +30,8 @@ class CurrencyConfig(Base, TemporalMixIn):
     inflation_ticker = Column(String(50), nullable=True)
     inflation_rate = Column(Float, nullable=False)
 
-    frequency = Column(String(50), nullable=True, primary_key=True)
-    dataversion = Column(Float, nullable=False, primary_key=True)
+    frequency = Column(FrequencyType(50), nullable=True, primary_key=True)
+    dataversion = Column(Integer, nullable=False, primary_key=True)
 
     __mapper_args__ = {'polymorphic_identity': 'currency_config'}
 

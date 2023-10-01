@@ -4,9 +4,13 @@ from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSou
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.lib.Constants import InfinityTime
 from epsilonPhi.core.dataModel.alchemist.Configs import *
-import epsilonPhi
-import datetime as dt
-import pandas as pd
+
+
+class AbstractConfig(object):
+    def __init__(self, properties_dict):
+        for key, value in properties_dict.items():
+            setattr(self, key, value)
+
 
 class CBaseConfig(object):
 
@@ -22,43 +26,24 @@ class CBaseConfig(object):
 
     def create_config(self,
                       config_name,
-                      params,
-                      keys=None,
-                      access_methods=None,
-                      access_type=None,
-                      input_is_class=False,
-                      output_is_class=False):
+                      params=None,
+                      keys=None):
 
-        config = OrderedDict()
-        self._catalog[config_name] = config
+        if config_name not in self._catalog.keys():
+           self._catalog[config_name] = OrderedDict()
 
+        pdict = OrderedDict()
         if params is not None:
             i = 0
-            pdict = OrderedDict()
             for p in params:
                 pdict[p] = i
                 i += 1
 
         self._param_catalog[config_name] = pdict
-        if input_is_class and output_is_class:
-            self._type_catalog = ('class', 'class')
-        elif input_is_class and not output_is_class:
-            self._type_catalog = ('class', 'list')
-        elif not input_is_class and not output_is_class:
-            self._type_catalog = ('list', 'list')
-        else:
-            raise Exception('Error - input as list and output as class is not supported')
-
         self._keys[config_name] = keys
 
-        if access_type is not None:
-            self._access_type[config_name] = access_type
-        if access_methods is not None:
-            self._access_methods[config_name] = access_methods
-        return config
-
-    def add_param_to_config(self, config_name, keys, values):
-        self._catalog[config_name][keys] = values
+    def add_param_to_config(self, config_name, key, values):
+        self._catalog[config_name][key] = values
 
     def update_config(self, config_name, keys, values):
         pass
@@ -117,30 +102,24 @@ class CConfigUtil(CBaseConfig):
            self.load_config_info()
         return self._config_info
 
-    def load_config(self, config_name, access_methods=None, access_type='Eager'):
+    def get_config_key(self, config_name):
+        return [x.name for x in config_name.__mapper__.primary_key if x.name not in ['uid']]
 
-        keys = [x.name for x in config_name.__mapper__.primary_key]
+    def load_config(self, config_name, vars=None, values=None):
 
-        input_is_class = False
-        output_is_class = False
-        if isinstance(config_name, type):
-            input_is_class = True
-            output_is_class = True
-            name = config_name
-        else:
-            name = config_name[0].upper() + config_name[1:]
+        primary_keys = self.get_config_key(config_name)
 
-        res = super(CConfigUtil, self).load_config(name)
+        res = super(CConfigUtil, self).load_config(config_name, vars=None, values=None)
         for r in res:
-            self.create_config(config_name, r.__dict__.keys(), keys, access_methods, access_type, input_is_class, output_is_class)
-            self.add_param_to_config(name, tuple([r.__dict__.get(x) for x in keys]), r)
+            self.create_config(config_name, r.__dict__.keys(), primary_keys)
+            self.add_param_to_config(config_name, tuple([r.__dict__.get(x) for x in primary_keys]), r)
 
         SessionMgr.instance.getSessionFactory().expunge_all()
 
-    def get_config(self, config_name, config_keys):
+    def get_config(self, config_name, config_key):
         if config_name not in self._catalog.keys():
             self.load_config(config_name)
-        return self._catalog.get(config_name)
+        return self._catalog.get(config_name).get(config_key)
 
     def get_estimation_config(self):
         return self.get_config(EstimationConfig, None)
@@ -148,8 +127,8 @@ class CConfigUtil(CBaseConfig):
     def get_simulation_config(self):
         return self.get_config(SimulationConfig, None)
 
-    def get_currency_config(self, currency, frequency):
-        return self.get_config(CurrencyConfig, [currency, frequency])
+    def get_currency_config(self, currency, frequency, dataversion):
+        return self.get_config(CurrencyConfig, (currency, frequency, dataversion))
 
     def get_private_asset_config(self, currency, frequency):
         return self.get_config(CurrencyConfig, [currency, frequency])

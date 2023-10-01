@@ -1,6 +1,5 @@
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
-from epsilonPhi.core.dataModel.dataSources.vendor.Datastream import pyDatastream
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
@@ -11,7 +10,10 @@ class GlobalDataSource(object):
 
     _session_mgr = SessionMgr()
     _session = _session_mgr.getSessionFactory()
+
+    # Cache Time Series Objects
     _cache = dict()
+
 
     def __init__(self):
         self.initialize()
@@ -73,14 +75,6 @@ class GlobalDataSource(object):
     def get_risk_free_rate(self, currency, frequency):
         pass
 
-    # Methods associated with interest rates
-
-
-
-
-    # Methods associated with implied volatilties
-
-
 
 
     # Methods associated with querying datastream
@@ -90,6 +84,8 @@ class GlobalDataSource(object):
                                              from_date=None,
                                              to_date=None,
                                              frequency='D'):
+
+        from epsilonPhi.core.dataModel.dataSources.vendor.Datastream import pyDatastream
         return pyDatastream.fetch(symbols,
                                   fields=fields,
                                   from_date=from_date,
