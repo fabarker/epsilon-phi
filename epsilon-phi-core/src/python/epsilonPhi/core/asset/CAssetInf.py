@@ -5,8 +5,8 @@ __date__ = '01/07/2023'
 
 class CAssetInf(ABC):
 
-    @abstractmethod
     @property
+    @abstractmethod
     def name(self):
         pass
 

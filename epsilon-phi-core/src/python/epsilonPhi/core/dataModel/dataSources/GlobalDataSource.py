@@ -1,8 +1,11 @@
+import pandas as pd
+
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 
 
 @SingletonDecorator
@@ -23,17 +26,10 @@ class GlobalDataSource(object):
         self._fx_curve = FXCurve()
 
     # Method Associated with loading DataFrames
-
-    def get_dataframe_from_ticker(self, ticker: str, cols=None, index_col=None):
-
-        uid = self._session_mgr.get_uid_from_ticker(ticker)
-        df_ = self.get_dataframe_from_uid(uid, cols, index_col)
-        df_.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in df_.columns.get_level_values(1)])
-        return df_.copy()
-
     def load_dataframe_from_uid(self, uid: int):
         if uid not in self._cache_df.keys():
-            self._cache_df[uid] = self._session_mgr.get_dataframe_from_uid(uid)
+            df_uid = self._session_mgr.get_dataframe_from_uid(uid)
+            self._cache_df[uid] = df_uid[np.setdiff1d(df_uid.columns, 'uid')].dropna(axis=1, how='all')
 
     def get_dataframe_from_uid(self, uid: int, cols=None, index_col=None):
 
@@ -43,38 +39,50 @@ class GlobalDataSource(object):
 
         if index_col is not None and index_col in df.columns:
             df = df.set_index(index_col, drop=True)
+        elif index_col is None and 'date' in df.columns:
+            df = df.set_index('date', drop=True).sort_index()
 
         if cols is not None:
-           df = df.get(cols, pd.DataFrame()).dropna(how='all')
+           keep_cols = np.intersect1d(cols, df.columns)
+           df = df.get(keep_cols).dropna(how='all')
+           df[np.setdiff1d(cols, df.columns)] = np.nan
         else:
-           df = df.copy().dropna(how='all')
+           df = df.dropna(how='all')
 
         if isinstance(df, pd.Series):
            df = df.to_frame()
+
         df.columns = pd.MultiIndex.from_tuples(list(zip([uid] * df.shape[1], df.columns)))
         return df
 
+    def get_dataframe_from_ticker(self, ticker: str, cols=None, index_col=None):
+
+        uid = self._session_mgr.get_uid_from_ticker(ticker)
+        df_ = self.get_dataframe_from_uid(uid, cols, index_col)
+
+        df_.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in df_.columns.get_level_values(1)])
+        return df_.copy()
+
+
     # Methods associated with loading raw time series
-    def load_time_series_data_from_uid(self, uid):
-        df = self.get_dataframe_from_uid(uid, index_col='date')
+    def get_time_series_data_from_uid(self, uid, cols=None):
+        df = self.get_dataframe_from_uid(uid, cols=cols, index_col='date')
         spec = self._session_mgr.get_time_series_spec_from_uid(uid, True).set_index('uid', drop=True)
-        self._cache_ts[uid] = CTimeSeries(df, ts_type=None, attributes=spec.T)
 
-    def get_time_series_data_from_uid(self, uid, cols='X', ts_type=None):
-        if uid not in self._cache_ts:
-            self.load_time_series_data_from_uid(uid)
-        ts = self._cache_ts[uid]
+        ts_spec = pd.concat([spec] * df.shape[1])
+        ts_spec.index = df.columns
+        return CTimeSeries(df, attributes=ts_spec.T)
 
-        spec = self._session_mgr.get_time_series_spec_from_uid(uid, True).set_index('uid', drop=True)
-        return CTimeSeries(df, ts_type=ts_type, attributes=spec.T)
+    def get_time_series_data_from_ticker(self, ticker, cols=None):
 
-    def get_time_series_data_from_ticker(self, ticker, cols='X', ts_type=None):
         df = self.get_dataframe_from_ticker(ticker, cols=cols, index_col='date')
         spec = self._session_mgr.get_time_series_spec_from_ticker(ticker, True).set_index('ticker', drop=True)
-        return CTimeSeries(df, ts_type=ts_type, attributes=spec.T)
+
+        ts_spec = pd.concat([spec] * df.shape[1])
+        ts_spec.index = df.columns
+        return CTimeSeries(df, attributes=ts_spec.T)
 
     # Methods associated with currencies / FX
-
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, pricing_dates, maturity_dates, price_quotes)
 
@@ -142,7 +150,7 @@ class GlobalDataSource(object):
 if __name__ == "__main__":
 
     self = GlobalDataSource()
-    df = self.get_time_series_data_from_ticker('UKPRATE.', cols=['IR'])
+    df = self.get_time_series_data_from_ticker('MSGWLDL')
 
 
 

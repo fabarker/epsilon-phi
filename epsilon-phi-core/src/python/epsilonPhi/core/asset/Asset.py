@@ -1,23 +1,30 @@
-from epsilonPhi.core.asset.CAssetInf import CAssetInf
-from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
-from epsilonPhi.core.schema.Schema import CContext
-from datetime import datetime
 import pandas as pd
+from epsilonPhi.core.asset.CAssetInf import CAssetInf
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
+from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
+from epsilonPhi.core.schema.Schema import CContext
+from typing import Optional
 import numpy as np
-import math
 
-class CAsset(CSlice, CAssetInf):
+ts_type: TimeSeriesType = TimeSeriesType.LEVELS
+class CAsset(CTimeSeries, CAssetInf):
     def __init__(self,
-                 ticker: str,
-                 currency: str,
-                 hedging_ratio: float,
-                 schema: CContext,
-                 dataframe=None):
+                 dataframe=None,
+                 ticker: Optional[str] = None,
+                 currency: Optional[str] = None,
+                 schema: Optional[CContext] = None,
+                 ):
 
-        super(CAsset, self).__init__(dataframe)
-        self._currency = currency
+        if isinstance(dataframe, pd.DataFrame):
+           assert len(dataframe.columns) == 1, 'Error - dataframe must be single return time series'
+
+        super(CAsset, self).__init__(data=dataframe,
+                                     ts_type=TimeSeriesType.RETURNS,
+                                     )
+
         self._ticker = ticker
-        self._hedging_ratio = hedging_ratio
+        self._currency = currency
         self._schema = schema
 
     @property
@@ -30,6 +37,12 @@ class CAsset(CSlice, CAssetInf):
     def name(self):
         return self._ticker
 
+    def get_frequency(self):
+        return self._schema.frequency
+
+    def get_currency(self):
+        return self._currency
+
     def get_alpha(self):
         pass
 
@@ -37,6 +50,15 @@ class CAsset(CSlice, CAssetInf):
         pass
 
     def get_historical_sharpe_ratio(self):
+        pass
+
+    def get_historical_volatility(self):
+        pass
+
+    def get_historical_risk_premium(self):
+        pass
+
+    def get_excess_return_df(self):
         pass
 
     def get_Sharpe_ratio(self):
@@ -73,12 +95,6 @@ class CAsset(CSlice, CAssetInf):
     def get_risk_premia(self):
         return self._schema.getEstimationMgr().get_risk_premium(self)
 
-    def get_historical_risk_premium(self):
-        pass
-
-    def get_excess_return_df(self):
-        pass
-
     def set_hedging_ratio(self, hedging_ratio):
         self._hedging_ratio = hedging_ratio
 
@@ -88,7 +104,20 @@ class CAsset(CSlice, CAssetInf):
 
 
 
+if __name__ == "__main__":
 
+    gds = GlobalDataSource()
+
+    df = gds.get_time_series_data_from_ticker('MSGWLDL','RI')
+    rtns = df.get_returns()
+
+
+    from epsilonPhi.core.schema.Schema import ContextCreator
+    schema = ContextCreator(currency='GBP',
+                            start_date='31-Dec-1999',
+                            end_date='31-Dec-2022').create_context()
+
+    asset = CAsset(ticker='MSGWLDL', currency='USD', schema=schema, dataframe=rtns)
 
 
 

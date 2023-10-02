@@ -385,7 +385,7 @@ class CTimeSeries(pd.DataFrame):
             self.__setattr__('_added_attributes', pd.DataFrame())
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
-        self._validate_index()
+        #self._validate_index()
 
     # check we have time series data
     def _validate_index(self):
