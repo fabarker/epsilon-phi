@@ -85,8 +85,8 @@ class CContext(object):
 
     def get_simulation_config(self):
         return CAppConfig._configUtil.get(self.currency,
-                                                          self.frequency,
-                                                          self.dataverson)
+                                          self.frequency,
+                                          self.dataverson)
 
 
 

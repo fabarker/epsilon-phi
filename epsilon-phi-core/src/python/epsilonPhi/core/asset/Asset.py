@@ -1,8 +1,10 @@
 import pandas as pd
 from epsilonPhi.core.asset.CAssetInf import CAssetInf
+from epsilonPhi.core.asset.AssetMgr import CAssetMgr
 from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
+from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
 from epsilonPhi.core.schema.Schema import CContext
 from typing import Optional
 import numpy as np
@@ -26,6 +28,7 @@ class CAsset(CTimeSeries, CAssetInf):
         self._ticker = ticker
         self._currency = currency
         self._schema = schema
+        self._assetMgr = CAssetMgr(schema)
 
     @property
     def asset_ticker(self):
@@ -42,6 +45,10 @@ class CAsset(CTimeSeries, CAssetInf):
 
     def get_currency(self):
         return self._currency
+
+    def get_risk_free_asset(self):
+        return self._assetMgr.get_risk_free_asset(self.currency,
+                                                  self.frequency)
 
     def get_alpha(self):
         pass
