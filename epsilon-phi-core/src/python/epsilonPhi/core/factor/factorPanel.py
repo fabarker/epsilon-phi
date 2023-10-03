@@ -10,10 +10,17 @@ class CFactorPanels(CFactorPanelInf):
         self._return_factors_df = None
         self._risk_factor_df = None
 
+
     def set_risk_factors(self):
         pass
 
     def set_return_factors(self):
+        pass
+
+    def append_factor_to_risk_model(self):
+        pass
+
+    def append_factor_to_return_model(self):
         pass
 
     def orthogonalize_factors(self):
@@ -22,12 +29,16 @@ class CFactorPanels(CFactorPanelInf):
     def get_return_factor_Sharpe_ratios(self):
         pass
 
-    def  set_return_factor_Sharpe_ratio(self, factor_name, Sharpe_ratio):
+    def set_return_factor_Sharpe_ratio(self, factor_name, Sharpe_ratio):
         pass
 
     def get_historical_factor_Sharpe_ratio(self, factor_name, orthogonalize=False):
         pass
 
-
     def get_historical_factor_volatility(self, factor_name, orthogonalize=False):
         pass
+
+    def get_historical_factor_excess_return(self, factor_name, orthogonalize=False):
+        pass
+
+

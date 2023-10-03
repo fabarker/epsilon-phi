@@ -15,6 +15,11 @@ class Frequency(Enum):
     BUSINESS_YEARLY = 'BY'
     NOT_DEFINED = ''
 
+    def yearfrac(self):
+        from epsilonPhi.core.utils.DateUtils import DateUtils
+        return DateUtils.Rdate_to_mat('1' + self.value)
+
+
     @staticmethod
     def get_frequency(frequency_str: str):
         assert isinstance(frequency_str, str), 'Error - must be a string'

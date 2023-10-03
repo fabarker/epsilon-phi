@@ -44,6 +44,10 @@ class CContext(object):
         return self.__frequency
 
     @property
+    def annualizing_factor(self):
+        return self.frequency.yearfrac()
+
+    @property
     def dates(self):
         if self.__dates is None:
             self.load_dates()
@@ -54,22 +58,48 @@ class CContext(object):
         return self.__currency
 
     @property
+    def risk_free_rate_ticker(self):
+        return CContext.get_risk_free_rate_ticker(self.currency,
+                                                  self.frequency,
+                                                  self.dataverson)
+    @property
     def risk_free_rate(self):
-        return CContext.get_risk_free_rate(self.currency,
-                                           self.frequency,
-                                           self.dataverson)
-
+        return CAppConfig._configUtil.get_currency_config(self.currency,
+                                                          self.frequency,
+                                                          self.dataverson).risk_free_rate
     @staticmethod
-    def get_risk_free_rate(currency, frequency, dataversion):
+    def get_risk_free_rate_ticker(currency, frequency, dataversion):
         return CAppConfig._configUtil.get_currency_config(currency,
                                                           frequency,
                                                           dataversion).risk_free_ticker
+    @property
+    def inflation_rate_ticker(self):
+        return CContext.get_inflation_rate_ticker(self.currency,
+                                                  self.frequency,
+                                                  self.dataverson)
+    @property
+    def inflation_rate(self):
+        return CAppConfig._configUtil.get_currency_config(self.currency,
+                                                          self.frequency,
+                                                          self.dataverson).inflation_rate
+
+    @staticmethod
+    def get_inflation_rate_ticker(currency, frequency, dataversion):
+        return CAppConfig._configUtil.get_currency_config(currency,
+                                                          frequency,
+                                                          dataversion).inflation_ticker
+
+    def get_risk_factor_covariance_matrix(self):
+        pass
+
+    def get_factor_panels(self):
+        pass
 
     def _setup(self):
-        self.load_configs()
+        self.__load_configs()
         self.load_dates()
 
-    def load_configs(self):
+    def __load_configs(self):
         CAppConfig.setup(app=_Env)
 
     def load_dates(self):
@@ -77,16 +107,20 @@ class CContext(object):
                                                 self.end_date,
                                                 self.frequency)
 
-
     def get_currency_config(self):
         return CAppConfig._configUtil.get_currency_config(self.currency,
                                                           self.frequency,
                                                           self.dataverson)
-
     def get_simulation_config(self):
         return CAppConfig._configUtil.get(self.currency,
                                           self.frequency,
                                           self.dataverson)
+
+    def get_estimation_config(self):
+        return CAppConfig._configUtil.get_estimation_config()
+
+    def get_factor_config(self):
+        return CAppConfig._configUtil.get_factor_config()
 
 
 
@@ -116,9 +150,11 @@ class ContextCreator:
 
 if __name__ == "__main__":
 
-    self = ContextCreator(start_date='31-Dec-1999',
+    self = ContextCreator(currency='GBP',
+                            start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
-    config = self.risk_free_rate
+    rfr = self.get_risk_free_rate('USD',Frequency.MONTHLY,1)
+
 
 
 
