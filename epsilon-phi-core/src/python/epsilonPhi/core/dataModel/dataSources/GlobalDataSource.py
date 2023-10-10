@@ -82,6 +82,12 @@ class GlobalDataSource(object):
         ts_spec.index = df.columns
         return CTimeSeries(df, attributes=ts_spec.T)
 
+    def get_total_return_series_from_ticker(self, ticker):
+        ts = self.get_time_series_data_from_ticker(ticker)
+
+        # convert the time series to total return
+        return ts
+
     # Methods associated with currencies / FX
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, pricing_dates, maturity_dates, price_quotes)
@@ -94,10 +100,6 @@ class GlobalDataSource(object):
 
     def get_fx_carry(self, currency_pairs, maturities, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, maturities, price_quotes)
-
-    def get_risk_free_rate(self, currency, frequency):
-        pass
-
 
 
     # Methods associated with querying datastream

@@ -57,7 +57,7 @@ class CAsset(CTimeSeries, CAssetInf):
         pass
 
     def get_historical_sharpe_ratio(self):
-        pass
+        return EstimationMgr.get
 
     def get_historical_volatility(self):
         pass
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
 
-    asset = CAsset(ticker='MSGWLDL', currency='USD', schema=schema, dataframe=rtns)
+    self = CAsset(ticker='MSGWLDL', currency='USD', schema=schema, dataframe=rtns)
 
 
 

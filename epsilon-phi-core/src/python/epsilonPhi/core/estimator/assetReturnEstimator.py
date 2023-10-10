@@ -18,8 +18,9 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
     @staticmethod
     def get_excess_return_timeseries(asset):
-        schema = asset.getSchema()
-        rfr = schema.get_risk_free_time_series(asset.currency, asset.frequency)
+        schema = asset._schema
+        rfr = asset._assetMgr.get_risk_free_asset(schema.currency,
+                                                  schema.frequency)
 
         common_dates = np.intersect1d(rfr.dates, asset.dates)
         factor = asset.reindex[common_dates] - rfr.reindex[common_dates]
@@ -27,7 +28,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         return factor
 
     @staticmethod
-    def get_historical_sharpe_ratio(asset):
+    def get_historical_Sharpe_ratio(asset):
         factor = AssetReturnEstimator.get_excess_return_timeseries(asset)
         tau = asset.schema.annualizing_factor
         return (np.mean(factor.data) * tau) / (np.std(factor.data) * math.sqrt(tau))
@@ -153,6 +154,25 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         return betas
 
 
+
+if __name__ == "__main__":
+
+    from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+    from epsilonPhi.core.asset.Asset import CAsset
+
+
+    gds = GlobalDataSource()
+
+    df = gds.get_time_series_data_from_ticker('MSGWLDL','RI')
+    rtns = df.get_returns()
+
+
+    from epsilonPhi.core.schema.Schema import ContextCreator
+    schema = ContextCreator(currency='GBP',
+                            start_date='31-Dec-1999',
+                            end_date='31-Dec-2022').create_context()
+
+    asset = CAsset(ticker='MSGWLDL', currency='USD', schema=schema, dataframe=rtns)
 
 
 

@@ -53,7 +53,6 @@ class CAssetMgr(CAssetMgrInf):
     def get_schema(self):
         return self._schema
 
-
     # Function returns SAA asset
     def get_asset_by_name(self):
         pass
@@ -64,15 +63,18 @@ class CAssetMgr(CAssetMgrInf):
     def remove_asset_from_cache(self, asset_name):
         del CAssetMgr._cache[asset_name]
 
-    def get_dataframe_for_asset(self, asset_name, freq=Frequency.DAILY):
-        pass
+    def get_dataframe_for_asset(self, asset_name):
+        gds = GlobalDataSource()
+        df = gds.get_time_series_data_from_ticker(asset_name)
 
-    def get_risk_free_asset(self, currency, frequency):
+    def get_risk_free_asset(self, currency):
         from epsilonPhi.core.asset.Asset import CAsset
-        risk_free = self._schema.get_risk_free_rate(currency,
-                                        frequency,
-                                        self._schema.dataversion)
-        return CAsset(dataframe=None,
+        risk_free = self._schema.get_risk_free_rate_ticker(currency,
+                                                           self._schema.frequency,
+                                                           self._schema.dataversion)
+        df = self.get_dataframe_for_asset(risk_free)
+
+        return CAsset(dataframe=df,
                       ticker=risk_free,
                       currency=currency,
                       schema=self._schema)
