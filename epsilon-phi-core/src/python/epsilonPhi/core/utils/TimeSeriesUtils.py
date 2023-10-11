@@ -2,6 +2,7 @@ import pandas as pd
 from operator import add
 import numpy as np
 import collections, re, six
+from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 
 class TimeSeriesUtils(object):
     pass
@@ -74,3 +75,13 @@ class TimeSeriesUtils(object):
     @staticmethod
     def RI_from_IO(df):
         pass
+
+
+if __name__ == "__main__":
+
+    gds = GlobalDataSource()
+
+    UKPRATE = gds.get_time_series_data_from_ticker('UKPRATE.')
+
+    rtns = MSGWLDL.get_returns()
+    TimeSeriesUtils.convert_timeseries_to_return_index(rtns)
