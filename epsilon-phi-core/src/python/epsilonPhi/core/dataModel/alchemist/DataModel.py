@@ -135,6 +135,8 @@ class CommodityIndexSpec(TimeSeriesSpec):
     exposure_currency = Column(String(3), nullable=False, index=True)
     hedge_ratio = Column(FloatOrNone, nullable=True)
 
+
+
     __mapper_args__ = {'polymorphic_identity': 'commodity_index_spec'}
 
 @auto_repr
@@ -143,8 +145,14 @@ class CommodityIndex(TimeSeries):
 
     uid = Column(Integer, ForeignKey('commodity_index_spec.uid'), index=True, primary_key=True)
     date = Column(DateTime, primary_key=True)
-
     X = Column(FloatOrNone, nullable=True)
+
+    @property
+    def _X(self):
+        if 'SPT' in self._spec.ticker:
+            return 'PI'
+        else:
+            return 'RI'
 
     __mapper_args__ = {'polymorphic_identity': 'commodity_index'}
     _spec = relationship("CommodityIndexSpec", foreign_keys=[uid])
@@ -205,6 +213,10 @@ class FXRate(TimeSeries):
     @property
     def maturity(self):
         return self._spec.maturity
+
+    @property
+    def _X(self):
+        return ''
 
 ############### Yield Curves ##############
 
@@ -285,8 +297,9 @@ class InterestRate(TimeSeries):
         return self._spec.type
 
     @property
-    def exposure_currency(self):
-        return self.currency
+    def _X(self):
+        return 'IR'
+
 
 ############### Hedge Funds ##############
 @auto_repr
@@ -297,7 +310,7 @@ class HedgeFundIndexSpec(TimeSeriesSpec):
 
        denominated_currency = Column(String(3), nullable=False, index=True)
        exposure_currency = Column(String(3), nullable=False, index=True)
-       hedge_ratio = Column(FloatOrNone, nullable=True)
+       hedge_ratio = Column(Integer, nullable=True)
        strategy_type = Column(String(150), nullable=False, index=True)
 
        __mapper_args__ = {'polymorphic_identity': 'hedge_fund_spec'}
@@ -307,26 +320,23 @@ class HedgeFundIndex(TimeSeries):
 
     uid = Column(Integer, ForeignKey('hedge_fund_index_spec.uid'), index=True, primary_key=True)
     date = Column(DateTime, primary_key=True)
-    X = Column(FloatOrNone, nullable=True)
+    RI = Column('X', FloatOrNone, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'hedge_fund_index'}
     _spec = relationship("HedgeFundIndexSpec", foreign_keys=[uid])
 
     @property
     def pricing_currency(self):
-        return self._spec.pricing_currency
+        return self._spec.denominated_currency
 
     @property
     def hedge_ratio(self):
         return self._spec.hedge_ratio
 
     @property
-    def strategy_type(self):
-        return self._spec.strategy_type
+    def _X(self):
+        return 'RI'
 
-    @property
-    def exposure_currency(self):
-        return self.exposure_currency
 
 # ############### Implied Volatility ################
 
@@ -537,6 +547,10 @@ class Economic(TimeSeries):
 
     __mapper_args__ = {'polymorphic_identity': 'economic'}
     _spec = relationship("EconomicSpec", foreign_keys=[uid])
+
+    @property
+    def _X(self):
+        return 'PI'
 
 
 if __name__ == "__main__":

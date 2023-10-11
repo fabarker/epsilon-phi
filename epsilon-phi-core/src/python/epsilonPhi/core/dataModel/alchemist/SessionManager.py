@@ -175,41 +175,6 @@ def session_scope():
 if __name__ == "__main__":
 
     session = SessionMgr().getSessionFactory()
-
-    SQL_1 = "SELECT * FROM `epsilon-phi-dev`.time_series_spec where name like '%Spot%' and provider = 'GS' and category = 'Implied Volatility'"
-    SQL_2 = "SELECT * FROM `epsilon-phi-dev`.time_series_spec where name like '%ATMF%' and provider = 'GS' and category = 'Implied Volatility'"
-
-    df_ATM = pd.read_sql(SQL_2, session.get_bind())
-    df_Spt = pd.read_sql(SQL_2, session.get_bind())
-    df = pd.concat((df_ATM, df_Spt), axis=0)
-
-    table_name = '`epsilon-phi-dev`.implied_volatility'
-    unique_uids = df_ATM.uid.unique()
-    N = len(unique_uids)
-
-    ctr = 0
-    for uid in df_ATM.uid.unique():
-
-        print(N-ctr)
-        READ_STATEMENT = f"SELECT * FROM {table_name} WHERE uid = {uid};"
-        df_data = pd.read_sql(READ_STATEMENT, session.get_bind())
-        df_data.relative_strike = '100'
-
-        DELETE_STATEMENT = f"DELETE FROM {table_name} WHERE uid = {uid};"
-        with session.get_bind().begin() as conn:
-            conn.execute(text(DELETE_STATEMENT))
-
-        df_data.to_sql('implied_volatility', session.get_bind(), if_exists='append', index=False)
-        ctr = ctr + 1
+    HF = session.query(HedgeFundIndex).first()
 
 
-    try:
-        session.query(ImpliedVolatility).filter(ImpliedVolatility.relative_strike.in_(['Spot', 'ATMF'])).update(
-            {"relative_strike": "100"})
-        session.commit()
-        print("UPDATE successful.")
-    except Exception as e:
-        session.rollback()
-        print("Error occurred during UPDATE:", str(e))
-    finally:
-        session.close()

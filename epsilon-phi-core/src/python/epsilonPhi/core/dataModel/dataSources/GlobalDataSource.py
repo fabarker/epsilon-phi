@@ -152,7 +152,7 @@ class GlobalDataSource(object):
 if __name__ == "__main__":
 
     self = GlobalDataSource()
-    df = self.get_time_series_data_from_ticker('MSGWLDL')
+    df = self.get_time_series_data_from_uid(6745)
 
 
 
