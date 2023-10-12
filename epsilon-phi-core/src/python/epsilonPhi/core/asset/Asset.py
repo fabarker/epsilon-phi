@@ -1,9 +1,9 @@
 import pandas as pd
 from epsilonPhi.core.asset.CAssetInf import CAssetInf
 from epsilonPhi.core.asset.AssetMgr import CAssetMgr
-from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
 from epsilonPhi.core.schema.Schema import CContext
 from typing import Optional
@@ -12,23 +12,27 @@ import numpy as np
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 class CAsset(CTimeSeries, CAssetInf):
     def __init__(self,
+                 schema,
+                 ticker,
                  dataframe=None,
-                 ticker: Optional[str] = None,
                  currency: Optional[str] = None,
-                 schema: Optional[CContext] = None,
+                 ts_type=TimeSeriesType.RETURNS
                  ):
 
         if isinstance(dataframe, pd.DataFrame):
            assert len(dataframe.columns) == 1, 'Error - dataframe must be single return time series'
 
+        if schema is not None and dataframe is not None:
+            dataframe = dataframe.reindex(schema.dates)
         super(CAsset, self).__init__(data=dataframe,
-                                     ts_type=TimeSeriesType.RETURNS,
+                                     ts_type=ts_type,
                                      )
 
         self._ticker = ticker
         self._currency = currency
         self._schema = schema
         self._assetMgr = CAssetMgr(schema)
+        self.frequency = schema.frequency
 
     @property
     def asset_ticker(self):
@@ -39,16 +43,28 @@ class CAsset(CTimeSeries, CAssetInf):
     @property
     def name(self):
         return self._ticker
+    @property
+    def frequency(self):
+        return self._frequency
+    @frequency.setter
+    def frequency(self, frequency):
+        self._frequency = frequency
+
+    def create_new_object(self, *args, **kwargs):
+        return self.__class__(self._schema,
+                              self._ticker,
+                              dataframe=kwargs.get('data', None),
+                              currency=self.currency,
+                              ts_type=kwargs.get('ts_type', None))
 
     def get_frequency(self):
-        return self._schema.frequency
+        return self._frequency
 
     def get_currency(self):
         return self._currency
 
     def get_risk_free_asset(self):
-        return self._assetMgr.get_risk_free_asset(self.currency,
-                                                  self.frequency)
+        return self._assetMgr.get_risk_free_asset(self.currency)
 
     def get_alpha(self):
         pass
@@ -57,7 +73,7 @@ class CAsset(CTimeSeries, CAssetInf):
         pass
 
     def get_historical_sharpe_ratio(self):
-        return EstimationMgr.get
+        pass
 
     def get_historical_volatility(self):
         pass

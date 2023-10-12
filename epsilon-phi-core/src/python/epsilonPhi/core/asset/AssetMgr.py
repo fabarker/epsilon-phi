@@ -1,4 +1,5 @@
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from abc import ABC, abstractmethod
 
@@ -64,8 +65,8 @@ class CAssetMgr(CAssetMgrInf):
         del CAssetMgr._cache[asset_name]
 
     def get_dataframe_for_asset(self, asset_name):
-        gds = GlobalDataSource()
-        df = gds.get_time_series_data_from_ticker(asset_name)
+        return GlobalDataSource().get_total_return_series_from_ticker(asset_name,
+                                                                      TimeSeriesType.RETURNS)
 
     def get_risk_free_asset(self, currency):
         from epsilonPhi.core.asset.Asset import CAsset
@@ -73,8 +74,19 @@ class CAssetMgr(CAssetMgrInf):
                                                            self._schema.frequency,
                                                            self._schema.dataversion)
         df = self.get_dataframe_for_asset(risk_free)
+        return CAsset(self._schema,
+                      risk_free,
+                      dataframe=df,
+                      currency=currency)
 
-        return CAsset(dataframe=df,
-                      ticker=risk_free,
-                      currency=currency,
-                      schema=self._schema)
+if __name__ == "__main__":
+
+    from epsilonPhi.core.schema.Schema import ContextCreator
+
+    schema = ContextCreator(currency='GBP',
+                            start_date='31-Dec-1999',
+                            end_date='31-Dec-2022').create_context()
+
+    assetMgr = CAssetMgr(schema)
+    rfr = assetMgr.get_risk_free_asset('GBP')
+    er = rfr.get_excess_return_df()

@@ -138,7 +138,9 @@ class SessionMgr(object):
 
     def get_dataframe_from_uid(self, uid: int):
         class_ = self.fetch_model_class_from_uid(uid)
-        query = self.getSessionFactory().query(class_).filter(class_.uid.in_([uid]))
+        cols = [ x.label(class_()._X) if x.name == 'X' else x for x in class_.__table__._columns.values() ]
+        query = self.getSessionFactory().query(*cols).filter(class_.uid.in_([uid]))
+
         return self.query_format_df(query)
 
     def get_time_series_spec_from_uid(self, uid: str, return_df=False):

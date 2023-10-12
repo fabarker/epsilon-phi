@@ -1,10 +1,9 @@
-import pandas as pd
-
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
+from epsilonPhi.core.utils.TimeSeriesUtils import TimeSeriesUtils
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 
 
@@ -82,11 +81,13 @@ class GlobalDataSource(object):
         ts_spec.index = df.columns
         return CTimeSeries(df, attributes=ts_spec.T)
 
-    def get_total_return_series_from_ticker(self, ticker):
+    def get_total_return_series_from_ticker(self, ticker, returns_type=TimeSeriesType.LEVELS):
         ts = self.get_time_series_data_from_ticker(ticker)
 
-        # convert the time series to total return
-        return ts
+        if returns_type == TimeSeriesType.RETURNS:
+            return TimeSeriesUtils.convert_timeseries_to_return_index(ts).get_returns()
+        else:
+            return TimeSeriesUtils.convert_timeseries_to_return_index(ts)
 
     # Methods associated with currencies / FX
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):
@@ -152,7 +153,7 @@ class GlobalDataSource(object):
 if __name__ == "__main__":
 
     self = GlobalDataSource()
-    df = self.get_time_series_data_from_uid(6745)
+    df = self.get_total_return_series_from_ticker('UKPRATE.')
 
 
 

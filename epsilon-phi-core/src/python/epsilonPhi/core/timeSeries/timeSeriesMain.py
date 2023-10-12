@@ -41,6 +41,7 @@ class CSlice(pd.Series):
             self.set_attributes(attributes)
         else:
             self.__setattr__('_added_attributes', pd.DataFrame())
+
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
 
@@ -56,22 +57,21 @@ class CSlice(pd.Series):
                               attributes=self.attributes,
                               returns_type=self.returns_type)
 
-    def create_new_object(self, data=None, index=None, name=None, attributes=None, ts_type=None, returns_type=None):
+    def create_new_object(self, data=None, attributes=None, ts_type=None, returns_type=None):
         return self.__class__(data=data,
-                              index=index,
-                              name=name,
                               ts_type=ts_type,
                               attributes=attributes,
                               returns_type=returns_type)
 
-    def _create_new_object_same_type(self, data=None, index=None, name=None, attributes=None):
-        return self.create_new_object(data, index, name, attributes, self.type, self.returns_type)
+    def _create_new_object_same_type(self, data=None, attributes=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=self.returns_type)
 
-    def _create_new_levels_object(self, data=None, index=None, name=None, attributes=None):
-        return self.create_new_object(data, index, name, attributes, TimeSeriesType.LEVELS, self.returns_type)
+    def _create_new_levels_object(self, data=None, attributes=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=self.returns_type)
 
-    def _create_new_returns_object(self, returns_type, data=None, index=None, name=None, attributes=None):
-        return self.create_new_object(data, index, name, attributes, TimeSeriesType.RETURNS, returns_type)
+    def _create_new_returns_object(self, returns_type, data=None, attributes=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
+
 
     @property
     def dates(self):
@@ -143,7 +143,7 @@ class CSlice(pd.Series):
 
         newobj.values[idx_nan] = np.nan
         newobj.insert_date_val(DateUtils.shift_date(newobj.dates[0], newobj.frequency, -1),1)
-        return self._create_new_levels_object(newobj, attributes=self.attributes, name=self.name)
+        return self._create_new_levels_object(newobj, attributes=self.attributes)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
@@ -405,22 +405,20 @@ class CTimeSeries(pd.DataFrame):
                               attributes=self.attributes,
                               returns_type=self.returns_type)
 
-    def create_new_object(self, data=None, index=None, columns=None, attributes=None, ts_type=None, returns_type=None):
+    def create_new_object(self, data=None, attributes=None, ts_type=None, returns_type=None):
         return self.__class__(data=data,
-                              index=index,
-                              columns=columns,
                               ts_type=ts_type,
                               attributes=attributes,
                               returns_type=returns_type)
 
-    def _create_new_object_same_type(self, data=None, index=None, columns=None, attributes=None):
-        return self.create_new_object(data, index, columns, attributes, self.type, self.returns_type)
+    def _create_new_object_same_type(self, data=None, attributes=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=self.returns_type)
 
-    def _create_new_levels_object(self, data=None, index=None, columns=None, attributes=None):
-        return self.create_new_object(data, index, columns, attributes, TimeSeriesType.LEVELS, self.returns_type)
+    def _create_new_levels_object(self, data=None, attributes=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=self.returns_type)
 
-    def _create_new_returns_object(self, returns_type, data=None, index=None, columns=None, attributes=None):
-        return self.create_new_object(data, index, columns, attributes, TimeSeriesType.RETURNS, returns_type)
+    def _create_new_returns_object(self, returns_type=None, data=None, attributes=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
 
     @property
     def dates(self):
@@ -478,7 +476,7 @@ class CTimeSeries(pd.DataFrame):
         if self.is_levels:
             return self.copy()
         lvls = self.apply(lambda x: x.get_levels())
-        return self._create_new_levels_object(lvls, attributes=self.attributes)
+        return self.create_new_object(data=lvls, attributes=self.attributes, ts_type=TimeSeriesType.LEVELS)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
@@ -500,7 +498,7 @@ class CTimeSeries(pd.DataFrame):
 
         rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
         newobj.values[rtns_locs] = np.nan
-        return self._create_new_returns_object(return_type, data=newobj, attributes=self.attributes)
+        return self._create_new_returns_object(returns_type=return_type, data=newobj, attributes=self.attributes)
 
     def select_subset_dates(self, dates):
         return self.loc[dates].copy()

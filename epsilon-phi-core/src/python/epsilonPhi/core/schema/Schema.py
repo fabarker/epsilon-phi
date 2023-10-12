@@ -28,7 +28,7 @@ class CContext(object):
         self.__dates = None
 
     @property
-    def dataverson(self):
+    def dataversion(self):
         return self.__data_version
 
     @property
