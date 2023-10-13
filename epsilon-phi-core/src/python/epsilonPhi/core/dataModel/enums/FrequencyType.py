@@ -1,4 +1,5 @@
 from enum import Enum
+import numpy as np
 
 class Frequency(Enum):
 
@@ -18,6 +19,22 @@ class Frequency(Enum):
     def yearfrac(self):
         from epsilonPhi.core.utils.DateUtils import DateUtils
         return DateUtils.Rdate_to_mat('1' + self.value)
+
+    def obs_per_year(self):
+        from epsilonPhi.core.utils.DateUtils import DateUtils
+
+        if self.value in ['B','D']:
+           return DateUtils.days_per_year
+        elif self.value in ['W']:
+           return 52
+        elif self.value in ['M','BM']:
+            return 12
+        elif self.value in ['Q','BQ',]:
+            return 4
+        elif self.value in ['Y','BY']:
+            return 1
+        else:
+            return np.nan
 
 
     @staticmethod

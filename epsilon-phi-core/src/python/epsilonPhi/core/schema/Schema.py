@@ -48,6 +48,10 @@ class CContext(object):
         return self.frequency.yearfrac()
 
     @property
+    def obs_per_year(self):
+        return self.frequency.obs_per_year()
+
+    @property
     def dates(self):
         if self.__dates is None:
             self.load_dates()

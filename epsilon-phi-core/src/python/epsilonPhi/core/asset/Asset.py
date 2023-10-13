@@ -1,70 +1,66 @@
-import pandas as pd
-from epsilonPhi.core.asset.CAssetInf import CAssetInf
-from epsilonPhi.core.asset.AssetMgr import CAssetMgr
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
-from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
-from epsilonPhi.core.schema.Schema import CContext
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
+from epsilonPhi.core.asset.CAssetInf import CAssetInf
+from epsilonPhi.core.asset.AssetMgr import CAssetMgr
 from typing import Optional
+import pandas as pd
 import numpy as np
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 class CAsset(CTimeSeries, CAssetInf):
     def __init__(self,
-                 schema,
-                 ticker,
                  dataframe=None,
-                 currency: Optional[str] = None,
+                 schema=None,
+                 denominated_currency: Optional[str] = None,
+                 exposure_currency: Optional[str] = None,
                  ts_type=TimeSeriesType.RETURNS
                  ):
 
-        if isinstance(dataframe, pd.DataFrame):
-           assert len(dataframe.columns) == 1, 'Error - dataframe must be single return time series'
-
-        if schema is not None and dataframe is not None:
-            dataframe = dataframe.reindex(schema.dates)
-        super(CAsset, self).__init__(data=dataframe,
+        df_ = CAssetMgr._prepare_dataframe_for_asset(schema, dataframe, ts_type)
+        super(CAsset, self).__init__(data=df_,
                                      ts_type=ts_type,
                                      )
 
-        self._ticker = ticker
-        self._currency = currency
-        self._schema = schema
-        self._assetMgr = CAssetMgr(schema)
-        self.frequency = schema.frequency
+        self.__denominated_currency = denominated_currency
+        self.__exposure_currency = exposure_currency
+        self.__schema = schema
+        self.__assetMgr = CAssetMgr(schema)
 
     @property
-    def asset_ticker(self):
-        return self._ticker
+    def denominated_currency(self):
+        return self.__denominated_currency
     @property
-    def currency(self):
-        return self._currency
+    def exposure_currency(self):
+        return self.__exposure_currency
+    @property
+    def obs_per_year(self):
+        return self.frequency.obs_per_year()
     @property
     def name(self):
-        return self._ticker
+        if isinstance(self.columns, pd.MultiIndex):
+            return self.columns.get_level_values(0)[0]
+        else:
+            return self.columns[0]
+
     @property
     def frequency(self):
-        return self._frequency
-    @frequency.setter
-    def frequency(self, frequency):
-        self._frequency = frequency
-
+        return self.schema.frequency
+    @property
+    def schema(self):
+        return self.__schema
+    @property
+    def assetMgr(self):
+        return self.__assetMgr
     def create_new_object(self, *args, **kwargs):
-        return self.__class__(self._schema,
-                              self._ticker,
+        return self.__class__(schema=self.schema,
                               dataframe=kwargs.get('data', None),
-                              currency=self.currency,
+                              denominated_currency=self.denominated_currency,
+                              exposure_currency=self.exposure_currency,
                               ts_type=kwargs.get('ts_type', None))
 
-    def get_frequency(self):
-        return self._frequency
-
-    def get_currency(self):
-        return self._currency
-
     def get_risk_free_asset(self):
-        return self._assetMgr.get_risk_free_asset(self.currency)
+        return self._assetMgr.get_risk_free_asset(self.denominated_currency)
 
     def get_alpha(self):
         pass
@@ -120,11 +116,6 @@ class CAsset(CTimeSeries, CAssetInf):
 
     def set_hedging_ratio(self, hedging_ratio):
         self._hedging_ratio = hedging_ratio
-
-    def get_hedging_option(self, hedging_option):
-        self._hedging_option = hedging_option
-
-
 
 
 if __name__ == "__main__":

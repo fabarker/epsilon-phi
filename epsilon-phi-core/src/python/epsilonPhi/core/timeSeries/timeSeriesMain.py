@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
+from pandas._typing import Any, Axis, Level, Scalar
+from typing import Optional
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -174,13 +178,30 @@ class CSlice(pd.Series):
     def select_subset_dates(self, dates):
         return self.loc[dates].copy()
 
+    def reindex(  # type: ignore[override]
+            self,
+            index=None,
+            *,
+            axis: Axis | None = None,
+            method: str | None = None,
+            copy: bool | None = None,
+            level: Level | None = None,
+            fill_value: Scalar | None = None,
+            limit: int | None = None,
+            tolerance=None):
+
+        obj = super(CSlice, self).reindex(index)
+        obj.name = self.name
+        return obj
+
     def insert_and_select_subset_dates(self, dates, fill_na=False):
 
-        reindexed = self.reindex(self.index.append(dates).unique()).sort_index()
+        unique_dates = self.index.append(dates).unique().sort_values()
+        reindexed = self.reindex(unique_dates)
         if fill_na:
-            return reindexed.ffill().reindex(dates).copy()
+            return reindexed.ffill().reindex(dates, copy=True)
         else:
-            return reindexed.reindex(dates).copy()
+            return reindexed.reindex(dates, copy=True)
 
     def select_subset_year(self, year):
         return self.loc[self.index.year == year]
@@ -400,10 +421,7 @@ class CTimeSeries(pd.DataFrame):
                       returns_type=klass.returns_type)
 
     def _deepcopy(self):
-        return self.__class__(self,
-                              ts_type=self._type,
-                              attributes=self.attributes,
-                              returns_type=self.returns_type)
+        return self._create_new_object_same_type(data=self, attributes=self.attributes)
 
     def create_new_object(self, data=None, attributes=None, ts_type=None, returns_type=None):
         return self.__class__(data=data,
@@ -483,16 +501,17 @@ class CTimeSeries(pd.DataFrame):
         if self.is_returns:
             return self.copy()
 
-        nan_locs = self.isna().values
-        if self.returns_type in [ReturnsType.SIMPLE,
+        copyobj = self.remove_empty_leading_trailing_rows()
+        nan_locs = copyobj.isna().values
+        if copyobj.returns_type in [ReturnsType.SIMPLE,
                                  ReturnsType.SIMPLE.value]:
-            newobj = self.ffill().apply(lambda x: x.pct_change().dropna())
+            newobj = copyobj.ffill().apply(lambda x: x.pct_change().dropna())
         elif return_type in [ReturnsType.LOG,
                              ReturnsType.LOG.value]:
-            newobj = self.ffill().apply(lambda x: np.log(x).diff().dropna())
+            newobj = copyobj.ffill().apply(lambda x: np.log(x).diff().dropna())
         elif return_type in [ReturnsType.DIFFERENCE,
                              ReturnsType.DIFFERENCE.value]:
-            newobj = self.ffill().apply(lambda x: x.diff().dropna())
+            newobj = copyobj.ffill().apply(lambda x: x.diff().dropna())
         else:
             raise ValueError('Error - must specify returns type')
 

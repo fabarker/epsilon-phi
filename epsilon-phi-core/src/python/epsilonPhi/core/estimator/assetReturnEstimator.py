@@ -1,6 +1,7 @@
 from epsilonPhi.core.estimator.assetEstimatorInf import CAssetReturnEstimatorInf
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.config.configUtil import CAppConfig
+import pandas as pd
 import numpy as np
 import math
 
@@ -18,23 +19,24 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
     @staticmethod
     def get_excess_return_timeseries(asset):
-        rfr = asset._assetMgr.get_risk_free_asset(schema.currency)
+        rfr = asset.get_risk_free_asset()
 
         common_dates = np.intersect1d(rfr.dates, asset.dates)
-        factor = asset.select_subset_dates(common_dates) - rfr.select_subset_dates(common_dates)
+        factor = asset.select_subset_dates(common_dates) - rfr.select_subset_dates(common_dates).values
+        factor.columns = pd.MultiIndex.from_tuples([(a, 'ER' if b == 'RI' else b) for a, b in factor.columns])
         return factor
 
     @staticmethod
     def get_historical_Sharpe_ratio(asset):
         factor = AssetReturnEstimator.get_excess_return_timeseries(asset)
-        tau = asset._schema.annualizing_factor
-        return (np.mean(factor.data) * tau) / (np.std(factor.data) * math.sqrt(tau))
+        N = asset._schema.obs_per_year
+        return (np.mean(factor.data) * N) / (np.std(factor.data) * math.sqrt(N))
 
     @staticmethod
     def get_historical_risk_premia(asset):
         factor = AssetReturnEstimator.get_excess_return_timeseries(asset)
-        tau = asset._schema.annualizing_factor
-        return np.mean(factor.data) * tau
+        N = asset._schema.obs_per_year
+        return np.mean(factor.data) * N
 
     @staticmethod
     def get_risk_premia_with_hedging(asset, hedging_option=None):
@@ -161,9 +163,10 @@ if __name__ == "__main__":
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
 
-
     assetMgr = CAssetMgr(schema)
-    asset = assetMgr.get_risk_free_asset('GBP')
+
+    asset = assetMgr.get_asset_by_name('S&PCOMP')
+    ER = AssetReturnEstimator.get_excess_return_timeseries(asset)
 
 
 

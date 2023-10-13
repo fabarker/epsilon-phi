@@ -86,13 +86,6 @@ class SessionMgr(object):
     def is_table_in_database(self, table_name):
         return table_name in self.get_all_tables_in_database()
 
-    def drop_column_from_table(self, table_name, column_name):
-        if self.is_table_in_database(table_name) and self.is_column_in_table:
-            conn = eng.connect()
-            stmt = text("ALTER TABLE " + table_name + " DROP COLUMN " + column_name + ";")
-            conn.execute(stmt)
-            conn.close()
-
     def fetch_model_class_from_table_name(self, table_name):
         for mapper in Base.registry.mappers:
             if hasattr(mapper, 'class_') and mapper.class_.__tablename__ == table_name.lower():
@@ -105,14 +98,30 @@ class SessionMgr(object):
             .filter(TimeSeriesSpec.ticker.in_(tickers))\
             .all()).set_index('table_name', drop=True)
 
+    def get_ticker_spec_table_mapping(self, tickers: list):
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec, CategoryTableMapping
+        return pd.DataFrame(self.getSessionFactory().query(TimeSeriesSpec.ticker, CategoryTableMapping.spec_table_name) \
+                            .join(CategoryTableMapping, TimeSeriesSpec.category == CategoryTableMapping.category) \
+                            .filter(TimeSeriesSpec.ticker.in_(tickers)) \
+                            .all()).set_index('spec_table_name', drop=True)
+
     def get_table_name_from_ticker(self, ticker):
         from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
-        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first().table_name
+        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first()._TimeSeriesSpec__map.table_name
+
+    def get_spec_table_name_from_ticker(self, ticker):
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
+        return self.getSessionFactory().query(TimeSeriesSpec).filter_by(ticker=ticker).first()._TimeSeriesSpec__map.spec_table_name
 
     def get_table_name_from_uid(self, uid):
         from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
         ts_info = self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first()
         return ts_info._TimeSeriesSpec__map.table_name
+
+    def get_spec_table_name_from_uid(self, uid):
+        from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
+        ts_info = self.getSessionFactory().query(TimeSeriesSpec).filter_by(uid=uid).first()
+        return ts_info._TimeSeriesSpec__map.spec_table_name
 
     def get_ticker_from_uid(self, uid: int) -> str:
         from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec
@@ -145,7 +154,9 @@ class SessionMgr(object):
 
     def get_time_series_spec_from_uid(self, uid: str, return_df=False):
 
-        q = self.getSessionFactory().query(TimeSeriesSpec).filter(TimeSeriesSpec.uid == uid)
+        table_name = self.get_spec_table_name_from_uid(uid)
+        class_ = self.fetch_model_class_from_table_name(table_name)
+        q = self.getSessionFactory().query(class_).filter(class_.uid == uid)
 
         if return_df:
            return self.query_format_df(q)
@@ -154,12 +165,22 @@ class SessionMgr(object):
 
     def get_time_series_spec_from_ticker(self, ticker: str, return_df=False):
 
-        q = self.getSessionFactory().query(TimeSeriesSpec).filter(TimeSeriesSpec.ticker == ticker)
+        table_name = self.get_spec_table_name_from_ticker(ticker)
+        class_ = self.fetch_model_class_from_table_name(table_name)
+        q = self.getSessionFactory().query(class_).filter(class_.ticker == ticker)
 
         if return_df:
            return self.query_format_df(q)
         else:
            return q.first()
+
+    def get_time_series_currency(self, ticker_uid):
+
+        if isinstance(ticker_uid, str):
+           spec = self.get_time_series_spec_from_ticker(ticker_uid)
+        else:
+           spec = self.get_time_series_spec_from_uid(ticker_uid)
+        return spec.denominated_currency, spec.exposure_currency
 
 @contextmanager
 def session_scope():

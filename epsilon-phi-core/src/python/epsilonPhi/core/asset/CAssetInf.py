@@ -19,12 +19,17 @@ class CAssetInf(ABC):
     @abstractmethod
     def get_historical_sharpe_ratio(self):
         pass
+
+    @property
     @abstractmethod
-    def get_currency(self):
+    def denominated_currency(self):
         pass
+
+    @property
     @abstractmethod
-    def get_frequency(self):
+    def exposure_currency(self):
         pass
+
     @abstractmethod
     def get_data_length(self):
         pass

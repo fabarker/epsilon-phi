@@ -77,7 +77,13 @@ class BondIndexSpec(TimeSeriesSpec):
     rating = Column(String(10), nullable=False)
     maturity_band = Column(String(20), nullable=False)
     maturity = Column(Integer, nullable=True)
+    @property
+    def denominated_currency(self):
+        return self.pricing_currency
 
+    @property
+    def exposure_currency(self):
+        return self.pricing_currency
 
     __mapper_args__ = {'polymorphic_identity': 'bond_index_spec'}
 
@@ -97,6 +103,7 @@ class BondIndex(TimeSeries):
 
     __mapper_args__ = {'polymorphic_identity': 'bond_index'}
     _spec = relationship("BondIndexSpec", foreign_keys=[uid])
+
 
 ############### Equity Indicies ##############
 @auto_repr
@@ -135,8 +142,6 @@ class CommodityIndexSpec(TimeSeriesSpec):
     exposure_currency = Column(String(3), nullable=False, index=True)
     hedge_ratio = Column(FloatOrNone, nullable=True)
 
-
-
     __mapper_args__ = {'polymorphic_identity': 'commodity_index_spec'}
 
 @auto_repr
@@ -156,7 +161,6 @@ class CommodityIndex(TimeSeries):
 
     __mapper_args__ = {'polymorphic_identity': 'commodity_index'}
     _spec = relationship("CommodityIndexSpec", foreign_keys=[uid])
-
 
 ############### FX Rates ##############
 
@@ -231,6 +235,13 @@ class YieldCurveSpec(TimeSeriesSpec):
 
        __mapper_args__ = {'polymorphic_identity': 'yield_curve_spec'}
 
+       @property
+       def denominated_currency(self):
+           return self.currency
+       @property
+       def exposure_currency(self):
+           return self.currency
+
 @auto_repr
 class YieldCurve(TimeSeries):
     __tablename__ = 'yield_curve'
@@ -267,6 +278,14 @@ class InterestRateSpec(TimeSeriesSpec):
 
        __mapper_args__ = {'polymorphic_identity': 'interest_rate_spec'}
 
+       @property
+       def denominated_currency(self):
+           return self.currency
+
+       @property
+       def exposure_currency(self):
+           return self.currency
+
 
 @auto_repr
 class InterestRate(TimeSeries):
@@ -283,10 +302,6 @@ class InterestRate(TimeSeries):
 
     __mapper_args__ = {'polymorphic_identity': 'interest_rate'}
     _spec = relationship("InterestRateSpec", foreign_keys=[uid])
-
-    @property
-    def pricing_currency(self):
-        return self._spec.currency
 
     @property
     def maturity(self):
@@ -324,10 +339,6 @@ class HedgeFundIndex(TimeSeries):
 
     __mapper_args__ = {'polymorphic_identity': 'hedge_fund_index'}
     _spec = relationship("HedgeFundIndexSpec", foreign_keys=[uid])
-
-    @property
-    def pricing_currency(self):
-        return self._spec.denominated_currency
 
     @property
     def hedge_ratio(self):
@@ -522,6 +533,26 @@ class Future(TimeSeries):
 
     __mapper_args__ = {'polymorphic_identity': 'future'}
     _spec = relationship("FutureSpec", foreign_keys=[uid])
+
+@auto_repr
+class FactorSpec(TimeSeriesSpec):
+    __tablename__ = 'factor_spec'
+
+    uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+    factor = Column(String(100))
+    universe = Column(String(100))
+
+@auto_repr
+class Factor(TimeSeries):
+    __tablename__ = 'factor'
+
+    uid = Column(Integer, ForeignKey('factor_spec.uid'), index=True, primary_key=True)
+    date = Column(DateTime, primary_key=True)
+    XR = Column(FloatOrNone, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'factor'}
+    _spec = relationship("FactorSpec", foreign_keys=[uid])
+
 
 @auto_repr
 class EconomicSpec(TimeSeriesSpec):
