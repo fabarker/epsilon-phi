@@ -586,17 +586,6 @@ class Economic(TimeSeries):
 
 if __name__ == "__main__":
 
-    import datetime
     from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
     session = SessionMgr().getSessionFactory()
 
-    try:
-        session.query(ImpliedVolatility).filter(ImpliedVolatility.relative_strike.in_(['Spot', 'ATMF'])).update(
-            {"relative_strike": "100"})
-        session.commit()
-        print("UPDATE successful.")
-    except Exception as e:
-        session.rollback()
-        print("Error occurred during UPDATE:", str(e))
-    finally:
-        session.close()

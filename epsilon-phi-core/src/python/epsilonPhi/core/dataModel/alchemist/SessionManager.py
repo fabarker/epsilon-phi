@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.Configs import *
 from contextlib import contextmanager
+from sqlalchemy import func
 import pandas as pd
 
 tblToEngine = {
@@ -182,6 +183,29 @@ class SessionMgr(object):
            spec = self.get_time_series_spec_from_uid(ticker_uid)
         return spec.denominated_currency, spec.exposure_currency
 
+    def get_factor_ticker(self, factor_mnemonic, region=None, universe=None, provider=None):
+        q = self.getSessionFactory().query(FactorSpec.ticker).filter(FactorSpec.factor == factor_mnemonic)
+
+        if region is not None:
+            q = q.filter(FactorSpec.region == region)
+        if universe is not None:
+            q = q.filter(FactorSpec.universe == universe)
+        if provider is not None:
+            q = q.filter(FactorSpec.provider == provider)
+        res = q.all()
+
+        if len(res) == 1:
+            return res[0][0]
+        elif len(res) > 1:
+            return [x[0] for x in q.all()]
+        else:
+            return None
+
+    def get_max_uid(self):
+        from sqlalchemy import func
+        return self.getSessionFactory().query(func.max(TimeSeriesSpec.uid)).scalar()
+
+
 @contextmanager
 def session_scope():
     scoped_session = SessionMgr().getSessionFactory()
@@ -197,7 +221,19 @@ def session_scope():
 
 if __name__ == "__main__":
 
-    session = SessionMgr().getSessionFactory()
-    HF = session.query(HedgeFundIndex).first()
+
+    sessionMgr = SessionMgr()
+    session = sessionMgr.getSessionFactory()
+
+    provider = 'AQR'
+    universe = 'Equity'
+    factor = 'SMB'
+    region = 'US'
+
+    ticker = sessionMgr.get_factor_ticker(factor, universe=universe, region=region)
+
+
+
+
 
 

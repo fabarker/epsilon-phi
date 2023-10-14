@@ -1,3 +1,5 @@
+import pandas as pd
+
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
@@ -103,6 +105,19 @@ class GlobalDataSource(object):
         return self._fx_curve.get_forward_prices(currency_pairs, maturities, price_quotes)
 
 
+    def get_factor_dataframe(self, factor, universe=None, region=None, provider=None):
+        tickers = self._session_mgr.get_factor_ticker(factor, region=region, universe=universe, provider=provider)
+
+        if not DateUtils.is_iterable(tickers):
+           tickers = [tickers]
+
+        fac_ts = pd.DataFrame()
+        for ticker in tickers:
+            df_ = self.get_dataframe_from_ticker(ticker, index_col='date')
+            fac_ts = pd.concat((fac_ts, df_), axis=1)
+        return fac_ts.copy()
+
+
     # Methods associated with querying datastream
     def get_time_series_data_from_datastream(self,
                                              symbols,
@@ -153,7 +168,14 @@ class GlobalDataSource(object):
 if __name__ == "__main__":
 
     self = GlobalDataSource()
-    df = self.get_total_return_series_from_ticker('UKPRATE.')
+
+    tickers = ['MSHWLD$','MSWRLD$','MSWRLDL','MSFXDW$']
+
+    df_ = pd.DataFrame()
+    for ticker in tickers:
+        df = self.get_dataframe_from_ticker(ticker, cols='PI')
+        df_ = pd.concat((df_, df), axis=1)
+
 
 
 

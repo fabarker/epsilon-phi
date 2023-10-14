@@ -1,3 +1,5 @@
+import datetime
+
 from pydatastream import Datastream as pyds
 from epsilonPhi.core.utils.ListUtils import ListUtils as lutils
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
@@ -10,7 +12,7 @@ import time, os
 import subprocess
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 
-_DATA_PATH = os.path.join(os.environ.get('HOMEDRIVE'), os.environ.get('HOMEPATH'), 'Documents', 'Data')
+#_DATA_PATH = os.path.join(os.environ.get('HOMEDRIVE'), os.environ.get('HOMEPATH'), 'Documents', 'Data')
 
 class DatatypeMapper(object):
 
@@ -217,33 +219,25 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    ds = pyDatastream.fetch('BBAUD2F')
+    tickers = ['MSFXDW$']
+    fields = ['MSPI']
+    from_date = datetime.date(year=1987, month=12, day=31)
+    to_date = datetime.date.today()
 
 
-    def run_updates():
-        datafields = ['EB','ER','EO']
+    frames = pyDatastream.fetch(tickers, fields, from_date=from_date, to_date=to_date, frequency='D')
 
-        # Hedge Funds
-        folder_name = r'C:\Users\fabar\Documents\Data\fx'
-        info_workbook_name = 'Spec.xlsx'
-        info_sheetname = 'Spec'
-        save_folder = os.path.join(_DATA_PATH, folder_name, 'Data Repository')
 
-        df_info = pd.read_excel(os.path.join(_DATA_PATH, folder_name, info_workbook_name), sheet_name=info_sheetname)
-        Tickers = df_info['ticker'].values.flatten()
+    df_ = pd.DataFrame()
+    for ticker in tickers:
+        subset = frames.loc[ticker]
+        subset.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in subset.columns])
+        df_ = pd.concat((df_, subset), axis=1)
+    frame = df_.dropna(how='all')
 
-        ctr = 0
-        for ticker in Tickers:
-            if ctr == 500:
-                pyDatastreamFO.cleanup()
-                closeExcel.kill_all_excel_instances()
-                time.sleep(30)
-                ctr = 0
+    res = pyDatastream.pyds().fetch(tickers,
+                                    fields='ISOCUR',
+                                    static=True)
 
-            if not os.path.isfile(os.path.join(save_folder, ticker.replace(':','_') + '.csv')):
-                r = request(ticker, datafields, start_date='BDATE', freq='Daily')
-                pyDatastreamFO().query_with_data_dump(r, save_folder)
-                ctr += 1
-    run_updates()
 
 

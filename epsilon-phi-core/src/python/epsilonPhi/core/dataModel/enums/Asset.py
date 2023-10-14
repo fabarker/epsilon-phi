@@ -16,3 +16,7 @@ class PrivateAsset(Enum):
     INFRASTRUCTURE = 'Infrastructure'
     ENERGY = 'Energy'
 
+class RiskFreeMap(Enum):
+
+    MSCI_WORLD = 'MSWRLDL'
+
