@@ -13,7 +13,7 @@ class TimeSeriesUtils(object):
         ts_rtns = df._create_new_levels_object()
 
         columns = df.columns
-        for col in columns:
+        for col in np.unique(columns):
             df_col = df.get([col])
 
             if 'TR' in col:
@@ -35,12 +35,12 @@ class TimeSeriesUtils(object):
             else:
                 pass
 
-        cols = pd.MultiIndex.from_tuples([(x[0],'RI') for x in ts_rtns.columns])
-        atts = ts_rtns.attributes.copy()
+        #cols = pd.MultiIndex.from_tuples([(x[0],'RI') for x in ts_rtns.columns])
+        #atts = ts_rtns.attributes.copy()
 
-        atts.columns = cols
-        ts_rtns.columns = cols
-        ts_rtns.set_attributes(atts)
+        #atts.columns = cols
+        #ts_rtns.columns = cols
+        #ts_rtns.set_attributes(atts)
         return ts_rtns.get_period_ends(Frequency.DAILY)
 
     @staticmethod

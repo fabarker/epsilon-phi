@@ -91,8 +91,8 @@ class GlobalDataSource(object):
         else:
             return TimeSeriesUtils.convert_timeseries_to_return_index(ts)
 
-    def get_interest_rate_tickers(self, currency, maturities=None, type=None):
-        return self._session_mgr.get_interest_rate_tickers(currency,
+    def get_interest_rate_tickers(self, currency_region, maturities=None, type=None):
+        return self._session_mgr.get_interest_rate_tickers(currency_region,
                                                            maturities,
                                                            type)
 

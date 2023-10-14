@@ -1,5 +1,5 @@
 from epsilonPhi.core.env.Env import DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DRIVER, DB_DATABASE_NAME
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exists
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
@@ -205,13 +205,22 @@ class SessionMgr(object):
         from sqlalchemy import func
         return self.getSessionFactory().query(func.max(TimeSeriesSpec.uid)).scalar()
 
-    def get_interest_rate_tickers(self, currency, maturity=None, type=None):
+    def get_interest_rate_tickers(self, currency_region, maturity=None, type=None):
 
-        if not DateUtils.is_iterable(currency):
-           currency = [currency]
-        q = self.getSessionFactory().query(InterestRateSpec.ticker,
-                                           InterestRateSpec.maturity,
-                                           InterestRateSpec.type).filter(InterestRateSpec.currency.in_(currency))
+        if self.getSessionFactory().query(
+                exists().where(InterestRateSpec.currency == currency_region)).scalar():
+
+            q = self.getSessionFactory().query(InterestRateSpec.ticker,
+                                               InterestRateSpec.maturity,
+                                               InterestRateSpec.type).filter(InterestRateSpec.currency.in_([currency_region]))
+        elif self.getSessionFactory().query(
+                exists().where(InterestRateSpec.region == currency_region)).scalar():
+
+            q = self.getSessionFactory().query(InterestRateSpec.ticker,
+                                               InterestRateSpec.maturity,
+                                               InterestRateSpec.type).filter(InterestRateSpec.region.in_([currency_region]))
+        else:
+            raise ValueError('Error - Currency or region {} not supported'.format(currency_region))
 
         if maturity is not None:
            if not DateUtils.is_iterable(maturity):
