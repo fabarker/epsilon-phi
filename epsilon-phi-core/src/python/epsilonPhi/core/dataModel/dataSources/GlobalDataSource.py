@@ -91,6 +91,11 @@ class GlobalDataSource(object):
         else:
             return TimeSeriesUtils.convert_timeseries_to_return_index(ts)
 
+    def get_interest_rate_tickers(self, currency, maturities=None, type=None):
+        return self._session_mgr.get_interest_rate_tickers(currency,
+                                                           maturities,
+                                                           type)
+
     # Methods associated with currencies / FX
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, pricing_dates, maturity_dates, price_quotes)
@@ -164,10 +169,10 @@ class GlobalDataSource(object):
 
 
 
-
 if __name__ == "__main__":
 
     self = GlobalDataSource()
+    res = self.get_interest_rate_tickers('USD')
 
     tickers = ['MSHWLD$','MSWRLD$','MSWRLDL','MSFXDW$']
 

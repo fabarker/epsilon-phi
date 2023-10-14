@@ -205,6 +205,26 @@ class SessionMgr(object):
         from sqlalchemy import func
         return self.getSessionFactory().query(func.max(TimeSeriesSpec.uid)).scalar()
 
+    def get_interest_rate_tickers(self, currency, maturity=None, type=None):
+
+        if not DateUtils.is_iterable(currency):
+           currency = [currency]
+        q = self.getSessionFactory().query(InterestRateSpec.ticker,
+                                           InterestRateSpec.maturity,
+                                           InterestRateSpec.type).filter(InterestRateSpec.currency.in_(currency))
+
+        if maturity is not None:
+           if not DateUtils.is_iterable(maturity):
+                maturity = [maturity]
+           q = q.filter(InterestRateSpec.maturity.in_(maturity))
+
+        if type is not None:
+           if not DateUtils.is_iterable(type):
+                type = [type]
+           q = q.filter(InterestRateSpec.type.in_(type))
+
+        return self.query_format_df(q)
+
 
 @contextmanager
 def session_scope():

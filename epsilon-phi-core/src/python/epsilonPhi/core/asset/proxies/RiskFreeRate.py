@@ -1,13 +1,17 @@
 import datetime
-from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 import os
 import pandas as pd
 import numpy as np
+import platform
 
 f_path_ = os.path.abspath(__file__)
-DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/')+ len('epsilon-phi-core/')],
-                    'src/resources/templates/MSCI Index Construction.xlsx')
+if 'win' in platform.system().lower():
+    DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core\\') + len('epsilon-phi-core\\')],
+                        'src\\resources\\templates\\MSCI Index Construction.xlsx')
+else:
+    DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/')+ len('epsilon-phi-core/')],
+                        'src/resources/templates/MSCI Index Construction.xlsx')
 
 class MSCIActivityPanel(object):
     def __init__(self):
@@ -16,15 +20,22 @@ class MSCIActivityPanel(object):
 
     def __load_activity_panel(self):
 
-        self._df = pd.read_excel(DIR_,
-                           sheet_name='Rules',
+        _df = pd.read_excel(DIR_,
+                           sheet_name=None,
                            index_col=0,
                            header=[0, 1])
+
+        self._df = _df.get('Rules')
+        self._mapping = _df.get('Mapping')
+
+        if isinstance(self._mapping.columns, pd.MultiIndex):
+           self._mapping.columns = self._mapping.columns.get_level_values('MSCI Region')
 
         indicies = self._df.columns.get_level_values('Index Name')
         for index in indicies:
             self.__construct_activity_panel_single_index(index)
         self._panels = self._panels.fillna(False)
+        self._panels.columns.names = ['Index', 'MSCI Region', 'Region', 'Local', 'Dollar', 'Currency']
 
     def __construct_activity_panel_single_index(self, index_name):
 
@@ -43,7 +54,8 @@ class MSCIActivityPanel(object):
         else:
            res = pd.DataFrame(columns=[(index_name, region)])
 
-        res.columns = pd.MultiIndex.from_tuples([(index_name, region)])
+        new_col = [index_name, region] + list(self._mapping.loc[region].values)
+        res.columns = pd.MultiIndex.from_tuples([tuple(new_col)])
         self._panels = pd.concat((self._panels, res), axis=1)
 
     def __process_period_string(self, val):
@@ -87,34 +99,51 @@ class CRiskFreeRate(object):
                  ):
 
         self._datasource = GlobalDataSource()
-        self._activity_panel = MSCIActivityPanel.get_activity_panel_single_index(index_ticker)
-        self.construct_history()
+        activity_panel = MSCIActivityPanel.get_activity_panel_single_index(index_ticker)
 
-    def construct_history(self):
-        pass
+        self.__regions = np.unique(activity_panel.columns.get_level_values('Region'))
+        self._info = pd.DataFrame(activity_panel.columns.to_frame().values,
+                                  columns=activity_panel.columns.names).set_index('Region', drop=True)
 
-    def get_index_constituent_regions(self):
-        return self._activity_panel.columns
+        self._activity_panel = activity_panel.copy()
+        self._activity_panel.columns = activity_panel.columns.get_level_values('Region')
 
-    def get_constituent_region_ticker(self, region):
-        pass
+    @property
+    def regions(self):
+        self.__regions
 
-    def get_constituent_region_data(self, region):
+    def get_constituent_region_dollar_ticker(self, region):
+        return self._info.loc[region].Dollar
+
+    def get_constituent_region_local_ticker(self, region):
+        return self._info.loc[region].Local
+
+    def get_constituent_region_currency(self, region):
+        return self._info.loc[region].Currency
+
+    def get_constituent_region_activity(self, region):
         return self._activity_panel.get(region)
 
-    def get_constituent_region_rate(self):
-        pass
-
     def get_constituent_region_rate_ticker(self, region):
-        pass
+        currency = self.get_constituent_region_currency(region)
+        return self._datasource.get_interest_rate_tickers(currency, maturities=['ON','1m'])
 
-    def get_constituent_region_contribution(self, region):
-        pass
+    def get_risk_free_rate_from_constituent_region(self, region):
+        rfr_tickers = self.get_constituent_region_rate_ticker(region)
 
-    def get_constitient_region_MV(self):
-        pass
+        for ticker in rfr_tickers.ticker:
+            if 'df_rfr' not in locals():
+                df_rfr = self._datasource.get_total_return_series_from_ticker(ticker)
+            else:
+                df_rfr = pd.concat((df_rfr, self._datasource.get_total_return_series_from_ticker(ticker)), axis=1)
+        return df_rfr
+
+    def get_constituent_region_MV(self, region):
+        ticker = self.get_constituent_region_dollar_ticker(region)
+        return self._datasource.get_dataframe_from_ticker(ticker, cols='MV')
 
 
 if __name__ == "__main__":
 
-    panel = MSCIActivityPanel.get_activity_panel_single_index('ACWI')
+    rfr = CRiskFreeRate('ACWI')
+    rfr.get_risk_free_rate_from_constituent_region('US')
