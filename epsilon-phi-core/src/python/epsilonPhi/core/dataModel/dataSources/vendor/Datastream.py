@@ -92,7 +92,29 @@ class pyDatastream(object):
         frames = pd.DataFrame()
         for chunk in chunks:
             res = pyDatastream.pyds().fetch(chunk,
-                                            fields='ISOCUR',
+                                            fields='DS.SRCE',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
+    def get_name_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='NAME',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
+    def get_source_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='DS.SRCE',
                                             static=True)
             frames = pd.concat((frames, res))
         return frames
@@ -219,13 +241,23 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    tickers = ['MSCHIN$','MSKUWA$','MSLUXB$','MSRUSS$','MSSAUD$','MSTHAF$','MSVENF$']
-    fields = ['DY','RI','PI','MV']
+    filepath = r'/Users/francisbarker/Desktop/Rates Data.xlsx'
+    df = pd.read_excel(filepath, sheet_name='Data', header=0)
 
+    tickers = list()
+    for key in df.keys():
+        if 'sheet' in key.lower():
+            pass
+        else:
+            tix = df.get(key)
+            tickers.extend(tix.values.flatten().tolist())
+
+    tickers = ['CLOINIR','CLBCBPR']
+    res = pyDatastream.get_source_from_tickers(tickers)
+
+    fields = ['IO','IR','IB','RI','X']
     from_date = datetime.date(year=1969, month=12, day=31)
     to_date = datetime.date.today()
-
-
     frames = pyDatastream.fetch(tickers, fields, from_date=from_date, to_date=to_date, frequency='D')
 
 
@@ -236,9 +268,8 @@ if __name__ == "__main__":
         df_ = pd.concat((df_, subset), axis=1)
     frame = df_.dropna(how='all')
 
-    res = pyDatastream.pyds().fetch(tickers,
-                                    fields='ISOCUR',
-                                    static=True)
+
+    res = pyDatastream.get_currency_ISO_from_tickers(tickers)
 
 
 
