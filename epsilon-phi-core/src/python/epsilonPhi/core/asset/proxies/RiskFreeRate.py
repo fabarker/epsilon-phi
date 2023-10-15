@@ -152,6 +152,22 @@ class CRiskFreeRate(object):
         df_.columns = pd.MultiIndex.from_tuples([(region, 'MV')])
         return df_.copy()
 
+    def run_data_test_single_region(self, region):
+        rfr = self.get_risk_free_rate_from_constituent_region(region)
+        insert_dates = pd.date_range(rfr.index[0], rfr.index[-1])
+        rfr = rfr.reindex(insert_dates)
+
+        A = self.get_constituent_region_activity(region)
+
+        # Dates the index was active
+        dates_A = pd.to_datetime(A.index[A.values.flatten()])
+        dates_D = pd.to_datetime(rfr.index)
+        missing = np.setdiff1d(dates_A, dates_D)
+        if len(missing) > 0:
+            return pd.DataFrame([1]*len(missing), columns=[region], index=missing)
+        else:
+            return pd.DataFrame()
+
     def get_dataframe_for_constituent_region(self, region):
         MV = self.get_constituent_region_MV(region)
         rfr = self.get_risk_free_rate_from_constituent_region(region)
@@ -163,9 +179,11 @@ class CRiskFreeRate(object):
         df_ = CTimeSeries()
         for region in self.regions:
             print(region)
-            df_ = pd.concat((df_, self.get_dataframe_for_constituent_region(region)), axis=1)
+            df_ = pd.concat((df_, self.run_data_test_single_region(region)), axis=1)
+            #df_ = pd.concat((df_, self.get_dataframe_for_constituent_region(region)), axis=1)
 
-        MVs = df_.get('MV')
+        MVs = df_.loc[:, df_.columns._get_level_values(1) == 'MV']
+        mv_idx = self._datasource.get_dataframe_from_ticker('MSACWFL', cols='MV')
 
 
 

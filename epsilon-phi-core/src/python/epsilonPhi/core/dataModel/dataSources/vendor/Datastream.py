@@ -219,10 +219,10 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    tickers = ['VENLEND','VEDP30D','VENOVER']
-    fields = ['IO','IR','IB','RI','X']
+    tickers = ['MSCHIN$','MSKUWA$','MSLUXB$','MSRUSS$','MSSAUD$','MSTHAF$','MSVENF$']
+    fields = ['DY','RI','PI','MV']
 
-    from_date = datetime.date(year=1987, month=12, day=31)
+    from_date = datetime.date(year=1969, month=12, day=31)
     to_date = datetime.date.today()
 
 
