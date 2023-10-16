@@ -110,7 +110,7 @@ class CRiskFreeRate(object):
 
         self._activity_panel = activity_panel.copy()
         self._activity_panel.columns = activity_panel.columns.get_level_values('Region')
-        self._construct_history()
+        #self._construct_history()
 
     @property
     def regions(self):
@@ -189,4 +189,3 @@ class CRiskFreeRate(object):
 
 if __name__ == "__main__":
 
-    rfr = CRiskFreeRate('THE WORLD INDEX')
