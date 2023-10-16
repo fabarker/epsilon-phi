@@ -11,8 +11,7 @@ import os
 nan = pd.pandas._libs.tslibs.nattype.NaTType
 session = SessionMgr().getSessionFactory()
 
-_SHEETNAME = 'Data'
-df_xl = pd.read_excel(r'/Users/francisbarker/Desktop/Additional Rates.xlsx', sheet_name=['Sheet1','Sheet5','Sheet4'], index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
+df_xl = pd.read_excel(r'/Users/francisbarker/Desktop/Thailand Rates Data.xlsx', sheet_name=['Sheet9'], index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
 
 
 dfs = [df_xl.get(x) for x in df_xl.keys()]
@@ -23,11 +22,6 @@ unique_tickers = np.unique(df.columns.get_level_values(0))
 for ticker in unique_tickers:
 
         col_ = df.get(ticker).dropna(how='all')
-        SD = np.min(col_.index)
-        ED = np.max(col_.index)
-        dates = pd.date_range(SD, ED)
-        col_ = col_.reindex(dates).ffill().reindex(pd.date_range(SD, ED,freq='B'))
-
 
         if not Bloomberg.is_ticker_in_database(ticker):
 
@@ -36,7 +30,7 @@ for ticker in unique_tickers:
                 spec.category = col_.columns.get_level_values('category')[0]
                 spec.datasource = col_.columns.get_level_values('datasource')[0]
                 spec.currency = col_.columns.get_level_values('currency')[0]
-                spec.maturity = col_.columns.get_level_values('maturity')[0]
+                spec.maturity = col_.columns.get_level_values('maturity')[0].lower()
                 spec.type = col_.columns.get_level_values('type')[0]
                 spec.name = col_.columns.get_level_values('name')[0]
                 spec.provider = col_.columns.get_level_values('provider')[0]
@@ -77,7 +71,7 @@ for ticker in unique_tickers:
 
             if len(missing) > 0:
                 for_db = dt_df.set_index('date', drop=True).reindex(missing)
-                for_db = for_db[['uid','IO','IB','IR','RI','X']]
+                for_db = for_db[['uid','IR','X','IO','IB','RI']]
                 for_db.index.name = 'date'
                 for_db = for_db.reset_index(drop=False)
                 for_db.to_sql(name='interest_rate',

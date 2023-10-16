@@ -189,4 +189,4 @@ class CRiskFreeRate(object):
 
 if __name__ == "__main__":
 
-    rfr = CRiskFreeRate('ACWI')
+    rfr = CRiskFreeRate('THE WORLD INDEX')

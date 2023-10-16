@@ -241,24 +241,23 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    filepath = r'/Users/francisbarker/Desktop/Rates Data.xlsx'
-    df = pd.read_excel(filepath, sheet_name='Data', header=0)
 
-    tickers = list()
-    for key in df.keys():
-        if 'sheet' in key.lower():
-            pass
-        else:
-            tix = df.get(key)
-            tickers.extend(tix.values.flatten().tolist())
+    tickers = ['USTBL1M','FRTCM1M']
 
-    tickers = ['CLOINIR','CLBCBPR']
-    res = pyDatastream.get_source_from_tickers(tickers)
 
     fields = ['IO','IR','IB','RI','X']
     from_date = datetime.date(year=1969, month=12, day=31)
     to_date = datetime.date.today()
-    frames = pyDatastream.fetch(tickers, fields, from_date=from_date, to_date=to_date, frequency='D')
+
+    frames = pd.DataFrame()
+    for ticker in tickers:
+        frame = pyDatastream.fetch(ticker, fields, from_date=from_date, to_date=to_date, frequency='D')
+
+        if np.all(frame.index.day == 15):
+           frame.index = frame.index + pd.tseries.offsets.MonthBegin(-1)
+
+        frame.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in frame.columns])
+        frames = pd.concat((frames, frame), axis=1).dropna(how='all')
 
 
     df_ = pd.DataFrame()
@@ -270,6 +269,7 @@ if __name__ == "__main__":
 
 
     res = pyDatastream.get_currency_ISO_from_tickers(tickers)
+    res = pyDatastream.get_name_from_tickers(tickers)
 
 
 

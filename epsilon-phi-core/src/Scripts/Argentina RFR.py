@@ -2,7 +2,7 @@ import pandas as pd
 from docx import Document
 
 # Path to the Word document
-doc_path = "/Users/francisbarker/Desktop/Argentina Risk Free Rate.docx"
+doc_path = "/Users/francisbarker/Desktop/Jordan Risk Free Rate.docx"
 
 # Load the Word document with python-docx
 doc = Document(doc_path)
@@ -30,12 +30,17 @@ values = list()
 for idx, row in df.iterrows():
     date, value = row.get('data').split('=')
 
-    pct = float(value.strip().replace('%', '').replace(',','')) / 100
+    pct = float(value.strip().replace('%', '').replace(',',''))
     dateval = pd.to_datetime(date.strip())
 
     dates.extend([dateval])
     values.extend([pct])
 
 df_ = pd.DataFrame(values, index=dates, columns=['Rate'])
-# Display the dataframe
-print(df.head())
+
+SD = df_.index.min()
+ED = df_.index.max()
+all_dates = pd.date_range(SD, ED)
+df_dates = df_.reindex(all_dates).ffill().reindex(pd.date_range(SD, ED, freq='B'))
+
+print(df_dates.head())
