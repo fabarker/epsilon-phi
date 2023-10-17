@@ -36,7 +36,6 @@ class MSCIActivityPanel(object):
         indicies = self._df.columns.get_level_values('Index Name')
         for index in indicies:
             self.__construct_activity_panel_single_index(index)
-        self._panels = self._panels.fillna(False)
         self._panels.columns.names = ['Index', 'MSCI Region', 'Region', 'Local', 'Dollar', 'Currency']
 
     def __construct_activity_panel_single_index(self, index_name):
@@ -110,7 +109,6 @@ class CRiskFreeRate(object):
 
         self._activity_panel = activity_panel.copy()
         self._activity_panel.columns = activity_panel.columns.get_level_values('Region')
-        #self._construct_history()
 
     @property
     def regions(self):
@@ -126,7 +124,7 @@ class CRiskFreeRate(object):
         return self._info.loc[region].Currency
 
     def get_constituent_region_activity(self, region):
-        return self._activity_panel.get([region]).any(axis=1).to_frame((region, 'X'))
+        return self._activity_panel.get([region]).dropna(how='all', axis=0).any(axis=1).to_frame('X')
 
     def get_constituent_region_rate_ticker(self, region):
         return self._datasource.get_interest_rate_tickers(region, maturities=['ON','1m','3m'])
@@ -152,6 +150,37 @@ class CRiskFreeRate(object):
         df_.columns = pd.MultiIndex.from_tuples([(region, 'MV')])
         return df_.copy()
 
+    def run_data_test_MV_single_region(self, region):
+        dates = self.get_constituent_region_active_dates(region)
+        MV = self.get_constituent_region_MV(region).dropna()
+        missing_dates = np.setdiff1d(pd.to_datetime(dates),
+                                     pd.to_datetime(MV.index))
+        df_ = pd.DataFrame(missing_dates, index=[region] * len(missing_dates), columns=['dates'])
+        df_['type'] = 'MV'
+        return df_.copy()
+
+    def run_data_test_RFR_single_region(self, region):
+        dates = self.get_constituent_region_active_dates(region)
+        rfr = self.get_risk_free_rate_from_constituent_region(region)
+        missing_dates = np.setdiff1d(pd.to_datetime(dates),
+                                     pd.to_datetime(rfr.index))
+        df_ = pd.DataFrame(missing_dates, index=[region] * len(missing_dates), columns=['dates'])
+        df_['type'] = 'RFR'
+        return df_.copy()
+
+    def run_data_check(self):
+
+        df_ = pd.DataFrame()
+        for region in self.regions:
+            print(region)
+            df_ = pd.concat((df_, pd.concat((self.run_data_test_RFR_single_region(region),
+                             self.run_data_test_MV_single_region(region)), axis=0)), axis=0)
+
+        idx = df_.dates < pd.to_datetime('2023-06-30')
+        return df_[idx.values].copy()
+
+
+
     def run_data_test_single_region(self, region):
         rfr = self.get_risk_free_rate_from_constituent_region(region)
         insert_dates = pd.date_range(rfr.index[0], rfr.index[-1])
@@ -168,24 +197,34 @@ class CRiskFreeRate(object):
         else:
             return pd.DataFrame()
 
+    def get_constituent_region_active_dates(self, region):
+        dates = self.get_constituent_region_activity(region)
+        b_days = np.logical_and(dates.index.dayofweek != 6,
+                                dates.index.dayofweek != 5)
+        return dates[b_days].dropna().index
+
     def get_dataframe_for_constituent_region(self, region):
-        MV = self.get_constituent_region_MV(region)
-        rfr = self.get_risk_free_rate_from_constituent_region(region)
-        A = self.get_constituent_region_activity(region)
-        return pd.concat((MV, rfr, A), axis=1).dropna()
+        dates = self.get_constituent_region_active_dates(region)
+
+        MV = self.get_constituent_region_MV(region).reindex(dates)
+        rfr = self.get_risk_free_rate_from_constituent_region(region).reindex(dates)
+
+        return pd.concat((MV, rfr), axis=1).dropna(axis=0)
+
 
     def _construct_history(self):
 
         df_ = CTimeSeries()
         for region in self.regions:
             print(region)
-            df_ = pd.concat((df_, self.run_data_test_single_region(region)), axis=1)
-            #df_ = pd.concat((df_, self.get_dataframe_for_constituent_region(region)), axis=1)
+            df_ = pd.concat((df_, self.get_dataframe_for_constituent_region(region)), axis=1)
 
         MVs = df_.loc[:, df_.columns._get_level_values(1) == 'MV']
-        mv_idx = self._datasource.get_dataframe_from_ticker('MSACWFL', cols='MV')
+        mv_idx = self._datasource.get_dataframe_from_ticker('MSWRLD$', cols='MV')
 
 
 
 if __name__ == "__main__":
 
+   rfr = CRiskFreeRate('WORLD')
+   df = rfr.run_data_check()

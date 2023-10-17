@@ -1,7 +1,5 @@
 from imfpy import searches, retrievals, tools
 from imfpy.retrievals import dots
-import json
-import urllib3
 import requests
 import pandas as pd
 import numpy as np
@@ -109,15 +107,14 @@ class IMFQuery(object):
 
 if __name__ == "__main__":
 
-    rfr = IMFQuery.get_region_interest_rates('Singapore')
-
-
-    codes_df =IMFQuery.get_all_country_codes()
-    regions = np.unique(codes_df.index)
+    import time
+    regions_df = pd.read_excel(r'C:\Users\fabar\OneDrive\Desktop\IMF Regions.xlsx', index_col=0)
+    regions = regions_df.values.flatten()
 
     rfrs = pd.DataFrame()
     failed = list()
     for region in regions:
+        time.sleep(5)
         try:
             rfr = IMFQuery.get_region_interest_rates(region)
             rfrs = pd.concat((rfrs, rfr), axis=1)
