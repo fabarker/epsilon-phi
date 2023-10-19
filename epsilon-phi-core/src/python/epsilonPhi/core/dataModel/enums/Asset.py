@@ -20,3 +20,6 @@ class RiskFreeMap(Enum):
 
     MSCI_WORLD = 'MSWRLDL'
 
+    AUD = 'ADBR090,AUPRIMF'
+
+

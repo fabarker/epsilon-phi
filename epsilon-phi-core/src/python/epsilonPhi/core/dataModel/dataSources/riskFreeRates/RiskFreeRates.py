@@ -1,7 +1,8 @@
 import datetime
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
-from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
+from epsilonPhi.core.utils.DateUtils import DateUtils
 import os
 import pandas as pd
 import numpy as np
@@ -14,6 +15,43 @@ if 'windows' in platform.system().lower():
 else:
     DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/')+ len('epsilon-phi-core/')],
                         'src/resources/templates/MSCI Index Construction.xlsx')
+
+class CRiskFreeRate(object):
+    _cache = dict()
+    _session = SessionMgr()
+
+    @staticmethod
+    def load_risk_free_rate(region):
+
+        df_rfrs = CRiskFreeRate._session.get_interest_rates_for_region(region, ['ON', '1M', '3M'])
+
+        df = pd.DataFrame()
+        for col in df_rfrs.columns:
+            df_col = df_rfrs.get(col).dropna().to_frame(col)/100
+            df = pd.concat((df, df_col.reindex(pd.date_range(df_col.index.min(),
+                                              df_col.index.max())).ffill()), axis=1)
+
+        rfrs = -1 + np.power(1 + df.mean(axis=1).to_frame(region), 1 / DateUtils.days_per_year)
+        lvls = CTimeSeries(rfrs, ts_type=TimeSeriesType.RETURNS).get_levels().resample('B').asfreq()
+        CRiskFreeRate._cache[region] = lvls.fillna(1).get_returns()
+
+    @staticmethod
+    def get_risk_free_for_region(region):
+
+        if region not in CRiskFreeRate._cache.keys():
+           CRiskFreeRate.load_risk_free_rate(region)
+        return CRiskFreeRate._cache.get(region)
+
+    @staticmethod
+    def get_risk_free_rate_from_currency(currency):
+        region = CRiskFreeRate.get_region_name_from_currency(currency)
+
+
+    @staticmethod
+    def get_region_name_from_currency(currency):
+        pass
+
+
 
 class MSCIActivityPanel(object):
     def __init__(self):
@@ -80,13 +118,13 @@ class MSCIActivityPanel(object):
         assert type(start) == pd.Timestamp, 'Error in start date'
         assert type(end) == pd.Timestamp, 'Error in end date'
         assert start < end, 'Error in dates'
-        range = pd.date_range(start, end)
+        range = pd.date_range(start + pd.tseries.offsets.BDay(-1), end)
         return pd.DataFrame([True] * range.__len__(), index=range, columns=['X'])
 
 
     def __process_period_datetime(self, val):
 
-        range = pd.date_range(val, datetime.date.today())
+        range = pd.date_range(val + pd.tseries.offsets.BDay(-1), datetime.date.today())
         return pd.DataFrame([True] * range.__len__(), index=range, columns=['X'])
 
     @staticmethod
@@ -94,21 +132,23 @@ class MSCIActivityPanel(object):
         panel = MSCIActivityPanel()
         return panel._panels.get(index_name)
 
-class CRiskFreeRate(object):
+class CCompositeRate(object):
     def __init__(self,
                  index_ticker,
                  ):
 
+        self.ticker = index_ticker
         self._datasource = GlobalDataSource()
-        activity_panel = MSCIActivityPanel.get_activity_panel_single_index(index_ticker)
+        activity_panel = MSCIActivityPanel.get_activity_panel_single_index(self.ticker)
 
-        self.__regions = np.unique(activity_panel.columns.get_level_values('Region'))
+        self.__regions = np.unique(activity_panel.columns.get_level_values('MSCI Region'))
         self._info = pd.DataFrame(activity_panel.columns.to_frame().values,
-                                  columns=activity_panel.columns.names).set_index('Region', drop=True)
+                                  columns=activity_panel.columns.names).set_index('MSCI Region', drop=True)
         self._info = self._info[~self._info.index.duplicated(keep='first')]
 
         self._activity_panel = activity_panel.copy()
-        self._activity_panel.columns = activity_panel.columns.get_level_values('Region')
+        self._activity_panel.columns = activity_panel.columns.get_level_values('MSCI Region')
+        self.__load_constituent_data()
 
     @property
     def regions(self):
@@ -130,19 +170,9 @@ class CRiskFreeRate(object):
         return self._datasource.get_interest_rate_tickers(region, maturities=['ON','1m','3m'])
 
     def get_risk_free_rate_from_constituent_region(self, region):
-
-        rfr_tickers = self.get_constituent_region_rate_ticker(region)
-        rfr = CTimeSeries()
-
-        for ticker in rfr_tickers.ticker:
-            rfr = pd.concat((rfr, self._datasource.get_total_return_series_from_ticker(ticker)), axis=1)
-
-        nan_rows = np.all(rfr.isna(), axis=1)
-        rfr = rfr.get_periodic_returns(Frequency.BUSINESS_DAILY).mean(axis=1, skipna=True)
-
-        # be sure to put the nans back in
-        rfr[nan_rows] = np.nan
-        return rfr.to_frame((region, 'RFR'))
+        rfr = CRiskFreeRate.get_risk_free_for_region(self._info.loc[region].Region)
+        rfr.columns = pd.MultiIndex.from_tuples([(region, 'RFR')])
+        return rfr.copy()
 
     def get_constituent_region_MV(self, region):
         ticker = self.get_constituent_region_dollar_ticker(region)
@@ -179,24 +209,6 @@ class CRiskFreeRate(object):
         idx = df_.dates < pd.to_datetime('2023-06-30')
         return df_[idx.values].copy()
 
-
-
-    def run_data_test_single_region(self, region):
-        rfr = self.get_risk_free_rate_from_constituent_region(region)
-        insert_dates = pd.date_range(rfr.index[0], rfr.index[-1])
-        rfr = rfr.reindex(insert_dates)
-
-        A = self.get_constituent_region_activity(region)
-
-        # Dates the index was active
-        dates_A = pd.to_datetime(A.index[A.values.flatten()])
-        dates_D = pd.to_datetime(rfr.index)
-        missing = np.setdiff1d(dates_A, dates_D)
-        if len(missing) > 0:
-            return pd.DataFrame([1]*len(missing), columns=[region], index=missing)
-        else:
-            return pd.DataFrame()
-
     def get_constituent_region_active_dates(self, region):
         dates = self.get_constituent_region_activity(region)
         b_days = np.logical_and(dates.index.dayofweek != 6,
@@ -211,20 +223,38 @@ class CRiskFreeRate(object):
 
         return pd.concat((MV, rfr), axis=1).dropna(axis=0)
 
-
-    def _construct_history(self):
+    def __load_constituent_data(self):
 
         df_ = CTimeSeries()
         for region in self.regions:
             print(region)
             df_ = pd.concat((df_, self.get_dataframe_for_constituent_region(region)), axis=1)
 
-        MVs = df_.loc[:, df_.columns._get_level_values(1) == 'MV']
-        mv_idx = self._datasource.get_dataframe_from_ticker('MSWRLD$', cols='MV')
+        self._panel = df_.copy()
+        self._index_market_value = df_.iloc[:, df_.columns.get_level_values(1) == 'MV'].sum(axis=1)
 
+    def get_constituent_region_weights_and_rates(self, region):
+        return ((self._panel.get(region).get('MV') / self._index_market_value).to_frame(region),
+                self._panel.get(region).get('RFR').to_frame(region))
 
+    def get_constituent_region_contribution(self, region):
+        wts, rts = self.get_constituent_region_weights_and_rates(region)
+        return wts.reindex(wts.index[0:-1]).values * rts.reindex(rts.index[1:])
+
+    def construct_history(self):
+
+        panel = pd.DataFrame()
+        for region in self.regions:
+            panel = pd.concat((panel, self.get_constituent_region_contribution(region)), axis=1)
+        self._rfr = panel.sum(axis=1).to_frame(self.ticker)
+
+    @staticmethod
+    def get_composite_risk_free_rate(index_name):
+        rfr = CCompositeRate(index_name)
+        rfr.construct_history()
+        return CTimeSeries(rfr._rfr, ts_type=TimeSeriesType.RETURNS)
 
 if __name__ == "__main__":
 
-   rfr = CRiskFreeRate('WORLD')
-   df = rfr.run_data_check()
+   rfr = CCompositeRate('ACWI')
+   rfr = CCompositeRate.get_composite_risk_free_rate('ACWI')

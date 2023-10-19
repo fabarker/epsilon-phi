@@ -81,6 +81,15 @@ class SessionMgr(object):
         else:
             return []
 
+    def get_bbid_from_region(self, region):
+        return self.getSessionFactory().query(CurrencyMapper.code).filter(CurrencyMapper.region == region).scalar()
+
+    def get_currency_from_region(self, region):
+        return self.getSessionFactory().query(CurrencyMapper.code).filter(CurrencyMapper.region == region).scalar()
+
+    def get_currency_name(self, code):
+        return self.getSessionFactory().query(CurrencyMapper.name).filter(CurrencyMapper.code == code).scalar()
+
     def is_column_in_table(self, table_name, column_name):
         return column_name in self.get_all_columns_in_table(table_name)
 
@@ -148,7 +157,7 @@ class SessionMgr(object):
 
     def get_dataframe_from_uid(self, uid: int):
         class_ = self.fetch_model_class_from_uid(uid)
-        cols = [ x.label(class_()._X) if x.name == 'X' else x for x in class_.__table__._columns.values() ]
+        cols = [x.label(class_()._X) if x.name == 'X' else x for x in class_.__table__._columns.values()]
         query = self.getSessionFactory().query(*cols).filter(class_.uid.in_([uid]))
 
         return self.query_format_df(query)
@@ -205,22 +214,24 @@ class SessionMgr(object):
         from sqlalchemy import func
         return self.getSessionFactory().query(func.max(TimeSeriesSpec.uid)).scalar()
 
-    def get_interest_rate_tickers(self, currency_region, maturity=None, type=None):
+    def get_interest_rates_for_region(self, region, maturity=None, type=None):
 
-        if self.getSessionFactory().query(
-                exists().where(InterestRateSpec.currency == currency_region)).scalar():
+        spec = self.get_interest_rate_tickers_from_region(region, maturity=maturity, type=type)
+        q = self.getSessionFactory().query(InterestRate).filter(InterestRate.uid.in_(spec.get('uid').values.flatten()))
+        res = self.query_format_df(q).drop(columns=['IB', 'RI', 'IO'])
+        res.set_index(['uid', 'date'], inplace=True)
+        df = res.mean(axis=1).to_frame('IR')
 
-            q = self.getSessionFactory().query(InterestRateSpec.ticker,
+        panel = pd.concat([df.loc[x] for x in np.unique(df.index.get_level_values(0))], axis=1)
+        panel.columns = pd.MultiIndex.from_frame(spec)
+        return panel.dropna(axis=1, how='all')
+
+    def get_interest_rate_tickers_from_region(self, region, maturity=None, type=None):
+
+        q = self.getSessionFactory().query(InterestRateSpec.uid,
+                                               InterestRateSpec.ticker,
                                                InterestRateSpec.maturity,
-                                               InterestRateSpec.type).filter(InterestRateSpec.currency.in_([currency_region]))
-        elif self.getSessionFactory().query(
-                exists().where(InterestRateSpec.region == currency_region)).scalar():
-
-            q = self.getSessionFactory().query(InterestRateSpec.ticker,
-                                               InterestRateSpec.maturity,
-                                               InterestRateSpec.type).filter(InterestRateSpec.region.in_([currency_region]))
-        else:
-            raise ValueError('Error - Currency or region {} not supported'.format(currency_region))
+                                               InterestRateSpec.type).filter(InterestRateSpec.region.in_([region]))
 
         if maturity is not None:
            if not DateUtils.is_iterable(maturity):
@@ -252,7 +263,13 @@ if __name__ == "__main__":
 
 
     sessionMgr = SessionMgr()
+    bbid = sessionMgr.get_bbid_from_region('United States')
     session = sessionMgr.getSessionFactory()
+
+
+
+
+
 
     provider = 'AQR'
     universe = 'Equity'

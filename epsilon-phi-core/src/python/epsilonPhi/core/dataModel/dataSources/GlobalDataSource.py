@@ -96,6 +96,10 @@ class GlobalDataSource(object):
                                                            maturities,
                                                            type)
 
+    def get_risk_free_rate_time_series(self, region):
+        from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
+        return CRiskFreeRate.get_risk_free_for_region(region)
+
     # Methods associated with currencies / FX
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, pricing_dates, maturity_dates, price_quotes)
@@ -172,14 +176,14 @@ class GlobalDataSource(object):
 if __name__ == "__main__":
 
     self = GlobalDataSource()
-    res = self.get_interest_rate_tickers('USD')
 
-    tickers = ['MSHWLD$','MSWRLD$','MSWRLDL','MSFXDW$']
+    tickers = ['MSMEXF$','WIMXCO$','IFGWMX$']
 
     df_ = pd.DataFrame()
     for ticker in tickers:
-        df = self.get_dataframe_from_ticker(ticker, cols='PI')
+        df = self.get_dataframe_from_ticker(ticker, cols='MV')
         df_ = pd.concat((df_, df), axis=1)
+    df_.to_clipboard()
 
 
 

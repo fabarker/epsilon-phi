@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, BigInteger, Float
+from sqlalchemy import Column, Integer, String, DateTime, BigInteger, Float, Boolean
 from epsilonPhi.core.lib.Decorators import auto_repr
 from epsilonPhi.core.dataModel.alchemist.BaseData import Base, TemporalMixIn
 from sqlalchemy.types import TypeDecorator, String
@@ -15,6 +15,19 @@ class FrequencyType(TypeDecorator):
         if value is None:
             return None
         return Frequency(value)
+
+@auto_repr
+class CurrencyMapper(Base):
+    __tablename__ = 'currency_mapper'
+
+    uid = Column(Integer, nullable=True, primary_key=True)
+    code = Column(String(3), nullable=True, primary_key=True)
+    name = Column(String(255), nullable=True, primary_key=True)
+    region = Column(String(255), nullable=True, primary_key=True)
+    code_imf = Column(String(6), nullable=True)
+    EUR_legacy = Column(Boolean, nullable=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'currency_mapper'}
 
 
 @auto_repr

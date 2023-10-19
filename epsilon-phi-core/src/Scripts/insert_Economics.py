@@ -1,3 +1,5 @@
+import numpy as np
+
 from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
@@ -9,10 +11,14 @@ import os
 nan = pd.pandas._libs.tslibs.nattype.NaTType
 session = SessionMgr().getSessionFactory()
 
-_SHEETNAME = 'Miners'
-df = pd.read_excel(r'/Users/francisbarker/Desktop/MSCI Data.xlsx', _SHEETNAME, index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
+df_xl = pd.read_excel(r'/Users/francisbarker/Desktop/Broker Dealer Balance Sheet.xlsx',
+                      sheet_name=['Broker-Dealer Balance Sheets'], index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10,11,12,13])
 
-unique_tickers = np.unique(df.columns.get_level_values(0))
+
+dfs = [df_xl.get(x) for x in df_xl.keys()]
+df = pd.concat(dfs, axis=1)
+
+unique_tickers = np.unique(df.columns.get_level_values('ticker'))
 
 for ticker in unique_tickers:
 
@@ -21,12 +27,14 @@ for ticker in unique_tickers:
         if not Bloomberg.is_ticker_in_database(ticker):
 
             try:
-                spec = EquityIndexSpec()
+                spec = EconomicSpec()
                 spec.category = col_.columns.get_level_values('category')[0]
                 spec.datasource = col_.columns.get_level_values('datasource')[0]
-                spec.denominated_currency = col_.columns.get_level_values('denominated_currency')[0]
-                spec.exposure_currency = col_.columns.get_level_values('exposure_currency')[0]
-                spec.hedge_ratio = int(col_.columns.get_level_values('hedge_ratio')[0])
+                spec.history = int(col_.columns.get_level_values('history')[0])
+                spec.indicator = col_.columns.get_level_values('indicator')[0]
+                spec.real = col_.columns.get_level_values('real')[0]
+                spec.sector = col_.columns.get_level_values('sector')[0]
+                spec.seasonal_adjustment = col_.columns.get_level_values('seasonal_adjustment')[0]
                 spec.name = col_.columns.get_level_values('name')[0]
                 spec.provider = col_.columns.get_level_values('provider')[0]
                 spec.region = col_.columns.get_level_values('region')[0]
@@ -44,7 +52,7 @@ for ticker in unique_tickers:
 
         try:
             uid = Bloomberg.get_uid_from_ticker(ticker)
-            db_dta = pd.read_sql('SELECT * FROM equity_index WHERE uid = "' + str(uid) + '";',
+            db_dta = pd.read_sql('SELECT * FROM interest_rate WHERE uid = "' + str(uid) + '";',
                                  con=SessionMgr().getEngine())
 
             # prepare excel data
@@ -58,24 +66,23 @@ for ticker in unique_tickers:
             dt_df = dt_df.drop_duplicates(subset='date', keep='first')
 
             if db_dta.size > 0:
-                db_dates = pd.to_datetime(db_dta.get('date').values)
-                xl_dates = pd.to_datetime(dt_df.get('date').values)
-                missing = np.setdiff1d(xl_dates, db_dates)
+               db_dates = pd.to_datetime(db_dta.get('date').values)
+               xl_dates = pd.to_datetime(dt_df.get('date').values)
+               missing = np.setdiff1d(xl_dates, db_dates)
             else:
-                missing = pd.to_datetime(dt_df.get('date').values)
+               missing = pd.to_datetime(dt_df.get('date').values)
 
             if len(missing) > 0:
                 for_db = dt_df.set_index('date', drop=True).reindex(missing)
-                for_db = for_db[['uid','RI','PI','DY','MV']]
+                for_db = for_db[['uid','X']]
                 for_db.index.name = 'date'
                 for_db = for_db.reset_index(drop=False)
-                for_db.to_sql(name='equity_index',
-                              con=SessionMgr().getEngine(),
-                              if_exists='append',
-                              index=False)
+                for_db.to_sql(name='economic',
+                             con=SessionMgr().getEngine(),
+                             if_exists='append',
+                             index=False)
                 print('Data added for {}'.format(ticker))
             else:
                 print('No data to add for ticker {}'.format(ticker))
         except:
             print('Error - could not add time series data info for ticker {}'.format(ticker))
-

@@ -11,7 +11,8 @@ import os
 nan = pd.pandas._libs.tslibs.nattype.NaTType
 session = SessionMgr().getSessionFactory()
 
-df_xl = pd.read_excel(r'/Users/francisbarker/Desktop/Thailand Rates Data.xlsx', sheet_name=['Sheet9'], index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
+df_xl = pd.read_excel(r'/Users/francisbarker/Desktop/Broker Dealer Balance Sheet.xlsx',
+                      sheet_name=['Broker-Dealer Balance Sheets'], index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
 
 
 dfs = [df_xl.get(x) for x in df_xl.keys()]
@@ -71,7 +72,7 @@ for ticker in unique_tickers:
 
             if len(missing) > 0:
                 for_db = dt_df.set_index('date', drop=True).reindex(missing)
-                for_db = for_db[['uid','IR','X','IO','IB','RI']]
+                for_db = for_db[['uid','IR']]
                 for_db.index.name = 'date'
                 for_db = for_db.reset_index(drop=False)
                 for_db.to_sql(name='interest_rate',

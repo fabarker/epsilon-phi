@@ -12,6 +12,9 @@ import time, os
 import subprocess
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 
+DS_USERNAME = 'ZGOL865'
+DS_PASSWORD = 'SOUTH366'
+
 #_DATA_PATH = os.path.join(os.environ.get('HOMEDRIVE'), os.environ.get('HOMEPATH'), 'Documents', 'Data')
 
 class DatatypeMapper(object):
@@ -92,7 +95,7 @@ class pyDatastream(object):
         frames = pd.DataFrame()
         for chunk in chunks:
             res = pyDatastream.pyds().fetch(chunk,
-                                            fields='DS.SRCE',
+                                            fields='ISOCUR',
                                             static=True)
             frames = pd.concat((frames, res))
         return frames
@@ -241,35 +244,21 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
+    tickers = ['ADBR090','','','']
 
-    tickers = ['USTBL1M','FRTCM1M']
-
-
-    fields = ['IO','IR','IB','RI','X']
-    from_date = datetime.date(year=1969, month=12, day=31)
+    fields = ['IR','RI']
+    from_date = datetime.date(year=1970, month=12, day=31)
     to_date = datetime.date.today()
 
     frames = pd.DataFrame()
     for ticker in tickers:
         frame = pyDatastream.fetch(ticker, fields, from_date=from_date, to_date=to_date, frequency='D')
-
-        if np.all(frame.index.day == 15):
-           frame.index = frame.index + pd.tseries.offsets.MonthBegin(-1)
-
         frame.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in frame.columns])
         frames = pd.concat((frames, frame), axis=1).dropna(how='all')
 
-
-    df_ = pd.DataFrame()
-    for ticker in tickers:
-        subset = frames.loc[ticker]
-        subset.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in subset.columns])
-        df_ = pd.concat((df_, subset), axis=1)
-    frame = df_.dropna(how='all')
-
-
-    res = pyDatastream.get_currency_ISO_from_tickers(tickers)
-    res = pyDatastream.get_name_from_tickers(tickers)
+    ISO = pyDatastream.get_currency_ISO_from_tickers(tickers)
+    name = pyDatastream.get_name_from_tickers(tickers)
+    source = pyDatastream.get_source_from_tickers(tickers)
 
 
 
