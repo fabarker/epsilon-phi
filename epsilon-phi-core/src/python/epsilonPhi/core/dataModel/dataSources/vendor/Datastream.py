@@ -12,9 +12,6 @@ import time, os
 import subprocess
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 
-DS_USERNAME = 'ZGOL865'
-DS_PASSWORD = 'SOUTH366'
-
 #_DATA_PATH = os.path.join(os.environ.get('HOMEDRIVE'), os.environ.get('HOMEPATH'), 'Documents', 'Data')
 
 class DatatypeMapper(object):
@@ -77,16 +74,13 @@ class pyDatastream(object):
         chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), int(np.floor(100/len(fields))))
         frames = pd.DataFrame()
         for chunk in chunks:
-            try:
-                res = pyDatastream.pyds(raise_on_error=False).fetch(chunk,
+            res = pyDatastream.pyds(raise_on_error=False).fetch(chunk,
                                                                     fields=fields,
                                                                     date_from=from_date,
                                                                     date_to=to_date,
                                                                     freq=frequency,
                                                                     always_multiindex=False)
-                frames = pd.concat((frames, res))
-            except:
-                pass
+            frames = pd.concat((frames, res))
         return frames
 
     @staticmethod
@@ -113,6 +107,17 @@ class pyDatastream(object):
 
     @staticmethod
     def get_source_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='DS.SRCE',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
+    def get_frequency_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
         chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
         frames = pd.DataFrame()
         for chunk in chunks:
@@ -255,15 +260,18 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    tickers = ['LIPCS00','AAOCS00','LSFCS00','LFACS00','LFCCS00','LFZCS00']
+    tickers = ['INPRATE.']
 
-    fields = ['L','OI','PH','PL','PO','PS','VM']
+
+
+    fields = ['IR','RI','X','IB','IO']
     from_date = datetime.date(year=1970, month=12, day=31)
     to_date = datetime.date.today()
+    res = pyDatastream.pyds(raise_on_error=False).fetch(tickers, 'NAME', return_metadata=True)
 
     frames = pd.DataFrame()
     for ticker in tickers:
-        frame = pyDatastream.fetch(ticker, fields, from_date=from_date, to_date=to_date, frequency='D')
+        frame = pyDatastream.fetch(ticker, fields, from_date=pd.Timestamp('2023-06-30 00:00:00'), frequency='D')
         frame.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in frame.columns])
         frames = pd.concat((frames, frame), axis=1).dropna(how='all')
 
