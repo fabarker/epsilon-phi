@@ -123,6 +123,17 @@ class pyDatastream(object):
         return frames
 
     @staticmethod
+    def get_latest_date_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='TIME',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
     def get_region(tickers):
         pass
 
@@ -244,9 +255,9 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    tickers = ['ADBR090','','','']
+    tickers = ['LIPCS00','AAOCS00','LSFCS00','LFACS00','LFCCS00','LFZCS00']
 
-    fields = ['IR','RI']
+    fields = ['L','OI','PH','PL','PO','PS','VM']
     from_date = datetime.date(year=1970, month=12, day=31)
     to_date = datetime.date.today()
 

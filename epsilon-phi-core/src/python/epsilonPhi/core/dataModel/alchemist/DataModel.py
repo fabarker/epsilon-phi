@@ -39,6 +39,7 @@ class TimeSeriesSpec(Base):
     category = Column(String(50), ForeignKey('category_table_mapping.category'), nullable=False)
     datasource = Column(String(50), nullable=True)
     symbol = Column(String(50), nullable=True)
+    frequency = Column(String(10), nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'time_series_spec'}
     __map = relationship("CategoryTableMapping", foreign_keys=[category], primaryjoin='TimeSeriesSpec.category == CategoryTableMapping.category')

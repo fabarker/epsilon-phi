@@ -176,6 +176,7 @@ class GlobalDataSource(object):
 if __name__ == "__main__":
 
     self = GlobalDataSource()
+    session = self._session
 
     tickers = ['MSMEXF$','WIMXCO$','IFGWMX$']
 
