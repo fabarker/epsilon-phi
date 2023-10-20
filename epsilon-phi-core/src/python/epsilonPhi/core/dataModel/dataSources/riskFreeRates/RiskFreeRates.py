@@ -1,6 +1,6 @@
 import datetime
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
-from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr, TimeSeriesSpec
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
 from epsilonPhi.core.utils.DateUtils import DateUtils
 import os
@@ -18,12 +18,13 @@ else:
 
 class CRiskFreeRate(object):
     _cache = dict()
-    _session = SessionMgr()
+    _sessionMgr = SessionMgr()
+    _session = _sessionMgr.getSessionFactory()
 
     @staticmethod
     def load_risk_free_rate(region):
 
-        df_rfrs = CRiskFreeRate._session.get_interest_rates_for_region(region, ['ON', '1M', '3M'])
+        df_rfrs = CRiskFreeRate._sessionMgr.get_interest_rates_for_region(region, ['ON', '1M', '3M'])
 
         df = pd.DataFrame()
         for col in df_rfrs.columns:
@@ -44,13 +45,11 @@ class CRiskFreeRate(object):
 
     @staticmethod
     def get_risk_free_rate_from_currency(currency):
-        region = CRiskFreeRate.get_region_name_from_currency(currency)
-
-
-    @staticmethod
-    def get_region_name_from_currency(currency):
-        pass
-
+        region = CRiskFreeRate._sessionMgr.get_region_from_currency(currency)
+        if region:
+            return CRiskFreeRate.get_risk_free_for_region(region)
+        else:
+            raise ValueError('Currency {} not supported'.format(currency))
 
 
 class MSCIActivityPanel(object):
@@ -256,5 +255,4 @@ class CCompositeRate(object):
 
 if __name__ == "__main__":
 
-   rfr = CCompositeRate('ACWI')
-   rfr = CCompositeRate.get_composite_risk_free_rate('ACWI')
+   rfr = CRiskFreeRate.get_risk_free_rate_from_currency('USD')
