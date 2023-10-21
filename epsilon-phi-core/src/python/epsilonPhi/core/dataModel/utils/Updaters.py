@@ -321,7 +321,7 @@ class Updater:
         elif datasource.lower() == 'gs':
             GSQUANT_UPDATER(table)
         else:
-            raise ValueError('Error - datasource {} not recognised')
+            print('datasource {} not recognised'.format(datasource))
 
     @staticmethod
     def _get_time_series_spec_for_table_datasource(table, datasource):
@@ -382,7 +382,31 @@ class DATASTREAM_UPDATER(Updater):
                                                              TimeSeriesSpec.uid == self._table.uid).\
                                                              filter(TimeSeriesSpec.symbol.in_(list(tickers))).\
                                                              group_by(TimeSeriesSpec.symbol).all()
-        return pd.DataFrame(res, columns=['symbol', 'last']).set_index('symbol')
+        return pd.DataFrame(res, columns=['symbol', 'start']).set_index('symbol')
+
+
+    @staticmethod
+    def _get_datastream_frequency(frequency):
+        if frequency in ['B','BD','D']:
+           return 'D'
+        elif frequency in ['M','MS','BM']:
+            return 'M'
+        else:
+            return frequency
+
+    def _filter_tickers_by_end_date(self, spec):
+
+        DB_LD = self._get_latest_observation_date_from_tickers(spec.index)
+        DS_LD = pyDatastream.get_latest_date_from_tickers(list(DB_LD.index))
+        DS_LD = DS_LD.replace('NA', pd.to_datetime(datetime.date(datetime.today())))
+
+        if 'MS' in spec.frequency.unique():
+            DS_LD.loc[spec.loc[spec.frequency == 'MS'].index] = (DS_LD.loc[spec.loc[spec.frequency == 'MS'].index] +
+                                                                 pd.tseries.offsets.MonthBegin(-1))
+
+        EDs = pd.concat((DB_LD, DS_LD), axis=1)
+        keep = EDs.index[(EDs.diff(axis=1).dropna(axis=1) > timedelta(1)).values.flatten()]
+        return DB_LD.loc[keep]
 
     def _setup(self):
 
@@ -392,42 +416,75 @@ class DATASTREAM_UPDATER(Updater):
 
         spec = self._get_time_series_spec_for_table_datasource(self._table,
                                                                      self._datasource)
-
-        DB_LD = self._get_latest_observation_date_from_tickers(spec.index)
-        DS_LD = pyDatastream.get_latest_date_from_tickers(list(DB_LD.index))
-
-        # for month start time series, shift the mid month datastream date back to the 1st
-        if 'MS' in spec.frequency.unique():
-            DS_LD.loc[spec.loc[spec.frequency == 'MS'].index] = (DS_LD.loc[spec.loc[spec.frequency == 'MS'].index] +
-                                                                 pd.tseries.offsets.MonthBegin(-1))
-
-        EDs = pd.concat((DB_LD, DS_LD), axis=1)
-        keep = EDs.index[(EDs.diff(axis=1).dropna(axis=1) > timedelta(1)).values.flatten()]
-
-        _spec = pd.concat((spec.loc[keep], DB_LD.loc[keep]), axis=1)
+        tickers = self._filter_tickers_by_end_date(spec)
+        _spec = pd.concat((spec.loc[tickers.index], tickers), axis=1)
         _spec.index.name = 'symbol'
-        self._spec = _spec.reset_index(drop=False).set_index('frequency')
-        self._frequencies = np.unique(self._spec.index)
+        self._spec = _spec.reset_index(drop=False).set_index('symbol')
+        self._frequencies = _spec.reset_index(drop=False).set_index('frequency')
+        self._unique_frequencies = np.unique(self._frequencies.index)
 
     def _query_datastream(self, query, freq, SD):
 
+        f = DATASTREAM_UPDATER._get_datastream_frequency(freq)
         return pyDatastream.fetch(query,
                                  fields=list(self._flds),
                                  from_date=SD,
-                                 frequency=freq)
+                                 frequency=f)
 
-    def _process_frame(self, df, symbol):
+    def run(self):
+        for freq in self._unique_frequencies:
+            F = self._frequencies.loc[freq]
+            if F.ndim == 1:
+                self.run_single_frequency(F.symbol, freq, F.start)
+            else:
+                self.run_single_frequency(list(F.symbol), freq, F.start.min())
+
+    def run_single_frequency(self, ticker_list, freq, SD):
+
+        _nested_list = ListUtils._nest_list(ticker_list, self._chunk_size)
+
+        ctr = 1
+        for list in _nested_list:
+            print(len(_nested_list) - ctr)
+            ctr += 1
+
+            df_ = self._query_datastream(list, freq, SD)
+
+            df_dtbs = pd.DataFrame()
+            unique_tickers = df_.index.get_level_values(0).unique()
+            for symbol in unique_tickers:
+                processed = self._process_frame(df_.loc[symbol].copy(), symbol, freq)
+                df_dtbs = pd.concat((df_dtbs, processed), axis=0)
+
+
+            if df_dtbs.size > 0:
+                df_sql = df_dtbs.reset_index(drop=True).dropna(how='all', axis=1)
+                if df_sql.size > 0:
+                   self.insert(df_sql)
+                else:
+                    pd.DataFrame(list).to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
+                    print('No data for add for time series ' + self._table_name)
+            else:
+                pd.DataFrame(list).to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
+                print('No data for add for time series ' + self._table_name)
+
+    def _process_frame(self, df, symbol, freq):
 
         # drop any rows that are all names
         df_ = df.dropna(how='all', axis=0)
 
         # rename the index to match the date col of the table
         df_.index.name = 'date'
-        df_.index = pd.to_datetime(df_.index)
+
+        if freq.upper() == 'MS':
+            df_.index = pd.to_datetime(df_.index) + pd.tseries.offsets.MonthBegin(-1)
+        else:
+            df_.index = pd.to_datetime(df_.index)
 
         # add the series uid to the table
         uid = int(self._spec.loc[symbol].uid)
-        df_['uid'] = uid
+        uids = pd.DataFrame([uid] * df_.shape[0], columns=['uid'], index=df_.index)
+        df_ = pd.concat((uids, df_), axis=1)
         df_ = df_.reset_index(drop=False)
 
         cols = np.setdiff1d(self._tbl_cols, df_.columns)
@@ -438,6 +495,11 @@ class DATASTREAM_UPDATER(Updater):
 
         # now drop any columns with all nans
         tbl_df = df_.dropna(how='all', axis=1)
+
+        if tbl_df.size == 0:
+            pd.DataFrame([symbol + ' NOT UPDATED']).to_csv(os.path.join(self._error_dir, symbol.replace(':', '_') +
+                                                                        datetime.now().strftime(" %m%d%Y %H%M%S%z")))
+            return pd.DataFrame()
 
         # Check if we have DSRI, DSDY in the frame
         if 'DSRI' in tbl_df.columns:
@@ -471,47 +533,10 @@ class DATASTREAM_UPDATER(Updater):
             print('Error adding data to database {}'.format(df.columns))
             df.to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
 
-    def run(self):
-
-        for freq in self._frequencies:
-            self.run_single_frequency(list(self._spec.loc[freq].symbol),
-                                      freq,
-                                      self._spec.loc[freq].get('last').min())
-
-    def run_single_frequency(self, ticker_list, freq, SD):
-
-        _nested_list = ListUtils._nest_list(ticker_list, self._chunk_size)
-
-        ctr = 1
-        for list in _nested_list:
-            print(len(_nested_list) - ctr)
-            ctr += 1
-
-            df_ = self._query_datastream(list, freq, SD)
-
-            df_dtbs = pd.DataFrame()
-            unique_tickers = df_.index.get_level_values(0).unique()
-            for symbol in unique_tickers:
-                processed = self._process_frame(df_.loc[symbol], symbol)
-                df_dtbs = pd.concat((df_dtbs, processed), axis=0)
-
-
-            if df_dtbs.size > 0:
-                df_sql = df_dtbs.reset_index(drop=True).dropna(how='all', axis=1)
-                if df_sql.size > 0:
-                   self.insert(df_sql)
-                else:
-                    pd.DataFrame(list).to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
-                    print('No data for add for time series ' + self._table_name)
-            else:
-                pd.DataFrame(list).to_csv(os.path.join(self._error_dir, datetime.now().strftime("%m%d%Y %H%M%S%z")))
-                print('No data for add for time series ' + self._table_name)
-
-
 
 if __name__ == "__main__":
 
-    table_names = ['interest_rate', 'commodity_index', 'equity_index', 'etf', 'future', 'hedge_fund_index', 'interest_rate', 'yield_curve']
+    table_names = ['commodity_index','hedge_fund_index', 'yield_curve']
     for table in table_names:
         Updater.update_table_data(table)
 

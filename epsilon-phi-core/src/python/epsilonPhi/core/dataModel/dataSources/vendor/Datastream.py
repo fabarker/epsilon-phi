@@ -46,6 +46,8 @@ class Freq(object):
 
 class pyDatastream(object):
 
+
+    _cache = None
     _CREDENTIALS = list()
     _CREDENTIALS.extend([('ZGOL433','ATLAS802'),
                          ('ZGSC304','TORCH863'),
@@ -54,15 +56,40 @@ class pyDatastream(object):
                          ('ZGDP339','ALPHA198')])
 
     @staticmethod
-    def pyds(raise_on_error=True):
-        return pyds(username=DS_USERNAME,
-                    password=DS_PASSWORD,
-                    proxy=None,
-                    raise_on_error=raise_on_error)
+    def pyds(raise_on_error=False):
+
+        if pyDatastream._cache is None:
+            pyDatastream._cache = pyds(username=DS_USERNAME,
+                        password=DS_PASSWORD,
+                        proxy=None,
+                        raise_on_error=raise_on_error)
+        return pyDatastream._cache
 
     @staticmethod
     def get_usage(months=12):
         return pyDatastream.pyds().usage_statistics(months=months)
+
+    @staticmethod
+    def get_max_instruments_per_call(data_types):
+
+        MAX_INSTRUMENTS = 50
+        MAX_DATATYPES = 50
+        MAX_PROD = 100
+
+        if data_types is None:
+            return int(MAX_INSTRUMENTS)
+
+        if isinstance(data_types, str):
+           data_types = [datetime]
+
+        N = len(data_types)
+        if N == 0:
+           return int(MAX_INSTRUMENTS)
+        elif N > MAX_DATATYPES:
+           raise ValueError('Error - number of datatypes exceeds maximum datatypes')
+
+        max_instruments = MAX_PROD // N
+        return int(min(MAX_INSTRUMENTS, max_instruments))
 
     @staticmethod
     def fetch(tickers: Optional[Union[list, np.array, str]] = None,
@@ -71,15 +98,17 @@ class pyDatastream(object):
               to_date: Optional[dt.date] = None,
               frequency: Optional[str] = None) -> pd.DataFrame:
 
-        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), int(np.floor(100/len(fields))))
+        N = pyDatastream.get_max_instruments_per_call(fields)
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), N)
+
         frames = pd.DataFrame()
         for chunk in chunks:
             res = pyDatastream.pyds(raise_on_error=False).fetch(chunk,
-                                                                    fields=fields,
-                                                                    date_from=from_date,
-                                                                    date_to=to_date,
-                                                                    freq=frequency,
-                                                                    always_multiindex=False)
+                                                                fields=fields,
+                                                                date_from=from_date,
+                                                                date_to=to_date,
+                                                                freq=frequency,
+                                                                always_multiindex=True)
             frames = pd.concat((frames, res))
         return frames
 
@@ -107,17 +136,6 @@ class pyDatastream(object):
 
     @staticmethod
     def get_source_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
-        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
-        frames = pd.DataFrame()
-        for chunk in chunks:
-            res = pyDatastream.pyds().fetch(chunk,
-                                            fields='DS.SRCE',
-                                            static=True)
-            frames = pd.concat((frames, res))
-        return frames
-
-    @staticmethod
-    def get_frequency_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
         chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
         frames = pd.DataFrame()
         for chunk in chunks:
@@ -261,13 +279,12 @@ class pyDatastreamFO(object):
 if __name__ == "__main__":
 
     tickers = ['INPRATE.']
-
-
+    res = pyDatastream.pyds().usage_statistics(months=12)
 
     fields = ['IR','RI','X','IB','IO']
-    from_date = datetime.date(year=1970, month=12, day=31)
+    from_date = datetime.date(year=2022, month=12, day=31)
     to_date = datetime.date.today()
-    res = pyDatastream.pyds(raise_on_error=False).fetch(tickers, 'NAME', return_metadata=True)
+    res = pyDatastream.get_name_from_tickers(tickers)
 
     frames = pd.DataFrame()
     for ticker in tickers:
