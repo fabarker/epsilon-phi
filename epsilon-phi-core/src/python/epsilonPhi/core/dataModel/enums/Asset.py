@@ -17,9 +17,7 @@ class PrivateAsset(Enum):
     ENERGY = 'Energy'
 
 class RiskFreeMap(Enum):
+    pass
 
-    MSCI_WORLD = 'MSWRLDL'
-
-    AUD = 'ADBR090,AUPRIMF'
 
 

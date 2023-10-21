@@ -84,6 +84,9 @@ class SessionMgr(object):
     def get_bbid_from_region(self, region):
         return self.getSessionFactory().query(CurrencyMapper.code).filter(CurrencyMapper.region == region).scalar()
 
+    def get_region_from_currency(self, currency):
+        return self.getSessionFactory().query(CurrencyMapper.region).filter(CurrencyMapper.code == currency.upper()).scalar()
+
     def get_currency_from_region(self, region):
         return self.getSessionFactory().query(CurrencyMapper.code).filter(CurrencyMapper.region == region).scalar()
 
@@ -213,6 +216,9 @@ class SessionMgr(object):
     def get_max_uid(self):
         from sqlalchemy import func
         return self.getSessionFactory().query(func.max(TimeSeriesSpec.uid)).scalar()
+
+    def get_inflation_rates_for_region(self, region):
+        pass
 
     def get_interest_rates_for_region(self, region, maturity=None, type=None):
 

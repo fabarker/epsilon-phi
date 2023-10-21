@@ -1,0 +1,10 @@
+from enum import Enum
+
+class FACTOR(Enum):
+
+    EQUITY_GLOBAL_ISG = 1
+    TERM_GLOBAL_ISG = 2
+    FUNDING_US_ISG = 3
+    LIQUIDITY_US_PS = 4
+    CARRY_GLOBAL_ISG = 5
+    EQUITY_EMERGING_ISG = 6

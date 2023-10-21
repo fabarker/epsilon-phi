@@ -16,13 +16,20 @@ else:
     DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/')+ len('epsilon-phi-core/')],
                         'src/resources/templates/MSCI Index Construction.xlsx')
 
+_COMPOSITE_RATES = ['World','Pacific ex-Japan','Pacific','European Union','Europe ex-UK','Europe','EMU','EM Latin America','EM Europe and Middle East','EM Europe','EM Asia','EM','AC World ex-US']
+
 class CRiskFreeRate(object):
     _cache = dict()
     _sessionMgr = SessionMgr()
     _session = _sessionMgr.getSessionFactory()
 
     @staticmethod
-    def load_risk_free_rate(region):
+    def load_composite_risk_free_rate(region):
+        CRiskFreeRate._cache[region] = CCompositeRate.get_composite_risk_free_rate(region)
+
+
+    @staticmethod
+    def load_standard_risk_free_rate(region):
 
         df_rfrs = CRiskFreeRate._sessionMgr.get_interest_rates_for_region(region, ['ON', '1M', '3M'])
 
@@ -35,6 +42,13 @@ class CRiskFreeRate(object):
         rfrs = -1 + np.power(1 + df.mean(axis=1).to_frame(region), 1 / DateUtils.days_per_year)
         lvls = CTimeSeries(rfrs, ts_type=TimeSeriesType.RETURNS).get_levels().resample('B').asfreq()
         CRiskFreeRate._cache[region] = lvls.fillna(1).get_returns()
+
+    @staticmethod
+    def load_risk_free_rate(region):
+        if region in _COMPOSITE_RATES:
+           CRiskFreeRate.load_composite_risk_free_rate(region)
+        else:
+           CRiskFreeRate.load_standard_risk_free_rate(region)
 
     @staticmethod
     def get_risk_free_for_region(region):
@@ -132,6 +146,7 @@ class MSCIActivityPanel(object):
         return panel._panels.get(index_name)
 
 class CCompositeRate(object):
+
     def __init__(self,
                  index_ticker,
                  ):
@@ -255,4 +270,4 @@ class CCompositeRate(object):
 
 if __name__ == "__main__":
 
-   rfr = CRiskFreeRate.get_risk_free_rate_from_currency('USD')
+   rfr = CRiskFreeRate.get_risk_free_for_region('World')

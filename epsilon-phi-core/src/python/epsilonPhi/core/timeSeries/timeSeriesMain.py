@@ -97,8 +97,10 @@ class CSlice(pd.Series):
     def frequency(self):
         if self.index.freq:
             return self.index.freq
-        else:
+        elif self.index.inferred_freq:
             return self.index.inferred_freq
+        else:
+            return DateUtils.get_daterange_frequency(self.index)
 
     @property
     def attributes(self):
@@ -221,7 +223,11 @@ class CSlice(pd.Series):
         self.insert_dates(insert_dates)
 
     def insert_dates(self, dates):
-        self._cast_derived_class(self.reindex(self.index.append(dates).unique()).sort_index())
+        df_ = self.reindex(self.index.append(dates).unique()).sort_index()
+        if self.is_levels:
+            self._cast_derived_class(df_.ffill())
+        else:
+            self._cast_derived_class(df_.fillna(0))
 
     def intersect_over_dates(self, df):
         common_dates = np.intersect1d(self.dates, df.index)
@@ -558,7 +564,12 @@ class CTimeSeries(pd.DataFrame):
         self.insert_dates(insert_dates)
 
     def insert_dates(self, dates):
-        self._cast_derived_class(self.reindex(self.index.append(dates).unique()).sort_index())
+
+        df_ = self.reindex(self.index.append(dates).unique()).sort_index()
+        if self.is_levels:
+           self._cast_derived_class(df_.ffill())
+        else:
+           self._cast_derived_class(df_.fillna(0))
 
     def intersect_over_dates(self, df):
         common_dates = np.intersect1d(self.dates, df.index)

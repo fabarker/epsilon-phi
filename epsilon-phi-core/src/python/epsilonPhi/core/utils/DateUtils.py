@@ -157,6 +157,9 @@ class DateUtils(object):
            return None
 
         minDateDiff = np.min(np.diff(date_range))
+        if isinstance(minDateDiff, np.timedelta64):
+            minDateDiff = int(minDateDiff / np.timedelta64(1,'D'))
+
         if minDateDiff == 1:
             return 'D'
         elif 5 <= minDateDiff and minDateDiff <= 7:

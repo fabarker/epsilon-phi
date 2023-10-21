@@ -96,6 +96,10 @@ class GlobalDataSource(object):
                                                            maturities,
                                                            type)
 
+    def get_risk_free_rate_for_currency_region(self, currency):
+        from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
+        return CRiskFreeRate.get_risk_free_rate_from_currency(currency)
+
     def get_risk_free_rate_time_series(self, region):
         from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
         return CRiskFreeRate.get_risk_free_for_region(region)

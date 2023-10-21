@@ -1,4 +1,5 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.asset.CAssetInf import CAssetInf
@@ -60,7 +61,7 @@ class CAsset(CTimeSeries, CAssetInf):
                               ts_type=kwargs.get('ts_type', None))
 
     def get_risk_free_asset(self):
-        return self._assetMgr.get_risk_free_asset(self.denominated_currency)
+        return self.assetMgr.get_risk_free_asset(self.denominated_currency)
 
     def get_alpha(self):
         pass
@@ -69,16 +70,16 @@ class CAsset(CTimeSeries, CAssetInf):
         pass
 
     def get_historical_sharpe_ratio(self):
-        pass
+        return EstimationMgr.get_historical_Sharpe_ratio(self)
 
     def get_historical_volatility(self):
-        pass
+        return EstimationMgr.get_historical_volatility(self)
 
     def get_historical_risk_premium(self):
-        pass
+        return EstimationMgr.get_historical_risk_premia(self)
 
     def get_excess_return_df(self):
-        pass
+        return EstimationMgr.get_excess_return_timeseries(self)
 
     def get_Sharpe_ratio(self):
         pass

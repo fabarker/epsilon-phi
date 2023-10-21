@@ -54,6 +54,7 @@ class CAssetMgr(CAssetMgrInf):
         assert len(df_.columns) == 1, 'Error - dataframe must be single return time series'
 
         ts_ = CTimeSeries(df_, ts_type=ts_type)
+        ts_.insert_dates(schema.dates)
 
         if ts_type == TimeSeriesType.LEVELS:
             return ts_.get_levels().reindex(schema.dates)
@@ -94,10 +95,14 @@ class CAssetMgr(CAssetMgrInf):
                                                                       TimeSeriesType.RETURNS)
 
     def get_risk_free_asset(self, currency):
-        risk_free = self._schema.get_risk_free_rate_ticker(currency,
-                                                           self._schema.frequency,
-                                                           self._schema.dataversion)
-        return self.get_asset_by_name(risk_free)
+        from epsilonPhi.core.asset.Asset import CAsset
+        risk_free = GlobalDataSource().get_risk_free_rate_for_currency_region(currency)
+        risk_free.columns = [currency + '_RFR']
+
+        return CAsset(schema=self._schema,
+                       dataframe=risk_free,
+                       denominated_currency=currency,
+                       exposure_currency=currency)
 
 if __name__ == "__main__":
 
@@ -108,8 +113,7 @@ if __name__ == "__main__":
                             end_date='31-Dec-2022').create_context()
 
     assetMgr = CAssetMgr(schema)
-
-    spx = assetMgr.get_asset_by_name('S&PCOMP')
     rfr = assetMgr.get_risk_free_asset('GBP')
+    CPI = assetMgr.get_asset_by_name('USCCPI..E')
 
 

@@ -20,9 +20,9 @@ class TimeSeriesUtils(object):
             if 'TR' in col:
                 ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_TR(df_col))
             elif 'RY' in col:
-                return TimeSeriesUtils.RI_from_RY(df_col)
+                pass
             elif 'YTW' in col:
-                return TimeSeriesUtils.RI_from_YTW(df_col)
+                pass
             elif 'RI' in col:
                 ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_RI(df_col))
             elif 'IN' in col:
