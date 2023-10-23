@@ -17,6 +17,7 @@ else:
                         'src/resources/templates/MSCI Index Construction.xlsx')
 
 _COMPOSITE_RATES = ['World','Pacific ex-Japan','Pacific','European Union','Europe ex-UK','Europe','EMU','EM Latin America','EM Europe and Middle East','EM Europe','EM Asia','EM','AC World ex-US']
+_EUR_START_DATE = '1-Jan-1999'
 
 class CRiskFreeRate(object):
     _cache = dict()
@@ -27,26 +28,44 @@ class CRiskFreeRate(object):
     def load_composite_risk_free_rate(region):
         CRiskFreeRate._cache[region] = CCompositeRate.get_composite_risk_free_rate(region)
 
-
     @staticmethod
-    def load_standard_risk_free_rate(region):
+    def construct_risk_free_rate(region):
 
         df_rfrs = CRiskFreeRate._sessionMgr.get_interest_rates_for_region(region, ['ON', '1M', '3M'])
 
         df = pd.DataFrame()
         for col in df_rfrs.columns:
-            df_col = df_rfrs.get(col).dropna().to_frame(col)/100
+            df_col = df_rfrs.get(col).dropna().to_frame(col) / 100
             df = pd.concat((df, df_col.reindex(pd.date_range(df_col.index.min(),
-                                              df_col.index.max())).ffill()), axis=1)
+                                                             df_col.index.max())).ffill()), axis=1)
 
         rfrs = -1 + np.power(1 + df.mean(axis=1).to_frame(region), 1 / DateUtils.days_per_year)
-        lvls = CTimeSeries(rfrs, ts_type=TimeSeriesType.RETURNS).get_levels().resample('B').asfreq()
+        return CTimeSeries(rfrs, ts_type=TimeSeriesType.RETURNS).get_levels().resample('B').asfreq()
+
+
+    @staticmethod
+    def load_standard_risk_free_rate(region):
+        lvls = CRiskFreeRate.construct_risk_free_rate(region)
         CRiskFreeRate._cache[region] = lvls.fillna(1).get_returns()
+
+    @staticmethod
+    def load_EUR_risk_free_rate():
+
+        DEM = CRiskFreeRate.construct_risk_free_rate('Germany').get_returns()
+        DEM.columns =['Eurozone']
+        EUR = CRiskFreeRate.construct_risk_free_rate('Eurozone').get_returns()
+
+        CRiskFreeRate._cache['Eurozone'] = pd.concat((EUR[_EUR_START_DATE:],
+                                       DEM[DEM.index < _EUR_START_DATE]),
+                                       axis=0).sort_index()
+
 
     @staticmethod
     def load_risk_free_rate(region):
         if region in _COMPOSITE_RATES:
            CRiskFreeRate.load_composite_risk_free_rate(region)
+        elif region.lower() in ['eurozone', 'emu', 'european union']:
+            CRiskFreeRate.load_EUR_risk_free_rate()
         else:
            CRiskFreeRate.load_standard_risk_free_rate(region)
 
@@ -270,4 +289,4 @@ class CCompositeRate(object):
 
 if __name__ == "__main__":
 
-   rfr = CRiskFreeRate.get_risk_free_for_region('World')
+   rfr = CRiskFreeRate.get_risk_free_for_region('Eurozone')
