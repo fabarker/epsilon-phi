@@ -1,8 +1,8 @@
-
 import numpy as np
 import pandas as pd
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.lib.bonds.BondUtils import BondUtils
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 
 class TimeSeriesUtils(object):
@@ -20,7 +20,7 @@ class TimeSeriesUtils(object):
             if 'TR' in col:
                 ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_TR(df_col))
             elif 'RY' in col:
-                pass
+                ts_rtns = ts_rtns.concat(BondUtils.convertYield(df_col, 10))
             elif 'YTW' in col:
                 pass
             elif 'RI' in col:

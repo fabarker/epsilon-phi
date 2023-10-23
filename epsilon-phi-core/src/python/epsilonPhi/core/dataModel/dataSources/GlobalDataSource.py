@@ -64,6 +64,16 @@ class GlobalDataSource(object):
         df_.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in df_.columns.get_level_values(1)])
         return df_.copy()
 
+    def get_dataframe_from_tickers(self, tickers: list, cols=None, index_col=None):
+
+        if not DateUtils.is_iterable(tickers) and isinstance(tickers, str):
+           tickers = [tickers]
+
+        df_ = pd.DataFrame()
+        for ticker in tickers:
+            df_ = pd.concat((df_, self.get_dataframe_from_ticker(ticker, cols, index_col)), axis=1)
+        return df_.copy()
+
 
     # Methods associated with loading raw time series
     def get_time_series_data_from_uid(self, uid, cols=None):

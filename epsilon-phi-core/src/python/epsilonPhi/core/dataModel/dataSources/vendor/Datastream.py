@@ -278,19 +278,18 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    tickers = ['INPRATE.']
-    res = pyDatastream.pyds().usage_statistics(months=12)
 
-    fields = ['IR','RI','X','IB','IO']
-    from_date = datetime.date(year=2022, month=12, day=31)
+    tickers = ['ITLGLTB','FRNGLTB','TRBD10T','TRJP10T','CN13867','CN13895','TRUK10T','TRUS10T']
+
+    fields = ['RY','X']
+    from_date = datetime.date(year=1950, month=12, day=31)
     to_date = datetime.date.today()
-    res = pyDatastream.get_name_from_tickers(tickers)
 
     frames = pd.DataFrame()
     for ticker in tickers:
-        frame = pyDatastream.fetch(ticker, fields, from_date=pd.Timestamp('2023-06-30 00:00:00'), frequency='D')
+        frame = pyDatastream.fetch(ticker, fields, from_date=from_date, frequency='D')
         frame.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in frame.columns])
-        frames = pd.concat((frames, frame), axis=1).dropna(how='all')
+        frames = pd.concat((frames, frame.loc[ticker]), axis=1).dropna(how='all')
 
     ISO = pyDatastream.get_currency_ISO_from_tickers(tickers)
     name = pyDatastream.get_name_from_tickers(tickers)

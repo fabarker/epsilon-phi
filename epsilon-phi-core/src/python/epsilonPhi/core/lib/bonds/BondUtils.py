@@ -69,11 +69,11 @@ class BondUtils(object):
 
 if __name__ == "__main__":
 
-    ticker = 'BMUS10Y'
+    ticker = ['TRUK1MT','TRUK3MT','TRUK10T']
     from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 
     gds = GlobalDataSource()
-    df = gds.get_dataframe_from_ticker(ticker)
+    df = gds.get_dataframe_from_tickers(ticker)
     df_M = df.reindex(pd.date_range(df.index.min(), df.index.max(), freq='BM'))
 
     returns = BondUtils.convertYield(df.get(ticker).get('RY').to_frame('RY'), maturity=10)
