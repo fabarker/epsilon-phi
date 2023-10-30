@@ -1,5 +1,12 @@
 from enum import Enum
 
+class Datatype(Enum):
+
+    RETURN_INDEX = 'RI'
+    TOTAL_RETURN = 'TOTR'
+    PRICE_INDEX = 'PI'
+
+
 class Provider(Enum):
     WMR = 'WM/Refinitiv'
     REFINITIV = 'Refinitiv'

@@ -19,10 +19,11 @@ class CEquity(CConstructedFactor):
         df_d = EQ_D.get_excess_return_df()
 
         # Local Equity Market
-        EQ_L = self._factorMgr.get_asset_by_name('MSWRLDL')
+        EQ_L = self._factorMgr.get_asset_by_name('MSWRLD$')
         df_l = EQ_L.get_excess_return_df()
 
         df = 0.5 * (df_l + df_d)
+        df.columns = ['Equity']
         self._cast_derived_class(df)
 
 if __name__ == "__main__":

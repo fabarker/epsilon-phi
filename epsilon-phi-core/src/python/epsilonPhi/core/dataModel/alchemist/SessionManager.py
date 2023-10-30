@@ -220,6 +220,20 @@ class SessionMgr(object):
     def get_inflation_rates_for_region(self, region):
         pass
 
+    def get_yield_curve_tickers_for_region(self, region):
+
+        q = self.getSessionFactory().query(YieldCurveSpec.uid,
+                                           YieldCurveSpec.ticker,
+                                           YieldCurveSpec.maturity,
+                                           YieldCurveSpec.type).filter(YieldCurveSpec.region.in_([region]))
+        return self.query_format_df(q).set_index('uid')
+
+    def get_govt_bond_tickers_for_region(self, region, maturity):
+        session = self.getSessionFactory()
+        return session.query(BondIndexSpec.ticker).filter(BondIndexSpec.region == region,
+                                                BondIndexSpec.sector == 'Govt',
+                                                BondIndexSpec.maturity == maturity).scalar()
+
     def get_interest_rates_for_region(self, region, maturity=None, type=None):
 
         spec = self.get_interest_rate_tickers_from_region(region, maturity=maturity, type=type)
@@ -271,3 +285,4 @@ if __name__ == "__main__":
 
     sessionMgr = SessionMgr()
     session = sessionMgr.getSessionFactory()
+    tickers = sessionMgr.get_yield_curve_tickers_for_region('United Kingdom')

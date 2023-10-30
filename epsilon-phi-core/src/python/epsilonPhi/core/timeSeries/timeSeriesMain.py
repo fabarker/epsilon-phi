@@ -137,18 +137,18 @@ class CSlice(pd.Series):
         idx_nan = self.isna().values
         if self.returns_type in [ReturnsType.SIMPLE,
                                  ReturnsType.SIMPLE.value]:
-            newobj = (1 + self.fillna(0)).cumprod(axis=0)
+            newobj = (1 + self).cumprod(axis=0)
         elif self.returns_type in [ReturnsType.LOG,
                                    ReturnsType.LOG.value]:
-            newobj = np.exp(self.fillna(0)).cumsum(axis=0)
+            newobj = np.exp(self).cumsum(axis=0)
         elif self.returns_type in [ReturnsType.DIFFERENCE,
                                    ReturnsType.DIFFERENCE.value]:
-            newobj = self.fillna(0).cumsum(axis=0)
+            newobj = self.cumsum(axis=0)
         else:
             raise ValueError('ERROR: {} not supported'.format(self.returns_type))
 
         newobj.values[idx_nan] = np.nan
-        newobj.insert_date_val(DateUtils.shift_date(newobj.dates[0], newobj.frequency, -1),1)
+        newobj.insert_date_val(DateUtils.shift_date(self.first_valid_index(), newobj.frequency, -1), 1)
         return self._create_new_levels_object(newobj, attributes=self.attributes)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
@@ -224,10 +224,7 @@ class CSlice(pd.Series):
 
     def insert_dates(self, dates):
         df_ = self.reindex(self.index.append(dates).unique()).sort_index()
-        if self.is_levels:
-            self._cast_derived_class(df_.ffill())
-        else:
-            self._cast_derived_class(df_.fillna(0))
+        self._cast_derived_class(df_)
 
     def intersect_over_dates(self, df):
         common_dates = np.intersect1d(self.dates, df.index)
@@ -602,6 +599,9 @@ class CTimeSeries(pd.DataFrame):
     def get_quarter_ends(self):
         return self.get_period_ends(Frequency.QUARTERLY)
 
+    def get_bquarter_ends(self):
+        return self.get_period_ends(Frequency.BUSINESS_QUARTERLY)
+
     def get_year_ends(self):
         return self.get_period_ends(Frequency.YEARLY)
 
@@ -628,6 +628,12 @@ class CTimeSeries(pd.DataFrame):
 
     def get_quarterly_returns(self):
         return self.get_periodic_returns(Frequency.QUARTERLY)
+
+    def get_bquarterly_levels(self):
+        return self.get_periodic_levels(Frequency.BUSINESS_QUARTERLY)
+
+    def get_bquarterly_returns(self):
+        return self.get_periodic_returns(Frequency.BUSINESS_QUARTERLY)
 
     def get_annual_levels(self):
         return self.get_periodic_levels(Frequency.YEARLY)

@@ -1,18 +1,32 @@
-from PIL import Image, ImageFile
+from PIL import Image, ImageFilter, ImageFile
 import pytesseract
 import pandas as pd
 import re
 import cv2
+from PIL import Image
 import datetime
 import numpy as np
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-path = r'C:\ProgramFiles\Tesseract - OCR'
-#pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+path = r'C:\Program Files\Tesseract-OCR'
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def extract_text_from_image(image_path):
-    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    text = pytesseract.image_to_string(img)
+    img = Image.open(image_path)
+    img_gray = img.convert('L')
+
+    # Convert image to numpy array and threshold to get a binary image
+    np_img = np.array(img_gray)
+    _, binary_img = cv2.threshold(np_img, 128, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # Convert binary image back to PIL format for further processing
+    pil_img = Image.fromarray(binary_img)
+
+    # Optionally apply a median filter for denoising
+    denoised_img = pil_img.filter(ImageFilter.MedianFilter(size=3))
+
+    # OCR using pytesseract
+    text = pytesseract.image_to_string(pil_img)
     return text
 
 
@@ -35,8 +49,16 @@ def is_year(string):
 
 
 def text_to_dataframe(text):
-    lines = np.array(text.replace('\n\n', '\n').replace("|", "").split('\n'))
-    bl = np.array([is_year(x) for x in lines])
+    lines = text.split('\n')
+
+    df = pd.DataFrame()
+    for line in lines:
+        splt = [re.sub(r'\s+', '', x).replace('_','') for x in line.split('|')]
+        df_row = pd.DataFrame(splt).T
+        df = pd.concat((df, df_row), axis=0)
+
+
+    nwlines = '|'.join(stripped).replace('||','|').replace('--','-').split('|')
 
     data = []
 
@@ -57,8 +79,24 @@ def text_to_dataframe(text):
     return pd.DataFrame(data, columns=columns)
 
 if __name__ == "__main__":
-    image_path = "/Users/francisbarker/Desktop/GFD 10 Year Yields/GBP/IMG_3484.jpg"
-    extracted_text = extract_text_from_image(image_path)
-    df = text_to_dataframe(extracted_text)
-    print(df)
+
+    data_path = r'C:\Users\fabar\OneDrive\Desktop\GFD\GFD 10 Year Yields.xlsx'
+    df = pd.read_excel(data_path, sheet_name=None, index_col=0)
+
+    data = pd.DataFrame()
+    for region in df.keys():
+        df_r = df.get(region)
+
+        df_region = pd.DataFrame()
+        for year, row in df_r.iterrows():
+            row_nans = row.dropna()
+            row_nans.index = [datetime.date(year=int(year), month=int(x), day=1) for x in row_nans.index]
+            df_region = pd.concat((df_region, row_nans), axis=0)
+        df_region.columns = [region]
+        df_region = df_region[~df_region.index.duplicated(keep='first')]
+        df_region.index = pd.to_datetime(df_region.index)
+        data = pd.concat((data, df_region), axis=1)
+    data.index = pd.to_datetime(data.index)
+    data = data.sort_index()
+    data.to_clipboard()
 
