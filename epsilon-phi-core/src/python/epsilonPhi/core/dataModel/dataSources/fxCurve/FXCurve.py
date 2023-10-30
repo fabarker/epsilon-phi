@@ -151,7 +151,7 @@ class FXCurve(object):
             for provider in self.provider:
                 tmp = mat_df.get(provider, pd.DataFrame(columns=mat_df.columns))
                 tmp.columns = tmp.columns.droplevel('uid')
-                df_p = tmp.groupby(lambda x: x, axis=1).first().dropna(how='all', axis=0)
+                df_p = tmp.T.groupby(lambda x: x).first().T.dropna(how='all')
                 curve_df = curve_df.combine_left(df_p)
 
         curve_df.columns = pd.MultiIndex.from_tuples(curve_df.columns)
@@ -257,13 +257,8 @@ class FXCurve(object):
 
 if __name__ == "__main__":
 
-    curve = FXCurve(provider=Provider.GS, pricing_location=PricingLocation.NEW_YORK)
-    df_ = curve.get_fx_curves('EUR/GBP')
+    _G_10_CURRENCIES = ['AUD', 'CAD', 'DKK', 'JPY', 'NZD', 'NOK', 'SEK', 'CHF', 'GBP', 'DEM', 'FRF', 'ITL', 'NLG', 'BEF']
+    CURRENCY_PAIRS = [x + '/USD' for x in _G_10_CURRENCIES]
 
-    #pricing_dates = pd.date_range('31-Dec-2021', '30-Dec-2022')
-    #maturity_dates = pd.to_datetime(['30-Dec-2022'] * pricing_dates.__len__())
-
-    #fwds = curve.get_forward_prices(['GBPUSD','EURUSD'], pricing_dates, maturity_dates, quote=['mid'])
-    #spts = curve.get_spot_rates('GBPUSD')
-
-    #spt_fwd = pd.concat((spts.reindex(fwds.index).ffill(), fwds), axis=0)
+    curve = FXCurve()
+    df_ = curve.get_carry('AUD/USD')
