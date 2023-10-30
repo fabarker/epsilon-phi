@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 
 class CSlice(pd.Series):
 
-    _metadata = ["_added_attributes", "_type"]
+    _metadata = ["_added_attributes", "_type", "_name"]
 
     @property
     def _constructor(self):
