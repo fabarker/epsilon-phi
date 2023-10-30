@@ -24,6 +24,9 @@ class CFactor(CTimeSeries):
         self._universe = None
         self._provider = None
 
+    def _cast_derived_class(self, klass):
+        super(CFactor, self).__init__(klass)
+
     def get_historical_risk_premia(self):
         pass
     def get_historical_Sharpe(self):

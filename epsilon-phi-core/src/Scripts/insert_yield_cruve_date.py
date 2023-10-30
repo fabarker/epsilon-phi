@@ -11,8 +11,8 @@ import os
 nan = pd.pandas._libs.tslibs.nattype.NaTType
 session = SessionMgr().getSessionFactory()
 
-df_xl = pd.read_excel(r'C:\Users\fabar\OneDrive\Documents\Data\FF Rates.xlsx',
-                      sheet_name=['F-F_Research_Data_Factors'], index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
+df_xl = pd.read_excel(r'C:\Users\fabar\OneDrive\Desktop\data\GFD Rates.xlsx',
+                      sheet_name=['Sheet1'], index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
 
 
 dfs = [df_xl.get(x) for x in df_xl.keys()]
@@ -23,20 +23,22 @@ unique_tickers = np.unique(df.columns.get_level_values(0))
 for ticker in unique_tickers:
 
         col_ = df.get(ticker).dropna(how='all')
+        col_.index = pd.to_datetime(col_.index)
 
         if not Bloomberg.is_ticker_in_database(ticker):
 
             try:
-                spec = InterestRateSpec()
+                spec = YieldCurveSpec()
                 spec.category = col_.columns.get_level_values('category')[0]
                 spec.datasource = col_.columns.get_level_values('datasource')[0]
                 spec.currency = col_.columns.get_level_values('currency')[0]
-                spec.maturity = col_.columns.get_level_values('maturity')[0].lower()
+                spec.maturity = int(col_.columns.get_level_values('maturity')[0])
                 spec.type = col_.columns.get_level_values('type')[0]
                 spec.name = col_.columns.get_level_values('name')[0]
                 spec.provider = col_.columns.get_level_values('provider')[0]
                 spec.region = col_.columns.get_level_values('region')[0]
                 spec.symbol = col_.columns.get_level_values('symbol')[0]
+                spec.frequency = 'MS'
                 spec.ticker = ticker
                 spec.uid = int(Bloomberg.get_max_uid() + 1)
 
@@ -50,13 +52,13 @@ for ticker in unique_tickers:
 
         try:
             uid = Bloomberg.get_uid_from_ticker(ticker)
-            db_dta = pd.read_sql('SELECT * FROM interest_rate WHERE uid = "' + str(uid) + '";',
+            db_dta = pd.read_sql('SELECT * FROM yield_curve WHERE uid = "' + str(uid) + '";',
                                  con=SessionMgr().getEngine())
 
             # prepare excel data
             dt_df = col_.copy().dropna(how='all')
             dt_df.index.name = 'date'
-            cols = col_.columns.get_level_values('datatype')
+            cols = col_.columns.get_level_values('Datatype')
             cols.name = None
             dt_df.columns = cols
             dt_df = dt_df.reset_index(drop=False)
@@ -72,10 +74,10 @@ for ticker in unique_tickers:
 
             if len(missing) > 0:
                 for_db = dt_df.set_index('date', drop=True).reindex(missing)
-                for_db = for_db[['uid','IR','X']]
+                for_db = for_db[['uid','RY']]
                 for_db.index.name = 'date'
                 for_db = for_db.reset_index(drop=False)
-                for_db.to_sql(name='interest_rate',
+                for_db.to_sql(name='yield_curve',
                              con=SessionMgr().getEngine(),
                              if_exists='append',
                              index=False)

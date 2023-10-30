@@ -5,6 +5,10 @@ __date__ = '03/08/2023'
 class CFactorUtil:
 
     @staticmethod
+    def combine_factors(df_, betas):
+        pass
+
+    @staticmethod
     def to_excess_return_time_series(asset):
         pass
 

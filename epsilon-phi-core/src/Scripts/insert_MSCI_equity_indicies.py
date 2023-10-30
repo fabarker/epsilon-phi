@@ -9,8 +9,9 @@ import os
 nan = pd.pandas._libs.tslibs.nattype.NaTType
 session = SessionMgr().getSessionFactory()
 
-_SHEETNAME = 'Miners'
-df = pd.read_excel(r'/Users/francisbarker/Desktop/MSCI Data.xlsx', _SHEETNAME, index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
+_SHEETNAME = 'Data'
+df = pd.read_excel(r'C:\Users\fabar\OneDrive\Documents\Data\Fama French Portfolios.xlsx',
+                   _SHEETNAME, index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
 
 unique_tickers = np.unique(df.columns.get_level_values(0))
 
@@ -66,7 +67,7 @@ for ticker in unique_tickers:
 
             if len(missing) > 0:
                 for_db = dt_df.set_index('date', drop=True).reindex(missing)
-                for_db = for_db[['uid','RI','PI','DY','MV']]
+                for_db = for_db[['uid','RI']]
                 for_db.index.name = 'date'
                 for_db = for_db.reset_index(drop=False)
                 for_db.to_sql(name='equity_index',

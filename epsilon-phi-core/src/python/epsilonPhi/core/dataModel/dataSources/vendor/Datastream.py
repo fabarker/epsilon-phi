@@ -278,11 +278,34 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
+    tickers = ['US66SAYAA',
+                'US15CBKAA',
+                'US66MCDAA',
+                'USFCFOBDA',
+                'US66BCWAA',
+                'US66CEQMA',
+                'US66DSCAA',
+                'US66BNKLA',
+                'US66XXXAA',
+                'US66XXXLA',
+                'US66MDVCA',
+                'US66IVSLA',
+                'US66GOLAA',
+                'US66CMPLA',
+                'US66FCMAA',
+                'US66FCMLA',
+                'US66SZXAA',
+                'US66PCDAA',
+                'US66FCULA',
+                'US66SECAA',
+                'US66SECLA',
+                'US66LTXCA',
+                'US66CBVLA',
+                'US66STYAA',
+                'US66MDRZA']
 
-    tickers = ['ITLGLTB','FRNGLTB','TRBD10T','TRJP10T','CN13867','CN13895','TRUK10T','TRUS10T']
-
-    fields = ['RY','X']
-    from_date = datetime.date(year=1950, month=12, day=31)
+    fields = ['X']
+    from_date = datetime.date(year=1945, month=12, day=31)
     to_date = datetime.date.today()
 
     frames = pd.DataFrame()

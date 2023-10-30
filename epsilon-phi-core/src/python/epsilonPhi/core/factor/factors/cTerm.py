@@ -1,49 +1,68 @@
-import pandas as pd
-import numpy as np
-from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
-from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.factor.Factor import CConstructedFactor
-from epsilonPhi.core.factor.factorMgr import CFactorMgr
+from epsilonPhi.core.dataModel.dataSources.yieldCurve.YieldCurve import YieldCurve
+from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
+import pandas as pd
+import numpy as np
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 
-class CTerm(CConstructedFactor):
+_REGIONS = {}
+_REGIONS['France'] = ('BMFR10Y', 7.0)
+_REGIONS['United States'] = ('BMUS10Y', 45.3)
+_REGIONS['United Kingdom'] = ('BMUK10Y', 6.6)
+_REGIONS['Italy'] = ('BMIT10Y', 5.2)
+_REGIONS['Japan'] = ('BMJP10Y', 23.9)
+_REGIONS['Canada'] = ('BMCN10Y', 3.9)
+_REGIONS['Germany'] = ('BMBD10Y', 8.1)
 
+gds = GlobalDataSource()
+
+class CTerm(CConstructedFactor):
     def __init__(self, schema):
         super(CConstructedFactor, self).__init__(schema=schema)
         self.construct_factor(FACTOR.EQUITY_GLOBAL_ISG)
 
+    def get_regional_bond_excess_return(self, region):
+        TR = self.get_region_bond_return_series(region)
+        RF = gds.get_risk_free_rate_time_series(region).\
+            get_periodic_returns(self._schema.frequency)
+
+        common_dates = np.intersect1d(TR.index,
+                                      RF.index)
+
+        return TR.loc[common_dates].values - RF.loc[common_dates]
+
+    def get_region_bond_return_series(self, region):
+        df_constructed = YieldCurve.get_total_return_time_series(region, 10, self._schema.frequency)
+        df_ = gds.get_total_return_series_from_ticker(_REGIONS.get(region)[0]).\
+            get_periodic_returns(self._schema.frequency)
+        df_constructed.columns = df_.columns
+        return pd.concat((df_constructed.loc[np.setdiff1d(df_constructed.index, df_.index)], df_),
+                  axis=0).sort_index()
+
+    def get_weight_for_region(self, region):
+        return _REGIONS.get(region)[1] / 100
+
     def construct_factor(self, name):
 
-        _MARKETS = [('BMUS10Y', 'United States', 45.3),
-                    ('BMBD10Y', 'Germany', 8.1),
-                    ('BMIT10Y', 'Italy', 5.2),
-                    ('BMFR10Y', 'France', 7),
-                    ('BMUK10Y', 'United Kingdom', 6.6),
-                    ('BMJP10Y', 'Japan', 23.9),
-                    ('BMCN10Y', 'Canada', 3.9)]
-
         df = pd.DataFrame()
-        for ticker in _MARKETS:
-            totr = GlobalDataSource().get_time_series_data_from_ticker(ticker[0], 'RI')
-            rfr = CRiskFreeRate.get_risk_free_for_region(ticker[1]).get_levels()
+        for region in _REGIONS.keys():
+            cntr = self.get_regional_bond_excess_return(region) * self.get_weight_for_region(region)
+            df = pd.concat((df, cntr), axis=1)
 
-            common_dates = np.intersect1d(totr.get_bmonth_ends().index,
-                                          rfr.get_bmonth_ends().index)
-
-            df = pd.concat((df, (totr.loc[common_dates].get_returns() -
-                                      rfr.loc[common_dates].get_returns().values) * ticker[-1]/100), axis=1)
-        self._cast_derived_class(df.mean(axis=1).to_frame('Term'))
+        df_ = df.sum(axis=1, skipna=False).dropna().to_frame('Term')
+        self._cast_derived_class(df_)
 
 if __name__ == "__main__":
 
     from epsilonPhi.core.schema.Schema import ContextCreator
     schema = ContextCreator(currency='GBP',
-                            start_date=pd.to_datetime('1-Nov-1983') + pd.tseries.offsets.BMonthEnd(1),
-                            end_date='31-Dec-2022').create_context()
+                            start_date='30-Nov-1983',
+                            end_date='31-Dec-2022',
+                            frequency='M').create_context()
 
-    fac = CTerm(schema)
+    self = CTerm(schema)
 
 
