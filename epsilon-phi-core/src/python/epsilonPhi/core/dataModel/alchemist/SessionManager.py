@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.Configs import *
 from contextlib import contextmanager
+import pickle
 from sqlalchemy import func
 import pandas as pd
 
@@ -265,6 +266,30 @@ class SessionMgr(object):
 
         return self.query_format_df(q)
 
+    def pickle_and_save_to_database(self, obj, id):
+
+        print('Saving {} to pickles'.format(id))
+
+        pickled_df = pickle.dumps(obj)
+        new_row = DatabasePickle(pickle=pickled_df, id=id)
+
+        session = self.getSessionFactory()
+        session.add(new_row)
+        session.commit()
+        session.close()
+
+    def load_pickle_from_database(self, uid):
+
+        print('Loading {} from pickles'.format(uid))
+
+        session = self.getSessionFactory()
+        pickled_obj = session.query(DatabasePickle).filter_by(id=uid).first().pickle
+        session.close()
+        return pickle.loads(pickled_obj)
+
+    def is_pickled(self, id):
+        return self.getSessionFactory().query(exists().where(DatabasePickle.id == id)).scalar()
+
 
 @contextmanager
 def session_scope():
@@ -281,8 +306,11 @@ def session_scope():
 
 if __name__ == "__main__":
 
-    import datetime
-
     sessionMgr = SessionMgr()
     session = sessionMgr.getSessionFactory()
-    tickers = sessionMgr.get_yield_curve_tickers_for_region('United Kingdom')
+
+    from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
+
+    curve = FXCurve()
+    df_ = curve.get_fx_curves('AUD/USD')
+    sessionMgr.pickle_and_save_to_database(df_, 'AUDUSD_FX_CURVE')

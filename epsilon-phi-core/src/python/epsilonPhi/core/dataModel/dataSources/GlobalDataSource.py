@@ -125,7 +125,7 @@ class GlobalDataSource(object):
         return self._fx_curve.get_spot_rates(currency_pairs, price_quotes)
 
     def get_fx_carry(self, currency_pairs, maturities, price_quotes):
-        return self._fx_curve.get_forward_prices(currency_pairs, maturities, price_quotes)
+        return self._fx_curve.get_carry(currency_pairs, maturities, price_quotes)
 
 
     def get_factor_dataframe(self, factor, universe=None, region=None, provider=None):

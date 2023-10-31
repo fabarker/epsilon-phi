@@ -114,52 +114,6 @@ class FXCurve(object):
         cross_df.columns.names = copy.deepcopy(curve_1.columns.names)
         return cross_df.copy()
 
-    def __load_fx_curve_single_currency_USD_cross(self, bbid: str):
-
-        rvs_bbid = self.parse_reverse_currency_pair(bbid)
-        bbid_spec = pd.concat((self._fxCurveMgr.get_bbid_spec(bbid, self.provider),
-                               self._fxCurveMgr.get_bbid_spec(rvs_bbid, self.provider)), axis=0).\
-                               set_index('maturity', drop=True)
-        self._fxCurveMgr.cache_fx_curve_data_single_currency_pair(bbid)
-
-
-        if bbid_spec.size == 0:
-            raise ValueError(
-                'Error - currency pair {} or {} not in database and curve cannot be constructed'.format(bbid, rvs_bbid))
-
-        unique_mats = np.unique(bbid_spec.index)
-
-        curve_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
-        for mat in unique_mats:
-            mat_spec = bbid_spec.loc[[mat]].set_index('uid', drop=True)
-
-            mat_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
-            for uid in mat_spec.index:
-                uid_spec = mat_spec.loc[uid]
-                _rates = self._fxCurveMgr.get_fx_time_series_from_uid(uid, pricing_location=self.pricing_location)
-
-                # shift provider to level 0 in the columns
-                _rates.columns = \
-                    _rates.columns.reorder_levels(['provider'] + list(np.setdiff1d(_rates.columns.names, 'provider')))
-
-                if uid_spec.bbid == self.parse_reverse_currency_pair(bbid):
-                    _rates = 1 / _rates
-                    _rates = _rates.rename(columns={PriceQuote.ASK.value: PriceQuote.BID.value, PriceQuote.BID.value: PriceQuote.ASK.value, uid_spec.bbid: bbid})
-
-                mat_df = mat_df.concat(_rates)
-
-            for provider in self.provider:
-                tmp = mat_df.get(provider, pd.DataFrame(columns=mat_df.columns))
-                tmp.columns = tmp.columns.droplevel('uid')
-                df_p = tmp.T.groupby(lambda x: x).first().T.dropna(how='all')
-                curve_df = curve_df.combine_left(df_p)
-
-        curve_df.columns = pd.MultiIndex.from_tuples(curve_df.columns)
-        curve_df.columns.names = ['bbid', 'maturity', 'pricing_location', 'quote']
-        self._fx_cache = pd.concat((self._fx_cache, curve_df), axis=1)
-        self._fxCurveMgr.reset_cache()
-
-
     def __load_fx_curve_single_currency(self, bbid: str):
 
         bbid = bbid.replace('/', '')
@@ -172,7 +126,8 @@ class FXCurve(object):
             curve_df = self.multiply_curves(bse_fx, ctr_fx)
             self._fx_cache = pd.concat((self._fx_cache, curve_df), axis=1)
         else:
-            self.__load_fx_curve_single_currency_USD_cross(bbid)
+            curve_df = self._fxCurveMgr.get_fx_curve_USD_cross(bbid, self.provider, self.pricing_location)
+            self._fx_cache = pd.concat((self._fx_cache, curve_df), axis=1)
 
     def get_spot_rates(self, bbids, quote='mid'):
         if isinstance(bbids, str):
@@ -257,8 +212,15 @@ class FXCurve(object):
 
 if __name__ == "__main__":
 
-    _G_10_CURRENCIES = ['AUD', 'CAD', 'DKK', 'JPY', 'NZD', 'NOK', 'SEK', 'CHF', 'GBP', 'DEM', 'FRF', 'ITL', 'NLG', 'BEF']
-    CURRENCY_PAIRS = [x + '/USD' for x in _G_10_CURRENCIES]
-
     curve = FXCurve()
-    df_ = curve.get_carry('AUD/USD')
+
+    spec = curve._fxCurveMgr.fx_spec
+    providers = ['WM/Refinitiv', 'Refinitiv', 'Barclays Bank PLC']
+    pairs = spec.reset_index().set_index('provider').loc[providers].bbid.unique()
+    currencies = [ x.replace('USD','') for x in pairs if 'USD' in x ]
+    unique_currencies = np.unique(currencies)
+
+    _CURRENCY_PAIRS = [ x + '/USD' for x in unique_currencies if len(x) > 1 ]
+    df_ = curve.get_fx_curves(_CURRENCY_PAIRS)
+
+

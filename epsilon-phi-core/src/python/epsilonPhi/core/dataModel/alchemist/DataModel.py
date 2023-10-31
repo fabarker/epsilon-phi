@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, TypeDecorator, text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, TypeDecorator, text, Boolean, LargeBinary
 from typing import Any
 from epsilonPhi.core.lib.Decorators import auto_repr
 from sqlalchemy.orm import relationship, declarative_base, declared_attr
@@ -583,6 +583,15 @@ class Economic(TimeSeries):
     @property
     def _X(self):
         return 'PI'
+
+@auto_repr
+class DatabasePickle(Base):
+    __tablename__ = 'pickles'
+
+    id = Column(String(255), primary_key=True)
+    pickle = Column(LargeBinary(length=2**32-1))
+
+
 
 
 if __name__ == "__main__":

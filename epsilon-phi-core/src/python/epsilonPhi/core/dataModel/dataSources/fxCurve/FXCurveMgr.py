@@ -2,14 +2,22 @@ from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
+from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
 from sqlalchemy import distinct
 import pandas as pd
 
 @SingletonDecorator
 class FXCurveManager(object):
 
+    _DEFAULT_PRICING_LOCATION = PricingLocation.LONDON.value
+    _DEFAULT_PROVIDERS = [Provider.WMR.value,
+                          Provider.REFINITIV.value,
+                          Provider.BBI.value]
+
     _fx_cache = pd.DataFrame()
     _cached_pairs = list()
+
+    _fx_curve_cache = dict()
 
     _sessionMgr = SessionMgr()
     _session = SessionMgr().getSessionFactory()
@@ -27,6 +35,10 @@ class FXCurveManager(object):
     @property
     def fx_spec(self):
         return self.__spec
+
+    @property
+    def _cached_fx_curves(self):
+        return self._fx_curve_cache.keys()
 
     def reset_cache(self):
         self._fx_cache = pd.DataFrame()
@@ -64,9 +76,9 @@ class FXCurveManager(object):
            uids = [uids]
         q = self._session.query(FXRate.uid,
                                 FXRate.date,
-                                FXRate.EB,
-                                FXRate.ER,
-                                FXRate.EO,
+                                FXRate.EB.label(PriceQuote.BID.value),
+                                FXRate.ER.label(PriceQuote.MID.value),
+                                FXRate.EO.label(PriceQuote.ASK.value),
                                 FXRate.pricing_location).filter(FXRate.uid.in_(uids))
         df_ = self._sessionMgr.query_format_df(q).set_index('uid', drop=True)
         self._fx_cache = pd.concat((self._fx_cache, df_), axis=0)
@@ -100,6 +112,122 @@ class FXCurveManager(object):
         series.columns = pd.MultiIndex.from_frame(cols.T)
         series.columns.names = fx_spec.columns.to_list() + ['quote']
         return series
+
+    def __construct_fx_curve_single_currency_USD_cross(self,
+                                                       bbid,
+                                                       provider,
+                                                       pricing_location):
+
+        print('Constructing {} {} {} FX Curve...'.format(bbid, provider, pricing_location))
+
+
+        rvs_bbid = self.parse_reverse_currency_pair(bbid)
+        bbid_spec = pd.concat((self.get_bbid_spec(bbid, provider),
+                               self.get_bbid_spec(rvs_bbid, provider)), axis=0).set_index('maturity', drop=True)
+        self.cache_fx_curve_data_single_currency_pair(bbid)
+
+        if bbid_spec.size == 0:
+            raise ValueError(
+                'Error - currency pair {} or {} not in database and curve cannot be constructed'.format(bbid, rvs_bbid))
+
+        unique_mats = np.unique(bbid_spec.index)
+
+        curve_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+        for mat in unique_mats:
+            mat_spec = bbid_spec.loc[[mat]].set_index('uid', drop=True)
+
+            mat_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+            for uid in mat_spec.index:
+                uid_spec = mat_spec.loc[uid]
+                _rates = self.get_fx_time_series_from_uid(uid, pricing_location=pricing_location)
+
+                # shift provider to level 0 in the columns
+                _rates.columns = \
+                    _rates.columns.reorder_levels(['provider'] + list(np.setdiff1d(_rates.columns.names, 'provider')))
+
+                if uid_spec.bbid == self.parse_reverse_currency_pair(bbid):
+                    _rates = 1 / _rates
+                    _rates = _rates.rename(
+                        columns={PriceQuote.ASK.value: PriceQuote.BID.value, PriceQuote.BID.value: PriceQuote.ASK.value,
+                                 uid_spec.bbid: bbid})
+
+                mat_df = mat_df.concat(_rates)
+
+            for single_provider in provider:
+                tmp = mat_df.get(single_provider, pd.DataFrame(columns=mat_df.columns))
+                tmp.columns = tmp.columns.droplevel('uid')
+                df_p = tmp.T.groupby(lambda x: x).first().T.dropna(how='all')
+                curve_df = curve_df.combine_left(df_p)
+
+        curve_df.columns = pd.MultiIndex.from_tuples(curve_df.columns)
+        curve_df.columns.names = ['bbid', 'maturity', 'pricing_location', 'quote']
+
+        rvs_curve = self.reverse_fx_curve(curve_df)
+        rvs_bbid = self.parse_reverse_currency_pair(bbid)
+
+        self._save_currency_curve_to_pickles(curve_df, bbid, provider, pricing_location)
+        self._save_currency_curve_to_pickles(rvs_curve, rvs_bbid, provider, pricing_location)
+        self.reset_cache()
+
+        id = self._get_pickle_uid(bbid, provider, pricing_location)
+        rvs_id = self._get_pickle_uid(rvs_bbid, provider, pricing_location)
+
+        self._fx_curve_cache[id] = curve_df.copy()
+        self._fx_curve_cache[rvs_id] = rvs_curve.copy()
+
+    def _save_currency_curve_to_pickles(self, curve_df, bbid, provider, pricing_location):
+        uid = self._get_pickle_uid(bbid, provider, pricing_location)
+
+        print('Saving {} to pickles'.format(uid))
+        self._sessionMgr.pickle_and_save_to_database(curve_df, uid)
+
+    def is_pickled(self,
+                   currency_pair,
+                   provider=None,
+                   pricing_location=None):
+
+        uid = self._get_pickle_uid(currency_pair,
+                                   provider,
+                                   pricing_location)
+        return self._sessionMgr.is_pickled(uid)
+
+    def _get_pickle_uid(self, currency_pair, provider, pricing_location):
+        return str((currency_pair.replace('/',""), provider, pricing_location))
+
+    def get_fx_curve_USD_cross(self, bbid, provider, pricing_location):
+        assert 'USD' in bbid, 'Error - function only supports USD cross exchange rates'
+        key = str((bbid, provider, pricing_location))
+        if key not in self._cached_fx_curves:
+           self.__load_fx_curve_USD_cross(bbid, provider, pricing_location)
+        return self._fx_curve_cache.get(key).dropna(how='all')
+
+    def __load_fx_curve_USD_cross(self, bbid, provider, pricing_location):
+
+        # First check if the curve is pickled, if not construct is
+        if not self.is_pickled(bbid, provider, pricing_location):
+            self.__construct_fx_curve_single_currency_USD_cross(bbid, provider, pricing_location)
+        else:
+            self._load_fx_curve_from_pickles(bbid, provider, pricing_location)
+
+    def _load_fx_curve_from_pickles(self, bbid, provider, pricing_location):
+
+        id = self._get_pickle_uid(bbid, provider, pricing_location)
+        self._fx_curve_cache[id] = self._sessionMgr.load_pickle_from_database(id)
+
+        rvs_bbid = self.parse_reverse_currency_pair(bbid)
+        rvs_id = self._get_pickle_uid(rvs_bbid, provider, pricing_location)
+        self._fx_curve_cache[rvs_id] =  self.reverse_fx_curve(self._fx_curve_cache[id])
+
+    def reverse_fx_curve(self, fx_curve):
+
+        copy_curve = fx_curve.copy()
+        bbid = fx_curve.columns.get_level_values('bbid').unique()[0]
+        rvs_df = 1 / copy_curve
+        rvs_df = rvs_df.rename(
+            columns={PriceQuote.ASK.value: PriceQuote.BID.value, PriceQuote.BID.value: PriceQuote.ASK.value},
+            level='quote')
+        return rvs_df.rename(columns={bbid: self.parse_reverse_currency_pair(bbid)}, level='bbid')
+
 
     def cache_fx_curve_data_single_currency_pair(self, bbid):
 

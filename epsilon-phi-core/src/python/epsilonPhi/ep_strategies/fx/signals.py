@@ -17,11 +17,18 @@ class Signals(object):
     @staticmethod
     def get_CAR(currency_pairs, horizon='1m'):
 
+        carry = _datasource.get_fx_carry(currency_pairs, horizon, price_quotes='mid')
+
         signal = CTimeSeries()
         for currency_pair in currency_pairs:
             carry = _datasource.get_fx_carry(currency_pair, horizon, price_quotes='mid')
             signal = pd.concat((signal, carry), axis=1)
         return signal.copy()
 
+if __name__ == "__main__":
 
-_G_10_CURRENCIES = ['AUD', 'CAD', 'DKK', 'JPY', 'NZD', 'NOK', 'SEK', 'CHF', 'GBP', 'DEM', 'FRF', 'ITL', 'NLG', 'BEF']
+
+    _G_10_CURRENCIES = ['AUD', 'CAD', 'DKK', 'JPY', 'NZD', 'NOK', 'SEK', 'CHF', 'GBP', 'DEM', 'FRF', 'ITL', 'NLG', 'BEF']
+
+    currency_pairs = [x + '/USD' for x in _G_10_CURRENCIES]
+    sig = Signals.get_CAR(currency_pairs)
