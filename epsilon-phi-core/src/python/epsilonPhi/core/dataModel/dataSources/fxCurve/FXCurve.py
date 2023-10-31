@@ -1,12 +1,12 @@
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurveMgr import FXCurveManager
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
 from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import pandas as pd
 import itertools
 import copy
+import datetime as dt
 
 
 @SingletonDecorator
@@ -214,13 +214,8 @@ if __name__ == "__main__":
 
     curve = FXCurve()
 
-    spec = curve._fxCurveMgr.fx_spec
-    providers = ['WM/Refinitiv', 'Refinitiv', 'Barclays Bank PLC']
-    pairs = spec.reset_index().set_index('provider').loc[providers].bbid.unique()
-    currencies = [ x.replace('USD','') for x in pairs if 'USD' in x ]
-    unique_currencies = np.unique(currencies)
-
-    _CURRENCY_PAIRS = [ x + '/USD' for x in unique_currencies if len(x) > 1 ]
-    df_ = curve.get_fx_curves(_CURRENCY_PAIRS)
+    pricing_date = dt.date(year=2022, month=12, day=31)
+    maturity_date = dt.date(year=2023, month=1, day=30)
+    df_ = curve.get_forward_prices('AUD/USD', pricing_date, maturity_date, quote='mid')
 
 

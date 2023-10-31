@@ -7,6 +7,7 @@ from epsilonPhi.core.dataModel.enums.Database import PriceQuote
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.utils.DateUtils import DateUtils
+from epsilonPhi.ep_strategies.fx.signals import Signals
 import numpy as np
 
 
@@ -72,7 +73,7 @@ class Factor(object):
     def set_signal(self, value: CTimeSeries):
 
         self._foreign_currencies = [x[0:3] for x in value.columns]
-        dom_ccy = np.unique([x[4:] for x in value.columns])
+        dom_ccy = np.unique([x[3:] for x in value.columns])
         assert len(dom_ccy) == 1, 'Error - can only have 1 base/domestic currency'
 
         if isinstance(dom_ccy, str):
@@ -151,7 +152,7 @@ class Factor(object):
         rebal_idx = np.isin(self.pricing_dates, self.rebalancing_dates)
         maturity_dates = self.rebalancing_dates[np.cumsum(rebal_idx)]
 
-        prices =CTimeSeries()
+        prices = CTimeSeries()
         for pqt in self._PRICE_QUOTE_TYPES:
             fwds = pd.concat([self._datasource.get_forward_rates(x, self.pricing_dates, maturity_dates, pqt).T for x in self.currency_pairs]).T
             spts = pd.concat([self._datasource.get_forward_rates(x, self.pricing_dates, self.pricing_dates, pqt).T for x in self.currency_pairs]).T
@@ -292,16 +293,14 @@ if __name__ == '__main__':
 
     G10 = Factor._G_10_CURRENCIES
 
-    start_date = dt.date(year=1982, month=12 , day=31)
+    start_date = dt.date(year=1982, month=12, day=31)
     end_date = dt.date(year=2022, month=12, day=31)
     frequency = Frequency.BUSINESS_MONTHLY
 
     base_currency = 'USD'
-    currency_pairs = [X + '/' + base_currency for x in G10]
+    currency_pairs = [x + '/' + base_currency for x in G10]
 
-    sig_df = Signal.get_CAR(start_date,
-                            end_date,
-                            Frequency)
+    sig_df = Signals.get_CAR(currency_pairs, '1m')
 
     CAR = Factor(start_date,
                  end_date,

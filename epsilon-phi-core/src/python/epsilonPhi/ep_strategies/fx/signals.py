@@ -16,14 +16,9 @@ class Signals(object):
 
     @staticmethod
     def get_CAR(currency_pairs, horizon='1m'):
-
-        carry = _datasource.get_fx_carry(currency_pairs, horizon, price_quotes='mid')
-
-        signal = CTimeSeries()
-        for currency_pair in currency_pairs:
-            carry = _datasource.get_fx_carry(currency_pair, horizon, price_quotes='mid')
-            signal = pd.concat((signal, carry), axis=1)
-        return signal.copy()
+        df_ = _datasource.get_fx_carry(currency_pairs, horizon, price_quotes='mid')
+        df_.columns = df_.columns.get_level_values('bbid')
+        return df_.copy().dropna(how='all')
 
 if __name__ == "__main__":
 
