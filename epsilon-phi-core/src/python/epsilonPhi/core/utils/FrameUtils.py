@@ -43,6 +43,18 @@ class FrameUtils(object):
         else:
             return df.copy()
 
+    @staticmethod
+    def set_levels(df, level_values, level_name):
+
+        level_names = df.columns.names
+        if level_name in level_names:
+           df.columns = df.columns.droplevel(level_name)
+           df.columns = FrameUtils.add_index_to_multi_index(df.columns, level_values, level_name)
+           df.columns = df.columns.reorder_levels(level_names)
+        else:
+           df.columns = FrameUtils.add_index_to_multi_index(df.columns, level_values, level_name)
+        return df.copy()
+
 
     @staticmethod
     def select_subset_levels(df, level_names, levels_values):

@@ -24,6 +24,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/epsilon-phi-core/src/python/epsilonPhi/ep_strategies/fx/factor.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

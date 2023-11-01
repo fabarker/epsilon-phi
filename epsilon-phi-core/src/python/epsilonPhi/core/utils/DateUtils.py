@@ -144,10 +144,11 @@ class DateUtils(object):
 
     @staticmethod
     def get_date_delta(from_date, to_date, year_frac=False):
+        days = np.array((pd.to_datetime(to_date) - pd.to_datetime(from_date))/np.timedelta64(1, 'D'), dtype=int)
         if year_frac:
-            return np.round((pd.to_datetime(to_date) - pd.to_datetime(from_date))/np.timedelta64(1, 'D') / DateUtils.days_per_year, 10)
+            return days / DateUtils.days_per_year
         else:
-            return (pd.to_datetime(to_date) - pd.to_datetime(from_date))/np.timedelta64(1, 'D')
+            return days
 
     @staticmethod
     def get_daterange_frequency(date_range):

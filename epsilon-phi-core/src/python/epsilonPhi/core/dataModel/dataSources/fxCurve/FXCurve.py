@@ -141,9 +141,16 @@ class FXCurve(object):
         fwd_df = FrameUtils.select_subset_level(fx_curves, 'maturity', tenor)
         return FrameUtils.select_subset_level(fwd_df, 'quote', quote).dropna(how='all')
 
+    def get_forward_price(self, bbids, pricing_date, maturity_date, quote='mid'):
+        pass
+
     def get_forward_prices(self, bbids, pricing_date, maturity_date, quote='mid'):
 
+        if not DateUtils.is_iterable(bbids):
+           bbids = [bbids]
+
         fx_curves = self.get_fx_curves(bbids)
+        fx_curves.columns = fx_curves.columns.droplevel('pricing_location')
 
         fx_curves = FrameUtils.drop_subset_level(fx_curves, 'maturity', ['ON', 'SW', 'TN'])
         pricing_date = pd.to_datetime(pricing_date)
@@ -152,12 +159,15 @@ class FXCurve(object):
         if isinstance(quote, str):
             quote = np.array([quote])
 
+        if isinstance(pricing_date, pd.Timestamp):
+           pricing_date = [pricing_date]
+
         fx_curve = FrameUtils.select_subset_level(fx_curves, 'quote', quote).dropna(how='all')
-        df = fx_curve.reindex(pricing_date)
+        df = fx_curve.reindex(pricing_date.unique())
 
         level_number = df.columns._get_level_number('maturity')
-        mats = DateUtils.Rdate_to_mat(df.columns._levels[level_number])
-        df.columns = df.columns.set_levels(mats, level='maturity', verify_integrity=False)
+        mats = DateUtils.Rdate_to_mat(df.columns.get_level_values('maturity'))
+        df = FrameUtils.set_levels(df, level_values=mats, level_name='maturity')
 
         # Time to maturity
         tau = DateUtils.get_date_delta(pricing_date, maturity_date, True)
@@ -165,12 +175,13 @@ class FXCurve(object):
         # build levels
         level_ints = np.setdiff1d(np.array(range(len(df.columns._levels))), level_number)
         levels = [np.array(df.columns._levels[x]) for x in level_ints]
-        levels.insert(level_number, tau)
+        levels.insert(level_number, np.unique(tau))
 
         # Create a new list with unique combinations
         cols = list(itertools.product(*levels))
         vals = pd.DataFrame(np.ones((df.shape[0], len(cols))) * np.nan, columns=pd.MultiIndex.from_tuples(cols), index=df.index)
         df_prime = pd.concat((df, vals.loc[:, ~vals.columns.isin(df.columns)]), axis=1)
+        df_prime.columns.names = df.columns.names
 
         sorted_df = df_prime.T.sort_index(level='maturity').T
         ccys = sorted_df.columns.get_level_values('bbid').unique()
@@ -178,6 +189,8 @@ class FXCurve(object):
 
         interp_df = pd.DataFrame()
         for ccy in ccys:
+
+            print('Calculating forward prices for {}'.format(ccy))
             for type in types:
                 idxs = np.logical_and(sorted_df.columns.get_level_values('bbid') == ccy,
                                sorted_df.columns.get_level_values('quote') == type)
@@ -186,7 +199,9 @@ class FXCurve(object):
 
                 # Extract the observations we need
                 locs = list(zip(pricing_date, itertools.product([ccy], tau, [type])))
-                fwds = pd.DataFrame([fwd_curve.loc[x] for x in locs], index=pricing_date)
+                fwds = pd.DataFrame([fwd_curve.loc[x] for x in locs], index=[maturity_date, pricing_date])
+                fwds.index.names = ['maturity_dates','pricing_dates']
+                fwds = fwds.sort_index(level=['maturity_dates', 'pricing_dates'])
                 fwds.columns = pd.MultiIndex.from_tuples([(ccy, type)])
 
                 interp_df = pd.concat((interp_df, fwds), axis=1).ffill()
@@ -214,8 +229,8 @@ if __name__ == "__main__":
 
     curve = FXCurve()
 
-    pricing_date = dt.date(year=2022, month=12, day=31)
-    maturity_date = dt.date(year=2023, month=1, day=30)
-    df_ = curve.get_forward_prices('AUD/USD', pricing_date, maturity_date, quote='mid')
+    pricing_dates = pd.date_range('1-Dec-1983','31-Dec-2022', freq='BM')
+    maturity_dates = pricing_dates + pd.tseries.offsets.BMonthEnd(1)
+    df_ = curve.get_forward_prices(['AUD/USD','CAD/USD'], pricing_dates, maturity_dates, quote=['mid','bid','ask'])
 
 

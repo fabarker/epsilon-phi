@@ -60,7 +60,7 @@ class Factor(object):
     @property
     def currency_pairs(self):
         if self.domestic_currency and self.foreign_currencies:
-            return np.array([X + '/' + self.domestic_currency for X in self.foreign_currencies])
+            return np.array([X + self.domestic_currency for X in self.foreign_currencies])
 
     @property
     def signal(self):
@@ -151,77 +151,95 @@ class Factor(object):
 
         rebal_idx = np.isin(self.pricing_dates, self.rebalancing_dates)
         maturity_dates = self.rebalancing_dates[np.cumsum(rebal_idx)]
+        self._forward_prices = self._datasource.get_fx_forward_prices(self.currency_pairs,
+                                                                      self.pricing_dates.append(self.pricing_dates),
+                                                                      maturity_dates.append(self.pricing_dates),
+                                                                      ['mid','ask','bid'])
 
-        prices = CTimeSeries()
-        for pqt in self._PRICE_QUOTE_TYPES:
-            fwds = pd.concat([self._datasource.get_forward_rates(x, self.pricing_dates, maturity_dates, pqt).T for x in self.currency_pairs]).T
-            spts = pd.concat([self._datasource.get_forward_rates(x, self.pricing_dates, self.pricing_dates, pqt).T for x in self.currency_pairs]).T
-            prices = pd.concat((prices, pd.concat((fwds, spts), axis=0)), axis=0)
-        self._forward_prices = prices.copy()
+    def get_reverse_currency_pair(self, currency_pair):
+        return currency_pair[3:] + currency_pair[0:3]
 
     def get_returns_panel(self, pricing_date, maturity_date):
 
-        if pricing_date > self._EURO_CUTOFF_DATE:
-           EUR_LEGACIES = [self.domestic_currency + '/' + X for X in self._EURO_LEGACY]
-           EUR_LEGACIES = EUR_LEGACIES + [self._datasource.get_reverse_currency_pair(x) for x in EUR_LEGACIES]
+        if pricing_date.date() > self._EURO_CUTOFF_DATE:
+           EUR_LEGACIES = [self.domestic_currency  + X for X in self._EURO_LEGACY]
+           EUR_LEGACIES = EUR_LEGACIES + [self.get_reverse_currency_pair(x) for x in EUR_LEGACIES]
            tradable_currencies = np.setdiff1d(self.currency_pairs, EUR_LEGACIES)
         else:
-            tradable_currencies = np.setdiff1d(self.currency_pairs,
-                                               ['EUR/' + self.domestic_currency, self.domestic_currency + '/EUR'])
+           tradable_currencies = np.setdiff1d(self.currency_pairs,
+                                               ['EUR' + self.domestic_currency, self.domestic_currency + 'EUR'])
 
-        if np.logical_and(pricing_date < self._BEF_EXCLUSION[1], pricing_date > self._BEF_EXCLUSION[1]):
+
+        if np.logical_and(pricing_date.date() < self._BEF_EXCLUSION[1], pricing_date.date() > self._BEF_EXCLUSION[1]):
             tradable_currencies = np.setdiff1d(tradable_currencies,
-                                               [self.domestic_currency + '/BEF',
-                                                    'BEF/' + self.domestic_currency])
+                                          [self.domestic_currency + 'BEF',
+                                               'BEF' + self.domestic_currency])
 
-        if pricing_date < self._TRY_START_DATE:
+        if pricing_date.date() < self._TRY_START_DATE:
             tradable_currencies = np.setdiff1d(tradable_currencies,
-                                               [self.domestic_currency + '/TRY',
-                                                    'TRY/' + self.domestic_currency])
+                                          [self.domestic_currency + 'TRY',
+                                              'TRY' + self.domestic_currency])
 
-        dates = self.pricing_dates[np.logical_and(self.pricing_dates <= maturity_date,
-                                                  self.pricing_dates >= pricing_date)]
+        dates = self.pricing_dates[(self.pricing_dates <= maturity_date) &
+                                   (self.pricing_dates >= pricing_date)]
 
-        signal = self.signal[tradable_currencies].loc[pricing_date].dropna().to_frame().T
+        mid_dates = self.pricing_dates[(self.pricing_dates < maturity_date) &
+                                   (self.pricing_dates > pricing_date)]
 
-        if 'm' in self.price_quote_type.lower():
+        # Get the signal that we sort on
+        signal = self.signal[tradable_currencies].loc[[pricing_date]].dropna(axis=1)
+
+        if self.price_quote_type == PriceQuote.MID:
             pqt = ('mid','mid')
         else:
             pqt = ('bid','ask')
 
-        long_rx = self._datasource.get_fwd_price_keys(dates, maturity_date, 'mid')
-        long_rx[0] = self._datasource.get_fwd_price_keys(dates[0], maturity_date, pqt[1])[0]
-        long_rx[-1] = self._datasource.get_fwd_price_keys(dates[-1], maturity_date, pqt[0])[0]
+        # Get all prices corresponding to this rebalancing period
 
-        long_spot = self._datasource.get_fwd_price_keys(dates, dates, 'mid')
-        long_spot[0] = self._datasource.get_fwd_price_keys(dates[0], dates[0], pqt[1])[0]
-        long_spot[-1] = self._datasource.get_fwd_price_keys(dates[-1], dates[-1], pqt[0])[0]
+        #### Forward Prices - Long Leg ####
 
-        long_rx_panel = self._forward_prices.loc[long_rx].get(signal.columns).dropna(axis=1)
+        fwd_prices_period = self._forward_prices.loc[maturity_date]
+
+        long_fwd_asks = fwd_prices_period.loc[[pricing_date], pd.IndexSlice[:, pqt[1]]].droplevel(level=1, axis=1)
+        long_fwd_bids = fwd_prices_period.loc[[maturity_date], pd.IndexSlice[:, pqt[0]]].droplevel(level=1, axis=1)
+        long_fwd_mids = fwd_prices_period.loc[mid_dates, pd.IndexSlice[:, 'mid']].droplevel(level=1, axis=1)
+        long_fwds = pd.concat([long_fwd_asks, long_fwd_mids, long_fwd_bids], axis=0).sort_index()
+
+        long_rx_panel = long_fwds.get(signal.columns).dropna(axis=1)
         long_rx_returns = (np.log(long_rx_panel) - np.log(long_rx_panel.shift(1)))
-        long_rx_returns.index = dates
 
-        long_spt_panel = self._forward_prices.loc[long_spot].get(signal.columns).dropna(axis=1)
+
+        #### Spot Prices - Long Leg ####
+
+        spt_prices_period = self._forward_prices.loc[list(zip(dates, dates))].droplevel(level=0, axis=0)
+
+        long_spt_asks = spt_prices_period.loc[[pricing_date], pd.IndexSlice[:, pqt[1]]].droplevel(level=1, axis=1)
+        long_spt_mids = spt_prices_period.loc[mid_dates, pd.IndexSlice[:, 'mid']].droplevel(level=1, axis=1)
+        long_spt_bids = spt_prices_period.loc[[maturity_date], pd.IndexSlice[:, pqt[0]]].droplevel(level=1, axis=1)
+        long_spts = pd.concat([long_spt_asks, long_spt_mids, long_spt_bids], axis=0).sort_index()
+
+        long_spt_panel = long_spts.get(signal.columns).dropna(axis=1)
         long_spt_returns = (np.log(long_spt_panel) - np.log(long_spt_panel.shift(1)))
-        long_spt_returns.index = dates
 
+        #### Forward Prices - Short Leg ####
 
+        short_fwd_bids = fwd_prices_period.loc[[pricing_date], pd.IndexSlice[:, pqt[0]]].droplevel(level=1, axis=1)
+        short_fwd_asks = fwd_prices_period.loc[[maturity_date], pd.IndexSlice[:, pqt[1]]].droplevel(level=1, axis=1)
+        short_fwd_mids = fwd_prices_period.loc[mid_dates, pd.IndexSlice[:, 'mid']].droplevel(level=1, axis=1)
+        shot_fwds = pd.concat([short_fwd_asks, short_fwd_mids, short_fwd_bids], axis=0).sort_index()
 
-        short_rx = self._datasource.get_fwd_price_keys(dates, maturity_date, 'mid')
-        short_rx[0] = self._datasource.get_fwd_price_keys(dates[0], maturity_date, pqt[0])[0]
-        short_rx[-1] = self._datasource.get_fwd_price_keys(dates[-1], maturity_date, pqt[1])[0]
-
-        short_spot = self._datasource.get_fwd_price_keys(dates, dates, 'mid')
-        short_spot[0] = self._datasource.get_fwd_price_keys(dates[0], dates[0], pqt[0])[0]
-        short_spot[-1] = self._datasource.get_fwd_price_keys(dates[-1], dates[-1], pqt[1])[0]
-
-        short_rx_panel = self._forward_prices.loc[short_rx].get(signal.columns).dropna(axis=1)
+        short_rx_panel = shot_fwds.get(signal.columns).dropna(axis=1)
         short_rx_returns = (np.log(short_rx_panel) - np.log(short_rx_panel.shift(1)))
-        short_rx_returns.index = dates
 
-        short_spt_panel = self._forward_prices.loc[short_spot].get(signal.columns).dropna(axis=1)
+        #### Spot Prices - Short Leg ####
+
+        short_spt_bids = spt_prices_period.loc[[pricing_date], pd.IndexSlice[:, pqt[0]]].droplevel(level=1, axis=1)
+        short_spt_asks = spt_prices_period.loc[[maturity_date], pd.IndexSlice[:, pqt[1]]].droplevel(level=1, axis=1)
+        short_spt_mids = spt_prices_period.loc[mid_dates, pd.IndexSlice[:, 'mid']].droplevel(level=1, axis=1)
+        shot_spts = pd.concat([short_spt_asks, short_spt_mids, short_spt_bids], axis=0).sort_index()
+
+        short_spt_panel = shot_spts.get(signal.columns).dropna(axis=1)
         short_spt_returns = (np.log(short_spt_panel) - np.log(short_spt_panel.shift(1)))
-        short_spt_returns.index = dates
 
         return long_rx_returns, long_spt_returns, short_rx_returns, short_spt_returns
 
