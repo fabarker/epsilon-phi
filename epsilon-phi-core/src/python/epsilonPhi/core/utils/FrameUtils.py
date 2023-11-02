@@ -28,6 +28,16 @@ class FrameUtils(object):
             return df.copy()
 
     @staticmethod
+    def vectorize(df, column_name=None):
+        df_ = pd.melt(df.reset_index(), id_vars='index')
+        cols = np.setdiff1d(df_.columns, 'value')
+        df_.index = list(map(tuple, df_[cols].to_numpy()))
+        if column_name is None:
+            return df_.get('value').to_frame()
+        else:
+            return df_.get('value').to_frame(column_name)
+
+    @staticmethod
     def drop_subset_level(df, level_name, values):
 
         if FrameUtils.is_iterable(values) is False:

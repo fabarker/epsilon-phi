@@ -190,13 +190,14 @@ class Factor(object):
         signal = self.signal[tradable_currencies].loc[[pricing_date]].dropna(axis=1)
 
         if self.price_quote_type == PriceQuote.MID:
-            pqt = ('mid','mid')
+            pqt = ('mid', 'mid')
         else:
-            pqt = ('bid','ask')
+            pqt = ('bid', 'ask')
 
         # Get all prices corresponding to this rebalancing period
 
         #### Forward Prices - Long Leg ####
+        # On the long side - we buy at the ask and sell at the bid
 
         fwd_prices_period = self._forward_prices.loc[maturity_date]
 
@@ -206,7 +207,7 @@ class Factor(object):
         long_fwds = pd.concat([long_fwd_asks, long_fwd_mids, long_fwd_bids], axis=0).sort_index()
 
         long_rx_panel = long_fwds.get(signal.columns).dropna(axis=1)
-        long_rx_returns = (np.log(long_rx_panel) - np.log(long_rx_panel.shift(1)))
+        long_rx_returns = (np.log(long_rx_panel) - np.log(long_rx_panel.shift(1))) # Bid - Ask
 
 
         #### Spot Prices - Long Leg ####
@@ -222,6 +223,7 @@ class Factor(object):
         long_spt_returns = (np.log(long_spt_panel) - np.log(long_spt_panel.shift(1)))
 
         #### Forward Prices - Short Leg ####
+        # On the long side - we buy at the ask and sell at the bid
 
         short_fwd_bids = fwd_prices_period.loc[[pricing_date], pd.IndexSlice[:, pqt[0]]].droplevel(level=1, axis=1)
         short_fwd_asks = fwd_prices_period.loc[[maturity_date], pd.IndexSlice[:, pqt[1]]].droplevel(level=1, axis=1)
@@ -250,7 +252,7 @@ class Factor(object):
         ccys_per_portfolio[0:remaining_currencies] = ccys_per_portfolio[0:remaining_currencies] + 1
 
         locs = np.zeros((1, N), dtype=int)
-        locs[0, np.hstack((0, ccys_per_portfolio[:,-1].cumsum()))] = 1
+        locs[0, np.hstack((0, ccys_per_portfolio[:, -1].cumsum()))] = 1
         return np.cumsum(locs)
 
     def run_strategy(self):
@@ -262,7 +264,8 @@ class Factor(object):
         str_df = pd.DataFrame()
         T = len(rebal_dates)
 
-        for t in range(1, T):
+        for t in range(1, T-1):
+            print('{}'.format(rebal_dates[t-1]))
 
             long_excess, long_spt, short_excess, short_spt = self.get_returns_panel(rebal_dates[t-1], fwd_mats[t-1])
             ranked_signal = self.signal[long_excess.columns].loc[rebal_dates[t-1]].sort_values()
@@ -281,7 +284,7 @@ class Factor(object):
                           np.exp(short_spt.get(ranked_signal.index[0:N]) @ wt)
 
                 # Linear in signal size
-                W_sig = (2/np.sum(np.abs(ranked_signal - np.mean(ranked_signal)))) + (ranked_signal - np.mean(ranked_signal))
+                W_sig = (2/np.sum(np.abs(ranked_signal - np.mean(ranked_signal)))) * (ranked_signal - np.mean(ranked_signal))
                 lin_sig = np.exp(short_excess.get(W_sig[W_sig < 0].index)) @ W_sig[W_sig < 0] +\
                           np.exp(long_excess.get(W_sig[W_sig > 0].index)) @ W_sig[W_sig > 0]
 
@@ -301,10 +304,10 @@ class Factor(object):
                 df = pd.concat([HML, L, H, HML_spt, lin_sig, lin_sig_spt, lin_rank, lin_rank_spt], axis=1).dropna()
                 str_df = pd.concat((str_df, df), axis=0)
 
-            str_df.columns = ['HML', 'L', 'H', 'HML_spt', 'SIGNAL_WEIGHTED', 'SIGNAL_WEIGHTED_SPT', 'RANK_WEIGHTED', 'RANK_WEIGHTS_SPT']
-            self.strategies = str_df.reindex(self.pricing_dates).copy()
-            self.PnLs = self.strategies.get(['HML', 'SIGNAL_WEIGHTED', 'RANK_WEIGHTED'])
-            self.PnLCurve = (1+self.PnLs).cumprod()
+        str_df.columns = ['HML', 'L', 'H', 'HML_spt', 'SIGNAL_WEIGHTED', 'SIGNAL_WEIGHTED_SPT', 'RANK_WEIGHTED', 'RANK_WEIGHTS_SPT']
+        self.strategies = str_df.reindex(self.pricing_dates).copy()
+        self.PnLs = self.strategies.get(['HML', 'SIGNAL_WEIGHTED', 'RANK_WEIGHTED'])
+        self.PnLCurve = (1+self.PnLs).cumprod()
 
 
 if __name__ == '__main__':
@@ -326,9 +329,10 @@ if __name__ == '__main__':
 
     CAR.rebalancing_frequency = Frequency.BUSINESS_MONTHLY
     CAR.set_signal(sig_df)
-    CAR.price_quote_type = PriceQuote.BID
+    CAR.price_quote_type = PriceQuote.MID
     CAR.number_of_portfolios = 5
     CAR.run_strategy()
+    df = CAR.PnLCurve
 
 
 

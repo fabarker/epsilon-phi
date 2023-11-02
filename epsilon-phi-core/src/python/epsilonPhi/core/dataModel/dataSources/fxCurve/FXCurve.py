@@ -183,7 +183,7 @@ class FXCurve(object):
         df_prime = pd.concat((df, vals.loc[:, ~vals.columns.isin(df.columns)]), axis=1)
         df_prime.columns.names = df.columns.names
 
-        sorted_df = df_prime.T.sort_index(level='maturity').T
+        sorted_df = df_prime.T.sort_index(level='maturity').T.replace(0, np.nan)
         ccys = sorted_df.columns.get_level_values('bbid').unique()
         types = sorted_df.columns.get_level_values('quote').unique()
 
@@ -192,17 +192,23 @@ class FXCurve(object):
 
             print('Calculating forward prices for {}'.format(ccy))
             for type in types:
-                idxs = np.logical_and(sorted_df.columns.get_level_values('bbid') == ccy,
-                               sorted_df.columns.get_level_values('quote') == type)
-                # Interpolate curves
-                fwd_curve = np.exp(np.log(sorted_df.iloc[:, idxs].interpolate(method='linear', axis=1)))
+                xs_df = sorted_df.xs(key=(ccy, type), level=('bbid', 'quote'), axis=1, drop_level=False)
+                fwd_curve = xs_df.interpolate(method='linear', axis=1)
 
-                # Extract the observations we need
-                locs = list(zip(pricing_date, itertools.product([ccy], tau, [type])))
-                fwds = pd.DataFrame([fwd_curve.loc[x] for x in locs], index=[maturity_date, pricing_date])
-                fwds.index.names = ['maturity_dates','pricing_dates']
+                df_vec = FrameUtils.vectorize(fwd_curve, 'Price')
+                locs = list(zip(itertools.cycle([ccy]), pricing_date, tau, itertools.cycle([type])))
+                fwds = df_vec.loc[locs]
+                fwds.index = [maturity_date, pricing_date]
+                fwds.index.names = ['maturity_dates', 'pricing_dates']
                 fwds = fwds.sort_index(level=['maturity_dates', 'pricing_dates'])
                 fwds.columns = pd.MultiIndex.from_tuples([(ccy, type)])
+
+                # Extract the observations we need
+                #locs = list(zip(pricing_date, itertools.product([ccy], tau, [type])))
+                #fwds = pd.DataFrame([fwd_curve.loc[x] for x in locs], index=[maturity_date, pricing_date])
+                #fwds.index.names = ['maturity_dates','pricing_dates']
+                #fwds = fwds.sort_index(level=['maturity_dates', 'pricing_dates'])
+                #fwds.columns = pd.MultiIndex.from_tuples([(ccy, type)])
 
                 interp_df = pd.concat((interp_df, fwds), axis=1).ffill()
         return interp_df.copy()
@@ -227,10 +233,9 @@ class FXCurve(object):
 
 if __name__ == "__main__":
 
-    curve = FXCurve()
 
-    pricing_dates = pd.date_range('1-Dec-1983','31-Dec-2022', freq='BM')
-    maturity_dates = pricing_dates + pd.tseries.offsets.BMonthEnd(1)
-    df_ = curve.get_forward_prices(['AUD/USD','CAD/USD'], pricing_dates, maturity_dates, quote=['mid','bid','ask'])
+
+    curve = FXCurve()
+    rates = curve.get_fx_rates('NZD/USD')
 
 

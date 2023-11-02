@@ -16,7 +16,7 @@ class Signals(object):
 
     @staticmethod
     def get_CAR(currency_pairs, horizon='1m'):
-        df_ = _datasource.get_fx_carry(currency_pairs, horizon, price_quotes='mid')
+        df_ = -1 * _datasource.get_fx_carry(currency_pairs, horizon, price_quotes='mid')
         df_.columns = df_.columns.get_level_values('bbid')
         return df_.copy().dropna(how='all')
 
