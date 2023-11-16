@@ -115,8 +115,9 @@ class cFunding(CConstructedFactor):
 
             proj = proj_panel[:date].dot(weights)
             factor = pd.concat((factor, proj.loc[np.setdiff1d(proj.index, factor.index)]), axis=0)
+
         factor.columns = ['Funding']
-        self._cast_derived_class(factor)
+        self._cast_derived_class(factor.get_periodic_returns(self._schema.frequency))
 
 
 
@@ -127,8 +128,6 @@ if __name__ == "__main__":
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
 
-    fac = CFunding(schema)
-    fac.to_clipboard()
 
 
 

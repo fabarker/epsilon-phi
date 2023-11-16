@@ -1,5 +1,8 @@
+import pandas as pd
+
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.factor.Factor import CConstructedFactor
+from epsilonPhi.core.factor.factorMgr import CFactorMgr
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 
@@ -7,25 +10,19 @@ ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 gds = GlobalDataSource()
 
 
-class cEquity(CConstructedFactor):
+class cCommodities(CConstructedFactor):
     def __init__(self, schema):
         super(CConstructedFactor, self).__init__(schema=schema)
-        self.construct_factor(FACTOR.EQUITY_GLOBAL_ISG)
+        self.construct_factor(FACTOR.COMMODITY_GLOBAL_ISG)
 
     def construct_factor(self, name):
 
         # Dollar Equity Market
-        EQ_D = gds.get_total_return_series_from_ticker('MSWRLD$').get_periodic_returns(self._schema.frequency)
+        TOTR_D = gds.get_total_return_series_from_ticker('GSCITOT').get_periodic_returns(self._schema.frequency)
         rfr_D = gds.get_risk_free_rate_time_series('United States').get_periodic_returns(self._schema.frequency)
-        df_D = EQ_D.subtract_over_common_dates(rfr_D)
+        df = TOTR_D.subtract_over_common_dates(rfr_D)
 
-        # Local Equity Market
-        EQ_L = gds.get_total_return_series_from_ticker('MSWRLDL').get_periodic_returns(self._schema.frequency)
-        rfr_L = gds.get_risk_free_rate_time_series('World').get_periodic_returns(self._schema.frequency)
-        df_L = EQ_L.subtract_over_common_dates(rfr_L)
-
-        df = 0.5 * df_L.addition_over_common_dates(df_D)
-        df.columns = ['Equity']
+        df.columns = ['Commodities']
         self._cast_derived_class(df)
 
 if __name__ == "__main__":
@@ -35,7 +32,7 @@ if __name__ == "__main__":
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
 
-    fac = cEquity(schema)
+    fac = cCommodities(schema)
 
 
 

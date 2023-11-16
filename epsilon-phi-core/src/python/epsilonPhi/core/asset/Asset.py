@@ -132,7 +132,7 @@ if __name__ == "__main__":
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
 
-    self = CAsset(ticker='MSGWLDL', currency='USD', schema=schema, dataframe=rtns)
+    self = CAsset(exposure_currency='LOC', denominated_currency='USD', schema=schema, dataframe=rtns)
 
 
 

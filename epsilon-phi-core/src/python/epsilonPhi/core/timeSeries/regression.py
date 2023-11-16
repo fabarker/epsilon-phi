@@ -2,7 +2,6 @@ import copy
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
-import numba
 
 class Regression(object):
 
@@ -23,6 +22,11 @@ class Regression(object):
             X = np.hstack((ones, X))
 
         return np.linalg.solve(X.T @ X, X.T @ y)
+
+    @staticmethod
+    def get_residuals_from_OLS_fit(X: np.array, y: np.array, intercept=True) -> np.array:
+        betas = Regression.simple_regression_fast_OLS(X, y, intercept)
+        return y - X @ betas
 
     @staticmethod
     def zero_intercept_regression(X: np.array, y: np.array) -> np.array:

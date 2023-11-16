@@ -371,6 +371,22 @@ class CSlice(pd.Series):
     def remove_empty_leading_trailing_rows(self):
         return self.remove_empty_trailing_rows().remove_empty_leading_rows()
 
+    def subtract_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime - B_prime.values
+    def addition_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime + B_prime.values
+
+    def multiply_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime * B_prime.values
+
+    def division_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime / B_prime.values
+
+
 
 class CTimeSeries(pd.DataFrame):
 
@@ -753,6 +769,21 @@ class CTimeSeries(pd.DataFrame):
     def remove_empty_leading_trailing_rows(self, keep_any_nans=True):
         return self.remove_empty_trailing_rows(keep_any_nans).\
                     remove_empty_leading_rows(keep_any_nans)
+
+    def subtract_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime - B_prime.values
+    def addition_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime + B_prime.values
+
+    def multiply_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime * B_prime.values
+
+    def division_over_common_dates(self, df):
+        A_prime, B_prime = self.intersect_over_dates(df)
+        return A_prime / B_prime.values
 
     def plot_df(self):
         self.plot()

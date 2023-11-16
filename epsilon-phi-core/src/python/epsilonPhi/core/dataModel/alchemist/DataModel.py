@@ -155,10 +155,7 @@ class CommodityIndex(TimeSeries):
 
     @property
     def _X(self):
-        if 'SPT' in self._spec.ticker:
-            return 'PI'
-        else:
-            return 'RI'
+        return 'RI'
 
     __mapper_args__ = {'polymorphic_identity': 'commodity_index'}
     _spec = relationship("CommodityIndexSpec", foreign_keys=[uid])

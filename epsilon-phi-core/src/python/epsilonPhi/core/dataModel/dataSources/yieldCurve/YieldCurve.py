@@ -1,5 +1,6 @@
 import pandas as pd
 from typing import Union
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Database import Datatype
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.dataSources.yieldCurve.YieldCurveMgr import YieldCurveMgr
@@ -74,6 +75,10 @@ class YieldCurve(object):
         return gds.get_time_series_data_from_ticker(tickers, Datatype.RETURN_INDEX.value)
 
     def construct_total_return_constant_maturity_vector(self, maturity, frequency):
+
+        if isinstance(frequency, Frequency):
+           frequency = frequency.value
+
         df = -1 + (self.price_fixed_rate_bonds(bond_term_to_maturity=maturity, frequency=frequency) / 100)
         df_db = self.get_govt_bond_total_return_index(maturity).get_returns()
         df.columns = df_db.columns
@@ -94,6 +99,9 @@ class YieldCurve(object):
                                bond_term_to_maturity,
                                coupon_frequency=2,
                                frequency='B'):
+
+        if isinstance(frequency, Frequency):
+           frequency = frequency.value
 
         # Constants and Parameters
         DAYS_PER_YEAR = DateUtils.days_per_year

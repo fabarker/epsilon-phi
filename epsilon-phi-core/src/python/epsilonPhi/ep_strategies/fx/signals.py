@@ -2,6 +2,7 @@ import pandas as pd
 
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.utils.DateUtils import DateUtils
 
 __author__ = 'Francis Barker'
 __date__ = 'Mon 30 Oct 16:25'
@@ -19,6 +20,13 @@ class Signals(object):
         df_ = -1 * _datasource.get_fx_carry(currency_pairs, horizon, price_quotes='mid')
         df_.columns = df_.columns.get_level_values('bbid')
         return df_.copy().dropna(how='all')
+
+    @staticmethod
+    def get_MOM(currency_pairs, horizon='1m'):
+        days = round(DateUtils.Rdate_to_mat(horizon) * 252)
+        df_ = _datasource.get_fx_spot_rates(currency_pairs, price_quotes='mid')
+        df_.columns = df_.columns.get_level_values('bbid')
+        return df_.pct_change(days)
 
 if __name__ == "__main__":
 

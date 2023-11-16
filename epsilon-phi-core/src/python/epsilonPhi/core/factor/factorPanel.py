@@ -1,15 +1,16 @@
 from epsilonPhi.core.factor.factorPanelInf import CFactorPanelInf
+from epsilonPhi.core.factor.factorMgr import CFactorMgr
 
 class CFactorPanels(CFactorPanelInf):
-    def __init__(self):
+    def __init__(self, schema):
         super(CFactorPanels, self).__init__()
 
+        self._factorMgr = CFactorMgr(schema)
         self._return_factors = None
         self._risk_factors = None
 
         self._return_factors_df = None
         self._risk_factor_df = None
-
 
     def set_risk_factors(self):
         pass

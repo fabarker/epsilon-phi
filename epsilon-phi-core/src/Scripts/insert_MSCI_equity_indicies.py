@@ -9,8 +9,8 @@ import os
 nan = pd.pandas._libs.tslibs.nattype.NaTType
 session = SessionMgr().getSessionFactory()
 
-_SHEETNAME = 'Data'
-df = pd.read_excel(r'C:\Users\fabar\OneDrive\Documents\Data\Fama French Portfolios.xlsx',
+_SHEETNAME = 'Sheet1'
+df = pd.read_excel(r'/Users/francisbarker/Desktop/EM EQUITY.xlsx',
                    _SHEETNAME, index_col=0, header=[0,1,2,3,4,5,6,7,8,9,10])
 
 unique_tickers = np.unique(df.columns.get_level_values(0))

@@ -16,7 +16,7 @@ class Factor(object):
 
     _EURO_LEGACY = ['FRF', 'DEM', 'NLG', 'BEF', 'PTE', 'ESP', 'FIM', 'IEP', 'GRD', 'ATS', 'CYP', 'EEK', 'LUF', 'MCF', 'MTL', 'SIT', 'SKK', 'SNL', 'VAL']
     _EURO_CUTOFF_DATE = dt.date(year=1998, month=12, day=31)
-    _G_10_CURRENCIES = ['AUD', 'CAD', 'DKK', 'JPY', 'NZD', 'NOK', 'SEK', 'CHF', 'GBP', 'DEM', 'FRF', 'ITL', 'NLG', 'BEF']
+    _G_10_CURRENCIES = ['AUD', 'CAD', 'DKK', 'JPY', 'NZD', 'NOK', 'SEK', 'CHF', 'GBP', 'DEM', 'FRF', 'ITL', 'NLG', 'BEF', 'EUR']
     _BEF_EXCLUSION = (dt.date(year=1989, month=12, day=15), dt.date(year=1994, month=2, day=3))
     _TRY_START_DATE = dt.date(year=2001, month=12, day=20)
     _PRICE_QUOTE_TYPES = [PriceQuote.MID,
@@ -81,7 +81,7 @@ class Factor(object):
         else:
             self._domestic_currency = dom_ccy[0]
 
-        self.signal = value.reindex(self.pricing_dates)
+        self.signal = value.copy()
 
     @property
     def number_of_portfolios(self):
@@ -263,6 +263,7 @@ class Factor(object):
 
         str_df = pd.DataFrame()
         T = len(rebal_dates)
+        PV = 1
 
         for t in range(1, T-1):
             print('{}'.format(rebal_dates[t-1]))
@@ -276,32 +277,56 @@ class Factor(object):
 
                 # High Minus Low Portfolio
                 wt = np.repeat(1/N, N)
-                H = np.exp(long_excess.get(ranked_signal.index[-N:]) @ wt) - 1
-                L = np.exp(short_excess.get(ranked_signal.index[0:N]) @ wt) - 1
-                HML = H-L
+                #H = np.exp(long_excess.get(ranked_signal.index[-N:]) @ wt) - 1
+                #L = np.exp(short_excess.get(ranked_signal.index[0:N]) @ wt) - 1
+                #HML = H-L
 
-                HML_spt = np.exp(long_spt.get(ranked_signal.index[-N:]) @ wt) - \
-                          np.exp(short_spt.get(ranked_signal.index[0:N]) @ wt)
+                H = np.sum(wt * np.exp(long_excess.get(ranked_signal.index[-N:]).fillna(0).cumsum()), axis=1)
+                L = np.sum(wt * np.exp(short_excess.get(ranked_signal.index[0:N]).fillna(0).cumsum()), axis=1)
+                HML = np.exp((H - L).diff()) - 1
+                H_rtns = np.exp(H.diff())-1
+                L_rtns = np.exp(L.diff())-1
+
+                HML_spt = np.exp((np.sum(wt * np.exp(long_spt.get(ranked_signal.index[-N:]).fillna(0).cumsum()), axis=1) -
+                          np.sum(wt * np.exp(short_spt.get(ranked_signal.index[0:N]).fillna(0).cumsum()), axis=1)).diff()) - 1
 
                 # Linear in signal size
                 W_sig = (2/np.sum(np.abs(ranked_signal - np.mean(ranked_signal)))) * (ranked_signal - np.mean(ranked_signal))
-                lin_sig = np.exp(short_excess.get(W_sig[W_sig < 0].index)) @ W_sig[W_sig < 0] +\
-                          np.exp(long_excess.get(W_sig[W_sig > 0].index)) @ W_sig[W_sig > 0]
+                lin_sig = np.exp((np.sum(W_sig[W_sig > 0] * np.exp(long_excess.get(W_sig[W_sig > 0].index).fillna(0).cumsum()), axis=1) +
+                              np.sum(W_sig[W_sig < 0] * np.exp(short_excess.get(W_sig[W_sig < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
 
-                lin_sig_spt = np.exp(short_spt.get(W_sig[W_sig < 0].index)) @ W_sig[W_sig < 0] + \
-                            np.exp(long_spt.get(W_sig[W_sig > 0].index)) @ W_sig[W_sig > 0]
+                lin_sig_spt = np.exp((np.sum(W_sig[W_sig > 0] * np.exp(long_spt.get(W_sig[W_sig > 0].index).fillna(0).cumsum()), axis=1) +
+                                  np.sum(W_sig[W_sig < 0] * np.exp(short_spt.get(W_sig[W_sig < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
+
+                #lin_sig = np.exp(short_excess.get(W_sig[W_sig < 0].index)) @ W_sig[W_sig < 0] +\
+                #          np.exp(long_excess.get(W_sig[W_sig > 0].index)) @ W_sig[W_sig > 0]
+
+                #lin_sig_spt = np.exp(short_spt.get(W_sig[W_sig < 0].index)) @ W_sig[W_sig < 0] + \
+                #            np.exp(long_spt.get(W_sig[W_sig > 0].index)) @ W_sig[W_sig > 0]
 
                 # Build Portfolio linear in rank
                 W_rank = 2 * ((ranked_signal.rank() - ranked_signal.rank().mean()) /\
                          ((ranked_signal.rank() - ranked_signal.rank().mean()).abs().sum()))
 
-                lin_rank = np.exp(short_excess.get(W_rank[W_rank < 0].index)) @ W_rank[W_rank < 0] +\
-                          np.exp(long_excess.get(W_rank[W_rank > 0].index)) @ W_rank[W_rank > 0]
+                lin_rank = np.exp((np.sum(
+                    W_rank[W_rank > 0] * np.exp(long_excess.get(W_rank[W_rank > 0].index).fillna(0).cumsum()), axis=1) +
+                                  np.sum(W_rank[W_rank < 0] * np.exp(
+                                      short_excess.get(W_rank[W_rank < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
 
-                lin_rank_spt = np.exp(short_spt.get(W_rank[W_rank < 0].index)) @ W_rank[W_rank < 0] + \
-                               np.exp(long_spt.get(W_rank[W_rank > 0].index)) @ W_rank[W_rank > 0]
+                lin_rank_spt = np.exp((np.sum(
+                    W_rank[W_rank > 0] * np.exp(long_spt.get(W_rank[W_rank > 0].index).fillna(0).cumsum()), axis=1) +
+                                      np.sum(W_rank[W_rank < 0] * np.exp(
+                                          short_spt.get(W_rank[W_rank < 0].index).fillna(0).cumsum()),
+                                             axis=1)).diff()) - 1
 
-                df = pd.concat([HML, L, H, HML_spt, lin_sig, lin_sig_spt, lin_rank, lin_rank_spt], axis=1).dropna()
+
+                #lin_rank = np.exp(short_excess.get(W_rank[W_rank < 0].index)) @ W_rank[W_rank < 0] +\
+                #          np.exp(long_excess.get(W_rank[W_rank > 0].index)) @ W_rank[W_rank > 0]
+
+                #lin_rank_spt = np.exp(short_spt.get(W_rank[W_rank < 0].index)) @ W_rank[W_rank < 0] + \
+                #               np.exp(long_spt.get(W_rank[W_rank > 0].index)) @ W_rank[W_rank > 0]
+
+                df = pd.concat([HML, L_rtns, H_rtns, HML_spt, lin_sig, lin_sig_spt, lin_rank, lin_rank_spt], axis=1).dropna()
                 str_df = pd.concat((str_df, df), axis=0)
 
         str_df.columns = ['HML', 'L', 'H', 'HML_spt', 'SIGNAL_WEIGHTED', 'SIGNAL_WEIGHTED_SPT', 'RANK_WEIGHTED', 'RANK_WEIGHTS_SPT']
@@ -312,27 +337,27 @@ class Factor(object):
 
 if __name__ == '__main__':
 
-    G10 = Factor._G_10_CURRENCIES
+    G10 = Factor._G_10_CURRENCIES + ['BRL','INR','IDR','KRW','TWD','RUB','CNY','CZK','HUF','ZAR','COP','CLP']
 
-    start_date = dt.date(year=1982, month=12, day=31)
-    end_date = dt.date(year=2022, month=12, day=31)
+    start_date = dt.date(year=1983, month=10, day=31)
+    end_date = dt.date(year=2023, month=10, day=31)
     frequency = Frequency.BUSINESS_MONTHLY
 
     base_currency = 'USD'
     currency_pairs = [x + '/' + base_currency for x in G10]
 
-    sig_df = Signals.get_CAR(currency_pairs, '1m')
+    sig_df = Signals.get_MOM(currency_pairs, '12m')
 
-    CAR = Factor(start_date,
+    MOM = Factor(start_date,
                  end_date,
                  frequency)
 
-    CAR.rebalancing_frequency = Frequency.BUSINESS_MONTHLY
-    CAR.set_signal(sig_df)
-    CAR.price_quote_type = PriceQuote.MID
-    CAR.number_of_portfolios = 5
-    CAR.run_strategy()
-    df = CAR.PnLCurve
+    MOM.rebalancing_frequency = Frequency.BUSINESS_MONTHLY
+    MOM.set_signal(sig_df)
+    MOM.price_quote_type = PriceQuote.MID
+    MOM.number_of_portfolios = 5
+    MOM.run_strategy()
+    df = MOM.PnLCurve
 
 
 

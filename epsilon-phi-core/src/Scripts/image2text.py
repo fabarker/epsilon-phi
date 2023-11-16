@@ -80,7 +80,7 @@ def text_to_dataframe(text):
 
 if __name__ == "__main__":
 
-    data_path = r'C:\Users\fabar\OneDrive\Desktop\GFD\GFD 10 Year Yields.xlsx'
+    data_path = r'/Users/francisbarker/Desktop/GFD EM Equity/GFD EM Equity.xlsx'
     df = pd.read_excel(data_path, sheet_name=None, index_col=0)
 
     data = pd.DataFrame()

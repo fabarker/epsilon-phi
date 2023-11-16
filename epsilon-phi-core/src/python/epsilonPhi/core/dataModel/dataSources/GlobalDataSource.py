@@ -84,14 +84,14 @@ class GlobalDataSource(object):
         ts_spec.index = df.columns
         return CTimeSeries(df, attributes=ts_spec.T)
 
-    def get_time_series_data_from_ticker(self, ticker, cols=None):
+    def get_time_series_data_from_ticker(self, ticker, cols=None, ts_type=TimeSeriesType.LEVELS):
 
         df = self.get_dataframe_from_ticker(ticker, cols=cols, index_col='date')
         spec = self._session_mgr.get_time_series_spec_from_ticker(ticker, True).set_index('ticker', drop=True)
 
         ts_spec = pd.concat([spec] * df.shape[1])
         ts_spec.index = df.columns
-        return CTimeSeries(df, attributes=ts_spec.T)
+        return CTimeSeries(df, attributes=ts_spec.T, ts_type=ts_type)
 
     def get_total_return_series_from_ticker(self, ticker, returns_type=TimeSeriesType.LEVELS):
         ts = self.get_time_series_data_from_ticker(ticker)

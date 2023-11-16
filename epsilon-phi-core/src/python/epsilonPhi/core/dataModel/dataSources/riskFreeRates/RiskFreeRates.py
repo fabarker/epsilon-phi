@@ -13,7 +13,7 @@ if 'windows' in platform.system().lower():
     DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core\\') + len('epsilon-phi-core\\')],
                         'src\\resources\\templates\\MSCI Index Construction.xlsx')
 else:
-    DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/')+ len('epsilon-phi-core/')],
+    DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/') + len('epsilon-phi-core/')],
                         'src/resources/templates/MSCI Index Construction.xlsx')
 
 _COMPOSITE_RATES = ['World','Pacific ex-Japan','Pacific','European Union','Europe ex-UK','Europe','EMU','EM Latin America','EM Europe and Middle East','EM Europe','EM Asia','EM','AC World ex-US']

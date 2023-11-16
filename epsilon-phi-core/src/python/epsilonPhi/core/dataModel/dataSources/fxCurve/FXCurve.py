@@ -193,6 +193,8 @@ class FXCurve(object):
             print('Calculating forward prices for {}'.format(ccy))
             for type in types:
                 xs_df = sorted_df.xs(key=(ccy, type), level=('bbid', 'quote'), axis=1, drop_level=False)
+                xs_df = xs_df.iloc[:, xs_df.columns.get_level_values('maturity') <= np.max(tau)]
+
                 fwd_curve = xs_df.interpolate(method='linear', axis=1)
 
                 df_vec = FrameUtils.vectorize(fwd_curve, 'Price')

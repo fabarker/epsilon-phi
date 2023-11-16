@@ -19,28 +19,18 @@ _REGIONS['Germany'] = ('BMBD10Y', 8.1)
 
 gds = GlobalDataSource()
 
-class CTerm(CConstructedFactor):
+class cTerm(CConstructedFactor):
     def __init__(self, schema):
         super(CConstructedFactor, self).__init__(schema=schema)
         self.construct_factor(FACTOR.EQUITY_GLOBAL_ISG)
 
     def get_regional_bond_excess_return(self, region):
-        TR = self.get_region_bond_return_series(region)
-        RF = gds.get_risk_free_rate_time_series(region).\
-            get_periodic_returns(self._schema.frequency)
-
-        common_dates = np.intersect1d(TR.index,
-                                      RF.index)
-
-        return TR.loc[common_dates].values - RF.loc[common_dates]
+        df_TR = self.get_region_bond_return_series(region)
+        df_rfr = gds.get_risk_free_rate_time_series(region).get_periodic_returns(self._schema.frequency)
+        return df_TR.subtract_over_common_dates(df_rfr)
 
     def get_region_bond_return_series(self, region):
-        df_constructed = YieldCurve.get_total_return_time_series(region, 10, self._schema.frequency)
-        df_ = gds.get_total_return_series_from_ticker(_REGIONS.get(region)[0]).\
-            get_periodic_returns(self._schema.frequency)
-        df_constructed.columns = df_.columns
-        return pd.concat((df_constructed.loc[np.setdiff1d(df_constructed.index, df_.index)], df_),
-                  axis=0).sort_index()
+        return YieldCurve.get_total_return_time_series(region, 10, self._schema.frequency)
 
     def get_weight_for_region(self, region):
         return _REGIONS.get(region)[1] / 100
@@ -63,6 +53,6 @@ if __name__ == "__main__":
                             end_date='31-Dec-2022',
                             frequency='M').create_context()
 
-    self = CTerm(schema)
+    self = cTerm(schema)
 
 

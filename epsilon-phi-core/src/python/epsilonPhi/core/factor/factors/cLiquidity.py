@@ -17,7 +17,7 @@ class cLiquidity(CConstructedFactor):
 
     def __init__(self, schema):
         super(CConstructedFactor, self).__init__(schema=schema)
-        self.construct_factor(FACTOR.LIQUIDITY_US_PS)
+        self.construct_factor(FACTOR.LIQUIDITY_US_PASTOR_STAMBAUGH)
 
     def get_equity_tickers(self):
         q = session.query(EquitySpec.ticker).filter(EquitySpec.exchange_code.in_(_EXCHANGE_CODES))
@@ -43,9 +43,11 @@ class cLiquidity(CConstructedFactor):
             X = LIQ[i:i+3*12]
             y = self.get_data_for_regressions(X.index)
 
-
     def construct_factor(self, name):
-        pass
+
+        df_ = self.get_Pastor_Stambaugh_liquidity_factor()
+        df_.columns = ['Liquidity']
+        self._cast_derived_class(df_)
 
 if __name__ == "__main__":
     from epsilonPhi.core.schema.Schema import ContextCreator
@@ -54,5 +56,4 @@ if __name__ == "__main__":
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
 
-    self = CLiquidity(schema)
-    self.replicate_factor()
+    self = cLiquidity(schema)
