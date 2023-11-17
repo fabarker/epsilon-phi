@@ -278,41 +278,21 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    tickers = ['US66SAYAA',
-                'US15CBKAA',
-                'US66MCDAA',
-                'USFCFOBDA',
-                'US66BCWAA',
-                'US66CEQMA',
-                'US66DSCAA',
-                'US66BNKLA',
-                'US66XXXAA',
-                'US66XXXLA',
-                'US66MDVCA',
-                'US66IVSLA',
-                'US66GOLAA',
-                'US66CMPLA',
-                'US66FCMAA',
-                'US66FCMLA',
-                'US66SZXAA',
-                'US66PCDAA',
-                'US66FCULA',
-                'US66SECAA',
-                'US66SECLA',
-                'US66LTXCA',
-                'US66CBVLA',
-                'US66STYAA',
-                'US66MDRZA']
 
-    fields = ['X']
+    tickers = ['211K75']
+    fields = ['X','MV','LF','DM','MPDEF','SP','RI','RY','CP','GP','TRPM']
     from_date = datetime.date(year=1945, month=12, day=31)
     to_date = datetime.date.today()
 
     frames = pd.DataFrame()
     for ticker in tickers:
-        frame = pyDatastream.fetch(ticker, fields, from_date=from_date, frequency='D')
-        frame.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in frame.columns])
-        frames = pd.concat((frames, frame.loc[ticker]), axis=1).dropna(how='all')
+        for field in fields:
+            try:
+                frame = pyDatastream.fetch(ticker, [field], from_date=from_date, frequency='M')
+                frame.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in frame.columns])
+                frames = pd.concat((frames, frame.loc[ticker]), axis=1).dropna(how='all')
+            except:
+                pass
 
     ISO = pyDatastream.get_currency_ISO_from_tickers(tickers)
     name = pyDatastream.get_name_from_tickers(tickers)
