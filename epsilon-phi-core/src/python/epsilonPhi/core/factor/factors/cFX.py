@@ -4,9 +4,9 @@ from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Database import PriceQuote
 from epsilonPhi.ep_strategies.fx.factor import Factor as Carry
 from epsilonPhi.ep_strategies.fx.factor import Signals
+from epsilonPhi.core.factor.Factor import CFactor
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 import datetime as dt
-from epsilonPhi.core.factor.Factor import CConstructedFactor
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 
@@ -16,7 +16,7 @@ gds = GlobalDataSource()
 sessionMgr = SessionMgr()
 session = sessionMgr.getSessionFactory()
 
-class cFX(CConstructedFactor):
+class cFX(CFactor):
 
     _CURRENCIES = ['EUR', 'DEM', 'CHF', 'NZD', 'AUD', 'CAD', 'GBP', 'NLG', 'BEF', 'ATS', 'FRF', 'ESP', 'ITL', 'NOK', 'DKK', 'SEK']
     _BASE_CURRENCY = 'USD'
@@ -25,17 +25,14 @@ class cFX(CConstructedFactor):
     _END_DATE = dt.date(year=2023, month=10, day=31)
     _STRATEGY_TYPE = 'HML'
 
-    def __init__(self, schema):
-        super(CConstructedFactor, self).__init__(schema=schema)
-        self.construct_factor(FACTOR.CARRY_GLOBAL_ISG)
+    def __init__(self, dataframe, ts_type=TimeSeriesType.RETURNS):
+        super(cFX, self).__init__(dataframe=dataframe, ts_type=ts_type)
 
-    def get_carry(self, currency_pairs):
-        return Signals.get_CAR(currency_pairs, '1m')
+    @staticmethod
+    def construct_factor(frequency):
 
-    def construct_factor(self, name):
-
-        signal_df = self.get_carry(self._CURRENCY_PAIRS)
-        CAR = Carry(self._START_DATE, self._END_DATE, self._schema.frequency)
+        signal_df = Signals.get_CAR(cFX._CURRENCY_PAIRS, '1m')
+        CAR = Carry(cFX._START_DATE, cFX._END_DATE, frequency)
 
         # Set the strategy parameters
         CAR.rebalancing_frequency = Frequency.BUSINESS_MONTHLY
@@ -44,17 +41,12 @@ class cFX(CConstructedFactor):
         CAR.number_of_portfolios = 5
         CAR.run_strategy()
 
-        df_ = CAR.PnLCurve.get(cFX._STRATEGY_TYPE).fillna(1).pct_change().dropna().to_frame('FX')
-        self._cast_derived_class(df_)
+        df_lvls = CAR.PnLCurve.get(cFX._STRATEGY_TYPE).fillna(1)
+        return df_lvls.get_returns().to_frame(FACTOR.CARRY_GLOBAL_ISG.name)
 
 
 if __name__ == "__main__":
-    from epsilonPhi.core.schema.Schema import ContextCreator
 
-    schema = ContextCreator(currency='GBP',
-                            start_date='31-Dec-1999',
-                            end_date='31-Dec-2022').create_context()
-
-    self = cFX(schema)
+    df = cFX.construct_factor(Frequency.BUSINESS_MONTHLY)
 
     

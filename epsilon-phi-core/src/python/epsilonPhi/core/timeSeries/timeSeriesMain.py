@@ -104,11 +104,11 @@ class CSlice(pd.Series):
 
     @property
     def attributes(self):
-        self.__update_attributes()
+        # self.__update_attributes()
         return self.__getattr__('_added_attributes')
 
     def __update_attributes(self):
-        if self.name:
+        if self.name and self.__getattr__('_added_attributes'):
             atts = self.__getattr__('_added_attributes')
             self.__setattr__('_added_attributes', atts.get([self.name]))
 
@@ -171,7 +171,9 @@ class CSlice(pd.Series):
 
         rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
         newobj.values[rtns_locs] = np.nan
-        return self._create_new_returns_object(return_type, data=newobj, name=self.name, attributes=self.attributes)
+        return self._create_new_returns_object(return_type,
+                                               data=newobj,
+                                               attributes=self.attributes)
 
     def insert_date_val(self, date, val):
         self.insert_date(date)
@@ -297,6 +299,7 @@ class CSlice(pd.Series):
 
     def set_attributes(self, attributes: pd.DataFrame):
         if isinstance(attributes, pd.DataFrame):
+            self.__setattr__('_added_attributes', attributes)
             self.__setattr__('_added_attributes', attributes)
 
     def add_attributes(self, attributes: pd.DataFrame):

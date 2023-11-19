@@ -1,8 +1,20 @@
+from epsilonPhi.core.utils.PickleUtils import PickleUtils
 
 __author__ = 'Francis Barker'
 __date__ = '03/08/2023'
 
 class CFactorUtil:
+
+    @staticmethod
+    def is_pickled(factor_name, end_date, frequency):
+        pickle_name = CFactorUtil.get_factor_pickle_name(factor_name, end_date, frequency)
+        return PickleUtils.is_pickled(pickle_name)
+
+    @staticmethod
+    def get_factor_pickle_name(factor_name, end_date, frequency):
+        return factor_name + end_date + frequency
+
+
 
     @staticmethod
     def combine_factors(df_, betas):

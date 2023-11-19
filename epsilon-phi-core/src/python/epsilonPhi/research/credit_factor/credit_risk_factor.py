@@ -6,6 +6,24 @@ from pandas.tseries.offsets import *
 import datetime as datetime
 import os
 tqdm.pandas()
+from epsilonPhi.core.dataModel.alchemist.DataModel import *
+import os
+import pandas as pd
+
+# Replace 'path/to/your/file' with the actual file path
+file_path = r'C:\Users\fabar\OneDrive\Desktop\data\WRDS_MMN_Corrected_Data.csv.gzip'
+
+# Read the gzipped CSV file
+df_db = pd.read_csv(file_path, compression='gzip')
+db_cusips = df_db.get('cusip').unique()
+db_cusips = [ str(x) for x in db_cusips ]
+
+df_ds = pd.read_excel(r'C:\Users\fabar\OneDrive\Desktop\data\Bond Data.xlsx', sheet_name='Info')
+df_cusips = df_ds.get('Cusips').unique()
+df_cusips = [ str(x) for x in df_cusips ]
+
+common_cusips = np.intersect1d(db_cusips, df_cusips)
+print(len(common_cusips))
 
 file_dir = '/Users/francisbarker/Downloads/WRDS_DMR_Replication/'
 sample_type      = 'bbw'

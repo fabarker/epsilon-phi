@@ -1,5 +1,6 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.factor.factorPanel import CFactorPanels
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.config.appConfig import CAppConfig
 from epsilonPhi.core.env.Env import DATAVERSION, Env
@@ -94,13 +95,18 @@ class CContext(object):
                                                           dataversion).inflation_ticker
 
     def get_risk_factor_covariance_matrix(self):
-        pass
+        return self._factor_panels.get_risk_factor_covariance(self.dates)
 
-    def get_factor_panels(self):
-        pass
+    def get_risk_factors_panel(self):
+        return self._factor_panels.get_risk_factor_panel()\
+            .selectSubsetDates(self.dates)
 
-    def set_factor_panels(self):
-        pass
+    def get_return_factors_panel(self):
+        return self._factor_panels.get_return_factor_panel() \
+            .selectSubsetDates(self.dates)
+
+    def set_factor_panels(self, factor_panels):
+        self._factor_panels = factor_panels
 
     def set_factor_config(self):
         pass
@@ -150,19 +156,30 @@ class ContextCreator:
         self._end_date = end_date
 
     def create_context(self):
-        schema = CContext(self._currency,
+        self._schema = CContext(self._currency,
                                 self._frequency,
                                 self._dataversion,
                                 self._start_date,
                                 self._end_date)
-        schema._setup()
-        return schema
+        self._schema._setup()
+        self.__load_default_factor_panels()
+        return self._schema
+
+    def __load_default_factor_panels(self):
+        factorPanels = CFactorPanels(self._schema.frequency,
+                                     self._schema.end_date,
+                                     LOAD_DEFAULT_FACTOR_MODEL=True)
+        self._schema.set_factor_panels(factorPanels)
+
 
 if __name__ == "__main__":
 
-    self = ContextCreator(currency='GBP',
+    schema = ContextCreator(currency='GBP',
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
+
+
+
 
 
 

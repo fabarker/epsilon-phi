@@ -88,7 +88,7 @@ class CAsset(CTimeSeries, CAssetInf):
         pass
 
     def get_return_betas(self, normalized=True):
-        betas = self._schema.getEstimationMgr().getReturnBetas(self, normalized=True)
+        betas = self.schema.getEstimationMgr().getReturnBetas(self, normalized=True)
         return betas
 
     def get_return_betas_not_normalized(self):
@@ -98,10 +98,10 @@ class CAsset(CTimeSeries, CAssetInf):
         return self.get_risk_premia() + self._schema.get_risk_free_rate() + self.get_alpha()
 
     def get_risk_betas(self):
-        return self._schema.getEstimationMgr().get_risk_betas(self, self.hedging_ratio)
+        return self.schema.getEstimationMgr().get_risk_betas(self, self.hedging_ratio)
 
     def get_idiosyncratic_variance(self):
-        return self._schema.getEstimationMgr().get_idiosyncratic_variance(self, self.hedging_ratio)
+        return self.schema.getEstimationMgr().get_idiosyncratic_variance(self, self.hedging_ratio)
 
     def get_volatility(self):
 
@@ -132,7 +132,8 @@ if __name__ == "__main__":
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
 
-    self = CAsset(exposure_currency='LOC', denominated_currency='USD', schema=schema, dataframe=rtns)
+    self = CAsset(exposure_currency='WLD', denominated_currency='WLD', schema=schema, dataframe=rtns)
+    betas = self.get_risk_betas()
 
 
 

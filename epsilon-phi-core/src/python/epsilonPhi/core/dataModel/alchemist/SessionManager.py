@@ -266,6 +266,17 @@ class SessionMgr(object):
 
         return self.query_format_df(q)
 
+    def save_pickle_to_database(self, pickle_object, pickle_id):
+        print('Saving {} to pickles'.format(pickle_id))
+
+        new_row = DatabasePickle(pickle=pickle_object, id=pickle_id)
+
+        session = self.getSessionFactory()
+        session.add(new_row)
+        session.commit()
+        session.close()
+
+
     def pickle_and_save_to_database(self, obj, id):
 
         print('Saving {} to pickles'.format(id))

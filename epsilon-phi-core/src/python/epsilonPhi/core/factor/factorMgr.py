@@ -1,5 +1,6 @@
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.utils.PickleUtils import PickleUtils
 from abc import ABC, abstractmethod
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 import os, pkgutil, importlib
@@ -22,10 +23,14 @@ class CFactorMgrInf(ABC):
 class CFactorMgr(CFactorMgrInf):
     _cache = {}
 
-    def __init__(self, schema):
+    def __init__(self,
+                 start_date,
+                 end_date,
+                 frequency):
+
         super(CFactorMgr, self).__init__()
-        self._schema = schema
-        self._assetMgr = CAssetMgr(schema)
+        self._schema = _schema
+        self._assetMgr = CAssetMgr(_schema)
 
         self.__risk_factors_df = None
         self.__return_factors_df = None
@@ -38,7 +43,7 @@ class CFactorMgr(CFactorMgrInf):
 
     @property
     def risk_factors_list(self):
-        return [ x.value for x in self.__risk_factor_list ]
+        return [x.value for x in self.__risk_factor_list]
     @property
     def return_factors_list(self):
         return [x.value for x in self.__return_factor_list]
@@ -55,20 +60,20 @@ class CFactorMgr(CFactorMgrInf):
     def return_risk_factor_list(self):
         return list(set(self.return_factors_list + self.risk_factors_list))
 
-    def reset_risk_factors_df(self):
+    def _reset_risk_factors_df(self):
         self.__risk_factors_df = None
 
-    def reset_return_factors_df(self):
+    def _reset_return_factors_df(self):
         self.__return_factors_df = None
 
     def set_risk_factor_list(self, risk_factor_list: list):
         self.__check_factor_list(risk_factor_list)
-        self.reset_risk_factors_df()
+        self._reset_risk_factors_df()
         self.__risk_factor_list = risk_factor_list
 
     def set_return_factor_list(self, return_factors_list: list):
         self.__check_factor_list(return_factors_list)
-        self.reset_return_factors_df()
+        self._reset_return_factors_df()
         self.__return_factor_list = return_factors_list
 
     def __check_factor_list(self, factor_list):
@@ -78,27 +83,45 @@ class CFactorMgr(CFactorMgrInf):
 
     def _load_factors(self):
         for factor in self.return_risk_factor_list:
-            self.load_single_factor(factor)
+            self.__load_single_factor(factor)
 
-    def load_single_factor(self, factor):
+    def __load_factor_from_pickles(self, factor):
+        if PickleUtils.is_factor_pickled(factor,
+                                         self._schema.end_date,
+                                         self._schema.frequency):
+            self._cache[factor] = PickleUtils.load_factor_from_pickles(factor,
+                                                                       self._schema.end_date,
+                                                                       self._schema.frequency)
+    def __load_single_factor(self, factor):
 
         if factor not in self._cache.keys():
-            if self.isConstructed(factor):
-               self._construct_factor(factor)
+            self.__load_factor_from_pickles(factor)
+
+        if factor not in self._cache.keys():
+            if self.__isConstructed(factor):
+               self.__construct_factor(factor)
             else:
                df = gds.get_time_series_data_from_ticker(factor, ts_type=TimeSeriesType.RETURNS)
                df.columns = [factor]
 
                from epsilonPhi.core.factor.Factor import CFactor
                self._cache[factor] = CFactor(df, self._schema, TimeSeriesType.RETURNS)
+               PickleUtils.pickle_factor(self._cache[factor],
+                                         factor,
+                                         self._schema.end_date,
+                                         self._schema.frequency)
 
-    def isConstructed(self, factor_name: str):
+    def __isConstructed(self, factor_name: str):
         return factor_name + '.py' in pkgutil.get_loader(_FACTOR_PACKAGE).contents()
 
-    def _construct_factor(self, factor):
+    def __construct_factor(self, factor):
         module = importlib.import_module(_FACTOR_PACKAGE + '.' + factor)
         constructor = getattr(module, factor)
         self._cache[factor] = constructor(self._schema)
+        PickleUtils.pickle_factor(self._cache[factor],
+                                  factor,
+                                  self._schema.end_date,
+                                  self._schema.frequency)
 
     def get_risk_factor_panel(self):
         return self.get_factor_panel().get(self.risk_factors_list)

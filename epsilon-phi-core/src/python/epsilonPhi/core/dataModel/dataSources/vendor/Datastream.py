@@ -124,6 +124,17 @@ class pyDatastream(object):
         return frames
 
     @staticmethod
+    def get_bond_cusips_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='LOC',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
     def get_name_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
         chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
         frames = pd.DataFrame()
@@ -278,25 +289,14 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
+    df = pd.read_excel(r'C:\Users\fabar\OneDrive\Desktop\data\Bond Data.xlsx')
+    tickers = df.Symbol.to_list()
 
-    tickers = ['211K75']
-    fields = ['X','MV','LF','DM','MPDEF','SP','RI','RY','CP','GP','TRPM']
+    fields = ['MV','LF','DM','RI','RY','CP','GP','VO','VA']
     from_date = datetime.date(year=1945, month=12, day=31)
     to_date = datetime.date.today()
+    frame = pyDatastream.fetch(tickers, fields, from_date=from_date, frequency='D')
 
-    frames = pd.DataFrame()
-    for ticker in tickers:
-        for field in fields:
-            try:
-                frame = pyDatastream.fetch(ticker, [field], from_date=from_date, frequency='M')
-                frame.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in frame.columns])
-                frames = pd.concat((frames, frame.loc[ticker]), axis=1).dropna(how='all')
-            except:
-                pass
-
-    ISO = pyDatastream.get_currency_ISO_from_tickers(tickers)
-    name = pyDatastream.get_name_from_tickers(tickers)
-    source = pyDatastream.get_source_from_tickers(tickers)
 
 
 
