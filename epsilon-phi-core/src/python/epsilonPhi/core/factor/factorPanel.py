@@ -12,6 +12,9 @@ import numpy as np
 import datetime as dt
 
 
+import QuantLib as ql
+ql.Actual366()
+
 _FACTOR_PACKAGE = 'epsilonPhi.core.factor.factors'
 gds = GlobalDataSource()
 
@@ -154,6 +157,9 @@ class CFactorPanels(CFactorPanelInf):
         pass
 
     def get_return_factor_betas(self):
+        pass
+
+    def cap_factor_Sharpe(self, factor, cap):
         pass
 
 
