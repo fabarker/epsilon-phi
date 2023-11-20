@@ -86,6 +86,10 @@ class CSlice(pd.Series):
         return self.values
 
     @property
+    def obs_per_year(self):
+        return Frequency(self.frequency).obs_per_year()
+
+    @property
     def data_length(self):
         return self.index.__len__()
 
@@ -96,7 +100,7 @@ class CSlice(pd.Series):
     @property
     def frequency(self):
         if self.index.freq:
-            return self.index.freq
+            return self.index.freq.name
         elif self.index.inferred_freq:
             return self.index.inferred_freq
         else:
@@ -469,6 +473,10 @@ class CTimeSeries(pd.DataFrame):
         return self.values
 
     @property
+    def obs_per_year(self):
+        return Frequency(self.frequency).obs_per_year()
+
+    @property
     def data_length(self):
         return self.index.__len__()
 
@@ -479,9 +487,12 @@ class CTimeSeries(pd.DataFrame):
     @property
     def frequency(self):
         if self.index.freq:
-            return self.index.freq
-        else:
+            return self.index.freq.name
+        elif self.index.inferred_freq:
             return self.index.inferred_freq
+        else:
+            return DateUtils.get_daterange_frequency(self.index)
+
 
     @property
     def attributes(self):

@@ -12,8 +12,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
     @staticmethod
     def get_risk_premium(asset):
-        schema = asset.getSchema()
-        hist_sharpe = schema.get_factor_panels().get_return_factor_Sharpe_ratios()
+        hist_sharpe = asset.schema.BaseModel.get_return_factor_Sharpe_ratios()
         betas = asset.get_return_betas()
         return np.mean(betas, axis=0) * hist_sharpe.conj().T * math.sqrt(schema.annualizing_factor)
 

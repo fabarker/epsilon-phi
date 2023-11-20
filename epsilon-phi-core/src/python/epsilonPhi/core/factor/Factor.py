@@ -1,7 +1,7 @@
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
-from epsilonPhi.core.factor.factorMgr import CFactorMgr
 import numpy as np
+import math
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 
@@ -20,21 +20,18 @@ class CFactor(CTimeSeries):
         newObj = CFactor(dataframe=data, ts_type=ts_type)
         return newObj
 
+    def deepcopy(self):
+        return CFactor(dataframe=self, ts_type=self.type)
+
     def get_historical_risk_premia(self):
-        return np.mean(self.values) * self.frequency.yearfrac()
+        return np.mean(self.values) * math.sqrt(self.obs_per_year)
 
     def get_historical_Sharpe(self):
-        return (np.mean(self.values) * self.frequency.yearfrac()) /\
-                    np.std(self.values, ddof=1) * np.sqrt(self.frequency.yearfrac())
+        return np.mean(self.values) / np.std(self.values, ddof=1) * math.sqrt(self.obs_per_year)
 
     def get_historical_volatility(self):
-        return np.std(self.values, ddof=1) * np.sqrt(self.frequency.yearfrac())
+        return np.std(self.values, ddof=1) * math.sqrt(self.obs_per_year)
 
-    def get_Sharpe_ratio(self):
-        pass
-
-    def get_risk_premium(self):
-        pass
 
 
 

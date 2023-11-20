@@ -62,7 +62,7 @@ class FACTOR(Enum):
     EQUITY_LT_REVERSAL_US_FF = 'LTR_US_FF'
 
     @staticmethod
-    def get_default_risk_factor_list():
+    def get_default_return_factor_list():
         return [FACTOR.EQUITY_GLOBAL_ISG,
                 FACTOR.TERM_GLOBAL_ISG,
                 FACTOR.FUNDING_US_ISG,
@@ -71,7 +71,7 @@ class FACTOR(Enum):
                 FACTOR.EQUITY_EMERGING_ISG]
 
     @staticmethod
-    def get_default_return_factor_list():
+    def get_default_risk_factor_list():
         return [FACTOR.EQUITY_GLOBAL_ISG,
                 FACTOR.TERM_GLOBAL_ISG,
                 FACTOR.FUNDING_US_ISG,

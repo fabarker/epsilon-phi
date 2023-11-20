@@ -1,5 +1,6 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
+from epsilonPhi.core.config.appConfig import CAppConfig
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.asset.CAssetInf import CAssetInf
@@ -88,7 +89,7 @@ class CAsset(CTimeSeries, CAssetInf):
         pass
 
     def get_return_betas(self, normalized=True):
-        betas = self.schema.getEstimationMgr().getReturnBetas(self, normalized=True)
+        betas = CAppConfig.get_estimation_mgr().getReturnBetas(self, normalized=True)
         return betas
 
     def get_return_betas_not_normalized(self):
@@ -98,10 +99,10 @@ class CAsset(CTimeSeries, CAssetInf):
         return self.get_risk_premia() + self._schema.get_risk_free_rate() + self.get_alpha()
 
     def get_risk_betas(self):
-        return self.schema.getEstimationMgr().get_risk_betas(self, self.hedging_ratio)
+        return CAppConfig.get_estimation_mgr().get_risk_betas(self, self.hedging_ratio)
 
     def get_idiosyncratic_variance(self):
-        return self.schema.getEstimationMgr().get_idiosyncratic_variance(self, self.hedging_ratio)
+        return CAppConfig.get_estimation_mgr().get_idiosyncratic_variance(self, self.hedging_ratio)
 
     def get_volatility(self):
 
@@ -113,7 +114,7 @@ class CAsset(CTimeSeries, CAssetInf):
         return np.sqrt(systematic_var + idio)
 
     def get_risk_premia(self):
-        return self._schema.getEstimationMgr().get_risk_premium(self)
+        return CAppConfig.get_estimation_mgr().get_risk_premium(self)
 
     def set_hedging_ratio(self, hedging_ratio):
         self._hedging_ratio = hedging_ratio
@@ -133,7 +134,7 @@ if __name__ == "__main__":
                             end_date='31-Dec-2022').create_context()
 
     self = CAsset(exposure_currency='WLD', denominated_currency='WLD', schema=schema, dataframe=rtns)
-    betas = self.get_risk_betas()
+    betas = self.get_risk_premia()
 
 
 

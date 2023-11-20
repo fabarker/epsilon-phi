@@ -1,6 +1,8 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
 from epsilonPhi.core.factor.factorPanel import CFactorPanels
+from epsilonPhi.core.modelFactory.ModelFactory import BaseModel
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.config.appConfig import CAppConfig
 from epsilonPhi.core.env.Env import DATAVERSION, Env
@@ -94,22 +96,23 @@ class CContext(object):
                                                           frequency,
                                                           dataversion).inflation_ticker
 
+    @property
+    def BaseModel(self):
+        return self._base_model
+
     def get_risk_factor_covariance_matrix(self):
-        return self._factor_panels.get_risk_factor_covariance(self.dates)
+        return self._base_model.get_risk_factor_covariance(self.dates)
 
     def get_risk_factors_panel(self):
-        return self._factor_panels.get_risk_factor_panel()\
+        return self._base_model.get_risk_factor_panel()\
             .selectSubsetDates(self.dates)
 
     def get_return_factors_panel(self):
-        return self._factor_panels.get_return_factor_panel() \
+        return self._base_model.get_return_factor_panel() \
             .selectSubsetDates(self.dates)
 
-    def set_factor_panels(self, factor_panels):
-        self._factor_panels = factor_panels
-
-    def set_factor_config(self):
-        pass
+    def set_base_model(self, base_model):
+        self._base_model = base_model
 
     def _setup(self):
         self.__load_configs()
@@ -162,14 +165,13 @@ class ContextCreator:
                                 self._start_date,
                                 self._end_date)
         self._schema._setup()
-        self.__load_default_factor_panels()
+        self.__load_default_model()
         return self._schema
 
-    def __load_default_factor_panels(self):
-        factorPanels = CFactorPanels(self._schema.frequency,
-                                     self._schema.end_date,
-                                     LOAD_DEFAULT_FACTOR_MODEL=True)
-        self._schema.set_factor_panels(factorPanels)
+    def __load_default_model(self):
+        mdl = BaseModel.get_default_model(self._frequency,
+                                          self._end_date)
+        self._schema.set_base_model(mdl)
 
 
 if __name__ == "__main__":

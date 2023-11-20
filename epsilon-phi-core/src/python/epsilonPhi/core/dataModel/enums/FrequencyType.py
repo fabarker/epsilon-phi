@@ -1,5 +1,6 @@
 from enum import Enum
 import numpy as np
+from pandas import offsets
 
 class Frequency(Enum):
 

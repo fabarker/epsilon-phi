@@ -1,109 +1,202 @@
-from enum import Enum
+import pandas as pd
+import math
 from epsilonPhi.core.factor.factorPanel import CFactorPanels
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
-import datetime
+from epsilonPhi.core.dataModel.enums.Factor import FACTOR
+from epsilonPhi.core.dataModel.enums.Model import REGRESSION_TYPE, SAMPLING_TYPE, WEIGHTING_SCHEME
+from epsilonPhi.core.timeSeries.regression import Regression
+import datetime as dt
+import numpy as np
 
-class CModelFactory(object):
+class BaseModel(object):
 
-    class REGRESSION_TYPE(object):
-        class OLS(object):
-            def __init__(self):
-                pass
+    __DEFAULT_RISK_FACTORS = FACTOR.get_default_risk_factor_list()
+    __DEFAULT_RETURN_FACTORS = FACTOR.get_default_return_factor_list()
+    __DEFAULT_END_DATE = dt.date(year=2022, month=12, day=31)
+    __DEFAULT_FREQUENCY = Frequency.BUSINESS_MONTHLY
 
-        class RIDGE(object):
-            def __init__(self, lmbda):
-                self._lambda = lmbda
+    def __init__(self,
+                 frequency=None,
+                 end_date=None,
+                 ):
 
-        class LASSO(object):
-            def __init__(self, lmbda):
-                self._lambda = lmbda
+        if frequency is None:
+            self.__frequency = BaseModel.__DEFAULT_FREQUENCY
+        else:
+            self.__frequency = frequency
 
-        class ELASTIC_NET(object):
-            def __init__(self, lmbda):
-                self._lambda = lmbda
+        if end_date is None:
+           self.__end_date = BaseModel.__DEFAULT_END_DATE
+        else:
+           self.__end_date = end_date
 
-        class ROBUST(object):
-            def __init__(self, lmbda):
-                self._lambda = lmbda
+        # List of return factors
+        self.__RISK_FACTORS_LIST = []
+        self.__RETURN_FACTORS_LIST = []
 
-        class BAYESIAN(object):
-            def __init__(self, lmbda):
-                self._lambda = lmbda
+        # Associated with factor model spec
+        self.__regression_type = None
+        self.__sampling_type = None
+        self.__orthogonalize_list = None
+        self.__weighting_scheme = None
+        self.__use_statistical_model = False
+        self.__factor_Sharpe_cap = {}
+        self._factorPanels = None
+        self.__regression = None
 
-    class WINDOW_TYPE(object):
-        class STATIC(object):
-            def __init__(self):
-                pass
+    def create_model(self):
+        self.__factorPanels = CFactorPanels(self.factor_list,
+                                            self.frequency,
+                                            self.end_date)
+        self.__factorPanels.load_factors()
 
-        class ROLLING(object):
+    @staticmethod
+    def get_default_model(frequency, end_date):
 
-            def __init__(self, sample_size_in_years):
-                self._sample_size_in_years = sample_size_in_years
+        mdl = BaseModel(frequency, end_date)
+        mdl.set_risk_factor_list(mdl.__DEFAULT_RISK_FACTORS)
+        mdl.set_return_factor_list(mdl.__DEFAULT_RETURN_FACTORS)
+        mdl.set_orthogonalize([FACTOR.EQUITY_EMERGING_ISG.name, FACTOR.FUNDING_US_ISG.name])
+        mdl.set_window_type(SAMPLING_TYPE.ROLLING, length=5)
+        mdl.set_weighting_scheme(WEIGHTING_SCHEME.EQUAL)
+        mdl.set_factor_Sharpe_cap(FACTOR.EQUITY_EMERGING_ISG.name, 0.2)
+        mdl.create_model()
+        return mdl
 
-            def __repr__(self):
-                return f"ModelFactory.WINDOW_TYPE.ROLLING(sample_size_in_years={self._sample_size_in_years})"
+    # Public Properteis
+    @property
+    def factor_panels(self):
+        return self.__factorPanels
+    @property
+    def end_date(self):
+        return self.__end_date
+    @property
+    def frequency(self):
+        return self.__frequency
+    @property
+    def risk_factor_df(self):
+        return None
+    @property
+    def return_factor_df(self):
+        return None
+    @property
+    def return_factor_list(self):
+        return self.__return_factor_list
+    @property
+    def risk_factor_list(self):
+        return self.__risk_factor_list
 
-        class EXPANDING(object):
-            def __init__(self, starting_window_size_years):
-                self._starting_window_size_years = starting_window_size_years
+    @property
+    def factor_list(self):
+        return list(np.unique(self.__return_factor_list + self.__risk_factor_list))
+    @property
+    def regression_type(self):
+        return self.__regression_type
+    @property
+    def sampling_type(self):
+        return self.__sampling_type
+    @property
+    def is_statistical_model(self):
+        return self.__use_statistical_model
+    @property
+    def factor_Sharpe_caps(self):
+        return self.__factor_Sharpe_cap
 
-    class ORTHOGONALIZE(object):
-        def __init__(self, orthogonalize_list):
-            self._orthogonalize_list = orthogonalize_list
+    @property
+    def regression(self):
+        return self.__regression
 
-    class WEIGHTING_SCHEME(object):
-        class EQUAL(object):
-            def __init__(self):
-                pass
+    def is_orthogonalized(self, factor_name):
+        return factor_name in self.__orthogonalize_list
 
-        class EXPONENTIAL(object):
-            def __init__(self, decay):
-                self._decay = decay
-
-    class USE_STATISTICAL_MODEL(object):
-        def __init__(self, boolean=False):
-            self._boolean = boolean
-
-    def __init__(self):
-        self._regression_type = None
-        self._window_type = None
-        self._orthogonalize = None
-        self._weighting_scheme = None
-        self._set_factor_Sharpe_cap = None
+    ############ setter methods ###############
 
     def set_regression_type(self, regression_type: REGRESSION_TYPE):
-        self._regression_type = regression_type
+        self.__regression_type = regression_type
+        self.__regression = Regression(regression_type)
 
-    def set_window_type(self, window_type: WINDOW_TYPE):
-        self._window_type = window_type
+    def set_window_type(self, window_type: SAMPLING_TYPE, length=None):
+        self.__window_type = (window_type, length)
 
-    def set_orthogonalize(self, orthogonalize: ORTHOGONALIZE):
-        self._orthogonalize = orthogonalize
+    def set_orthogonalize(self, orthogonalize_list):
+        self.__orthogonalize_list = orthogonalize_list
 
     def set_weighting_scheme(self, weighting_scheme: WEIGHTING_SCHEME):
-        self._weighting_scheme = weighting_scheme
+        self.__weighting_scheme = weighting_scheme
 
-    def use_statistical_model(self, use_statistical_model: WEIGHTING_SCHEME):
-        self._use_statistical_model = use_statistical_model
+    def use_statistical_model(self, use_statistical_model: bool):
+        self.__use_statistical_model = use_statistical_model
 
     def set_risk_factor_list(self, risk_factor_list):
-        pass
+
+        assert isinstance(risk_factor_list, list), 'ERROR - Must be list of return factor enums'
+        boolean = [isinstance(x, FACTOR) for x in risk_factor_list]
+        assert np.all(boolean), 'Error - factor list must be a list of FACTOR enumerators'
+        self.__risk_factor_list = [x.name for x in risk_factor_list]
 
     def set_return_factor_list(self, return_factor_list):
-        pass
+
+        assert isinstance(return_factor_list, list), 'ERROR - Must be list of return factor enums'
+        boolean = [isinstance(x, FACTOR) for x in return_factor_list]
+        assert np.all(boolean), 'Error - factor list must be a list of FACTOR enumerators'
+        self.__return_factor_list = [x.name for x in return_factor_list]
 
     def set_factor_Sharpe_cap(self, factor, Sharpe_cap):
-        self._factor_Sharpe_cap[factor] = Sharpe_cap
+        self.__factor_Sharpe_cap[factor] = Sharpe_cap
 
-    def __set_factor_panels(self):
+    ###################### PUBLIC METHODS ######################
+    def get_return_factor_df(self, orthogonalize=False):
 
-    def create_model(self, end_date, frequency):
-        CModelFactory
-        pass
+        if orthogonalize:
+            df_ = self.factor_panels.get_factors_df(self.return_factor_list)
+            return self.regression.orthogonalize_columns(df_, self.__orthogonalize_list)
+        return self.factor_panels.get_factors_df(self.return_factor_list)
+
+    def get_risk_factor_df(self, orthogonalize=False):
+
+        if orthogonalize:
+            df_ = self.factor_panels.get_factors_df(self.risk_factor_list)
+            return self.regression.orthogonalize_columns(df_, self.__orthogonalize_list)
+        return self.factor_panels.get_factors_df(self.risk_factor_list)
+
+    def get_factor(self, factor_name, orthogonalized=False):
+
+        if orthogonalized:
+            X = self.factor_panels.get_factors_df(np.setdiff1d(self.return_factor_list, factor_name))
+            y = self.factor_panels.get_factor(factor_name)
+            return self.regression.residuals(X, y)
+        return self.factor_panels.get_factor(factor_name)
+
+    def get_return_factor_Sharpe_ratios(self):
+        return pd.DataFrame([self.get_return_factor_Sharpe_ratio(x) for x in self.return_factor_list],
+                             index=self.return_factor_list)
+
+    def get_return_factor_Sharpe_ratio(self, factor_name):
+
+        if self.is_orthogonalized(factor_name):
+            sr = self.get_factor(factor_name, True).get_historical_Sharpe()
+        else:
+            sr = self.get_factor(factor_name).get_historical_Sharpe()
+        return np.minimum(sr, self.factor_Sharpe_caps.get(factor_name, np.inf))
+
+    def get_risk_factor_covariance(self):
+        panel = self.get_risk_factor_df()
+
+
+
+
+
+
+    # Methods associated with factors
 
 
 if __name__ == "__main__":
 
-    model_factory = CModelFactory()
-    model = model_factory.create_model(frequency=Frequency.BUSINESS_MONTHLY,
-                                       end_date=datetime.date(year=2022, month=12, day=31))
+    return_factors = FACTOR.get_default_return_factor_list()
+
+    model = BaseModel()
+
+    model.set_return_factor_list(FACTOR.get_default_return_factor_list())
+    model.set_risk_factor_list(FACTOR.get_default_risk_factor_list())
+    model.create_model()
+
