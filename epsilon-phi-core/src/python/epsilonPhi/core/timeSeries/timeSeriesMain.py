@@ -1,18 +1,18 @@
 from __future__ import annotations
-
+from epsilonPhi.core.timeSeries.timeSeriesInf import slice_metadata, metadata
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
-from pandas._typing import Any, Axis, Level, Scalar
-from typing import Optional
+from typing import Optional, Union
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
 class CSlice(pd.Series):
 
-    _metadata = ["_added_attributes", "_type", "_name"]
+    __pandas_priority__ = 5000
+    _metadata = slice_metadata
 
     @property
     def _constructor(self):
@@ -33,49 +33,50 @@ class CSlice(pd.Series):
         return _cs
 
     def __init__(self,
-                 data=None,
-                 attributes: pd.DataFrame = None,
+                 data: Optional[pd.Series] = None,
+                 attributes: Optional[Union[pd.Series, pd.DataFrame]] = None,
                  ts_type: TimeSeriesType = TimeSeriesType.LEVELS,
                  returns_type: ReturnsType = ReturnsType.SIMPLE,
                  **kwargs):
 
         super(CSlice, self).__init__(data=data, **kwargs)
         # Set attributes in object
-        if isinstance(attributes, pd.DataFrame):
-            self.set_attributes(attributes)
-        else:
-            self.__setattr__('_added_attributes', pd.DataFrame())
 
+        self.set_attributes(attributes)
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
+        self.__validate_index()
+
+    # check we have time series data
+    def __validate_index(self):
+        try:
+            self.index = pd.to_datetime(self.index)
+            self.sort_index(inplace=True)
+        except:
+            pass
+
+    #############
 
     def _cast_derived_class(self, klass):
-        self.__init__(klass,
-                      ts_type=klass.type,
-                      attributes=klass.attributes,
-                      returns_type=klass.returns_type)
-
-    def _deepcopy(self):
-        return self.__class__(self,
-                              ts_type=self._type,
-                              attributes=self.attributes,
-                              returns_type=self.returns_type)
+        self.__init__(klass, ts_type=klass.type, attributes=klass.attributes, returns_type=klass.returns_type)
 
     def create_new_object(self, data=None, attributes=None, ts_type=None, returns_type=None):
-        return self.__class__(data=data,
-                              ts_type=ts_type,
-                              attributes=attributes,
-                              returns_type=returns_type)
+        return self.__class__(data=data, ts_type=ts_type, attributes=attributes,  returns_type=returns_type)
 
-    def _create_new_object_same_type(self, data=None, attributes=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=self.returns_type)
+    def deepcopy(self):
+        return self.create_new_object(data=self,
+                                      ts_type=self.type, attributes=self.attributes, returns_type=self.returns_type)
 
-    def _create_new_levels_object(self, data=None, attributes=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=self.returns_type)
+    def _create_new_object_same_type(self, data=None, attributes=None, returns_type=None):
+        return self.create_new_object(data, attributes, self.type, returns_type)
+
+    def _create_new_levels_object(self, data=None, attributes=None, returns_type=None):
+        return self.create_new_object(data, attributes, TimeSeriesType.LEVELS, returns_type)
 
     def _create_new_returns_object(self, returns_type, data=None, attributes=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
+        return self.create_new_object(data, attributes, TimeSeriesType.RETURNS, returns_type)
 
+    ##############
 
     @property
     def dates(self):
@@ -109,12 +110,7 @@ class CSlice(pd.Series):
     @property
     def attributes(self):
         # self.__update_attributes()
-        return self.__getattr__('_added_attributes')
-
-    def __update_attributes(self):
-        if self.name and self.__getattr__('_added_attributes'):
-            atts = self.__getattr__('_added_attributes')
-            self.__setattr__('_added_attributes', atts.get([self.name]))
+        return self.__getattr__('_added_attributes').copy()
 
     @property
     def type(self):
@@ -126,7 +122,8 @@ class CSlice(pd.Series):
 
     @property
     def is_levels(self):
-        return self.type == TimeSeriesType.LEVELS
+        return (self.type ==
+                TimeSeriesType.LEVELS)
 
     @property
     def is_returns(self):
@@ -136,7 +133,7 @@ class CSlice(pd.Series):
     def get_levels(self):
 
         if self.is_levels:
-            return self.copy()
+            return self.deepcopy()
 
         idx_nan = self.isna().values
         if self.returns_type in [ReturnsType.SIMPLE,
@@ -144,7 +141,7 @@ class CSlice(pd.Series):
             newobj = (1 + self).cumprod(axis=0)
         elif self.returns_type in [ReturnsType.LOG,
                                    ReturnsType.LOG.value]:
-            newobj = np.exp(self).cumsum(axis=0)
+            newobj = np.exp(self.cumsum(axis=0))
         elif self.returns_type in [ReturnsType.DIFFERENCE,
                                    ReturnsType.DIFFERENCE.value]:
             newobj = self.cumsum(axis=0)
@@ -153,73 +150,41 @@ class CSlice(pd.Series):
 
         newobj.values[idx_nan] = np.nan
         newobj.insert_date_val(DateUtils.shift_date(self.first_valid_index(), newobj.frequency, -1), 1)
-        return self._create_new_levels_object(newobj, attributes=self.attributes)
+        return self._create_new_levels_object(newobj, attributes=self.attributes, returns_type=self.returns_type)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
-        if self.is_returns:
-            return self.copy()
+        if return_type is None:
+           return_type = self.returns_type
 
-        nan_locs = self.isna().values
-        if self.returns_type in [ReturnsType.SIMPLE,
-                                 ReturnsType.SIMPLE.value]:
-            newobj = self.ffill().pct_change().dropna()
+        if (self.is_returns and
+                self.returns_type == return_type):
+            return self.deepcopy()
+
+
+        copyobject = self.get_levels()
+        nan_locs = copyobject.isna().values
+        if return_type in [ReturnsType.SIMPLE,
+                           ReturnsType.SIMPLE.value]:
+            newobj = copyobject.ffill().pct_change().dropna()
         elif return_type in [ReturnsType.LOG,
                              ReturnsType.LOG.value]:
-            newobj = np.log(self.ffill()).diff().dropna()
+            newobj = np.log(copyobject.ffill()).diff().dropna()
         elif return_type in [ReturnsType.DIFFERENCE,
                              ReturnsType.DIFFERENCE.value]:
-            newobj = self.ffill().diff().dropna()
+            newobj = copyobject.ffill().diff().dropna()
         else:
             raise ValueError('Error - must specify returns type')
 
         rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
         newobj.values[rtns_locs] = np.nan
-        return self._create_new_returns_object(return_type,
-                                               data=newobj,
-                                               attributes=self.attributes)
+        newobj.__setattr__('_returns_type', return_type)
+        return self._create_new_returns_object(return_type, data=newobj, attributes=self.attributes)
 
-    def insert_date_val(self, date, val):
-        self.insert_date(date)
-        self[date] = val
-
-    def select_subset_dates(self, dates):
-        return self.loc[dates].copy()
-
-    def reindex(  # type: ignore[override]
-            self,
-            index=None,
-            *,
-            axis: Axis | None = None,
-            method: str | None = None,
-            copy: bool | None = None,
-            level: Level | None = None,
-            fill_value: Scalar | None = None,
-            limit: int | None = None,
-            tolerance=None):
-
-        obj = super(CSlice, self).reindex(index)
-        obj.name = self.name
-        return obj
-
-    def insert_and_select_subset_dates(self, dates, fill_na=False):
-
-        unique_dates = self.index.append(dates).unique().sort_values()
-        reindexed = self.reindex(unique_dates)
-        if fill_na:
-            return reindexed.ffill().reindex(dates, copy=True)
-        else:
-            return reindexed.reindex(dates, copy=True)
-
-    def select_subset_year(self, year):
-        return self.loc[self.index.year == year]
-
-    def select_subset_month(self, month):
-        return self.loc[self.index.month == month]
-
-    def select_subset_month_year(self, month, year):
-        return self.loc[np.logical_and(self.index.month == month,
-                                       self.index.year == year)]
+    def insert_dates(self, dates):
+        unique_dates = DateUtils.merge([self.dates, dates])
+        df_ = self.reindex(unique_dates).sort_index()
+        self._cast_derived_class(df_)
 
     def insert_date(self, date):
         if not DateUtils.is_iterable(date):
@@ -228,30 +193,51 @@ class CSlice(pd.Series):
         insert_dates = pd.to_datetime(date)
         self.insert_dates(insert_dates)
 
-    def insert_dates(self, dates):
-        df_ = self.reindex(self.index.append(dates).unique()).sort_index()
-        self._cast_derived_class(df_)
+    def insert_date_val(self, date, val):
+        self.insert_date(date)
+        self[date] = val
+
+    def select_subset_dates(self, dates):
+        return self.loc[dates].deepcopy()
+
+    def insert_and_select_subset_dates(self, dates, fill_na=False):
+
+        unique_dates = DateUtils.merge([self.dates, dates])
+        if fill_na:
+            return self.reindex(unique_dates).ffill().reindex(dates)
+        else:
+            return self.reindex(unique_dates).reindex(dates)
+
+    def select_subset_year(self, year):
+        return self.loc[self.index.year == year].deepcopy()
+
+    def select_subset_month(self, month):
+        return self.loc[self.dates.month == month].deepcopy()
+
+    def select_subset_month_year(self, month, year):
+        return self.loc[np.logical_and(self.dates.month == month,
+                                       self.dates.year == year)].deepcopy()
 
     def intersect_over_dates(self, df):
-        common_dates = np.intersect1d(self.dates, df.index)
-        return self.select_subset_dates(common_dates), df.loc[common_dates].copy()
+        common_dates = np.intersect1d(self.index, pd.to_datetime(df.index))
+        return self.select_subset_dates(common_dates), df.loc[common_dates].deepcopy()
 
     def intersect_over_date_range(self, df):
-        common_dates = np.intersect1d(self.dates, df.index)
-        return self[np.min(common_dates):np.max(common_dates)], \
-            df[np.min(common_dates):np.max(common_dates)]
+        common_dates = np.intersect1d(self.index, pd.to_datetime(df.index))
+        return self[np.min(common_dates):np.max(common_dates)].deepcopy(), \
+            df[np.min(common_dates):np.max(common_dates)].deepcopy()
+
+
+    ############
+    def get_period_ends(self, frequency):
+        period_dates = DateUtils.get_date_range(self.index.min(), self.index.max(), periodicity=frequency)
+        return self.insert_and_select_subset_dates(period_dates, fill_na=True)
 
     def get_periodic_levels(self, periods):
         return self.get_levels().get_period_ends(periods)
 
-    def get_periodic_returns(self, periods):
-        return self.get_levels().get_period_ends(periods).get_returns()
-
-    def get_period_ends(self, frequency):
-        period_dates = DateUtils.get_date_range(np.min(self.dates),
-                                                np.max(self.dates),
-                                                periodicity=frequency)
-        return self.insert_and_select_subset_dates(period_dates, fill_na=True)
+    def get_periodic_returns(self, periods, returns_type=None):
+        return self.get_levels().get_period_ends(periods).get_returns(returns_type)
 
     def get_week_ends(self):
         return self.get_period_ends(Frequency.WEEKLY)
@@ -268,136 +254,171 @@ class CSlice(pd.Series):
     def get_year_ends(self):
         return self.get_period_ends(Frequency.YEARLY)
 
+    def get_weekly_returns(self, returns_type=None):
+        return self.get_periodic_returns(Frequency.WEEKLY, returns_type)
+
+    def get_bmonthly_returns(self, returns_type=None):
+        return self.get_periodic_returns(Frequency.BUSINESS_MONTHLY, returns_type)
+
+    def get_quarterly_returns(self, returns_type=None):
+        return self.get_periodic_returns(Frequency.QUARTERLY, returns_type)
+
+    def get_annual_returns(self, returns_type=None):
+        return self.get_periodic_returns(Frequency.YEARLY, returns_type)
+
+    def get_monthly_returns(self, returns_type=None):
+        return self.get_periodic_returns(Frequency.MONTHLY, returns_type)
+
     def get_weekly_levels(self):
         return self.get_periodic_levels(Frequency.WEEKLY)
-
-    def get_weekly_returns(self):
-        return self.get_periodic_returns(Frequency.WEEKLY)
 
     def get_monthly_levels(self):
         return self.get_periodic_levels(Frequency.MONTHLY)
 
-    def get_monthly_returns(self):
-        return self.get_periodic_returns(Frequency.MONTHLY)
-
     def get_bmonthly_levels(self):
         return self.get_periodic_levels(Frequency.BUSINESS_MONTHLY)
-
-    def get_bmonthly_returns(self):
-        return self.get_periodic_returns(Frequency.BUSINESS_MONTHLY)
 
     def get_quarterly_levels(self):
         return self.get_periodic_levels(Frequency.QUARTERLY)
 
-    def get_quarterly_returns(self):
-        return self.get_periodic_returns(Frequency.QUARTERLY)
-
     def get_annual_levels(self):
         return self.get_periodic_levels(Frequency.YEARLY)
 
-    def get_annual_returns(self):
-        return self.get_periodic_returns(Frequency.YEARLY)
+    ############ Methods Associated with Attributes ############
 
     def reset_attributes(self):
-        self.__setattr__('_added_attributes', pd.DataFrame())
+        self.set_attributes(attributes=pd.Series(name=self.name))
 
-    def set_attributes(self, attributes: pd.DataFrame):
+    def set_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None) -> None:
+
         if isinstance(attributes, pd.DataFrame):
-            self.__setattr__('_added_attributes', attributes)
-            self.__setattr__('_added_attributes', attributes)
+            attributes = attributes.get(self.name)
+        elif isinstance(attributes, dict):
+            attributes = pd.Series(attributes, name=self.name)
 
-    def add_attributes(self, attributes: pd.DataFrame):
-        self.append_attributes(attributes)
+        if attributes is None:
+            attributes = pd.Series(name=self.name)
 
-    def add_attribute(self, attribute_name, attribute_vals):
+        self.__setattr__('_added_attributes', attributes)
 
-        if not FrameUtils.is_iterable(attribute_vals):
-            attribute_vals = [attribute_vals]
-        new_att = pd.DataFrame(attribute_vals, columns=[self.name], index=[attribute_name])
-        self.append_attributes(new_att)
+    def set_attribute_single(self, attribute_name, attribute_value):
 
-    def append_attributes(self, new_attributes: pd.DataFrame):
-        new_atts = pd.concat((self.attributes, new_attributes), axis=0)
-        self.set_attributes(new_atts)
+        atts = self.attributes
+        if attribute_name in atts.index:
+           atts[attribute_name] = attribute_value
+        else:
+          new_att = pd.Series({attribute_name: attribute_value}, name=self.name)
+          atts = pd.concat((atts, new_att))
+        self.set_attributes(atts)
 
-    def get_attributes(self, attribute_name):
-        return self.attributes.loc[attribute_name]
+    def append_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame, dict]]) -> None:
 
-    def sort_by_attribute(self, attribute_name, sort_ascending=False):
-        pass
+        if attributes is None:
+            return
+
+        if isinstance(attributes, pd.DataFrame):
+            attributes = attributes.get(self.name, pd.Series()).to_dict()
+        elif isinstance(attributes, pd.Series):
+            attributes = attributes.to_dict()
+
+        for att in attributes.keys():
+            self.set_attribute_single(att, attributes.get(att))
+
+    def get_attribute(self, attribute_name):
+        if attribute_name in self.attributes.index:
+            return self.attributes.loc(attribute_name)
 
     def concat(self, time_series):
         assert self.type == time_series.type, 'ERROR - timeseries must be of the same type to concat'
-        new_atts = pd.concat((self.attributes, time_series.attributes), axis=1)
-        return CTimeSeries(data=pd.concat((self, time_series), axis=1), ts_type=self.type, attributes=new_atts)
+        df_ = pd.concat(objs=(self, time_series), axis=1)
+        atts = pd.concat(objs=(self.attributes, time_series.attributes), axis=1)
+        return df_._create_new_object_same_type(df_, attributes=atts, returns_type=self.returns_type)
 
     def ind(self, ind_value):
         if self.is_levels:
             self._cast_derived_class(
                 ind_value * (self / self.loc[self.first_valid_index()]))
 
-    def _backfill_returns(self, backfill):
+    def backfill_returns(self, backfill):
         """Method to backfill two time series objects based on returns.
            Method backfills self with data from B_prime, across matching columns.
        """
         # Make sure both objects are returns objects
         if self.is_levels:
-            raise ValueError('Error - _backfill_returns only supports returns objects')
+            raise ValueError('Error - backfill_returns only supports returns objects')
 
-        backfill_rtns = backfill.get_returns()
+        backfill_rtns = backfill.get_returns(self.returns_type)
         assert self.name == backfill.name, 'Error - series must have the same names'
-        backfilled = pd.concat((backfill.loc[backfill_rtns.dates < min(self.dates)], self), axis=0).sort_index()
+        backfilled = pd.concat(objs=(backfill.loc[backfill_rtns.dates < min(self.index)], self), axis=0).sort_index()
+        backfilled.name = self.name
 
         # preserve the attributes
-        return self._create_new_returns_object(self.returns_type,
-                                               data=backfilled,
-                                               name=self.name,
-                                               attributes=self.attributes)
+        return self._create_new_returns_object(self.returns_type, data=backfilled, attributes=self.attributes)
 
-    def _backfill_levels(self, backfill):
+    def backfill_levels(self, backfill):
 
         # Make sure both objects are returns objects
         if self.is_returns:
-            raise ValueError('Error - _backfill_levels only supports levels objects')
+            raise ValueError('Error - backfill_levels only supports levels objects')
 
-        self_rtns = self.get_returns()
-        backfill_rtns = backfill.get_returns()
+        self_rtns = self.get_returns(self.returns_type)
+        backfill_rtns = backfill.get_returns(self.returns_type)
 
         backfilled_rtns = self_rtns._backfill_returns(backfill_rtns)
         backfilled_lvls = backfilled_rtns.get_levels()
 
         rescaled = backfilled_lvls * (self.loc[self.first_valid_index()] / backfilled_lvls.loc[self.first_valid_index()])
-        return self._create_new_levels_object(rescaled, attributes=self.attributes, name=self.name)
+        rescaled.name = self.name
+        return self._create_new_levels_object(rescaled, attributes=self.attributes, returns_type=self.returns_type)
+
+    def backfill_series(self, backfill):
+
+        backfill_type = backfill.to_time_series_type(self.type)
+        if self.type == TimeSeriesType.LEVELS:
+           return self.backfill_levels(backfill_type)
+        elif self.type in [TimeSeriesType.GROWTH, TimeSeriesType.RETURNS]:
+           return self.backfill_returns(backfill_type)
+        else:
+           raise ValueError('Error - type {} not supported'.format(self.type))
 
     def remove_empty_leading_rows(self):
-        return self.loc[:self.last_valid_index()]
+        return self.loc[:self.last_valid_index()].deepcopy()
 
     def remove_empty_trailing_rows(self):
-        return self.loc[:self.first_valid_index()]
+        return self.loc[:self.first_valid_index()].deepcopy()
 
     def remove_empty_leading_trailing_rows(self):
         return self.remove_empty_trailing_rows().remove_empty_leading_rows()
 
     def subtract_over_common_dates(self, df):
         A_prime, B_prime = self.intersect_over_dates(df)
-        return A_prime - B_prime.values
+        return A_prime - B_prime.values.reshape(A_prime.shape)
+
     def addition_over_common_dates(self, df):
         A_prime, B_prime = self.intersect_over_dates(df)
-        return A_prime + B_prime.values
+        return A_prime + B_prime.values.reshape(A_prime.shape)
 
     def multiply_over_common_dates(self, df):
         A_prime, B_prime = self.intersect_over_dates(df)
-        return A_prime * B_prime.values
+        return A_prime * B_prime.values.reshape(A_prime.shape)
 
     def division_over_common_dates(self, df):
         A_prime, B_prime = self.intersect_over_dates(df)
-        return A_prime / B_prime.values
+        return A_prime / B_prime.values.reshape(A_prime.shape)
 
+    def to_time_series_type(self, ts_type):
 
+        if ts_type == TimeSeriesType.LEVELS:
+           return self.get_levels()
+        elif ts_type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
+           return self.get_returns(self.returns_type)
+        else:
+            raise ValueError('Error - type {} not supported'.format(ts_type))
 
 class CTimeSeries(pd.DataFrame):
 
-    _metadata = ["_added_attributes", "_type"]
+    __pandas_priority__ = 5000
+    _metadata = metadata
 
     @property
     def _constructor(self):
@@ -432,13 +453,16 @@ class CTimeSeries(pd.DataFrame):
             self.__setattr__('_added_attributes', pd.DataFrame())
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
-        #self._validate_index()
+        self.__validate_index()
 
-    # check we have time series data
-    def _validate_index(self):
-         if self.index.size > 0:
-            if not isinstance(self.index, pd.DatetimeIndex):
-                self.index = pd.to_datetime(self.index)
+    ###################
+
+    def __validate_index(self):
+        try:
+            self.index = pd.to_datetime(self.index)
+            self.sort_index(inplace=True)
+        except:
+            pass
 
     def _cast_derived_class(self, klass):
         self.__init__(klass,
@@ -446,23 +470,28 @@ class CTimeSeries(pd.DataFrame):
                       attributes=klass.attributes,
                       returns_type=klass.returns_type)
 
-    def _deepcopy(self):
-        return self._create_new_object_same_type(data=self, attributes=self.attributes)
-
     def create_new_object(self, data=None, attributes=None, ts_type=None, returns_type=None):
         return self.__class__(data=data,
                               ts_type=ts_type,
                               attributes=attributes,
                               returns_type=returns_type)
 
-    def _create_new_object_same_type(self, data=None, attributes=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=self.returns_type)
+    def deepcopy(self):
+        return self.create_new_object(data=self,
+                                      returns_type=self.returns_type,
+                                      ts_type=self.type,
+                                      attributes=self.attributes)
 
-    def _create_new_levels_object(self, data=None, attributes=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=self.returns_type)
+    def _create_new_object_same_type(self, data=None, attributes=None, returns_type=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=returns_type)
+
+    def _create_new_levels_object(self, data=None, attributes=None, returns_type=None):
+        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type)
 
     def _create_new_returns_object(self, returns_type=None, data=None, attributes=None):
         return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
+
+    ######################
 
     @property
     def dates(self):
@@ -525,63 +554,70 @@ class CTimeSeries(pd.DataFrame):
 
     def get_levels(self):
         if self.is_levels:
-            return self.copy()
+            return self.deepcopy()
+
         lvls = self.apply(lambda x: x.get_levels())
-        return self.create_new_object(data=lvls, attributes=self.attributes, ts_type=TimeSeriesType.LEVELS)
+        return self._create_new_levels_object(data=lvls, attributes=self.attributes, returns_type=self.returns_type)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
-        if self.is_returns:
-            return self.copy()
+        if return_type is None:
+           return_type = self.returns_type
 
-        copyobj = self.remove_empty_leading_trailing_rows()
-        nan_locs = copyobj.isna().values
-        if copyobj.returns_type in [ReturnsType.SIMPLE,
-                                 ReturnsType.SIMPLE.value]:
-            newobj = copyobj.ffill().apply(lambda x: x.pct_change().dropna())
-        elif return_type in [ReturnsType.LOG,
-                             ReturnsType.LOG.value]:
-            newobj = copyobj.ffill().apply(lambda x: np.log(x).diff().dropna())
-        elif return_type in [ReturnsType.DIFFERENCE,
-                             ReturnsType.DIFFERENCE.value]:
-            newobj = copyobj.ffill().apply(lambda x: x.diff().dropna())
-        else:
-            raise ValueError('Error - must specify returns type')
+        rtns = self.apply(lambda x: x.get_returns(return_type))
+        return self._create_new_returns_object(return_type, data=rtns, attributes=self.attributes)
 
-        rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
-        newobj.values[rtns_locs] = np.nan
-        return self._create_new_returns_object(returns_type=return_type, data=newobj, attributes=self.attributes)
+    #def get_returns(self, return_type=ReturnsType.SIMPLE):
+
+    #    if self.is_returns:
+    #        return self.deepcopy()
+
+    #    copyobj = self.remove_empty_leading_trailing_rows()
+    #    nan_locs = copyobj.isna().values
+    #    if return_type in [ReturnsType.SIMPLE,
+    #                       ReturnsType.SIMPLE.value]:
+    #        newobj = copyobj.ffill().apply(lambda x: x.pct_change().dropna())
+    #    elif return_type in [ReturnsType.LOG,
+    #                         ReturnsType.LOG.value]:
+    #        newobj = copyobj.ffill().apply(lambda x: np.log(x).diff().dropna())
+    #    elif return_type in [ReturnsType.DIFFERENCE,
+    #                         ReturnsType.DIFFERENCE.value]:
+    #        newobj = copyobj.ffill().apply(lambda x: x.diff().dropna())
+    #    else:
+    #        raise ValueError('Error - must specify returns type')
+
+    #    rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
+    #    newobj.values[rtns_locs] = np.nan
+    #    return self._create_new_returns_object(returns_type=return_type, data=newobj, attributes=self.attributes)
 
     def select_subset_dates(self, dates):
-        return self.loc[dates].copy()
-
-    def insert_and_select_subset_dates(self, dates, fill_na=False):
-
-        reindexed = self.reindex(self.index.append(dates).unique()).sort_index()
-        if fill_na:
-            return reindexed.ffill().reindex(dates).copy()
-        else:
-            return reindexed.reindex(dates).copy()
+        return self.loc[dates].deepcopy()
 
     def select_subset_columns(self, columns):
         return self.select_subset_labels(self.columns[columns])
 
     def select_subset_labels(self, labels):
-        return self.get(labels).copy()
+        return self.get(labels).deepcopy()
 
     def select_subset_attribute(self, attribute_name, attribute_values):
         idx = self.attributes.loc[attribute_name].isin([attribute_values]).values
-        return self.iloc[:, idx]
+        return self.iloc[:, idx].deepcopy()
 
     def select_subset_year(self, year):
-        return self.loc[self.index.year == year]
+        return self.loc[self.index.year == year].deepcopy()
 
     def select_subset_month(self, month):
-        return self.loc[self.index.month == month]
+        return self.loc[self.index.month == month].deepcopy()
 
     def select_subset_month_year(self, month, year):
         return self.loc[np.logical_and(self.index.month == month,
-                                       self.index.year == year)]
+                                       self.index.year == year)].deepcopy()
+
+    def insert_and_select_subset_dates(self, dates):
+
+        subset = self.deepcopy()
+        subset.insert_dates(dates)
+        return subset.reindex(dates)
 
     def insert_date(self, date):
         if not DateUtils.is_iterable(date):
@@ -592,30 +628,31 @@ class CTimeSeries(pd.DataFrame):
 
     def insert_dates(self, dates):
 
-        df_ = self.reindex(self.index.append(dates).unique()).sort_index()
+        unique_dates = DateUtils.merge([self.dates, dates])
+        df_ = self.reindex(unique_dates)
         if self.is_levels:
            self._cast_derived_class(df_.ffill())
         else:
            self._cast_derived_class(df_.fillna(0))
 
     def intersect_over_dates(self, df):
-        common_dates = np.intersect1d(self.dates, df.index)
-        return self.select_subset_dates(common_dates), df.loc[common_dates].copy()
+        common_dates = np.intersect1d(self.index, df.index)
+        return self.select_subset_dates(common_dates), df.loc[common_dates].deepcopy()
 
     def intersect_over_date_range(self, df):
-        common_dates = np.intersect1d(self.dates, df.index)
+        common_dates = np.intersect1d(self.index, df.index)
         return self[np.min(common_dates):np.max(common_dates)], \
-            df[np.min(common_dates):np.max(common_dates)]
+            df[np.min(common_dates):np.max(common_dates)].deepcopy()
+
+    def get_period_ends(self, frequency):
+        period_dates = DateUtils.get_date_range(np.min(self.index), np.max(self.index), periodicity=frequency)
+        return self.insert_and_select_subset_dates(period_dates)
+
+    def get_periodic_returns(self, periods, return_type=None):
+        return self.get_levels().get_period_ends(periods).get_returns(return_type)
 
     def get_periodic_levels(self, periods):
         return self.get_levels().get_period_ends(periods)
-
-    def get_periodic_returns(self, periods):
-        return self.get_levels().get_period_ends(periods).get_returns()
-
-    def get_period_ends(self, frequency):
-        period_dates = DateUtils.get_date_range(np.min(self.dates), np.max(self.dates), periodicity=frequency)
-        return self.insert_and_select_subset_dates(period_dates, fill_na=True)
 
     def get_week_ends(self):
         return self.get_period_ends(Frequency.WEEKLY)
@@ -638,38 +675,40 @@ class CTimeSeries(pd.DataFrame):
     def get_weekly_levels(self):
         return self.get_periodic_levels(Frequency.WEEKLY)
 
-    def get_weekly_returns(self):
-        return self.get_periodic_returns(Frequency.WEEKLY)
+    def get_weekly_returns(self, return_type=None):
+        return self.get_periodic_returns(Frequency.WEEKLY, return_type)
 
     def get_monthly_levels(self):
         return self.get_periodic_levels(Frequency.MONTHLY)
 
-    def get_monthly_returns(self):
-        return self.get_periodic_returns(Frequency.MONTHLY)
+    def get_monthly_returns(self, return_type=None):
+        return self.get_periodic_returns(Frequency.MONTHLY, return_type)
 
     def get_bmonthly_levels(self):
         return self.get_periodic_levels(Frequency.BUSINESS_MONTHLY)
 
-    def get_bmonthly_returns(self):
-        return self.get_periodic_returns(Frequency.BUSINESS_MONTHLY)
+    def get_bmonthly_returns(self, return_type=None):
+        return self.get_periodic_returns(Frequency.BUSINESS_MONTHLY, return_type)
 
     def get_quarterly_levels(self):
         return self.get_periodic_levels(Frequency.QUARTERLY)
 
-    def get_quarterly_returns(self):
-        return self.get_periodic_returns(Frequency.QUARTERLY)
+    def get_quarterly_returns(self, return_type=None):
+        return self.get_periodic_returns(Frequency.QUARTERLY, return_type)
 
     def get_bquarterly_levels(self):
         return self.get_periodic_levels(Frequency.BUSINESS_QUARTERLY)
 
-    def get_bquarterly_returns(self):
-        return self.get_periodic_returns(Frequency.BUSINESS_QUARTERLY)
+    def get_bquarterly_returns(self, return_type=None):
+        return self.get_periodic_returns(Frequency.BUSINESS_QUARTERLY, return_type)
 
     def get_annual_levels(self):
         return self.get_periodic_levels(Frequency.YEARLY)
 
-    def get_annual_returns(self):
-        return self.get_periodic_returns(Frequency.YEARLY)
+    def get_annual_returns(self, return_type=None):
+        return self.get_periodic_returns(Frequency.YEARLY, return_type)
+
+    ############### Methods Associated with Attributes ##################
 
     def reset_attributes(self):
         self.__setattr__('_added_attributes', pd.DataFrame())
@@ -704,27 +743,28 @@ class CTimeSeries(pd.DataFrame):
     def sort_by_attribute(self, attribute_name, sort_ascending=False):
         pass
 
+    ###################
+
     def concat(self, time_series):
         assert self.type == time_series.type, 'ERROR - timeseries must be of the same type to concat'
-        new_atts = pd.concat((self.attributes, time_series.attributes), axis=1)
-        df_concat = pd.concat((self, time_series), axis=1)
-        return self.__class__(df_concat, ts_type=self.type, attributes=new_atts)
+        new_atts = pd.concat(objs=(self.attributes, time_series.attributes), axis=1)
+        df_concat = pd.concat(objs=(self, time_series), axis=1)
+        return self.__class__(df_concat.sort_index(), ts_type=self.type, attributes=new_atts, returns_type=self.returns_type)
 
     def combine_left(self, time_series):
         if self.size > 0 and time_series.size > 0:
             return self.combine_first(time_series)
         elif time_series.size > 0:
-            return time_series.copy()
+            return time_series.deepcopy()
         else:
-            return self.copy()
+            return self.deepcopy()
 
     def ind(self, ind_value):
         if self.is_levels:
             self._cast_derived_class(
                self.apply(lambda x: ind_value*(x/x.loc[x.first_valid_index()])))
 
-
-    def _backfill_returns(self, backfill):
+    def backfill_returns(self, backfill):
         """Method to backfill two time series objects based on returns.
            Method backfills self with data from B_prime, across matching columns.
        """
@@ -732,44 +772,53 @@ class CTimeSeries(pd.DataFrame):
         if self.is_levels:
            raise ValueError('Error - _backfill_returns only supports returns objects')
 
-        backfill_rtns = backfill.get_returns()
+        backfill_rtns = backfill.get_returns(self.returns_type)
         common_labels = np.intersect1d(self.columns, backfill_rtns.columns)
         not_in_backfill = self.get(np.setdiff1d(self.columns, backfill.columns))
 
         backfilled = self._create_new_returns_object(self.returns_type)
         for label in common_labels:
-            backfilled = backfilled.concat(self.get(label)._backfill_returns(backfill_rtns.get(label)))
+            backfilled = backfilled.concat(self.get(label).backfill_returns(backfill_rtns.get(label)))
         backfilled.columns = self.columns
 
         self_with_backfill = not_in_backfill.concat(backfilled).select_subset_labels(self.columns)
         assert np.all(self_with_backfill.columns == self.columns), 'Error in backfill'
-        return self_with_backfill.copy()
+        return self._create_new_returns_object(self.returns_type, data=self_with_backfill, attributes=self.attribute)
 
-    def _backfill_levels(self, backfill):
+    def backfill_levels(self, backfill):
 
         # Make sure both objects are returns objects
         if self.is_returns:
            raise ValueError('Error - _backfill_levels only supports levels objects')
 
-        self_rtns = self.get_returns()
-        backfill_rtns = backfill.get_returns()
+        self_rtns = self.get_returns(self.returns_type)
+        backfill_rtns = backfill.get_returns(self.returns_type)
 
-        backfilled_rtns = self_rtns._backfill_returns(backfill_rtns)
+        backfilled_rtns = self_rtns.backfill_returns(backfill_rtns)
         backfilled_lvls = backfilled_rtns.get_levels()
         rescaled = backfilled_lvls.apply(lambda x: x * (self.get(x.name).loc[self.get(x.name).first_valid_index()] /
                                                         x.loc[self.get(x.name).first_valid_index()]))
         assert np.all(rescaled.columns == self.columns), 'Error in backfill'
-        return self._create_new_levels_object(rescaled, attributes=self.attributes)
+        return self._create_new_levels_object(rescaled, attributes=self.attributes, returns_type=self.returns_type)
 
+    def backfill_series(self, backfill):
+
+        backfill_type = backfill.to_time_series_type(self.type)
+        if self.type == TimeSeriesType.LEVELS:
+           return self.backfill_levels(backfill_type)
+        elif self.type in [TimeSeriesType.GROWTH, TimeSeriesType.RETURNS]:
+           return self.backfill_returns(backfill_type)
+        else:
+           raise ValueError('Error - type {} not supported'.format(self.type))
 
     def remove_empty_leading_rows(self, keep_any_nans=True):
 
         first_valid_indicies = self.apply(lambda x: x.last_valid_index())
 
         if keep_any_nans:
-           return self.loc[:max(first_valid_indicies)]
+           return self.loc[:max(first_valid_indicies)].deepcopy()
         else:
-           return self.loc[:min(first_valid_indicies):]
+           return self.loc[:min(first_valid_indicies):].deepcopy()
 
     def remove_empty_trailing_rows(self, keep_any_nans=True):
 
@@ -803,6 +852,15 @@ class CTimeSeries(pd.DataFrame):
         self.plot()
         plt.show()
 
+    def to_time_series_type(self, ts_type):
+
+        if ts_type == TimeSeriesType.LEVELS:
+           return self.get_levels()
+        elif ts_type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
+           return self.get_returns(self.returns_type)
+        else:
+            raise ValueError('Error - type {} not supported'.format(ts_type))
+
     @staticmethod
     def get_timeseries_from_ticker(ticker, fields=None, ts_type=None):
         from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
@@ -819,9 +877,16 @@ class CTimeSeries(pd.DataFrame):
 if __name__ == "__main__":
 
 
-    ds = CTimeSeries.get_timeseries_from_ticker('SPXDELTA20C(O1)', fields='mid', ts_type=TimeSeriesType.LEVELS)
-    gsq = CTimeSeries.get_timeseries_from_ticker('SPXDELTA20P(O1)', fields='mid', ts_type=TimeSeriesType.LEVELS)
+    ds = CTimeSeries.get_timeseries_from_ticker('MSSPANL', fields='PI', ts_type=TimeSeriesType.LEVELS)
+    ds1 = CTimeSeries.get_timeseries_from_ticker('MSSRIL$', fields='PI', ts_type=TimeSeriesType.LEVELS)
 
+    self = CSlice(data=ds.iloc[:, 0], ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
+
+    self_2 = CSlice(data=ds1.iloc[:, 0], ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
+
+    new = self.reindex(self_2.index)
+
+    new_atts = {'Currency':'GBP','Price':'Mid','Location':'LDN'}
 
 
 

@@ -2,6 +2,7 @@ from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSou
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.factor.Factor import CFactor
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 import numpy as np
 import pandas as pd
@@ -10,8 +11,8 @@ ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 gds = GlobalDataSource()
 
 class cEmerging(CFactor):
-    def __init__(self, dataframe, ts_type=TimeSeriesType.RETURNS):
-        super(cEmerging, self).__init__(dataframe=dataframe, ts_type=ts_type)
+    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
+        super(cEmerging, self).__init__(series=series, ts_type=ts_type)
 
     @staticmethod
     def construct_factor(frequency):
@@ -29,8 +30,9 @@ class cEmerging(CFactor):
 
 
         df = EM_D.subtract_over_common_dates(EQ_D)
-        df.columns = [FACTOR.EQUITY_EMERGING_ISG.name]
-        return df.copy()
+        factor = CSlice(data=df.values.flatten(), index=df.index, name=FACTOR.EQUITY_EMERGING_ISG.name,
+                        ts_type=TimeSeriesType.RETURNS)
+        return factor.copy()
 
 if __name__ == "__main__":
 

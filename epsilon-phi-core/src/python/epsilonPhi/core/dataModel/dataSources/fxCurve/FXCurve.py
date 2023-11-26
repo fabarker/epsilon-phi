@@ -1,13 +1,18 @@
+import numpy as np
+from epsilonPhi.core.dataModel.enums.TimeSeries import ReturnsType
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurveMgr import FXCurveManager
 from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
+from epsilonPhi.core.utils.DateUtils import Offsets
 import pandas as pd
 import itertools
 import copy
-import datetime as dt
+import warnings
 
+warnings.filterwarnings(action='ignore', message='All-NaN slice encountered')
 
 @SingletonDecorator
 class FXCurve(object):
@@ -141,10 +146,71 @@ class FXCurve(object):
         fwd_df = FrameUtils.select_subset_level(fx_curves, 'maturity', tenor)
         return FrameUtils.select_subset_level(fwd_df, 'quote', quote).dropna(how='all')
 
-    def get_forward_price(self, bbids, pricing_date, maturity_date, quote='mid'):
-        pass
+    def get_forward_contract_return(self, bbid, pricing_dates, maturity_date, quote='mid'):
 
-    def get_forward_prices(self, bbids, pricing_date, maturity_date, quote='mid'):
+        prices_s = self.get_forward_prices(bbid, pricing_dates[0:-1], maturity_date, quote)
+        prices_s = prices_s.reset_index(level='maturity_dates', drop=True).sort_index()
+
+        assert np.all(maturity_date >= pricing_dates[1:]), 'Error - maturity date must fall on or after end pricing date'
+        prices_t = self.get_forward_prices(bbid, pricing_dates[1:]  , maturity_date, quote)
+        prices_t = prices_t.reset_index(level='maturity_dates', drop=True).sort_index()
+        df_ = pd.DataFrame(np.log(prices_t.values / prices_s.values), index=prices_t.index, columns=[bbid])
+        return df_.sort_index()
+
+    def hedge_time_series_from_local(self, time_series, from_currency, to_currency, hedge_ratio, hedge_frequency=Frequency.BUSINESS_MONTHLY):
+
+        if from_currency == to_currency:
+            return time_series
+
+        if abs(hedge_ratio) < DateUtils.ERROR_TOLERANCE:
+            unhdgd = self.unhedged_time_series(time_series, from_currency, to_currency).get_returns()
+            return unhdgd.to_time_series_type(time_series.type)
+
+        lvls = time_series.get_levels()
+        maturity_date = lvls.dates[0:-1] + Offsets.getOffset(hedge_frequency, 1)
+
+        fwd_returns = self.get_forward_contract_return(from_currency + to_currency, lvls.dates, maturity_date)
+        unhedged = self.unhedged_time_series(time_series, from_currency, to_currency).get_returns(ReturnsType.LOG)
+        hdg = unhedged.subtract_over_common_dates(hedge_ratio * fwd_returns).dropna()
+        return hdg.get_returns(time_series.returns_type).to_time_series_type(time_series.type)
+
+
+    def hedge_time_series(self, time_series, target_currency, target_hedge_ratio, denominated_currency, exposure_currency=None, current_hedge_ratio=None, hedge_frequency=Frequency.BUSINESS_MONTHLY):
+
+
+        lvls = time_series.get_levels()
+        maturity_date = lvls.dates[0:-1] + Offsets.getOffset(hedge_frequency, 1)
+
+        # If the exposure and denominated currency match, we have local index
+        if exposure_currency == denominated_currency or exposure_currency is None:
+            return self.hedge_time_series_from_local(time_series, denominated_currency, target_currency, target_hedge_ratio, hedge_frequency)
+
+        # Otherwise there has already been some fx translations applied
+        assert current_hedge_ratio is not None, 'Error - time series has already undergone fx translations and must provide its current hedge ratio'
+
+        fx_conversion = self.unhedged_time_series(time_series, denominated_currency, target_currency)
+
+        if current_hedge_ratio - target_hedge_ratio != 0:
+           fwds_leg_1 = (current_hedge_ratio - target_hedge_ratio) * self.get_forward_contract_return(exposure_currency + denominated_currency, lvls.dates, maturity_date)
+           fx_conversion = fx_conversion.addition_over_common_dates(fwds_leg_1)
+
+        if target_hedge_ratio != 0:
+            fwds_leg_2 = target_hedge_ratio * self.get_forward_contract_return(denominated_currency + target_currency, lvls.dates, maturity_date)
+            fx_conversion = fx_conversion.addition_over_common_dates(fwds_leg_2)
+
+        return fx_conversion.to_time_series_type(time_series.type)
+
+    def unhedged_time_series(self, time_series, from_currency, to_currency):
+
+        if from_currency == to_currency:
+           return time_series
+
+        spt = self.get_spot_rates(from_currency + to_currency, quote='mid')
+
+        lvls = time_series.get_levels()
+        return lvls.multiply_over_common_dates(spt).to_time_series_type(time_series.type)
+
+    def get_forward_prices_old(self, bbids, pricing_date, maturity_date, quote='mid'):
 
         if not DateUtils.is_iterable(bbids):
            bbids = [bbids]
@@ -163,7 +229,7 @@ class FXCurve(object):
            pricing_date = [pricing_date]
 
         fx_curve = FrameUtils.select_subset_level(fx_curves, 'quote', quote).dropna(how='all')
-        df = fx_curve.reindex(pricing_date.unique())
+        df = fx_curve.reindex(pricing_date.unique()).rename_axis(index=fx_curve.index.name)
 
         level_number = df.columns._get_level_number('maturity')
         mats = DateUtils.Rdate_to_mat(df.columns.get_level_values('maturity'))
@@ -195,7 +261,7 @@ class FXCurve(object):
                 xs_df = sorted_df.xs(key=(ccy, type), level=('bbid', 'quote'), axis=1, drop_level=False)
                 xs_df = xs_df.iloc[:, xs_df.columns.get_level_values('maturity') <= np.max(tau)]
 
-                fwd_curve = xs_df.interpolate(method='linear', axis=1)
+                fwd_curve = np.exp(np.log(xs_df).interpolate(method='linear', axis=1, limit_area='inside'))
 
                 df_vec = FrameUtils.vectorize(fwd_curve, 'Price')
                 locs = list(zip(itertools.cycle([ccy]), pricing_date, tau, itertools.cycle([type])))
@@ -211,6 +277,69 @@ class FXCurve(object):
                 #fwds.index.names = ['maturity_dates','pricing_dates']
                 #fwds = fwds.sort_index(level=['maturity_dates', 'pricing_dates'])
                 #fwds.columns = pd.MultiIndex.from_tuples([(ccy, type)])
+
+                interp_df = pd.concat((interp_df, fwds), axis=1).ffill()
+        return interp_df.copy()
+
+    def get_forward_prices(self, bbids, pricing_date, maturity_date, quote='mid'):
+
+        if not DateUtils.is_iterable(bbids):
+           bbids = [bbids]
+
+        fx_curves = self.get_fx_curves(bbids)
+        fx_curves.columns = fx_curves.columns.droplevel('pricing_location')
+
+        fx_curves = FrameUtils.drop_subset_level(fx_curves, 'maturity', ['ON', 'SW', 'TN'])
+        pricing_date = pd.to_datetime(pricing_date)
+        maturity_date = pd.to_datetime(maturity_date)
+
+        if isinstance(quote, str):
+            quote = np.array([quote])
+
+        if isinstance(pricing_date, pd.Timestamp):
+           pricing_date = [pricing_date]
+
+        fx_curve = FrameUtils.select_subset_level(fx_curves, 'quote', quote).dropna(how='all')
+        df = fx_curve.reindex(pricing_date).rename_axis(index=fx_curve.index.name)
+
+        mats = DateUtils.Rdate_to_mat(df.columns.get_level_values('maturity'))
+        df = FrameUtils.set_levels(df, level_values=mats, level_name='maturity')
+
+        # Time to maturity
+        tau = DateUtils.get_date_delta(pricing_date, maturity_date, True)
+
+        sorted_df = df.T.sort_index(level='maturity').T.replace(0, np.nan)
+        ccys = sorted_df.columns.get_level_values('bbid').unique()
+        types = sorted_df.columns.get_level_values('quote').unique()
+
+        interp_df = pd.DataFrame()
+        for ccy in ccys:
+
+            print('Calculating forward prices for {}'.format(ccy))
+            for type in types:
+                xs_df = sorted_df.xs(key=(ccy, type), level=('bbid', 'quote'), axis=1, drop_level=False)
+
+
+                maturity_mat = xs_df.columns.get_level_values('maturity').values.reshape(1, -1).repeat(xs_df.index.size, axis=0)
+                T = tau.reshape(-1, 1).repeat(maturity_mat.shape[1], axis=1)
+
+                LB_locs = ((maturity_mat <= T) & (~xs_df.isna().values))
+                UB_locs = ((maturity_mat > T) & (~xs_df.isna().values))
+
+                LB = np.nanmax(maturity_mat * np.where(LB_locs, LB_locs, np.nan), axis=1)
+                UB = np.nanmin(maturity_mat * np.where(UB_locs, UB_locs, np.nan), axis=1)
+
+                y_LB = np.log(xs_df.values[np.where(np.isnan(LB), 0, LB).reshape(-1, 1) == maturity_mat])
+                y_UB = np.log(xs_df.values[np.where(np.isnan(UB), 0, UB).reshape(-1, 1) == maturity_mat])
+
+                W = (tau - UB) / (LB - UB)
+                fwd_mat = np.exp(W * y_LB + (1 - W) * y_UB)
+                fwd_mat[LB == tau] = np.exp(y_LB[LB == tau])
+
+                fwds = pd.DataFrame(fwd_mat, index=[maturity_date, pricing_date])
+                fwds.index.names = ['maturity_dates', 'pricing_dates']
+                fwds = fwds.sort_index(level=['maturity_dates', 'pricing_dates'])
+                fwds.columns = pd.MultiIndex.from_tuples([(ccy, type)])
 
                 interp_df = pd.concat((interp_df, fwds), axis=1).ffill()
         return interp_df.copy()
@@ -235,9 +364,26 @@ class FXCurve(object):
 
 if __name__ == "__main__":
 
-
+    dates = pd.date_range('31-Dec-1980', '31-Dec-2002')
+    from_date = dates[0:-1]
+    to_date = dates[1:]
+    maturity = from_date + pd.tseries.offsets.BMonthEnd(1)
 
     curve = FXCurve()
-    rates = curve.get_fx_rates('NZD/USD')
+
+
+    import timeit
+    number_of_executions = 1
+
+    # Timing curve.get_forward_prices
+    time_1 = timeit.timeit(lambda: curve.get_forward_prices('USDGBP', from_date, maturity),
+                           number=number_of_executions)
+
+    # Timing curve.get_forward_prices_2
+    time_2 = timeit.timeit(lambda: curve.get_forward_prices_old('USDGBP', from_date, maturity),
+                           number=number_of_executions)
+
+    print(f"Time for get_forward_prices: {time_1} seconds")
+    print(f"Time for get_forward_prices_2: {time_2} seconds")
 
 

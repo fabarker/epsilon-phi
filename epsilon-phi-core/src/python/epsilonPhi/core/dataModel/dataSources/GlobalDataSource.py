@@ -7,6 +7,7 @@ from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
 from epsilonPhi.core.utils.TimeSeriesUtils import TimeSeriesUtils
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
+from epsilonPhi.core.dataModel.enums.Database import PriceQuote
 
 
 @SingletonDecorator
@@ -118,6 +119,11 @@ class GlobalDataSource(object):
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):
         return self._fx_curve.get_forward_prices(currency_pairs, pricing_dates, maturity_dates, price_quotes)
 
+    def get_forward_returns(self, currency_pairs, from_dates, to_dates, maturity_dates, price_quotes):
+        prices_from = self._fx_curve.get_forward_prices(currency_pairs, from_dates, maturity_dates, price_quotes)
+        prices_to = self._fx_curve.get_forward_prices(currency_pairs, to_dates, maturity_dates, price_quotes)
+        return np.log(prices_to) - np.log(prices_from)
+
     def get_fx_forward_rates(self, currency_pairs, maturities, price_quotes):
         return self._fx_curve.get_forward_rates(currency_pairs, maturities, price_quotes)
 
@@ -127,6 +133,19 @@ class GlobalDataSource(object):
     def get_fx_carry(self, currency_pairs, maturities, price_quotes):
         return self._fx_curve.get_carry(currency_pairs, maturities, price_quotes)
 
+    def get_interest_rate_differential(self, domestic_currency, foreign_currency):
+        rd = self.get_risk_free_rate_for_currency_region(domestic_currency)
+        rf = self.get_risk_free_rate_for_currency_region(foreign_currency)
+        return rf.subtract_over_common_dates(rd)
+
+    def fx_convert_timeseries_to_currency(self, timeseries, denominated_currency, target_currency, hedge_ratio):
+        return
+
+    def fx_convert_timeseries_to_currency_hedged(self, time_series, target_currency, target_hedge_ratio, denominated_currency, exposure_currency=None, current_hedge_ratio=None, hedge_frequency=Frequency.BUSINESS_MONTHLY):
+        return self._fx_curve.hedge_time_series(time_series, target_currency, target_hedge_ratio, denominated_currency, exposure_currency, current_hedge_ratio, hedge_frequency)
+
+    def fx_convert_timeseries_to_currency_unhedged(self, timeseries, denominated_currency, target_currency):
+        return self._fx_curve.unhedged_time_series(timeseries, denominated_currency, target_currency)
 
     def get_factor_dataframe(self, factor, universe=None, region=None, provider=None):
         tickers = self._session_mgr.get_factor_ticker(factor, region=region, universe=universe, provider=provider)
@@ -192,16 +211,18 @@ if __name__ == "__main__":
     self = GlobalDataSource()
     session = self._session
 
-    tickers = ['MSMEXF$','WIMXCO$','IFGWMX$']
-
-    df_ = pd.DataFrame()
+    tickers = ['MSWRLDL', 'MSFXDW$', 'MSHWLD$', 'MSWRLD$']
+    _dfs = CTimeSeries()
     for ticker in tickers:
-        df = self.get_dataframe_from_ticker(ticker, cols='MV')
-        df_ = pd.concat((df_, df), axis=1)
-    df_.to_clipboard()
+        df = self.get_time_series_data_from_ticker(ticker, cols='PI')
+        _dfs = _dfs.concat(df)
 
 
 
+    df = CTimeSeries(df, ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
+    df = df.get_bmonthly_returns()
+    df = df['31-Jan-1985':]
 
-
-
+    US_EQ_AUD_HEDGED = self.fx_convert_timeseries_to_currency_hedged(df, 'AUD', 0.5, 'USD', 'USD')
+    US_EQ_GBP_HEDGED_VIA_AUD = self.fx_convert_timeseries_to_currency_hedged(US_EQ_AUD_HEDGED, 'GBP', 1, 'AUD', 'USD', 0.5)
+    US_EQ_GBP_HEDGED = self.fx_convert_timeseries_to_currency_hedged(df, 'GBP', 1, 'USD', 'USD')

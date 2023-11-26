@@ -1,6 +1,7 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
 from epsilonPhi.core.factor.Factor import CFactor
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 import numpy as np
@@ -11,8 +12,8 @@ gds = GlobalDataSource()
 
 
 class cEquity(CFactor):
-    def __init__(self, dataframe, ts_type=TimeSeriesType.RETURNS):
-        super(cEquity, self).__init__(dataframe=dataframe, ts_type=ts_type)
+    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
+        super(cEquity, self).__init__(series=series, ts_type=ts_type)
 
 
     @staticmethod
@@ -29,8 +30,9 @@ class cEquity(CFactor):
         df_L = EQ_L.subtract_over_common_dates(rfr_L)
 
         df = 0.5 * df_L.addition_over_common_dates(df_D)
-        df.columns = [FACTOR.EQUITY_GLOBAL_ISG.name]
-        return df.copy()
+        factor = CSlice(data=df.values.flatten(), index=df.index, name=FACTOR.EQUITY_GLOBAL_ISG.name,
+                    ts_type=TimeSeriesType.RETURNS)
+        return factor.copy()
 
 if __name__ == "__main__":
 

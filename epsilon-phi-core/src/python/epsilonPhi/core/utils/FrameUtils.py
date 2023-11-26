@@ -29,7 +29,7 @@ class FrameUtils(object):
 
     @staticmethod
     def vectorize(df, column_name=None):
-        df_ = pd.melt(df.reset_index(), id_vars='index')
+        df_ = pd.melt(df.reset_index(), id_vars='date')
         cols = np.setdiff1d(df_.columns, 'value')
         df_.index = list(map(tuple, df_[cols].to_numpy()))
         if column_name is None:

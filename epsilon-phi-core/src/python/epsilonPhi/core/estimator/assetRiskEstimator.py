@@ -1,4 +1,5 @@
 from epsilonPhi.core.estimator.assetEstimatorInf import CAssetRiskEstimatorInf
+from epsilonPhi.core.config.configUtil import CAppConfig
 import numpy as np
 import math
 
@@ -11,28 +12,31 @@ class AssetRiskEstimator(CAssetRiskEstimatorInf):
 
         schema = asset.schema
         schema_currency = schema.currency
+        asset_in_schema_currency = asset.convert_asset_to_currency(schema_currency, hedging_ratio)
 
-        hedged_name, unhedged_name = asset.get_risk_mapping()
-        hedged_asset = schema.get_asset_mgr().get_asset_by_name(hedged_name)
-        unhedged_asset = schema.get_asset_mgr().get_asset_by_name(unhedged_name)
+        model = CAppConfig.get_BaseModel()
+        factor_df = asset.schema.get_risk_factors_panel()
 
-        hedged_betas, hedged_idio = hedged_asset.get_risk_betas_no_hedge()
-        unhdgd_betas, unhdgd_idio = unhedged_asset.get_risk_betas_no_hedge()
+        rx = asset_in_schema_currency.get_excess_return_df()
+        y, X = rx.intersect_over_dates(factor_df)
+        _, betas = model.regression.regress(X,
+                                            y,
+                                            orthogonalize_columns=model.orthogonal_list,
+                                            normalize=False)
 
-        asset.set_hedging_ratio(hedging_ratio)
-        betas, idio_var = asset.get_risk_betas_no_hedge()
-        return betas, idio_var
+        residuals = y - model.regression.orthogonalize_columns(X, model.orthogonal_list) @ np.mean(betas, axis=0)
+        return np.mean(betas, axis=0), np.var(residuals, ddof=1) * schema.obs_per_year
 
     @staticmethod
     def get_risk_factor_stdev(asset):
 
-        factor_covar_mat = asset.schema.get_risk_factor_covar_matrix()
+        factor_covar_mat = asset.schema.get_risk_factor_covariance()
         betas, idio_var = asset.get_beta_and_idio_var(asset.get_hedging_ratio)
         return math.sqrt(np.matmul(np.matmul(betas.cong().T, factor_covar_mat.vallues), betas) + idio_var)
 
     @staticmethod
-    def get_risk_factor_betas_no_hedge(asset):
-        return asset.schema.get_factor_panels().get_risk_factor_betas_no_hedge(asset)
+    def get_betas_and_idio_risk(asset, hedging_ratio):
+        return AssetRiskEstimator.get_beta_and_idio_variance(asset, hedging_ratio)
 
     @staticmethod
     def get_risk_betas(asset, hedging_ratio):

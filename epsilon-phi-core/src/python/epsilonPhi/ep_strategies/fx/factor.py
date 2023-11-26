@@ -101,7 +101,7 @@ class Factor(object):
 
     @property
     def rebalancing_frequency(self):
-        self._rebalaning_frequency
+        return self._rebalancing_frequency
 
     @rebalancing_frequency.setter
     def rebalancing_frequency(self, value):
@@ -156,13 +156,14 @@ class Factor(object):
                                                                       maturity_dates.append(self.pricing_dates),
                                                                       ['mid','ask','bid'])
 
+
     def get_reverse_currency_pair(self, currency_pair):
         return currency_pair[3:] + currency_pair[0:3]
 
     def get_returns_panel(self, pricing_date, maturity_date):
 
         if pricing_date.date() > self._EURO_CUTOFF_DATE:
-           EUR_LEGACIES = [self.domestic_currency  + X for X in self._EURO_LEGACY]
+           EUR_LEGACIES = [self.domestic_currency + X for X in self._EURO_LEGACY]
            EUR_LEGACIES = EUR_LEGACIES + [self.get_reverse_currency_pair(x) for x in EUR_LEGACIES]
            tradable_currencies = np.setdiff1d(self.currency_pairs, EUR_LEGACIES)
         else:
@@ -337,7 +338,7 @@ class Factor(object):
 
 if __name__ == '__main__':
 
-    G10 = Factor._G_10_CURRENCIES + ['BRL','INR','IDR','KRW','TWD','RUB','CNY','CZK','HUF','ZAR','COP','CLP']
+    G10 = Factor._G_10_CURRENCIES
 
     start_date = dt.date(year=1983, month=10, day=31)
     end_date = dt.date(year=2023, month=10, day=31)
@@ -346,18 +347,18 @@ if __name__ == '__main__':
     base_currency = 'USD'
     currency_pairs = [x + '/' + base_currency for x in G10]
 
-    sig_df = Signals.get_MOM(currency_pairs, '12m')
+    sig_df = Signals.get_CAR(currency_pairs, '1m')
 
-    MOM = Factor(start_date,
+    CAR = Factor(start_date,
                  end_date,
                  frequency)
 
-    MOM.rebalancing_frequency = Frequency.BUSINESS_MONTHLY
-    MOM.set_signal(sig_df)
-    MOM.price_quote_type = PriceQuote.MID
-    MOM.number_of_portfolios = 5
-    MOM.run_strategy()
-    df = MOM.PnLCurve
+    CAR.rebalancing_frequency = Frequency.BUSINESS_MONTHLY
+    CAR.set_signal(sig_df)
+    CAR.price_quote_type = PriceQuote.MID
+    CAR.number_of_portfolios = 5
+    CAR.run_strategy()
+    df = CAR.PnLCurve
 
 
 

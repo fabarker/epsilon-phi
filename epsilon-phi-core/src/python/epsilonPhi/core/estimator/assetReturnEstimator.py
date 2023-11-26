@@ -1,4 +1,5 @@
 from epsilonPhi.core.estimator.assetEstimatorInf import CAssetReturnEstimatorInf
+from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.config.configUtil import CAppConfig
 import pandas as pd
@@ -12,9 +13,9 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
     @staticmethod
     def get_risk_premium(asset):
-        hist_sharpe = asset.schema.BaseModel.get_return_factor_Sharpe_ratios()
+        hist_sharpe = CAppConfig.get_BaseModel().get_return_factor_Sharpe_ratios()
         betas = asset.get_return_betas()
-        return np.mean(betas, axis=0) * hist_sharpe.conj().T * math.sqrt(schema.annualizing_factor)
+        return np.mean(betas, axis=0) * hist_sharpe.values.T * math.sqrt(asset.schema.obs_per_year)
 
     @staticmethod
     def get_excess_return_timeseries(asset):
@@ -22,7 +23,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
         common_dates = np.intersect1d(rfr.dates, asset.dates)
         factor = asset.select_subset_dates(common_dates) - rfr.select_subset_dates(common_dates).values
-        factor.columns = pd.MultiIndex.from_tuples([(a, 'ER' if b == 'RI' else b) for a, b in factor.columns])
+        factor.columns = (factor.name[0], 'ER')
         return factor
 
     @staticmethod
@@ -95,60 +96,33 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         return risk_premia, data_length, historical_risk_premia
 
     @staticmethod
+    def get_estimation_length(asset):
+        common_dates = pd.to_datetime(np.intersect1d(asset.schema.get_return_factors_panel().dates,
+                                      asset.get_excess_return_df().dates))
+        return round((common_dates.max() - common_dates.min()).days / DateUtils.days_per_year, 4)
+
+
+    @staticmethod
     def get_return_betas(asset, normalized=True):
 
-        schema = asset.schema
-        reg_result = None
-        factor_panel = schema.get_factor_panels()
+        model = CAppConfig.get_BaseModel()
+        factor_df = asset.schema.get_return_factors_panel()
 
-        orthog_list = factor_panel.get_factor_orthogonalier()
-        estimation_config = CAppConfig.get_config_util().get_estimation_config('Default')
+        rx = asset.get_excess_return_df()
+        y, X = rx.intersect_over_dates(factor_df)
 
-        if not orthog_list:
-            orthog_list = []
+        _, betas = model.regression.regress(X,
+                                            y,
+                                            orthogonalize_columns=model.orthogonal_list,
+                                            normalize=True)
 
-        ts_class = CFactorUtil.asset_to_factor(asset)
-        if ts_class is None or ts_class.is_empty():
-            raise Exception('Error converting asset to factor for asset {}'.format(asset.get_name()))
 
-        if asset.frequency == Frequency.MONTHLY:
+        #if asset.get_asset_name() in CAppConfig.get_config_util().get_market_stress_beta():
+        #   mkt_factor = factor_panel.get_market_factor()
+        #   mkt_factor_index = factor_panel.get_return_factor_list().index(mkt_factor)
 
-            reg_result = CAppConfig.get_time_series_regression().rolling_regression(ts_class,
-                                                                                    factor_panel.get_return_factor_dataframe(),
-                                                                                    orthog_list,
-                                                                                    estimation_config.rolling_window_size,
-                                                                                    'rolling',
-                                                                                    schema.start_date,
-                                                                                    schema.end_date,
-                                                                                    normalized,
-                                                                                    Frequency.MONTHLY)
-
-        if asset.frequency == Frequency.QUARTERLY:
-
-            reg_result = CAppConfig.get_time_series_regression().rolling_regression(ts_class,
-                                                                                    factor_panel.get_return_factor_dataframe(),
-                                                                                    orthog_list,
-                                                                                    estimation_config.expanding_window_size,
-                                                                                    'expanding',
-                                                                                    schema.start_date,
-                                                                                    schema.end_date,
-                                                                                    normalized,
-                                                                                    Frequency.QUARTERLY)
-        else:
-            raise Exception("Frequency not supported {}".format(asset.frequency))
-
-        if reg_result is None:
-            raise Exception("Error - betas are zero")
-
-        betas = reg_result.T
-
-        if asset.get_asset_name() in CAppConfig.get_config_util().get_market_stress_beta():
-           mkt_factor = factor_panel.get_market_factor()
-           mkt_factor_index = factor_panel.get_return_factor_list().index(mkt_factor)
-
-           stress_betas = CAppConfig.get_config_util().get_market_stress_beta()
-           betas[:, mkt_factor_index] = betas[:, mkt_factor_index] * stress_betas[asset.get_asset_name()]
-
+        #   stress_betas = CAppConfig.get_config_util().get_market_stress_beta()
+        #   betas[:, mkt_factor_index] = betas[:, mkt_factor_index] * stress_betas[asset.get_asset_name()]
         return betas
 
 
@@ -159,7 +133,7 @@ if __name__ == "__main__":
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
 
     schema = ContextCreator(currency='GBP',
-                            start_date='31-Dec-1999',
+                            start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
     assetMgr = CAssetMgr(schema)

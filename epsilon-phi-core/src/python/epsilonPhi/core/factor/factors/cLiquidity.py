@@ -1,7 +1,7 @@
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.dataSources.vendor.PastorStambaugh import Liquidity
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
@@ -17,8 +17,8 @@ session = sessionMgr.getSessionFactory()
 
 class cLiquidity(CFactor):
 
-    def __init__(self, dataframe, ts_type=TimeSeriesType.RETURNS):
-        super(cLiquidity, self).__init__(dataframe=dataframe, ts_type=ts_type)
+    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
+        super(cLiquidity, self).__init__(series=series, ts_type=ts_type)
 
     @staticmethod
     def get_equity_tickers():
@@ -54,8 +54,7 @@ class cLiquidity(CFactor):
            raise ValueError('Error - PS Liquidity only available at monthly or higher frequencies')
 
         df_ = cLiquidity.get_Pastor_Stambaugh_liquidity_factor()
-        df_.columns = [FACTOR.LIQUIDITY_US_PASTOR_STAMBAUGH.name]
-        return CTimeSeries(df_, ts_type=TimeSeriesType.RETURNS)
+        return CSlice(data=df_.values.flatten(), index=df_.index,  name=FACTOR.LIQUIDITY_US_PASTOR_STAMBAUGH.name, ts_type=TimeSeriesType.RETURNS)
 
 if __name__ == "__main__":
 

@@ -50,6 +50,17 @@ class DateUtils(object):
         return np.array([isinstance(x, datetime) for x in arr])
 
     @staticmethod
+    def merge(dates: list):
+
+        if not DateUtils.is_iterable(dates):
+           dates = [dates]
+
+        new_series = pd.concat([pd.Series(pd.to_datetime(x)) for x in dates], axis=0).unique()
+        return pd.to_datetime(np.sort(new_series))
+
+
+
+    @staticmethod
     def shift_date(date, offset, periods):
         return date + Offsets.getOffset(offset, periods)
 
@@ -173,6 +184,15 @@ class DateUtils(object):
             return 'A'
         else:
             return ''
+
+if __name__ == "__main__":
+
+    dr1 = pd.date_range('31-Dec-2001', '31-Dec-2003', freq='A')
+    dr2 = pd.date_range('31-Dec-2001', '31-Dec-2002', freq='W')
+    dr3 = '31-Dec-2013'
+    dr4 = datetime(year=2015, month=12, day=31)
+
+    range = DateUtils.merge([dr1, dr2, dr3, dr4])
 
 
 

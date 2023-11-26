@@ -8,6 +8,11 @@ class EstimationMgr(CEStimationMgrInf):
         return AssetReturnEstimator.get_risk_premium(asset)
 
     @staticmethod
+    def get_estimation_length(asset):
+        from epsilonPhi.core.estimator.assetReturnEstimator import AssetReturnEstimator
+        return AssetReturnEstimator.get_estimation_length(asset)
+
+    @staticmethod
     def get_excess_return_timeseries(asset):
         from epsilonPhi.core.estimator.assetReturnEstimator import AssetReturnEstimator
         return AssetReturnEstimator.get_excess_return_timeseries(asset)
@@ -30,7 +35,7 @@ class EstimationMgr(CEStimationMgrInf):
     @staticmethod
     def get_beta_and_idio_variance(asset, hedging_ratio):
         from epsilonPhi.core.estimator.assetRiskEstimator import AssetRiskEstimator
-        return AssetRiskEstimator.get_risk_betas(asset, hedging_ratio)
+        return AssetRiskEstimator.get_betas_and_idio_risk(asset, hedging_ratio)
 
     @staticmethod
     def get_risk_factor_stdev(asset, hedging_ratio):

@@ -1,10 +1,14 @@
 import pandas as pd
-import math
+from typing import Optional
 from epsilonPhi.core.factor.factorPanel import CFactorPanels
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 from epsilonPhi.core.dataModel.enums.Model import REGRESSION_TYPE, SAMPLING_TYPE, WEIGHTING_SCHEME
 from epsilonPhi.core.timeSeries.regression import Regression
+from epsilonPhi.core.config.appConfig import CAppConfig
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 import datetime as dt
 import numpy as np
 
@@ -51,19 +55,22 @@ class BaseModel(object):
         self.__factorPanels.load_factors()
 
     @staticmethod
-    def get_default_model(frequency, end_date):
+    def setup_default_model(frequency=None, end_date=None, cache_model=False):
 
         mdl = BaseModel(frequency, end_date)
         mdl.set_risk_factor_list(mdl.__DEFAULT_RISK_FACTORS)
         mdl.set_return_factor_list(mdl.__DEFAULT_RETURN_FACTORS)
         mdl.set_orthogonalize([FACTOR.EQUITY_EMERGING_ISG.name, FACTOR.FUNDING_US_ISG.name])
-        mdl.set_window_type(SAMPLING_TYPE.ROLLING, length=5)
-        mdl.set_weighting_scheme(WEIGHTING_SCHEME.EQUAL)
+        mdl.set_regression_type(Regression.REGRESSION_TYPES.OLS, Regression.SAMPLING_TYPE.ROLLING(60), Regression.WEIGHTING_SCHEME.EQUAL)
         mdl.set_factor_Sharpe_cap(FACTOR.EQUITY_EMERGING_ISG.name, 0.2)
         mdl.create_model()
-        return mdl
 
-    # Public Properteis
+        if cache_model:
+           CAppConfig._BaseModel = mdl
+        else:
+           return mdl
+
+    # Public Properties
     @property
     def factor_panels(self):
         return self.__factorPanels
@@ -85,7 +92,6 @@ class BaseModel(object):
     @property
     def risk_factor_list(self):
         return self.__risk_factor_list
-
     @property
     def factor_list(self):
         return list(np.unique(self.__return_factor_list + self.__risk_factor_list))
@@ -101,28 +107,39 @@ class BaseModel(object):
     @property
     def factor_Sharpe_caps(self):
         return self.__factor_Sharpe_cap
-
     @property
     def regression(self):
         return self.__regression
-
+    @property
+    def orthogonal_list(self):
+        return self.__orthogonalize_list
     def is_orthogonalized(self, factor_name):
         return factor_name in self.__orthogonalize_list
 
     ############ setter methods ###############
 
-    def set_regression_type(self, regression_type: REGRESSION_TYPE):
-        self.__regression_type = regression_type
-        self.__regression = Regression(regression_type)
+    def set_regression_type(self,
+                            regression_type: REGRESSION_TYPE,
+                            sampling:  Optional[SAMPLING_TYPE] = None,
+                            weights: Optional[WEIGHTING_SCHEME] = None,
+                            **kwargs):
 
-    def set_window_type(self, window_type: SAMPLING_TYPE, length=None):
-        self.__window_type = (window_type, length)
+        """
+        Sets the regression type and optionally specifies sampling and weighting schemes.
+
+        :param regression_type: The type of regression model to be used.
+        :param sampling: Optional sampling type to be used.
+        :param weights: Optional weighting scheme to be applied.
+        :param kwargs: Additional keyword arguments for the regression model.
+        """
+
+        self.__regression = Regression(regression_type,
+                                       weights,
+                                       sampling,
+                                       **kwargs)
 
     def set_orthogonalize(self, orthogonalize_list):
         self.__orthogonalize_list = orthogonalize_list
-
-    def set_weighting_scheme(self, weighting_scheme: WEIGHTING_SCHEME):
-        self.__weighting_scheme = weighting_scheme
 
     def use_statistical_model(self, use_statistical_model: bool):
         self.__use_statistical_model = use_statistical_model
@@ -162,9 +179,11 @@ class BaseModel(object):
     def get_factor(self, factor_name, orthogonalized=False):
 
         if orthogonalized:
-            X = self.factor_panels.get_factors_df(np.setdiff1d(self.return_factor_list, factor_name))
-            y = self.factor_panels.get_factor(factor_name)
-            return self.regression.residuals(X, y)
+            df_ = self.factor_panels.get_factors_df(self.return_factor_list)
+
+            X = df_.get(np.setdiff1d(self.return_factor_list, factor_name))
+            y = self.factor_panels.get_factor(factor_name).select_subset_dates(X.index)
+            return self.regression.orthorgonalize(X, y)
         return self.factor_panels.get_factor(factor_name)
 
     def get_return_factor_Sharpe_ratios(self):
@@ -179,22 +198,38 @@ class BaseModel(object):
             sr = self.get_factor(factor_name).get_historical_Sharpe()
         return np.minimum(sr, self.factor_Sharpe_caps.get(factor_name, np.inf))
 
-    def get_risk_factor_covariance(self):
-        panel = self.get_risk_factor_df()
+    def get_risk_factor_covariance(self, dates):
+        panel = self.get_risk_factor_df().loc[dates]
+        return panel.cov()
+
+    def get_risk_factor_correlation(self, dates):
+        panel = self.get_risk_factor_df().loc[dates]
+        return panel.corr()
+
+    def get_principle_component_factors(self):
+        df_ = self.get_risk_factor_df()
+        cov_mat = np.cov(df_, rowvar=False)
+        eigenvalues, eigenvectors = np.linalg.eigh(cov_mat)
+
+        # Sort eigenvalues and eigenvectors in descending order
+        sorted_indices = np.argsort(eigenvalues)[::-1]
+        eigenvectors = eigenvectors[:, sorted_indices]
+
+        # Project the data onto the principal components
+        pca_result = np.dot(df_, eigenvectors)
+
+        return pd.DataFrame(pca_result, index=df_.index)
 
 
-
-
-
-
-    # Methods associated with factors
+        # Methods associated with factors
 
 
 if __name__ == "__main__":
 
     return_factors = FACTOR.get_default_return_factor_list()
 
-    model = BaseModel()
+    model = BaseModel.setup_default_model()
+    factors = model.get_principle_component_factors()
 
     model.set_return_factor_list(FACTOR.get_default_return_factor_list())
     model.set_risk_factor_list(FACTOR.get_default_risk_factor_list())

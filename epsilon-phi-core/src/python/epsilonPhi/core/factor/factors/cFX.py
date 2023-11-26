@@ -25,8 +25,8 @@ class cFX(CFactor):
     _END_DATE = dt.date(year=2023, month=10, day=31)
     _STRATEGY_TYPE = 'HML'
 
-    def __init__(self, dataframe, ts_type=TimeSeriesType.RETURNS):
-        super(cFX, self).__init__(dataframe=dataframe, ts_type=ts_type)
+    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
+        super(cFX, self).__init__(series=series, ts_type=ts_type)
 
     @staticmethod
     def construct_factor(frequency):
@@ -42,7 +42,8 @@ class cFX(CFactor):
         CAR.run_strategy()
 
         df_lvls = CAR.PnLCurve.get(cFX._STRATEGY_TYPE).fillna(1)
-        return df_lvls.get_returns().to_frame(FACTOR.CARRY_GLOBAL_ISG.name)
+        df_lvls.name = FACTOR.CARRY_GLOBAL_ISG.name
+        return df_lvls.get_returns()
 
 
 if __name__ == "__main__":

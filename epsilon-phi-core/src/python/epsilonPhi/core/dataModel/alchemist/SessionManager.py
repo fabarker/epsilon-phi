@@ -194,7 +194,7 @@ class SessionMgr(object):
            spec = self.get_time_series_spec_from_ticker(ticker_uid)
         else:
            spec = self.get_time_series_spec_from_uid(ticker_uid)
-        return spec.denominated_currency, spec.exposure_currency
+        return spec.denominated_currency, spec.exposure_currency, spec.hedge_ratio
 
     def get_factor_ticker(self, factor_mnemonic, region=None, universe=None, provider=None):
         q = self.getSessionFactory().query(FactorSpec.ticker).filter(FactorSpec.factor == factor_mnemonic)

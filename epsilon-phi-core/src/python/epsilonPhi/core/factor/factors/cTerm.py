@@ -21,8 +21,8 @@ _REGIONS['Germany'] = ('BMBD10Y', 8.1)
 gds = GlobalDataSource()
 
 class cTerm(CFactor):
-    def __init__(self, dataframe, ts_type=TimeSeriesType.RETURNS):
-        super(cTerm, self).__init__(dataframe=dataframe, ts_type=ts_type)
+    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
+        super(cTerm, self).__init__(series=series, ts_type=ts_type)
 
     @staticmethod
     def get_regional_bond_excess_return(region, frequency):
@@ -45,7 +45,9 @@ class cTerm(CFactor):
         for region in _REGIONS.keys():
             cntr = cTerm.get_regional_bond_excess_return(region, frequency) * cTerm.get_weight_for_region(region)
             df = pd.concat((df, cntr), axis=1)
-        return df.sum(axis=1, skipna=False).dropna().to_frame(FACTOR.TERM_GLOBAL_ISG.name)
+        df_ = df.sum(axis=1, skipna=False).dropna()
+        df_.name = FACTOR.TERM_GLOBAL_ISG.name
+        return df_.copy()
 
 if __name__ == "__main__":
 

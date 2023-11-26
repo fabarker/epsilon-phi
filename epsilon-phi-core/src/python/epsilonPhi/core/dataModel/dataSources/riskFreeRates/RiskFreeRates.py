@@ -2,6 +2,7 @@ import datetime
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr, TimeSeriesSpec
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
+from epsilonPhi.core.utils.PickleUtils import PickleUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
 import os
 import pandas as pd
@@ -18,6 +19,7 @@ else:
 
 _COMPOSITE_RATES = ['World','Pacific ex-Japan','Pacific','European Union','Europe ex-UK','Europe','EMU','EM Latin America','EM Europe and Middle East','EM Europe','EM Asia','EM','AC World ex-US']
 _EUR_START_DATE = '1-Jan-1999'
+_PICKLE_NAME = 'MSCI_CONSTITUENTS'
 
 class CRiskFreeRate(object):
     _cache = dict()
@@ -161,8 +163,13 @@ class MSCIActivityPanel(object):
 
     @staticmethod
     def get_activity_panel_single_index(index_name):
-        panel = MSCIActivityPanel()
-        return panel._panels.get(index_name)
+
+        if PickleUtils.is_pickled(_PICKLE_NAME):
+            panel_df = PickleUtils.load_pickle(_PICKLE_NAME)
+        else:
+            panel = MSCIActivityPanel()
+            panel_df = panel._panels
+        return panel_df.get(index_name)
 
 class CCompositeRate(object):
 
@@ -283,9 +290,17 @@ class CCompositeRate(object):
 
     @staticmethod
     def get_composite_risk_free_rate(index_name):
-        rfr = CCompositeRate(index_name)
-        rfr.construct_history()
-        return CTimeSeries(rfr._rfr, ts_type=TimeSeriesType.RETURNS)
+
+        if PickleUtils.is_pickled(index_name):
+            return PickleUtils.load_pickle(index_name)
+        else:
+            rfr = CCompositeRate(index_name)
+            rfr.construct_history()
+            rate = CTimeSeries(rfr._rfr, ts_type=TimeSeriesType.RETURNS)
+            PickleUtils.pickle_it(rate, index_name)
+            return rate
+
+
 
 if __name__ == "__main__":
 

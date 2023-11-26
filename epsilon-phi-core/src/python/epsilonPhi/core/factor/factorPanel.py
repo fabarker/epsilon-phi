@@ -1,3 +1,5 @@
+import pandas as pd
+
 from epsilonPhi.core.factor.factorPanelInf import CFactorPanelInf
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
@@ -57,39 +59,39 @@ class CFactorPanels(CFactorPanelInf):
             self.__load_factor_from_pickles(factor_name)
 
         if factor_name not in self._cache.keys():
-            if self.__isConstructed(factor_name):
+            if self.__is_constructed(factor_name):
                 self.__construct_factor(factor_name)
             else:
-                df = gds.get_time_series_data_from_ticker(FACTOR[factor_name].value, ts_type=TimeSeriesType.RETURNS)
-                df.columns = [factor_name]
-                self._cache[factor_name] = CFactor(df.get_periodic_returns(self._frequency))
-                PickleUtils.pickle_factor(self._cache[factor_name],
-                                          factor_name,
-                                          self._end_date,
-                                          self._frequency)
+                self.__load_factor_from_DB(factor_name)
 
-    def __isConstructed(self, factor_name: str):
+    def __load_factor_from_DB(self, factor_name):
+        df = gds.get_time_series_data_from_ticker(FACTOR[factor_name].value, ts_type=TimeSeriesType.RETURNS)
+        df_ = df.get_periodic_returns(self._frequency)
+        self._cache[factor_name] = CFactor(df_.values.flatten(), index=df_.index, name=str(factor_name), ts_type=TimeSeriesType.RETURNS)
+        PickleUtils.pickle_factor(self._cache[factor_name], factor_name, self._end_date, self._frequency)
+
+    def __is_constructed(self, factor_name: str):
         return FACTOR[factor_name].value + '.py' in pkgutil.get_loader(_FACTOR_PACKAGE).contents()
 
     def __construct_factor(self, factor_name):
         module = importlib.import_module(_FACTOR_PACKAGE + '.' + FACTOR[factor_name].value)
         constructor = getattr(module, FACTOR[factor_name].value)
         df_ = constructor.construct_factor(frequency=self._frequency)
-        self._cache[factor_name] = constructor(dataframe=df_)
+        self._cache[factor_name] = constructor(series=df_.loc[:self._end_date])
         PickleUtils.pickle_factor(self._cache[factor_name], factor_name, self._end_date, self._frequency)
+
     def get_factor(self, factor_name):
         if factor_name not in self._cache.keys():
            self.__load_single_factor(factor_name)
         return self._cache.get(factor_name).deepcopy()
 
     def get_factor_df(self, factor):
-        if factor not in self._cache.keys():
-            self.__load_single_factor(factor)
-        return self._cache.get(factor).deepcopy()
+        return self.get_factors_df(factor)
 
     def get_factors_df(self, factor_list):
 
-        panel = CTimeSeries(ts_type=TimeSeriesType.RETURNS)
-        for factor in factor_list:
-            panel = panel.concat(self.get_factor_df(factor))
-        return panel.copy()
+        panel = pd.DataFrame()
+        for factor in self._factor_list:
+            panel = pd.concat((panel, self.get_factor(factor)), axis=1)
+        df_ = CTimeSeries(panel.dropna(how='any', axis=0), ts_type=TimeSeriesType.RETURNS, validate_index=True)
+        return df_.get(factor_list)

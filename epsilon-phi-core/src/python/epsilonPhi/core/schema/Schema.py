@@ -98,21 +98,18 @@ class CContext(object):
 
     @property
     def BaseModel(self):
-        return self._base_model
+        return CAppConfig.get_BaseModel()
 
-    def get_risk_factor_covariance_matrix(self):
-        return self._base_model.get_risk_factor_covariance(self.dates)
+    def get_risk_factor_covariance(self):
+        return self.BaseModel.get_risk_factor_covariance(self.dates) * self.obs_per_year
 
     def get_risk_factors_panel(self):
-        return self._base_model.get_risk_factor_panel()\
-            .selectSubsetDates(self.dates)
+        return self.BaseModel.get_risk_factor_df()\
+            .select_subset_dates(self.dates)
 
     def get_return_factors_panel(self):
-        return self._base_model.get_return_factor_panel() \
-            .selectSubsetDates(self.dates)
-
-    def set_base_model(self, base_model):
-        self._base_model = base_model
+        return self.BaseModel.get_return_factor_df() \
+            .select_subset_dates(self.dates)
 
     def _setup(self):
         self.__load_configs()
@@ -169,9 +166,9 @@ class ContextCreator:
         return self._schema
 
     def __load_default_model(self):
-        mdl = BaseModel.get_default_model(self._frequency,
-                                          self._end_date)
-        self._schema.set_base_model(mdl)
+        CAppConfig.get_BaseModel().setup_default_model(self._frequency,
+                                                       self._end_date,
+                                                       cache_model=True)
 
 
 if __name__ == "__main__":
@@ -179,6 +176,7 @@ if __name__ == "__main__":
     schema = ContextCreator(currency='GBP',
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
+    cov = schema.get_risk_factor_covariance()
 
 
 

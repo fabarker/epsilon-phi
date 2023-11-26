@@ -1,6 +1,7 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
 from epsilonPhi.core.factor.Factor import CFactor
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 import pandas as pd
@@ -10,8 +11,8 @@ gds = GlobalDataSource()
 
 
 class cCommodities(CFactor):
-    def __init__(self, dataframe, ts_type=TimeSeriesType.RETURNS):
-        super(cCommodities, self).__init__(dataframe=dataframe, ts_type=ts_type)
+    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
+        super(cCommodities, self).__init__(series=series, ts_type=ts_type)
 
     @staticmethod
     def construct_factor(frequency):
@@ -21,8 +22,9 @@ class cCommodities(CFactor):
         rfr_D = gds.get_risk_free_rate_time_series('United States').get_periodic_returns(frequency)
         df = TOTR_D.subtract_over_common_dates(rfr_D)
 
-        df.columns = [FACTOR.COMMODITY_GLOBAL_ISG.name]
-        return df.copy()
+        factor = CSlice(data=df.values.flatten(), index=df.index, name=FACTOR.COMMODITY_GLOBAL_ISG.name,
+                        ts_type=TimeSeriesType.RETURNS)
+        return factor.copy()
 
 if __name__ == "__main__":
 
