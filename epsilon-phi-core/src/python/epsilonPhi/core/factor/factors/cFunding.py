@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.dataModel.dataSources.yieldCurve.YieldCurve import YieldCurve
 from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
@@ -24,8 +24,16 @@ _REGRESSORS = ['FFS1B1', 'FFS1B2', 'FFS1B3', 'FFS2B1', 'FFS2B2',
 
 
 class cFunding(CFactor):
-    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
-        super(cFunding, self).__init__(series=series, ts_type=ts_type)
+    def __init__(self,
+                 data,
+                 ts_type=TimeSeriesType.RETURNS,
+                 returns_type=ReturnsType.SIMPLE,
+                 **kwargs):
+
+        super(cFunding, self).__init__(data=data,
+                                       ts_type=ts_type,
+                                       returns_type=returns_type,
+                                       **kwargs)
 
     @staticmethod
     def get_leverage():
@@ -129,7 +137,7 @@ class cFunding(CFactor):
 
         factor.columns = [FACTOR.FUNDING_US_ISG.name]
         df = CSlice(data=factor.values.flatten(), index=factor.index, name=FACTOR.FUNDING_US_ISG.name,
-               ts_type=TimeSeriesType.RETURNS)
+               ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
         return df.get_periodic_returns(frequency)
 
 

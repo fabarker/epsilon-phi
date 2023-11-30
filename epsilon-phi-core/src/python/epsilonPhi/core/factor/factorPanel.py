@@ -1,7 +1,7 @@
 import pandas as pd
 
 from epsilonPhi.core.factor.factorPanelInf import CFactorPanelInf
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.PickleUtils import PickleUtils
@@ -53,6 +53,7 @@ class CFactorPanels(CFactorPanelInf):
     def __load_factor_from_pickles(self, factor):
         if PickleUtils.is_factor_pickled(factor, self._end_date, self._frequency):
             self._cache[factor] = PickleUtils.load_factor_from_pickles(factor, self._end_date, self._frequency)
+
     def __load_single_factor(self, factor_name):
 
         if factor_name not in self._cache.keys():
@@ -67,7 +68,8 @@ class CFactorPanels(CFactorPanelInf):
     def __load_factor_from_DB(self, factor_name):
         df = gds.get_time_series_data_from_ticker(FACTOR[factor_name].value, ts_type=TimeSeriesType.RETURNS)
         df_ = df.get_periodic_returns(self._frequency)
-        self._cache[factor_name] = CFactor(df_.values.flatten(), index=df_.index, name=str(factor_name), ts_type=TimeSeriesType.RETURNS)
+        self._cache[factor_name] = CFactor(df_.values.flatten(), index=df_.index,
+                                           name=str(factor_name), ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
         PickleUtils.pickle_factor(self._cache[factor_name], factor_name, self._end_date, self._frequency)
 
     def __is_constructed(self, factor_name: str):
@@ -77,7 +79,7 @@ class CFactorPanels(CFactorPanelInf):
         module = importlib.import_module(_FACTOR_PACKAGE + '.' + FACTOR[factor_name].value)
         constructor = getattr(module, FACTOR[factor_name].value)
         df_ = constructor.construct_factor(frequency=self._frequency)
-        self._cache[factor_name] = constructor(series=df_.loc[:self._end_date])
+        self._cache[factor_name] = constructor(data=df_.loc[:self._end_date], ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
         PickleUtils.pickle_factor(self._cache[factor_name], factor_name, self._end_date, self._frequency)
 
     def get_factor(self, factor_name):
@@ -90,8 +92,7 @@ class CFactorPanels(CFactorPanelInf):
 
     def get_factors_df(self, factor_list):
 
-        panel = pd.DataFrame()
+        panel = CTimeSeries(ts_type=TimeSeriesType.RETURNS)
         for factor in self._factor_list:
-            panel = pd.concat((panel, self.get_factor(factor)), axis=1)
-        df_ = CTimeSeries(panel.dropna(how='any', axis=0), ts_type=TimeSeriesType.RETURNS, validate_index=True)
-        return df_.get(factor_list)
+            panel = panel.concat(self.get_factor(factor))
+        return panel.dropna(how='any', axis=0).sort_index().get(factor_list)

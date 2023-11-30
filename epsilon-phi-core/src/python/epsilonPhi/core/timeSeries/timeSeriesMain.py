@@ -8,11 +8,17 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+import warnings
+
+warnings.filterwarnings('ignore', category=UserWarning)
 
 class CSlice(pd.Series):
 
     __pandas_priority__ = 5000
     _metadata = slice_metadata
+
+    def __prop__(self):
+        pass
 
     @property
     def _constructor(self):
@@ -33,25 +39,24 @@ class CSlice(pd.Series):
         return _cs
 
     def __init__(self,
-                 data: Optional[pd.Series] = None,
-                 attributes: Optional[Union[pd.Series, pd.DataFrame]] = None,
-                 ts_type: TimeSeriesType = TimeSeriesType.LEVELS,
-                 returns_type: ReturnsType = ReturnsType.SIMPLE,
+                 data: Optional[Union[pd.Series, CSlice]] = None,
+                 attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None,
+                 ts_type: Optional[TimeSeriesType] = None,
+                 returns_type: Optional[ReturnsType] = None,
                  **kwargs):
 
         super(CSlice, self).__init__(data=data, **kwargs)
-        # Set attributes in object
 
+        # Set attributes in object
         self.set_attributes(attributes)
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
-        self.__validate_index()
+        #self.__validate_index()
 
     # check we have time series data
     def __validate_index(self):
         try:
-            self.index = pd.to_datetime(self.index)
-            self.sort_index(inplace=True)
+            self.index = pd.to_datetime(np.sort(self.index))
         except:
             pass
 
@@ -60,21 +65,21 @@ class CSlice(pd.Series):
     def _cast_derived_class(self, klass):
         self.__init__(klass, ts_type=klass.type, attributes=klass.attributes, returns_type=klass.returns_type)
 
-    def create_new_object(self, data=None, attributes=None, ts_type=None, returns_type=None):
-        return self.__class__(data=data, ts_type=ts_type, attributes=attributes,  returns_type=returns_type)
+    def create_new_object(self, *args, **kwargs):
+        return self.__class__(*args, **kwargs)
 
     def deepcopy(self):
         return self.create_new_object(data=self,
                                       ts_type=self.type, attributes=self.attributes, returns_type=self.returns_type)
 
     def _create_new_object_same_type(self, data=None, attributes=None, returns_type=None):
-        return self.create_new_object(data, attributes, self.type, returns_type)
+        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=returns_type)
 
     def _create_new_levels_object(self, data=None, attributes=None, returns_type=None):
-        return self.create_new_object(data, attributes, TimeSeriesType.LEVELS, returns_type)
+        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type)
 
     def _create_new_returns_object(self, returns_type, data=None, attributes=None):
-        return self.create_new_object(data, attributes, TimeSeriesType.RETURNS, returns_type)
+        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
 
     ##############
 
@@ -109,7 +114,8 @@ class CSlice(pd.Series):
 
     @property
     def attributes(self):
-        # self.__update_attributes()
+        if self._added_attributes.ndim > 1:
+           self._added_attributes = self._added_attributes.get(self.name, pd.Series(name=self.name))
         return self.__getattr__('_added_attributes').copy()
 
     @property
@@ -148,9 +154,11 @@ class CSlice(pd.Series):
         else:
             raise ValueError('ERROR: {} not supported'.format(self.returns_type))
 
+        # Update the time series type
+        newobj.__setattr__('_type', TimeSeriesType.LEVELS)
         newobj.values[idx_nan] = np.nan
         newobj.insert_date_val(DateUtils.shift_date(self.first_valid_index(), newobj.frequency, -1), 1)
-        return self._create_new_levels_object(newobj, attributes=self.attributes, returns_type=self.returns_type)
+        return self._create_new_levels_object(newobj, attributes=newobj.attributes, returns_type=newobj.returns_type)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
@@ -176,9 +184,10 @@ class CSlice(pd.Series):
         else:
             raise ValueError('Error - must specify returns type')
 
+        # Update the time series type
+        newobj.__setattr__('_returns_type', return_type)
         rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
         newobj.values[rtns_locs] = np.nan
-        newobj.__setattr__('_returns_type', return_type)
         return self._create_new_returns_object(return_type, data=newobj, attributes=self.attributes)
 
     def insert_dates(self, dates):
@@ -290,6 +299,7 @@ class CSlice(pd.Series):
         self.set_attributes(attributes=pd.Series(name=self.name))
 
     def set_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None) -> None:
+
 
         if isinstance(attributes, pd.DataFrame):
             attributes = attributes.get(self.name)
@@ -420,6 +430,7 @@ class CTimeSeries(pd.DataFrame):
     __pandas_priority__ = 5000
     _metadata = metadata
 
+
     @property
     def _constructor(self):
         """This is the key to letting Pandas know how to keep
@@ -440,27 +451,23 @@ class CTimeSeries(pd.DataFrame):
 
     def __init__(self,
                  data=None,
-                 attributes: pd.DataFrame = None,
+                 attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None,
                  ts_type: TimeSeriesType = TimeSeriesType.LEVELS,
                  returns_type: ReturnsType = ReturnsType.SIMPLE,
                  **kwargs):
 
         super(CTimeSeries, self).__init__(data, **kwargs)
+
         # Set attributes in object
-        if isinstance(attributes, pd.DataFrame):
-            self.set_attributes(attributes)
-        else:
-            self.__setattr__('_added_attributes', pd.DataFrame())
+        self.set_attributes(attributes)
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
-        self.__validate_index()
 
     ###################
 
     def __validate_index(self):
         try:
-            self.index = pd.to_datetime(self.index)
-            self.sort_index(inplace=True)
+            self.index = pd.to_datetime(np.sort(self.index))
         except:
             pass
 
@@ -470,11 +477,8 @@ class CTimeSeries(pd.DataFrame):
                       attributes=klass.attributes,
                       returns_type=klass.returns_type)
 
-    def create_new_object(self, data=None, attributes=None, ts_type=None, returns_type=None):
-        return self.__class__(data=data,
-                              ts_type=ts_type,
-                              attributes=attributes,
-                              returns_type=returns_type)
+    def create_new_object(self, *args, **kwargs):
+        return self.__class__(*args, **kwargs)
 
     def deepcopy(self):
         return self.create_new_object(data=self,
@@ -525,7 +529,8 @@ class CTimeSeries(pd.DataFrame):
 
     @property
     def attributes(self):
-        return self.__getattr__('_added_attributes').get(self.columns, pd.DataFrame())
+        return self.__getattr__('_added_attributes').get(self.columns,
+                                                         pd.DataFrame(columns=self.columns))
 
     @property
     def type(self):
@@ -566,29 +571,6 @@ class CTimeSeries(pd.DataFrame):
 
         rtns = self.apply(lambda x: x.get_returns(return_type))
         return self._create_new_returns_object(return_type, data=rtns, attributes=self.attributes)
-
-    #def get_returns(self, return_type=ReturnsType.SIMPLE):
-
-    #    if self.is_returns:
-    #        return self.deepcopy()
-
-    #    copyobj = self.remove_empty_leading_trailing_rows()
-    #    nan_locs = copyobj.isna().values
-    #    if return_type in [ReturnsType.SIMPLE,
-    #                       ReturnsType.SIMPLE.value]:
-    #        newobj = copyobj.ffill().apply(lambda x: x.pct_change().dropna())
-    #    elif return_type in [ReturnsType.LOG,
-    #                         ReturnsType.LOG.value]:
-    #        newobj = copyobj.ffill().apply(lambda x: np.log(x).diff().dropna())
-    #    elif return_type in [ReturnsType.DIFFERENCE,
-    #                         ReturnsType.DIFFERENCE.value]:
-    #        newobj = copyobj.ffill().apply(lambda x: x.diff().dropna())
-    #    else:
-    #        raise ValueError('Error - must specify returns type')
-
-    #    rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
-    #    newobj.values[rtns_locs] = np.nan
-    #    return self._create_new_returns_object(returns_type=return_type, data=newobj, attributes=self.attributes)
 
     def select_subset_dates(self, dates):
         return self.loc[dates].deepcopy()
@@ -711,37 +693,101 @@ class CTimeSeries(pd.DataFrame):
     ############### Methods Associated with Attributes ##################
 
     def reset_attributes(self):
-        self.__setattr__('_added_attributes', pd.DataFrame())
+        self.set_attributes()
 
-    def set_attributes(self, attributes: pd.DataFrame):
-        self.__setattr__('_added_attributes',
-                         attributes.get(self.columns, pd.DataFrame()))
+    def set_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame]] = None) -> None:
 
-    def add_attributes(self, attributes: pd.DataFrame):
-        self.append_attributes(attributes)
+        if attributes is None:
+            self.__setattr__('_added_attributes', pd.DataFrame())
+        else:
+            if isinstance(attributes, pd.Series):
+               attributes = attributes.to_frame(self.columns)
 
-    def add_attribute(self, attribute_name, attribute_vals):
+            if attributes is None:
+               attributes = pd.DataFrame(columns=self.columns)
 
-        if not FrameUtils.is_iterable(attribute_vals):
-            attribute_vals = [attribute_vals]
+            atts = attributes.T.reindex(self.columns)
+            self.__setattr__('_added_attributes', atts.T)
 
-        N = len(attribute_vals)
-        if N == 1:
-            attribute_vals = [attribute_vals] * self.number_of_cols
+    def set_attribute_single(self, attribute_name, attribute_values):
 
-        if len(attribute_vals) == self.number_of_cols:
-            new_att = pd.DataFrame(attribute_vals, columns=self.columns, index=[attribute_name])
-            self.append_attributes(new_att)
+        if (not DateUtils.is_iterable(attribute_values) or
+           len(attribute_values) == 1):
+           attribute_values = [attribute_values] * self.number_of_cols
 
-    def append_attributes(self, new_attributes: pd.DataFrame):
-        new_atts = pd.concat((self.attributes, new_attributes), axis=0)
-        self.set_attributes(new_atts)
+        atts = self.attributes
+        if attribute_name in atts.index:
+           atts[attribute_name] = attribute_values
+        else:
+          new_att = pd.DataFrame(data=attribute_values, index=[attribute_name], columns=self.columns)
+          atts = pd.concat((atts, new_att))
+        self.set_attributes(atts)
 
-    def get_attributes(self, attribute_name):
-        return self.attributes.loc[attribute_name]
+    def add_attribute_single_column(self, attribute_name, attribute_value, column_name):
 
-    def sort_by_attribute(self, attribute_name, sort_ascending=False):
-        pass
+        if column_name not in self.columns:
+            return None
+
+        if (isinstance(self.columns, pd.MultiIndex) and
+            not isinstance(column_name, pd.MultiIndex)):
+            column_name = pd.MultiIndex.from_tuples([column_name])
+
+        atts = self.attributes
+        if attribute_name not in atts.index:
+            new_att = pd.DataFrame([np.nan] * self.number_of_cols, columns=[attribute_name], index=self.columns)
+            atts = pd.concat((atts, new_att.T), axis=0)
+
+        if isinstance(self.columns, pd.MultiIndex):
+           atts.loc[(attribute_name, column_name)] = attribute_value
+        else:
+           atts[attribute_name, column_name] = attribute_value
+        self.set_attributes(atts)
+
+    def add_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame]]) -> None:
+        set_diff = np.setdiff1d(self.attributes.index, attributes.index)
+        self.append_attributes(attributes.loc[set_diff])
+
+    def append_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame]]) -> None:
+
+        if attributes is None:
+            return
+
+        if isinstance(attributes, pd.Series):
+           attributes = attributes.to_frame(attributes.name)
+
+        # Adjust Attributes Accordingly
+        set_diff = np.setdiff1d(self.attributes.index, attributes.index)
+
+        if (isinstance(self.columns, pd.MultiIndex) and
+                not isinstance(attributes.columns, pd.MultiIndex)):
+            attributes.columns = pd.MultiIndex.from_tuples([attributes.columns])
+        atts = pd.concat(objs=(self.attributes.loc[set_diff], attributes), axis=0)
+
+        # keep corresponding columns
+        self.set_attributes(atts.get(self.columns))
+
+
+    def get_attribute(self, attribute_name):
+        if attribute_name in self.attributes.index:
+            return self.attributes.loc[[attribute_name]]
+
+
+    def sort_by_attribute(self, attribute_name, inplace=True):
+
+        if attribute_name in self.attributes.index:
+
+           idx = self.get_attribute(attribute_name).astype(str)
+           klass = self.select_subset_columns(np.argsort(idx).flatten())
+           klass.set_attributes(self.attributes.get(klass.columns))
+           if inplace:
+              self._cast_derived_class(klass)
+           else:
+               return klass
+        else:
+            if not inplace:
+               return self.deepcopy()
+
+
 
     ###################
 
@@ -878,16 +924,22 @@ if __name__ == "__main__":
 
 
     ds = CTimeSeries.get_timeseries_from_ticker('MSSPANL', fields='PI', ts_type=TimeSeriesType.LEVELS)
+
     ds1 = CTimeSeries.get_timeseries_from_ticker('MSSRIL$', fields='PI', ts_type=TimeSeriesType.LEVELS)
+    ds1.set_attribute_single('location','Europe')
 
-    self = CSlice(data=ds.iloc[:, 0], ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
+    ds2 = CTimeSeries.get_timeseries_from_ticker('MSSRIL$', fields='RI', ts_type=TimeSeriesType.LEVELS)
+    ds2.set_attribute_single('location', 'World')
 
-    self_2 = CSlice(data=ds1.iloc[:, 0], ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
+    atts = pd.Series(['USD','Zoo'], index=['denominated', 'location'])
+    atts_1 = pd.Series(['EUR', 'GBP'], index=['denominated', 'exposure'])
 
-    new = self.reindex(self_2.index)
+    ds.set_attributes(atts)
+    ds1.set_attributes(atts_1)
+    ds1.set_attribute_single('hedge_ratio', 0)
 
-    new_atts = {'Currency':'GBP','Price':'Mid','Location':'LDN'}
-
+    new = ds.concat(ds1.concat(ds2))
+    new.sort_by_attribute('location', inplace=True)
 
 
 

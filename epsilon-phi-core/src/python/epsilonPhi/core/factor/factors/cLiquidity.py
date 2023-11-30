@@ -1,4 +1,4 @@
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.dataSources.vendor.PastorStambaugh import Liquidity
 from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
@@ -17,8 +17,16 @@ session = sessionMgr.getSessionFactory()
 
 class cLiquidity(CFactor):
 
-    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
-        super(cLiquidity, self).__init__(series=series, ts_type=ts_type)
+    def __init__(self,
+                 data,
+                 ts_type=TimeSeriesType.RETURNS,
+                 returns_type=ReturnsType.SIMPLE,
+                 **kwargs):
+
+        super(cLiquidity, self).__init__(data=data,
+                                         ts_type=ts_type,
+                                         returns_type=returns_type,
+                                         **kwargs)
 
     @staticmethod
     def get_equity_tickers():

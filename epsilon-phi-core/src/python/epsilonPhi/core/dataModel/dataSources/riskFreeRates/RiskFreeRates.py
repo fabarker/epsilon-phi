@@ -1,7 +1,7 @@
 import datetime
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr, TimeSeriesSpec
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType, ReturnsType
 from epsilonPhi.core.utils.PickleUtils import PickleUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
 import os
@@ -17,7 +17,7 @@ else:
     DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/') + len('epsilon-phi-core/')],
                         'src/resources/templates/MSCI Index Construction.xlsx')
 
-_COMPOSITE_RATES = ['World','Pacific ex-Japan','Pacific','European Union','Europe ex-UK','Europe','EMU','EM Latin America','EM Europe and Middle East','EM Europe','EM Asia','EM','AC World ex-US']
+_COMPOSITE_RATES = ['AC World','World','Pacific ex-Japan','Pacific','European Union','Europe ex-UK','Europe','EMU','EM Latin America','EM Europe and Middle East','EM Europe','EM Asia','EM','AC World ex-US']
 _EUR_START_DATE = '1-Jan-1999'
 _PICKLE_NAME = 'MSCI_CONSTITUENTS'
 
@@ -31,16 +31,21 @@ class CRiskFreeRate(object):
         CRiskFreeRate._cache[region] = CCompositeRate.get_composite_risk_free_rate(region)
 
     @staticmethod
-    def construct_risk_free_rate(region):
+    def get_interest_rates_for_region(region, maturities):
 
-        df_rfrs = CRiskFreeRate._sessionMgr.get_interest_rates_for_region(region, ['ON', '1M', '3M'])
+        df_rfrs = CRiskFreeRate._sessionMgr.get_interest_rates_for_region(region, maturities)
 
         df = pd.DataFrame()
         for col in df_rfrs.columns:
             df_col = df_rfrs.get(col).dropna().to_frame(col) / 100
             df = pd.concat((df, df_col.reindex(pd.date_range(df_col.index.min(),
                                                              df_col.index.max())).ffill()), axis=1)
+        return CTimeSeries(df, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
 
+    @staticmethod
+    def construct_risk_free_rate(region):
+
+        df = CRiskFreeRate.get_interest_rates_for_region(region, ['ON', '1M', '3M'])
         rfrs = -1 + np.power(1 + df.mean(axis=1).to_frame(region), 1 / DateUtils.days_per_year)
         return CTimeSeries(rfrs, ts_type=TimeSeriesType.RETURNS).get_levels().resample('B').asfreq()
 
@@ -292,11 +297,12 @@ class CCompositeRate(object):
     def get_composite_risk_free_rate(index_name):
 
         if PickleUtils.is_pickled(index_name):
-            return PickleUtils.load_pickle(index_name)
+            res = PickleUtils.load_pickle(index_name)
+            return CTimeSeries(res, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
         else:
             rfr = CCompositeRate(index_name)
             rfr.construct_history()
-            rate = CTimeSeries(rfr._rfr, ts_type=TimeSeriesType.RETURNS)
+            rate = CTimeSeries(rfr._rfr, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
             PickleUtils.pickle_it(rate, index_name)
             return rate
 

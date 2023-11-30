@@ -1,27 +1,18 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
+from epsilonPhi.core.asset.CAssetInf import CAssetInf, _assetmeta
 from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
 from epsilonPhi.core.config.appConfig import CAppConfig
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
-from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
-from epsilonPhi.core.asset.CAssetInf import CAssetInf
 from epsilonPhi.core.asset.AssetMgr import CAssetMgr
-from typing import Optional
+from epsilonPhi.core.schema.Schema import CContext
+from typing import Optional, Union
 import numpy as np
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
-class CAsset(CSlice, CAssetInf):
+class CAsset(CAssetInf, CSlice):
 
-    _metadata = ["_denominated_currency",
-                 "_exposure_currency",
-                 "_schema",
-                 "_assetMgr",
-                 "_hedge_ratio",
-                 "_ts_hedge_ratio",
-                 "_added_attributes",
-                 "_type",
-                 "_name",
-                 "_returns_type",
-                 "_alpha"]
+    _metadata = _assetmeta
 
     @property
     def _constructor(self):
@@ -30,17 +21,19 @@ class CAsset(CSlice, CAssetInf):
         return _c
 
     def __init__(self,
-                 dataframe,
-                 schema=None,
-                 denominated_currency=None,
-                 exposure_currency=None,
-                 ts_hedge_ratio=None,
-                 ts_type=TimeSeriesType.RETURNS,
+                 data: Optional[Union[CTimeSeries, CSlice]],
+                 schema: Optional[CContext] = None,
+                 denominated_currency: Optional[str] = None,
+                 exposure_currency: Optional[str] = None,
+                 ts_hedge_ratio: Optional[Union[float, int]] = None,
+                 returns_type: Optional[ReturnsType] = None,
+                 ts_type: Optional[TimeSeriesType] = None,
                  **kwargs
-                 ):
+                 ) -> None:
 
-        series = CAssetMgr._prepare_dataframe_for_asset(schema, dataframe, ts_type)
+        series = CAssetMgr._prepare_dataframe_for_asset(schema, data)
         super(CAsset, self).__init__(data=series,
+                                     returns_type=returns_type,
                                      ts_type=ts_type,
                                      **kwargs
                                      )
@@ -50,7 +43,9 @@ class CAsset(CSlice, CAssetInf):
         self._schema = schema
         self._assetMgr = CAssetMgr(schema)
         self._hedge_ratio = None
-        self._alpha = 0
+        self._alpha = None
+        self._risk_betas = {}
+        self._return_betas = {}
 
         if ((ts_hedge_ratio is not None) and
                 (self.denominated_currency != self.exposure_currency)):
@@ -58,38 +53,8 @@ class CAsset(CSlice, CAssetInf):
         else:
             self._ts_hedge_ratio = 0
 
-    def _cast_derived_class(self, klass):
-        self.__init__(dataframe=klass,
-                      schema=klass.schema,
-                      denominated_currency=klass.denominated_currency,
-                      exposure_currency=klass.exposure_currency,
-                      ts_hedge_ratio=klass._ts_hedge_ratio,
-                      ts_type=klass.type,
-                      returns_type=klass.returns_type,
-                      attributes=klass.attributes)
-
     def deepcopy(self):
-        return self.create_new_object(dataframe=self,
-                                      schema=self.schema,
-                                      denominated_currency=self.denominated_currency,
-                                      exposure_currency=self.exposure_currency,
-                                      ts_hedge_ratio=self._ts_hedge_ratio,
-                                      ts_type=self.type,
-                                      returns_type=self.returns_type,
-                                      attributes=self.attributes)
-
-    def _create_new_object_same_type(self, data=None, attributes=None, returns_type=None):
-        return self.create_new_object(data, attributes, self.type, returns_type)
-
-    def create_new_object(self, *args, **kwargs):
-        return self.__class__(schema=kwargs.get('schema', self.schema),
-                              dataframe=kwargs.get('data', self),
-                              denominated_currency=kwargs.get('denominated_currency', self.denominated_currency),
-                              exposure_currency=kwargs.get('exposure_currency', self.exposure_currency),
-                              ts_hedge_ratio=kwargs.get('ts_hedge_ratio', self._ts_hedge_ratio),
-                              ts_type=kwargs.get('ts_type', self.type),
-                              returns_type=kwargs.get('returns_type', self.returns_type),
-                              attributes=kwargs.get('attributes', self.attributes))
+        return super().deepcopy()
 
     ###############
 
@@ -118,58 +83,71 @@ class CAsset(CSlice, CAssetInf):
     def is_time_series_in_local_terms(self):
         return self.denominated_currency == self.exposure_currency
 
+
     ###############
 
-    def set_currency_hedge_ratio(self, hedge_ratio: Optional[float, int]):
-        assert hedge_ratio >= 0 and hedge_ratio <= 1, 'Error - Currency hedge ratio must be in interval [0,1]'
-        assert isinstance(hedge_ratio, float) and isinstance(hedge_ratio, int), 'Error - Currency hedge ratio must be of type float or int'
+    def set_currency_hedge_ratio(self, hedge_ratio: Optional[Union[float, int]]):
+        if hedge_ratio is not None:
+            assert 0 <= hedge_ratio <= 1, 'Error - Currency hedge ratio must be in interval [0,1]'
+            assert isinstance(hedge_ratio, (float, int)), 'Error - Currency hedge ratio must be of type float or int'
         self._hedge_ratio = hedge_ratio
 
     def set_alpha(self, alpha):
         self._alpha = alpha
 
-    ############
+
+    ##################### Asset risk free rate ###########################
 
     def get_risk_free_asset(self):
         return self.assetMgr.get_risk_free_asset(self.denominated_currency)
 
-    def get_historical_total_return(self, from_date, to_date):
-        pass
+
+    ########### Historical Asset Class Performance Metrics ###############
+
+    def get_historical_total_return(self, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_total_return(self)
 
     def get_historical_sharpe_ratio(self, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_Sharpe_ratio(self)
+        return EstimationMgr.get_historical_sharpe_ratio(self[from_date:to_date])
 
     def get_historical_volatility(self, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_volatility(self)
+        return EstimationMgr.get_historical_volatility(self[from_date:to_date])
 
     def get_historical_risk_premium(self, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_risk_premia(self)
+        return EstimationMgr.get_historical_risk_premium(self[from_date:to_date])
 
     def get_excess_return_df(self, from_date=None, to_date=None):
-        return EstimationMgr.get_excess_return_timeseries(self)
+        return EstimationMgr.get_excess_return_timeseries(self[from_date:to_date])
 
-    def get_historical_value_at_risk(self, horiozon, confidence):
-        pass
-    def get_historical_conditional_value_at_risk(self, horizon, confidence):
-        pass
+    def get_historical_value_at_risk(self, horizon=1, confidence=0.99, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_value_at_risk(self[from_date:to_date], horizon=horizon, confidence=confidence)
 
-    def get_historical_PoL(self, horizon):
-        pass
+    def get_historical_conditional_value_at_risk(self, horizon=1, confidence=0.99, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_conditional_value_at_risk(self[from_date:to_date], horizon=horizon, confidence=confidence)
 
-    def get_historical_worst_peak_to_trough(self):
-        pass
+    def get_historical_probability_of_loss(self, horizon=1, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_probability_of_loss(self[from_date:to_date], horizon=horizon)
 
-    def get_historical_max_drawdown(self):
-        pass
+    def get_historical_worst_peak_to_trough(self, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_worst_peak_to_trough(self[from_date:to_date])
 
-    def get_historical_beta(self):
-        pass
+    def get_historical_equity_beta(self, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_equity_beta(self[from_date:to_date])
 
-    def get_historical_skewness(self):
-        pass
+    def get_historical_alpha_over_equity(self, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_alpha_over_equity(self[from_date:to_date])
+
+    def get_historical_skewness(self, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_skewness(self[from_date:to_date])
+
+    def get_historical_worst_period_return(self, period=1, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_worst_period_return(self[from_date:to_date], period=period)
+
+    def get_historical_best_period_return(self, period=1, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_best_period_return(self[from_date:to_date], period=period)
 
 
-    ##############
+    ################### Factor Model Asset Metrics ###################
 
     def get_return_betas(self, normalized=True):
         betas = CAppConfig.get_estimation_mgr().get_return_betas(self, normalized=True)
@@ -194,10 +172,10 @@ class CAsset(CSlice, CAssetInf):
         return CAppConfig.get_estimation_mgr().get_risk_betas(self, self.hedging_ratio)
 
     def get_asset_risk_betas(self):
-        pass
+        return CAppConfig.get_estimation_mgr().get_risk_betas(self, 1)
 
     def get_fx_risk_betas(self):
-        pass
+        return self.get_return_betas() - self.get_asset_risk_betas()
 
     def get_fx_risk_decomposition(self):
         pass
@@ -205,23 +183,20 @@ class CAsset(CSlice, CAssetInf):
     def get_idiosyncratic_variance(self):
         return CAppConfig.get_estimation_mgr().get_idiosyncratic_variance(self, self.hedging_ratio)
 
-    def get_volatility(self):
+    def get_volatility(self, hedging_ratio=None):
 
-        betas = self.get_risk_betas()
-        idio = self.get_idiosyncratic_variance()
-
-        factor_covariance = self.schema.get_risk_factor_covariance()
-        systematic_var = betas @ factor_covariance @ betas
-        return np.sqrt(systematic_var + idio)
+        if hedging_ratio is None:
+           hedging_ratio = self.hedging_ratio
+        return EstimationMgr.get_risk_factor_stdev(self, hedging_ratio)
 
     def get_data_length(self):
         return EstimationMgr.get_estimation_length(self)
 
     def get_beta_and_idio_risk(self, hedging_ratio=None):
+
         if hedging_ratio is None:
-            return CAppConfig.get_estimation_mgr().get_beta_and_idio_variance(self, self.hedging_ratio)
-        else:
-            return CAppConfig.get_estimation_mgr().get_beta_and_idio_variance(self, hedging_ratio)
+           hedging_ratio = self.hedging_ratio
+        return CAppConfig.get_estimation_mgr().get_beta_and_idio_variance(self, hedging_ratio)
 
     def get_standard_error(self):
         pass
@@ -257,9 +232,39 @@ if __name__ == "__main__":
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
-    self = CAsset(exposure_currency='WLD', denominated_currency='USD', schema=schema, dataframe=rtns, ts_hedge_ratio=0)
-    self.set_asset_hedging_ratio(0)
-    betas = self.get_volatility()
+    self = CAsset(exposure_currency='WLD',
+                  denominated_currency='USD',
+                  schema=schema,
+                  data=rtns,
+                  ts_hedge_ratio=0,
+                  returns_type=rtns.returns_type,
+                  ts_type=rtns.type)
+
+    self.set_currency_hedge_ratio(0)
+
+    self.get_risk_premia()
+    vol = self.get_volatility()
+    beta, idio = self.get_beta_and_idio_risk(0)
+    rb = self.get_asset_risk_betas()
+    fx = self.get_fx_risk_betas()
+
+    rtn = self.get_historical_total_return()
+    sr = self.get_historical_sharpe_ratio()
+    vol = self.get_historical_volatility()
+    er = self.get_historical_risk_premium()
+    mdd = self.get_historical_worst_peak_to_trough()
+
+    beta = self.get_historical_equity_beta()
+    alpha = self.get_historical_alpha_over_equity()
+    skew = self.get_historical_skewness()
+
+    max_rtn = self.get_historical_best_period_return()
+    min_rtn = self.get_historical_worst_period_return()
+
+    var = self.get_historical_value_at_risk()
+    cvar = self.get_historical_conditional_value_at_risk()
+    pol = self.get_historical_probability_of_loss()
+
 
 
 

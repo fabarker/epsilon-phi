@@ -1,4 +1,4 @@
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from abc import ABC, abstractmethod
 import pandas as pd
@@ -41,7 +41,7 @@ class CAssetMgr(CAssetMgrInf):
                 self._schema.frequency)
 
     @staticmethod
-    def _prepare_dataframe_for_asset(schema, df_, ts_type):
+    def _prepare_dataframe_for_asset(schema, df_):
 
         if df_ is None:
            return None
@@ -49,20 +49,20 @@ class CAssetMgr(CAssetMgrInf):
         if schema is None:
            return df_
 
-        from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
-        assert isinstance(df_, pd.DataFrame) or isinstance(df_, pd.Series), 'Error - data must be dataframe or timeseries object'
+        from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
+        assert isinstance(df_, CTimeSeries) or isinstance(df_, CSlice), 'Error - data must be dataframe or timeseries object'
 
-        if isinstance(df_, pd.DataFrame):
+        if isinstance(df_, CTimeSeries):
             assert len(df_.columns) == 1, 'Error - dataframe must be single return time series'
-            ts_ = CSlice(df_.iloc[:, 0], ts_type=ts_type, returns_type=df_.returns_type)
+            ts_ = CSlice(df_.iloc[:, 0], ts_type=df_.type, returns_type=df_.returns_type)
         else:
-            ts_ = CSlice(df_, ts_type=ts_type, returns_type=df_.returns_type)
+            ts_ = CSlice(df_, ts_type=df_.type, returns_type=df_.returns_type)
 
         ts_.insert_dates(schema.dates)
-        if ts_type == TimeSeriesType.LEVELS:
-            return ts_.get_periodic_levels(schema.frequency)
-        elif ts_type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
-            return ts_.get_levels().get_periodic_returns(schema.frequency)
+        if df_.type == TimeSeriesType.LEVELS:
+           return ts_.get_periodic_levels(schema.frequency)
+        elif df_.type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
+            return ts_.get_periodic_returns(schema.frequency)
 
     def load_asset_by_name(self, asset_name):
 
@@ -71,10 +71,12 @@ class CAssetMgr(CAssetMgrInf):
         denominated_currency, exposure_currency, hedge_ratio = self.get_time_series_currency_info(asset_name)
 
         asset = CAsset(schema=self._schema,
-                      dataframe=df_,
-                      denominated_currency=denominated_currency,
-                      exposure_currency=exposure_currency,
-                      ts_hedge_ratio=hedge_ratio)
+                       data=df_,
+                       denominated_currency=denominated_currency,
+                       exposure_currency=exposure_currency,
+                       ts_hedge_ratio=hedge_ratio,
+                       returns_type=ReturnsType.SIMPLE,
+                       ts_type=TimeSeriesType.RETURNS)
 
         key = self.get_asset_key(asset_name)
         CAssetMgr._cache[key] = asset.deepcopy()
@@ -104,9 +106,12 @@ class CAssetMgr(CAssetMgrInf):
         risk_free.columns = [currency + '_RFR']
 
         return CAsset(schema=self._schema,
-                       dataframe=risk_free,
-                       denominated_currency=currency,
-                       exposure_currency=currency)
+                      data=risk_free,
+                      denominated_currency=currency,
+                      exposure_currency=currency,
+                      ts_hedge_ratio=0,
+                      returns_type=ReturnsType.SIMPLE,
+                      ts_type=TimeSeriesType.RETURNS)
 
     @staticmethod
     def convert_asset_to_currency(asset, target_currency, hedging_ratio):
@@ -142,11 +147,9 @@ if __name__ == "__main__":
 
     assetMgr = CAssetMgr(schema)
     asset = assetMgr.get_asset_by_name('MSUSAML')
-    asset_GBP = assetMgr.convert_asset_to_currency(asset, target_currency='GBP', hedging_ratio=0)
-    asset_EUR = assetMgr.convert_asset_to_currency(asset, target_currency='EUR', hedging_ratio=0)
 
     from epsilonPhi.core.dataModel.enums.TimeSeries import ReturnsType
-    asset_GBP_LOG = asset_GBP.get_returns(ReturnsType.LOG)
+    asset_GBP_LOG = asset.get_returns(ReturnsType.LOG)
     asset_GBP_LOG_SIMPLE = asset_GBP_LOG.get_returns(ReturnsType.SIMPLE)
 
 

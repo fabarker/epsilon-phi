@@ -111,7 +111,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         rx = asset.get_excess_return_df()
         y, X = rx.intersect_over_dates(factor_df)
 
-        _, betas = model.regression.regress(X,
+        regstats = model.regression.regress(X,
                                             y,
                                             orthogonalize_columns=model.orthogonal_list,
                                             normalize=True)
@@ -123,7 +123,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
         #   stress_betas = CAppConfig.get_config_util().get_market_stress_beta()
         #   betas[:, mkt_factor_index] = betas[:, mkt_factor_index] * stress_betas[asset.get_asset_name()]
-        return betas
+        return regstats[:, 1:]
 
 
 

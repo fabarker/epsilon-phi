@@ -94,13 +94,28 @@ class GlobalDataSource(object):
         ts_spec.index = df.columns
         return CTimeSeries(df, attributes=ts_spec.T, ts_type=ts_type)
 
-    def get_total_return_series_from_ticker(self, ticker, returns_type=TimeSeriesType.LEVELS):
+    def get_total_return_series_from_ticker(self, ticker, ts_type=TimeSeriesType.LEVELS):
         ts = self.get_time_series_data_from_ticker(ticker)
 
-        if returns_type == TimeSeriesType.RETURNS:
+        if ts_type == TimeSeriesType.RETURNS:
             return TimeSeriesUtils.convert_timeseries_to_return_index(ts).get_returns()
         else:
             return TimeSeriesUtils.convert_timeseries_to_return_index(ts)
+
+    def get_excess_return_series_from_ticker(self, ticker, ts_type=TimeSeriesType.LEVELS):
+
+        lv = self.get_total_return_series_from_ticker(ticker, ts_type=TimeSeriesType.LEVELS)
+        ccy, _, _  = self._session_mgr.get_time_series_currency(ticker)
+        rf = self.get_risk_free_rate_for_currency_region(ccy).get_levels()
+        x, y = lv.intersect_over_dates(rf)
+        rx = x.get_returns().subtract_over_common_dates(y.get_returns())
+
+        if ts_type in [ TimeSeriesType.RETURNS, TimeSeriesType.GROWTH ]:
+           return rx.deepcopy()
+        elif ts_type == TimeSeriesType.LEVELS:
+           return rx.get_levels()
+        else:
+            raise ValueError('Error return')
 
     def get_interest_rate_tickers(self, currency_region, maturities=None, type=None):
         return self._session_mgr.get_interest_rate_tickers(currency_region,
@@ -114,6 +129,19 @@ class GlobalDataSource(object):
     def get_risk_free_rate_time_series(self, region):
         from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
         return CRiskFreeRate.get_risk_free_for_region(region)
+
+    def get_interest_rates_for_region(self, region, maturities):
+        from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
+        return CRiskFreeRate.get_interest_rates_for_region(region, maturities)
+
+    def get_consumer_price_index_for_region(self, region):
+
+        df_ = self._session_mgr.get_consumer_price_index_tickers_from_region(region)
+        if df_.size > 0:
+           return self.get_dataframe_from_ticker(df_.ticker.values[0])
+        else:
+            return pd.DataFrame()
+
 
     # Methods associated with currencies / FX
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):
@@ -211,10 +239,10 @@ if __name__ == "__main__":
     self = GlobalDataSource()
     session = self._session
 
-    tickers = ['MSWRLDL', 'MSFXDW$', 'MSHWLD$', 'MSWRLD$']
+    tickers = ['MSWRLD$']
     _dfs = CTimeSeries()
     for ticker in tickers:
-        df = self.get_time_series_data_from_ticker(ticker, cols='PI')
+        df = self.get_excess_return_series_from_ticker(ticker)
         _dfs = _dfs.concat(df)
 
 

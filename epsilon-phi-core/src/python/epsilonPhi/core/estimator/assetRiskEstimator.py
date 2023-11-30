@@ -19,20 +19,24 @@ class AssetRiskEstimator(CAssetRiskEstimatorInf):
 
         rx = asset_in_schema_currency.get_excess_return_df()
         y, X = rx.intersect_over_dates(factor_df)
-        _, betas = model.regression.regress(X,
+        regstats = model.regression.regress(X,
                                             y,
                                             orthogonalize_columns=model.orthogonal_list,
                                             normalize=False)
 
+        betas = regstats[:, 1:]
         residuals = y - model.regression.orthogonalize_columns(X, model.orthogonal_list) @ np.mean(betas, axis=0)
         return np.mean(betas, axis=0), np.var(residuals, ddof=1) * schema.obs_per_year
 
     @staticmethod
-    def get_risk_factor_stdev(asset):
+    def get_risk_factor_stdev(asset, hedging_ratio):
 
-        factor_covar_mat = asset.schema.get_risk_factor_covariance()
-        betas, idio_var = asset.get_beta_and_idio_var(asset.get_hedging_ratio)
-        return math.sqrt(np.matmul(np.matmul(betas.cong().T, factor_covar_mat.vallues), betas) + idio_var)
+        betas, idio = AssetRiskEstimator.get_beta_and_idio_variance(asset, hedging_ratio)
+
+        factor_covariance = asset.schema.get_risk_factor_covariance()
+        systematic_var = betas @ factor_covariance @ betas
+        return np.sqrt(systematic_var + idio)
+
 
     @staticmethod
     def get_betas_and_idio_risk(asset, hedging_ratio):
@@ -48,25 +52,7 @@ class AssetRiskEstimator(CAssetRiskEstimatorInf):
         _, idio = AssetRiskEstimator.get_beta_and_idio_variance(asset, hedging_ratio)
         return idio
 
-    @staticmethod
-    def get_historical_volatility(asset):
-        return np.std(asset.values.flatten()) * math.sqrt(asset.obs_per_year)
 
-    @staticmethod
-    def get_historical_max_drawdown(asset):
-        return np.min(-1 + (asset.get_levels() / asset.get_levels().expanding().max()))
-
-    @staticmethod
-    def get_historical_value_at_risk(asset, horizon=1, alpha=0.99):
-        return np.quantile(asset.get_levels().pct_change(asset.obs_per_year*horizon).dropna(), 1-alpha)
-
-    @staticmethod
-    def get_historical_crisis_period_performance(asset):
-        pass
-
-    @staticmethod
-    def get_historical_beta_to_equity_market(asset):
-        pass
 
 if __name__ == "__main__":
 

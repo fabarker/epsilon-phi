@@ -27,7 +27,7 @@ class CAppConfig(object):
         from epsilonPhi.core.config.configUtil import CConfigUtil
         CAppConfig._configUtil = CConfigUtil()
 
-        from epsilonPhi.core.modelFactory.ModelFactory import BaseModel
+        from epsilonPhi.core.modelFactory.modelFactory import BaseModel
         CAppConfig._BaseModel = BaseModel.setup_default_model()
 
         CAppConfig._setup = True

@@ -2,7 +2,7 @@ from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSou
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
 from epsilonPhi.core.factor.factorPanel import CFactorPanels
-from epsilonPhi.core.modelFactory.ModelFactory import BaseModel
+from epsilonPhi.core.modelFactory.modelFactory import BaseModel
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.config.appConfig import CAppConfig
 from epsilonPhi.core.env.Env import DATAVERSION, Env

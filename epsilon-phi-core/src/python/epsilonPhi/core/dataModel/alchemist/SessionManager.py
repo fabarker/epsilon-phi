@@ -6,8 +6,10 @@ from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.Configs import *
 from contextlib import contextmanager
 import pickle
-from sqlalchemy import func
 import pandas as pd
+
+import os
+os.environ['APPDATA'] = ""
 
 tblToEngine = {
     'AssetConfig': 'PWM_DEFAULT_ENGINE',
@@ -240,12 +242,25 @@ class SessionMgr(object):
         spec = self.get_interest_rate_tickers_from_region(region, maturity=maturity, type=type)
         q = self.getSessionFactory().query(InterestRate).filter(InterestRate.uid.in_(spec.get('uid').values.flatten()))
         res = self.query_format_df(q).drop(columns=['IB', 'RI', 'IO'])
-        res.set_index(['uid', 'date'], inplace=True)
-        df = res.mean(axis=1).to_frame('IR')
 
-        panel = pd.concat([df.loc[x] for x in np.unique(df.index.get_level_values(0))], axis=1)
-        panel.columns = pd.MultiIndex.from_frame(spec)
-        return panel.dropna(axis=1, how='all')
+        if res.size > 0:
+            res.set_index(['uid', 'date'], inplace=True)
+            df = res.mean(axis=1).to_frame('IR')
+
+            panel = pd.concat([df.loc[x] for x in np.unique(df.index.get_level_values(0))], axis=1)
+            panel.columns = pd.MultiIndex.from_frame(spec)
+            return panel.dropna(axis=1, how='all')
+        else:
+            return pd.DataFrame()
+
+    def get_consumer_price_index_tickers_from_region(self, region):
+
+        q = self.getSessionFactory().query(EconomicSpec.uid,
+                                           EconomicSpec.ticker).filter(EconomicSpec.region.in_([region]),
+                                                                       EconomicSpec.indicator == 'CPI',
+                                                                       EconomicSpec.seasonal_adjustment == 1)
+
+        return self.query_format_df(q)
 
     def get_interest_rate_tickers_from_region(self, region, maturity=None, type=None):
 
@@ -301,6 +316,9 @@ class SessionMgr(object):
     def is_pickled(self, id):
         return self.getSessionFactory().query(exists().where(DatabasePickle.id == id)).scalar()
 
+    def show_table(self, table):
+        import pandasgui
+        pandasgui.show(self.query_format_df(session.query(table)))
 
 @contextmanager
 def session_scope():
@@ -320,8 +338,6 @@ if __name__ == "__main__":
     sessionMgr = SessionMgr()
     session = sessionMgr.getSessionFactory()
 
-    from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
 
-    curve = FXCurve()
-    df_ = curve.get_fx_curves('AUD/USD')
-    sessionMgr.pickle_and_save_to_database(df_, 'AUDUSD_FX_CURVE')
+    sessionMgr.show_table(EquityIndexSpec)
+

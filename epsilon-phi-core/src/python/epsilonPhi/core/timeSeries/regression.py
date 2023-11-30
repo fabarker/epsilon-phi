@@ -95,25 +95,26 @@ class Regression(object):
         assert T == y.shape[0], 'Error - X {} and y {} lengths are inconsistent'.format(X.shape[0], y.shape[0])
 
         _samples = self._sampling_type.samples(T)
-        alpha = np.full(len(_samples), np.nan)
-        betas = np.full((len(_samples), N), np.nan)
+        pars = np.full((len(_samples), N + 1), np.nan)
 
         for ctr, s in enumerate(_samples):
+
             # Get the weighting scheme for the regression problem
             wts = self._weighting_scheme.weights(len(s))
 
+            # sample predictors
+            x_prime = X.iloc[s]
+
             # Orthogonalize and/or normalize columns where necessary
-            X_prime = X.iloc[s]
             if orthogonalize_columns is not None:
-                X_prime = self.orthogonalize_columns(X_prime, orthogonalize_columns)
+                x_prime = self.orthogonalize_columns(x_prime, orthogonalize_columns)
             if normalize:
-                X_prime = self.normalize_columns(X_prime)
+                x_prime = self.normalize_columns(x_prime)
 
             # Fitting the model
-            self._fit(X_prime, y.iloc[s].values.flatten(), wts)
-            betas[ctr, :] = self.betas
-            alpha[ctr] = self.alpha
-        return alpha, betas
+            self._fit(x_prime, y.iloc[s].values.flatten(), wts)
+            pars[ctr, :] = self.params
+        return pars
 
     def _fit(self, X, y, sample_weight=None):
 
@@ -182,6 +183,16 @@ class Regression(object):
         return residuals
 
     @property
+    def params(self):
+        """
+        Retrieve the regression parameters of the model.
+
+        :return: Coefficients of the model. For some models like Decision Trees,
+                         this might not be applicable.
+        """
+        return np.hstack((self._reg.intercept_, self._reg.coef_))
+
+    @property
     def betas(self):
         """
         Retrieve the regression coefficients (betas) of the model.
@@ -236,6 +247,16 @@ class Regression(object):
         for col in cols:
             copy_df.loc[:, col] = self.residuals(copy_df.loc[:, np.setdiff1d(copy_df.columns, col)], copy_df.loc[:, col])
         return copy_df
+
+    @staticmethod
+    def regress_against_factors(y, X):
+
+        reg = Regression(Regression.REGRESSION_TYPES.OLS,
+                         Regression.WEIGHTING_SCHEME.EQUAL,
+                         Regression.SAMPLING_TYPE.STATIC)
+
+        regstats = reg.regress(X, y)
+        return np.hstack((reg._reg.intercept_, reg._reg.coef_))
 
 
 

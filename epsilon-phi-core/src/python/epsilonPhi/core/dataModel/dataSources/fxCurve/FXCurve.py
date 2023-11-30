@@ -249,7 +249,7 @@ class FXCurve(object):
         df_prime = pd.concat((df, vals.loc[:, ~vals.columns.isin(df.columns)]), axis=1)
         df_prime.columns.names = df.columns.names
 
-        sorted_df = df_prime.T.sort_index(level='maturity').T.replace(0, np.nan)
+        sorted_df = FrameUtils.sort_by_level(df_prime, 'maturity').replace(0, np.nan)
         ccys = sorted_df.columns.get_level_values('bbid').unique()
         types = sorted_df.columns.get_level_values('quote').unique()
 
@@ -308,19 +308,23 @@ class FXCurve(object):
         # Time to maturity
         tau = DateUtils.get_date_delta(pricing_date, maturity_date, True)
 
-        sorted_df = df.T.sort_index(level='maturity').T.replace(0, np.nan)
-        ccys = sorted_df.columns.get_level_values('bbid').unique()
-        types = sorted_df.columns.get_level_values('quote').unique()
+        ccys = df.columns.get_level_values('bbid').unique()
+        types = df.columns.get_level_values('quote').unique()
 
         interp_df = pd.DataFrame()
         for ccy in ccys:
 
             print('Calculating forward prices for {}'.format(ccy))
             for type in types:
-                xs_df = sorted_df.xs(key=(ccy, type), level=('bbid', 'quote'), axis=1, drop_level=False)
+                xs_df = df.xs(key=(ccy, type), level=('bbid', 'quote'), axis=1, drop_level=False)
+                xs_df = FrameUtils.sort_by_level(xs_df, level_name='maturity')
+
+                assert np.all(np.sort(xs_df.columns.get_level_values('maturity'))
+                              == xs_df.columns.get_level_values('maturity')), 'Error - maturities not sorted'
 
 
-                maturity_mat = xs_df.columns.get_level_values('maturity').values.reshape(1, -1).repeat(xs_df.index.size, axis=0)
+                mats = xs_df.columns.get_level_values('maturity').values.reshape(1,-1)
+                maturity_mat = mats.repeat(xs_df.index.size, axis=0)
                 T = tau.reshape(-1, 1).repeat(maturity_mat.shape[1], axis=1)
 
                 LB_locs = ((maturity_mat <= T) & (~xs_df.isna().values))

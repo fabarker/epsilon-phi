@@ -1,4 +1,4 @@
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Database import PriceQuote
@@ -25,8 +25,16 @@ class cFX(CFactor):
     _END_DATE = dt.date(year=2023, month=10, day=31)
     _STRATEGY_TYPE = 'HML'
 
-    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
-        super(cFX, self).__init__(series=series, ts_type=ts_type)
+    def __init__(self,
+                 data,
+                 ts_type=TimeSeriesType.RETURNS,
+                 returns_type=ReturnsType.SIMPLE,
+                 **kwargs):
+
+        super(cFX, self).__init__(data=data,
+                                  ts_type=ts_type,
+                                  returns_type=returns_type,
+                                  **kwargs)
 
     @staticmethod
     def construct_factor(frequency):

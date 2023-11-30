@@ -1,6 +1,6 @@
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType, ReturnsType
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
 from sqlalchemy import distinct
@@ -132,11 +132,11 @@ class FXCurveManager(object):
 
         unique_mats = np.unique(bbid_spec.index)
 
-        curve_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+        curve_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE )
         for mat in unique_mats:
             mat_spec = bbid_spec.loc[[mat]].set_index('uid', drop=True)
 
-            mat_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+            mat_df = CTimeSeries(ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
             for uid in mat_spec.index:
                 uid_spec = mat_spec.loc[uid]
                 _rates = self.get_fx_time_series_from_uid(uid, pricing_location=pricing_location)
@@ -154,8 +154,12 @@ class FXCurveManager(object):
                 mat_df = mat_df.concat(_rates)
 
             for single_provider in provider:
-                tmp = mat_df.get(single_provider, pd.DataFrame(columns=mat_df.columns))
+                tmp = mat_df.get(single_provider, CTimeSeries(columns=mat_df.columns, returns_type=ReturnsType.SIMPLE, ts_type=TimeSeriesType.LEVELS))
+                tmp._added_attributes = tmp._added_attributes.get(single_provider, pd.DataFrame(columns=mat_df.columns))
+
                 tmp.columns = tmp.columns.droplevel('uid')
+                tmp._added_attributes.columns = tmp.columns
+
                 df_p = tmp.T.groupby(lambda x: x).first().T.dropna(how='all')
                 curve_df = curve_df.combine_left(df_p)
 
@@ -228,7 +232,6 @@ class FXCurveManager(object):
             level='quote')
         return rvs_df.rename(columns={bbid: self.parse_reverse_currency_pair(bbid)}, level='bbid')
 
-
     def cache_fx_curve_data_single_currency_pair(self, bbid):
 
         if bbid not in self._cached_pairs:
@@ -237,5 +240,89 @@ class FXCurveManager(object):
             self.__load_fx_series_df_from_uids(uids)
             self._cached_pairs.extend([bbid, rvs_bbid])
 
+    def get_msci_implied_xUSD_fwd_rates(self, currency):
+
+        from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+        gds = GlobalDataSource()
+
+        spt = self.get_msci_implied_xUSD_spot_rates(currency)
+        fwd_implied_carry = gds.get_fx_carry(spt.columns.get_level_values('bbid')[0],'1m','mid')
+
+        d_rf = gds.get_interest_rates_for_region('United States', '1m').mean(axis=1).resample('B').asfreq()
+
+        region = self._sessionMgr.get_region_from_currency(currency)
+        f_rf = gds.get_interest_rates_for_region(region, ['ON','1m','3m']).mean(axis=1)
+
+        carry = d_rf.subtract_over_common_dates(f_rf).to_frame(currency)
+        carry.columns = fwd_implied_carry.columns
+
+        fx_carry = pd.concat((carry[carry.index < fwd_implied_carry.index.min()],
+                                    fwd_implied_carry), axis=0).sort_index()
+
+        fwds = spt.multiply_over_common_dates(np.exp(fx_carry * (1/12)))
+        return fwds.copy()
+
+
+    def get_msci_implied_xUSD_spot_rates(self, currency):
+
+        region = self._sessionMgr.get_region_from_currency(currency)
+        q = self._session.query(EquityIndexSpec).filter(EquityIndexSpec.region == region,
+                                                        EquityIndexSpec.provider == 'MSCI')
+        spec = self._sessionMgr.query_format_df(q)
+        local = spec[spec.denominated_currency == spec.exposure_currency].ticker.values[0]
+
+        if not local:
+            return CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+
+        from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+        gds = GlobalDataSource()
+
+        dollar = local[0:-1] + '$'
+        Local = gds.get_time_series_data_from_ticker(local, cols='PI')
+        Foreign = gds.get_time_series_data_from_ticker(dollar, cols='PI')
+
+        fx = Foreign.division_over_common_dates(Local)
+        fx.columns = [currency + 'USD']
+
+        spt = gds.get_fx_spot_rates([currency + 'USD'], 'mid')
+
+        common_dates = np.max(np.intersect1d(spt.index, fx.index))
+
+        rebase = spt.loc[common_dates].values / fx.loc[common_dates].values
+        fx_rebase = fx * rebase
+        fx_rebase.columns = spt.columns
+        return fx_rebase
+
+
+
+
 if __name__ == "__main__":
-    self = FXCurveManager().get_fx_series_df_from_uid(1921)
+
+    from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+    from epsilonPhi.core.utils.FrameUtils import FrameUtils
+    from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import MSCIActivityPanel
+
+    panel = MSCIActivityPanel.get_activity_panel_single_index('AC World')
+    currencies = panel.columns.get_level_values('Currency')
+    gds = GlobalDataSource()
+
+    mgr = FXCurveManager()
+    failed = list()
+
+    fxdf = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+    for currency in np.unique(currencies):
+
+        if currency == 'USD':
+            continue
+
+        if currency == 'QAD':
+            currency = 'QAR'
+
+        print(currency)
+
+        df_fwds = mgr.get_msci_implied_xUSD_fwd_rates(currency)
+        fxdf = fxdf.concat(df_fwds)
+
+    xrates = ['USD' + x for x in currencies]
+    xrate_spt = gds.get_fx_spot_rates(xrates, 'mid')
+    self = FXCurveManager()

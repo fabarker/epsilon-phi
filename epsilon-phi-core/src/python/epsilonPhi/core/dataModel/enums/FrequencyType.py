@@ -24,8 +24,10 @@ class Frequency(Enum):
     def obs_per_year(self):
         from epsilonPhi.core.utils.DateUtils import DateUtils
 
-        if self.value in ['B','D']:
+        if self.value in ['D']:
            return DateUtils.days_per_year
+        elif self.value in ['B']:
+           return 252
         elif self.value in ['W']:
            return 52
         elif self.value in ['M','BM']:

@@ -42,7 +42,9 @@ class PickleUtils(object):
             frequency = frequency.value
         pickle_name = factor_name + end_date + frequency
 
-        return PickleUtils.load_pickle(pickle_name)
+        factor = PickleUtils.load_pickle(pickle_name)
+        factor.index = pd.to_datetime(factor.index)
+        return factor
 
     @staticmethod
     def pickle_factor(factor_object, factor_name, end_date, frequency):

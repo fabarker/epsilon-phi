@@ -29,7 +29,7 @@ class FrameUtils(object):
 
     @staticmethod
     def vectorize(df, column_name=None):
-        df_ = pd.melt(df.reset_index(), id_vars='date')
+        df_ = pd.melt(df.reset_index(), id_vars=df.index.name if df.index.name else 'index')
         cols = np.setdiff1d(df_.columns, 'value')
         df_.index = list(map(tuple, df_[cols].to_numpy()))
         if column_name is None:
@@ -65,7 +65,7 @@ class FrameUtils(object):
            df.columns = FrameUtils.add_index_to_multi_index(df.columns, level_values, level_name)
         return df.copy()
 
-
     @staticmethod
-    def select_subset_levels(df, level_names, levels_values):
-        pass
+    def sort_by_level(df, level_name):
+        idx = np.argsort(df.columns.get_level_values(level_name))
+        return df.get(df.columns[idx])

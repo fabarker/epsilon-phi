@@ -1,4 +1,4 @@
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 from epsilonPhi.core.dataModel.dataSources.yieldCurve.YieldCurve import YieldCurve
@@ -21,8 +21,16 @@ _REGIONS['Germany'] = ('BMBD10Y', 8.1)
 gds = GlobalDataSource()
 
 class cTerm(CFactor):
-    def __init__(self, series, ts_type=TimeSeriesType.RETURNS):
-        super(cTerm, self).__init__(series=series, ts_type=ts_type)
+    def __init__(self,
+                 data,
+                 ts_type=TimeSeriesType.RETURNS,
+                 returns_type=ReturnsType.SIMPLE,
+                 **kwargs):
+
+        super(cTerm, self).__init__(data=data,
+                                    ts_type=ts_type,
+                                    returns_type=returns_type,
+                                    **kwargs)
 
     @staticmethod
     def get_regional_bond_excess_return(region, frequency):

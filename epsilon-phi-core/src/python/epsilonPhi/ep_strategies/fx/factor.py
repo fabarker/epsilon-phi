@@ -2,6 +2,7 @@ import datetime as dt
 
 import pandas as pd
 from matplotlib import pyplot as plt
+from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Database import PriceQuote
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
@@ -331,9 +332,9 @@ class Factor(object):
                 str_df = pd.concat((str_df, df), axis=0)
 
         str_df.columns = ['HML', 'L', 'H', 'HML_spt', 'SIGNAL_WEIGHTED', 'SIGNAL_WEIGHTED_SPT', 'RANK_WEIGHTED', 'RANK_WEIGHTS_SPT']
-        self.strategies = str_df.reindex(self.pricing_dates).copy()
+        self.strategies = CTimeSeries(str_df.reindex(self.pricing_dates), returns_type=ReturnsType.SIMPLE, ts_type=TimeSeriesType.RETURNS)
         self.PnLs = self.strategies.get(['HML', 'SIGNAL_WEIGHTED', 'RANK_WEIGHTED'])
-        self.PnLCurve = (1+self.PnLs).cumprod()
+        self.PnLCurve = self.PnLs.get_levels()
 
 
 if __name__ == '__main__':

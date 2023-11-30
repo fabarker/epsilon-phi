@@ -30,6 +30,8 @@ class Offsets(object):
             return pd.tseries.offsets.BQuarterEnd(periods)
         if frequency.lower() in ['y','a']:
             return pd.tseries.offsets.YearEnd(periods)
+        if frequency.lower() in  ['bm','ba']:
+            return pd.tseries.offsets.BYearEnd(periods)
 
 class DateUtils(object):
 
