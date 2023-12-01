@@ -90,6 +90,10 @@ class SessionMgr(object):
     def get_region_from_currency(self, currency):
         return self.getSessionFactory().query(CurrencyMapper.region).filter(CurrencyMapper.code == currency.upper()).scalar()
 
+    def is_EURO_legacy(self, currency):
+        return self.getSessionFactory().query(CurrencyMapper.EUR_legacy).filter(
+            CurrencyMapper.code == currency.upper()).scalar()
+
     def get_currency_from_region(self, region):
         return self.getSessionFactory().query(CurrencyMapper.code).filter(CurrencyMapper.region == region).scalar()
 

@@ -239,6 +239,13 @@ if __name__ == "__main__":
     self = GlobalDataSource()
     session = self._session
 
+    uids = [1984, 2436, 3784, 1980, 3777, 2516]
+
+    rates = pd.DataFrame()
+    for uid in uids:
+        df = self.get_dataframe_from_uid(uid)
+        rates = pd.concat((rates, df), axis=1)
+
     tickers = ['MSWRLD$']
     _dfs = CTimeSeries()
     for ticker in tickers:

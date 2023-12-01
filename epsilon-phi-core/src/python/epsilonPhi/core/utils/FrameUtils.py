@@ -25,7 +25,7 @@ class FrameUtils(object):
            new_df.columns.names = df.columns.names
            return new_df.copy()
         else:
-            return df.copy()
+            return pd.DataFrame()
 
     @staticmethod
     def vectorize(df, column_name=None):

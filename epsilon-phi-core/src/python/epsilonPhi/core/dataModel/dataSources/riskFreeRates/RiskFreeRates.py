@@ -23,6 +23,7 @@ _PICKLE_NAME = 'MSCI_CONSTITUENTS'
 
 class CRiskFreeRate(object):
     _cache = dict()
+    _rate_cache = dict()
     _sessionMgr = SessionMgr()
     _session = _sessionMgr.getSessionFactory()
 
@@ -33,6 +34,13 @@ class CRiskFreeRate(object):
     @staticmethod
     def get_interest_rates_for_region(region, maturities):
 
+        if (region, tuple(maturities)) not in CRiskFreeRate._rate_cache.keys():
+            CRiskFreeRate.load_interest_rates_for_region(region, maturities)
+        return CRiskFreeRate._rate_cache.get((region, tuple(maturities)))
+
+    @staticmethod
+    def load_interest_rates_for_region(region, maturities):
+
         df_rfrs = CRiskFreeRate._sessionMgr.get_interest_rates_for_region(region, maturities)
 
         df = pd.DataFrame()
@@ -40,7 +48,11 @@ class CRiskFreeRate(object):
             df_col = df_rfrs.get(col).dropna().to_frame(col) / 100
             df = pd.concat((df, df_col.reindex(pd.date_range(df_col.index.min(),
                                                              df_col.index.max())).ffill()), axis=1)
-        return CTimeSeries(df, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
+        CRiskFreeRate._rate_cache[(region, tuple(maturities))] = CTimeSeries(df,
+                                                                             ts_type=TimeSeriesType.RETURNS,
+                                                                             returns_type=ReturnsType.SIMPLE)
+
+
 
     @staticmethod
     def construct_risk_free_rate(region):

@@ -1,8 +1,9 @@
 import numpy as np
-from epsilonPhi.core.dataModel.enums.TimeSeries import ReturnsType
+from epsilonPhi.core.dataModel.enums.TimeSeries import ReturnsType, TimeSeriesType
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurveMgr import FXCurveManager
 from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
@@ -71,7 +72,8 @@ class FXCurve(object):
         self.reset_cache()
 
     def __get_fx_curve(self, bbid):
-        return self._fx_cache.iloc[:, self._fx_cache.columns.get_level_values('bbid') == bbid].dropna(how='all')
+        #return self._fx_cache.iloc[:, self._fx_cache.columns.get_level_values('bbid') == bbid].dropna(how='all')
+        return FrameUtils.select_subset_level(self._fx_cache, 'bbid', bbid).dropna(how='all')
 
     def get_fx_curves(self, currency_pairs):
 
@@ -354,16 +356,22 @@ class FXCurve(object):
         spts = self.get_spot_rates(bbids, quotes)
         fwds = self.get_forward_rates(bbids, tenors, quotes)
 
-        # find the dates that are common between both dataframes
-        common_dates = np.intersect1d(spts.index, fwds.index)
+        if spts.size > 0 and fwds.size > 0:
 
-        # align the dataframes and take log ratios
-        cols = fwds.columns.set_levels(['0m'] * fwds.shape[1], level='maturity', verify_integrity=False)
-        carry = np.log(fwds.loc[common_dates] / spts.get(cols).loc[common_dates].values)
-        mult = np.reshape(1/DateUtils.Rdate_to_mat(carry.columns.get_level_values('maturity').values), (1, fwds.shape[1]))
+            # find the dates that are common between both dataframes
+            common_dates = np.intersect1d(spts.index, fwds.index)
 
-        # annualize the carry rates
-        return carry * np.repeat(mult, carry.shape[0], axis=0)
+            # align the dataframes and take log ratios
+            cols = fwds.columns.set_levels(['0m'] * fwds.shape[1], level='maturity', verify_integrity=False)
+            carry = np.log(fwds.loc[common_dates] / spts.get(cols).loc[common_dates].values)
+            mult = np.reshape(1/DateUtils.Rdate_to_mat(carry.columns.get_level_values('maturity').values), (1, fwds.shape[1]))
+
+            # annualize the carry rates
+            return carry * np.repeat(mult, carry.shape[0], axis=0)
+        else:
+            return CTimeSeries(columns=[bbids],
+                               returns_type=ReturnsType.SIMPLE,
+                               ts_type=TimeSeriesType.LEVELS)
 
 
 if __name__ == "__main__":

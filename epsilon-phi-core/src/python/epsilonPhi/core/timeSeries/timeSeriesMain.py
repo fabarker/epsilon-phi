@@ -17,9 +17,6 @@ class CSlice(pd.Series):
     __pandas_priority__ = 5000
     _metadata = slice_metadata
 
-    def __prop__(self):
-        pass
-
     @property
     def _constructor(self):
         """This is the key to letting Pandas know how to keep
@@ -619,12 +616,12 @@ class CTimeSeries(pd.DataFrame):
 
     def intersect_over_dates(self, df):
         common_dates = np.intersect1d(self.index, df.index)
-        return self.select_subset_dates(common_dates), df.loc[common_dates].deepcopy()
+        return self.select_subset_dates(common_dates), df.loc[common_dates].copy()
 
     def intersect_over_date_range(self, df):
         common_dates = np.intersect1d(self.index, df.index)
         return self[np.min(common_dates):np.max(common_dates)], \
-            df[np.min(common_dates):np.max(common_dates)].deepcopy()
+            df[np.min(common_dates):np.max(common_dates)].copy()
 
     def get_period_ends(self, frequency):
         period_dates = DateUtils.get_date_range(np.min(self.index), np.max(self.index), periodicity=frequency)
@@ -791,11 +788,12 @@ class CTimeSeries(pd.DataFrame):
 
     ###################
 
-    def concat(self, time_series):
-        assert self.type == time_series.type, 'ERROR - timeseries must be of the same type to concat'
+    def concat(self, time_series, ts_type=None):
         new_atts = pd.concat(objs=(self.attributes, time_series.attributes), axis=1)
         df_concat = pd.concat(objs=(self, time_series), axis=1)
-        return self.__class__(df_concat.sort_index(), ts_type=self.type, attributes=new_atts, returns_type=self.returns_type)
+        if ts_type is None:
+           ts_type = self.type
+        return self.__class__(df_concat.sort_index(), ts_type=ts_type, attributes=new_atts, returns_type=self.returns_type)
 
     def combine_left(self, time_series):
         if self.size > 0 and time_series.size > 0:

@@ -3,7 +3,8 @@ from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType, ReturnsType
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
-from sqlalchemy import distinct
+from epsilonPhi.core.dataModel.enums.Composites import CompositeFXRates
+from sqlalchemy import distinct, not_
 import pandas as pd
 
 @SingletonDecorator
@@ -127,8 +128,8 @@ class FXCurveManager(object):
         self.cache_fx_curve_data_single_currency_pair(bbid)
 
         if bbid_spec.size == 0:
-            raise ValueError(
-                'Error - currency pair {} or {} not in database and curve cannot be constructed'.format(bbid, rvs_bbid))
+            print('Error - currency pair {} or {} not in database and curve cannot be constructed'.format(bbid, rvs_bbid))
+            return pd.DataFrame()
 
         unique_mats = np.unique(bbid_spec.index)
 
@@ -203,7 +204,7 @@ class FXCurveManager(object):
         key = str((bbid, provider, pricing_location))
         if key not in self._cached_fx_curves:
            self.__load_fx_curve_USD_cross(bbid, provider, pricing_location)
-        return self._fx_curve_cache.get(key).dropna(how='all')
+        return self._fx_curve_cache.get(key, pd.DataFrame()).dropna(how='all')
 
     def __load_fx_curve_USD_cross(self, bbid, provider, pricing_location):
 
@@ -240,39 +241,135 @@ class FXCurveManager(object):
             self.__load_fx_series_df_from_uids(uids)
             self._cached_pairs.extend([bbid, rvs_bbid])
 
-    def get_msci_implied_xUSD_fwd_rates(self, currency):
+    def get_xUSD_carry(self, currency):
 
         from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
         gds = GlobalDataSource()
 
-        spt = self.get_msci_implied_xUSD_spot_rates(currency)
-        fwd_implied_carry = gds.get_fx_carry(spt.columns.get_level_values('bbid')[0],'1m','mid')
+        if self.is_composite_currency(currency):
+            self.construct_composite_forward_rates(currency)
 
-        d_rf = gds.get_interest_rates_for_region('United States', '1m').mean(axis=1).resample('B').asfreq()
+        # Construct the regions forward rates from interest rate carry and index implied spot rates
+        subregion = self._sessionMgr.get_region_from_currency(currency)
+        f_rf = gds.get_interest_rates_for_region(subregion, ['ON', '1m', '3m']).mean(axis=1)
+        d_rf = gds.get_interest_rates_for_region('United States', ['ON', '1m', '3m']).mean(axis=1).resample('B').asfreq()
+        carry = d_rf.subtract_over_common_dates(f_rf).to_frame(currency)
+
+        # Get the carry from the database, if it exists, we use it where data is available
+        fwd_carry = gds.get_fx_carry([currency + 'USD'], '1m', 'mid')
+        fwd_carry_copy = fwd_carry.copy()
+        fwd_carry = pd.DataFrame()
+        if fwd_carry.size > 0:
+            fwd_carry.columns = carry.columns
+            fx_carry = pd.concat((carry[carry.index < fwd_carry.index.min()],
+                                      fwd_carry), axis=0).sort_index()
+        else:
+            fx_carry = carry.copy()
+            fx_carry.columns = spt.columns
+        return fx_carry.copy(), fwd_carry_copy
+
+    def construct_composite_forward_rates(self, currency):
+
+        from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+        from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import MSCIActivityPanel
+        gds = GlobalDataSource()
+
+        if not self.is_composite_currency(currency):
+            raise ValueError('Error - currency {} is not a defined composite fx'.format(currency))
 
         region = self._sessionMgr.get_region_from_currency(currency)
-        f_rf = gds.get_interest_rates_for_region(region, ['ON','1m','3m']).mean(axis=1)
+        currency_activity = MSCIActivityPanel.get_activity_panel_single_index(region)
+        unique_currencies = np.unique(currency_activity.columns.get_level_values('Currency'))
 
-        carry = d_rf.subtract_over_common_dates(f_rf).to_frame(currency)
-        carry.columns = fwd_implied_carry.columns
+        carry_rates = CTimeSeries(ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
+        carry_chk = CTimeSeries(ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
+        MVs = CTimeSeries(ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
+        for region_currency in unique_currencies:
+            print(region_currency)
 
-        fx_carry = pd.concat((carry[carry.index < fwd_implied_carry.index.min()],
-                                    fwd_implied_carry), axis=0).sort_index()
+            # Get the regions carry rate
+            carry, fwd_carry = self.get_xUSD_carry(region_currency)
+            carry.columns = [region_currency]
 
-        fwds = spt.multiply_over_common_dates(np.exp(fx_carry * (1/12)))
+            currency_carry = pd.concat((carry, fwd_carry), axis=1)
+            currency_carry.columns = pd.MultiIndex.from_tuples([(region_currency, 'Rates'), (region_currency, 'Forwards')])
+            carry_chk = carry_chk.concat(currency_carry)
+
+            # We need to multiply the forward rates by the Market Value in the Index
+            ticker = self._get_regional_equity_index(region_currency, 'USD')
+            MV = gds.get_time_series_data_from_ticker(ticker, cols='MV', ts_type=TimeSeriesType.LEVELS).dropna()
+
+            # List of dates where the region was included in the parent index
+            ccy_locs = currency_activity.iloc[:, currency_activity.columns.get_level_values('Currency') == region_currency].any(axis=1)
+            locs = ccy_locs[ccy_locs]
+            MV.columns = pd.MultiIndex.from_tuples([(region_currency, locs.first_valid_index())])
+
+            # Find the intersect of carry, market values and locs
+            common_dates = np.intersect1d(np.intersect1d(carry.index, MV.index), locs.index)
+
+            carry_rates = carry_rates.concat(carry.loc[common_dates])
+            MVs = MVs.concat(MV.loc[common_dates])
+
+        wts = MVs / MVs.sum(axis=1, skipna=True).to_frame('MV').values
+        fx_carry = carry_rates.multiply_over_common_dates(wts.get(carry_rates.columns)).sum(axis=1)
+
+        spt = self.get_msci_composite_xUSD_spot_rates(currency)
+        fwds = spt.multiply_over_common_dates(np.exp(fx_carry.to_frame('carry') * (1 / 12)))
+        return fwds
+
+    def get_msci_composite_xUSD_fwd_rates(self, currency):
+
+        if self.is_composite_currency(currency):
+           return  self.construct_composite_forward_rates(currency)
+
+        # Get the spot rate for the currency region
+        spt = self.get_msci_composite_xUSD_spot_rates(currency)
+        fx_carry = self.get_xUSD_carry(currency)
+
+        fwds = spt.multiply_over_common_dates(np.exp(fx_carry * (1 / 12)))
         return fwds.copy()
 
+    def is_composite_currency(self, currency):
+        return currency in CompositeFXRates.composite_currencies
 
-    def get_msci_implied_xUSD_spot_rates(self, currency):
+    def is_EURO_legacy(self, currency):
+        return self._sessionMgr.is_EURO_legacy(currency)
 
-        region = self._sessionMgr.get_region_from_currency(currency)
-        q = self._session.query(EquityIndexSpec).filter(EquityIndexSpec.region == region,
-                                                        EquityIndexSpec.provider == 'MSCI')
-        spec = self._sessionMgr.query_format_df(q)
-        local = spec[spec.denominated_currency == spec.exposure_currency].ticker.values[0]
+    def _get_regional_equity_index(self, exposure_currency, denominated_currency):
+        region = self._sessionMgr.get_region_from_currency(exposure_currency)
 
+        if (self.is_EURO_legacy(exposure_currency) and
+                (exposure_currency == denominated_currency)):
+            exposure_currency = 'EUR'
+            denominated_currency = 'EUR'
+        elif self.is_EURO_legacy(exposure_currency):
+            exposure_currency = 'EUR'
+
+        q = self._session.query(EquityIndexSpec.ticker).filter(EquityIndexSpec.exposure_currency == exposure_currency,
+                                                                  EquityIndexSpec.denominated_currency == denominated_currency,
+                                                                  EquityIndexSpec.region == region,
+                                                                  EquityIndexSpec.provider == 'MSCI',
+                                                                  not_(EquityIndexSpec.name.like('%Hedge%')),
+                                                                  not_(EquityIndexSpec.name.like('%Hedged%')),
+                                                                  not_(EquityIndexSpec.name.like('%Growth%')),
+                                                                  not_(EquityIndexSpec.name.like('%Value%')))
+        if denominated_currency == 'USD':
+            q = q.filter(EquityIndexSpec.ticker.like('%$'))
+        elif exposure_currency == denominated_currency:
+            q = q.filter(EquityIndexSpec.ticker.like('%L'))
+        return q.scalar()
+
+
+    def get_msci_composite_xUSD_spot_rates(self, currency):
+
+
+        local = self._get_regional_equity_index(currency, currency)
         if not local:
             return CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+
+        base = currency
+        if self.is_EURO_legacy(currency):
+           currency = 'EUR'
 
         from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
         gds = GlobalDataSource()
@@ -283,17 +380,18 @@ class FXCurveManager(object):
 
         fx = Foreign.division_over_common_dates(Local)
         fx.columns = [currency + 'USD']
+        rebase = 1
 
-        spt = gds.get_fx_spot_rates([currency + 'USD'], 'mid')
+        #db_spts = gds.get_fx_spot_rates([currency + 'USD'], 'mid')
+        #if db_spts.size > 0:
+        #    rebase = (db_spts.loc[max(np.intersect1d(fx.index, db_spts.index))].values /
+        #          fx.loc[max(np.intersect1d(fx.index, db_spts.index))].values)
+        #else:
+        #    rebase = 1
 
-        common_dates = np.max(np.intersect1d(spt.index, fx.index))
-
-        rebase = spt.loc[common_dates].values / fx.loc[common_dates].values
-        fx_rebase = fx * rebase
-        fx_rebase.columns = spt.columns
-        return fx_rebase
-
-
+        rebased_fx = fx * rebase
+        rebased_fx.columns = [base + 'USD']
+        return rebased_fx
 
 
 if __name__ == "__main__":
@@ -301,6 +399,14 @@ if __name__ == "__main__":
     from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
     from epsilonPhi.core.utils.FrameUtils import FrameUtils
     from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import MSCIActivityPanel
+
+    mgr = FXCurveManager()
+
+    currency = 'WLD'
+    spt = mgr.get_msci_composite_xUSD_spot_rates('ACW')
+    fwd = mgr.get_msci_composite_xUSD_fwd_rates('ACW')
+
+
 
     panel = MSCIActivityPanel.get_activity_panel_single_index('AC World')
     currencies = panel.columns.get_level_values('Currency')
