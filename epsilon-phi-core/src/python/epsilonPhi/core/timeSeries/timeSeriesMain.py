@@ -37,7 +37,6 @@ class CSlice(pd.Series):
 
     def __init__(self,
                  data: Optional[Union[pd.Series, CSlice]] = None,
-                 attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None,
                  ts_type: Optional[TimeSeriesType] = None,
                  returns_type: Optional[ReturnsType] = None,
                  **kwargs):
@@ -45,38 +44,30 @@ class CSlice(pd.Series):
         super(CSlice, self).__init__(data=data, **kwargs)
 
         # Set attributes in object
-        self.set_attributes(attributes)
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
-        #self.__validate_index()
 
-    # check we have time series data
-    def __validate_index(self):
-        try:
-            self.index = pd.to_datetime(np.sort(self.index))
-        except:
-            pass
+
 
     #############
 
     def _cast_derived_class(self, klass):
-        self.__init__(klass, ts_type=klass.type, attributes=klass.attributes, returns_type=klass.returns_type)
+        self.__init__(klass, ts_type=klass.type, returns_type=klass.returns_type)
 
     def create_new_object(self, *args, **kwargs):
         return self.__class__(*args, **kwargs)
 
     def deepcopy(self):
-        return self.create_new_object(data=self,
-                                      ts_type=self.type, attributes=self.attributes, returns_type=self.returns_type)
+        return self.create_new_object(data=self, ts_type=self.type, returns_type=self.returns_type)
 
     def _create_new_object_same_type(self, data=None, attributes=None, returns_type=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=returns_type)
+        return self.create_new_object(data=data, ts_type=self.type, returns_type=returns_type)
 
     def _create_new_levels_object(self, data=None, attributes=None, returns_type=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type)
+        return self.create_new_object(data=data, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type)
 
     def _create_new_returns_object(self, returns_type, data=None, attributes=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
+        return self.create_new_object(data=data, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
 
     ##############
 
@@ -108,12 +99,6 @@ class CSlice(pd.Series):
             return self.index.inferred_freq
         else:
             return DateUtils.get_daterange_frequency(self.index)
-
-    @property
-    def attributes(self):
-        if self._added_attributes.ndim > 1:
-           self._added_attributes = self._added_attributes.get(self.name, pd.Series(name=self.name))
-        return self.__getattr__('_added_attributes').copy()
 
     @property
     def type(self):
@@ -155,7 +140,7 @@ class CSlice(pd.Series):
         newobj.__setattr__('_type', TimeSeriesType.LEVELS)
         newobj.values[idx_nan] = np.nan
         newobj.insert_date_val(DateUtils.shift_date(self.first_valid_index(), newobj.frequency, -1), 1)
-        return self._create_new_levels_object(newobj, attributes=newobj.attributes, returns_type=newobj.returns_type)
+        return self._create_new_levels_object(newobj, returns_type=newobj.returns_type)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
@@ -185,7 +170,7 @@ class CSlice(pd.Series):
         newobj.__setattr__('_returns_type', return_type)
         rtns_locs = np.diff(np.cumsum(nan_locs, axis=0), axis=0) != 0
         newobj.values[rtns_locs] = np.nan
-        return self._create_new_returns_object(return_type, data=newobj, attributes=self.attributes)
+        return self._create_new_returns_object(return_type, data=newobj)
 
     def insert_dates(self, dates):
         unique_dates = DateUtils.merge([self.dates, dates])
@@ -290,56 +275,11 @@ class CSlice(pd.Series):
     def get_annual_levels(self):
         return self.get_periodic_levels(Frequency.YEARLY)
 
-    ############ Methods Associated with Attributes ############
-
-    def reset_attributes(self):
-        self.set_attributes(attributes=pd.Series(name=self.name))
-
-    def set_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None) -> None:
-
-
-        if isinstance(attributes, pd.DataFrame):
-            attributes = attributes.get(self.name)
-        elif isinstance(attributes, dict):
-            attributes = pd.Series(attributes, name=self.name)
-
-        if attributes is None:
-            attributes = pd.Series(name=self.name)
-
-        self.__setattr__('_added_attributes', attributes)
-
-    def set_attribute_single(self, attribute_name, attribute_value):
-
-        atts = self.attributes
-        if attribute_name in atts.index:
-           atts[attribute_name] = attribute_value
-        else:
-          new_att = pd.Series({attribute_name: attribute_value}, name=self.name)
-          atts = pd.concat((atts, new_att))
-        self.set_attributes(atts)
-
-    def append_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame, dict]]) -> None:
-
-        if attributes is None:
-            return
-
-        if isinstance(attributes, pd.DataFrame):
-            attributes = attributes.get(self.name, pd.Series()).to_dict()
-        elif isinstance(attributes, pd.Series):
-            attributes = attributes.to_dict()
-
-        for att in attributes.keys():
-            self.set_attribute_single(att, attributes.get(att))
-
-    def get_attribute(self, attribute_name):
-        if attribute_name in self.attributes.index:
-            return self.attributes.loc(attribute_name)
-
     def concat(self, time_series):
         assert self.type == time_series.type, 'ERROR - timeseries must be of the same type to concat'
         df_ = pd.concat(objs=(self, time_series), axis=1)
         atts = pd.concat(objs=(self.attributes, time_series.attributes), axis=1)
-        return df_._create_new_object_same_type(df_, attributes=atts, returns_type=self.returns_type)
+        return df_._create_new_object_same_type(df_, returns_type=self.returns_type)
 
     def ind(self, ind_value):
         if self.is_levels:
@@ -360,7 +300,7 @@ class CSlice(pd.Series):
         backfilled.name = self.name
 
         # preserve the attributes
-        return self._create_new_returns_object(self.returns_type, data=backfilled, attributes=self.attributes)
+        return self._create_new_returns_object(self.returns_type, data=backfilled)
 
     def backfill_levels(self, backfill):
 
@@ -376,7 +316,7 @@ class CSlice(pd.Series):
 
         rescaled = backfilled_lvls * (self.loc[self.first_valid_index()] / backfilled_lvls.loc[self.first_valid_index()])
         rescaled.name = self.name
-        return self._create_new_levels_object(rescaled, attributes=self.attributes, returns_type=self.returns_type)
+        return self._create_new_levels_object(rescaled, returns_type=self.returns_type)
 
     def backfill_series(self, backfill):
 
@@ -448,9 +388,9 @@ class CTimeSeries(pd.DataFrame):
 
     def __init__(self,
                  data=None,
-                 attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None,
                  ts_type: TimeSeriesType = TimeSeriesType.LEVELS,
                  returns_type: ReturnsType = ReturnsType.SIMPLE,
+                 attributes: Optional[Union[pd.Series, pd.DataFrame, dict]] = None,
                  **kwargs):
 
         super(CTimeSeries, self).__init__(data, **kwargs)
@@ -461,12 +401,6 @@ class CTimeSeries(pd.DataFrame):
         self.__setattr__('_returns_type', returns_type)
 
     ###################
-
-    def __validate_index(self):
-        try:
-            self.index = pd.to_datetime(np.sort(self.index))
-        except:
-            pass
 
     def _cast_derived_class(self, klass):
         self.__init__(klass,
@@ -480,17 +414,16 @@ class CTimeSeries(pd.DataFrame):
     def deepcopy(self):
         return self.create_new_object(data=self,
                                       returns_type=self.returns_type,
-                                      ts_type=self.type,
-                                      attributes=self.attributes)
+                                      ts_type=self.type)
 
-    def _create_new_object_same_type(self, data=None, attributes=None, returns_type=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=self.type, returns_type=returns_type)
+    def _create_new_object_same_type(self, data=None, returns_type=None):
+        return self.create_new_object(data=data, ts_type=self.type, returns_type=returns_type)
 
-    def _create_new_levels_object(self, data=None, attributes=None, returns_type=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type)
+    def _create_new_levels_object(self, data=None, returns_type=None):
+        return self.create_new_object(data=data, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type)
 
-    def _create_new_returns_object(self, returns_type=None, data=None, attributes=None):
-        return self.create_new_object(data=data, attributes=attributes, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
+    def _create_new_returns_object(self, returns_type=None, data=None):
+        return self.create_new_object(data=data, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
 
     ######################
 
@@ -526,8 +459,7 @@ class CTimeSeries(pd.DataFrame):
 
     @property
     def attributes(self):
-        return self.__getattr__('_added_attributes').get(self.columns,
-                                                         pd.DataFrame(columns=self.columns))
+        return self.columns.copy()
 
     @property
     def type(self):
@@ -559,7 +491,7 @@ class CTimeSeries(pd.DataFrame):
             return self.deepcopy()
 
         lvls = self.apply(lambda x: x.get_levels())
-        return self._create_new_levels_object(data=lvls, attributes=self.attributes, returns_type=self.returns_type)
+        return self._create_new_levels_object(data=lvls, returns_type=self.returns_type)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
@@ -567,7 +499,7 @@ class CTimeSeries(pd.DataFrame):
            return_type = self.returns_type
 
         rtns = self.apply(lambda x: x.get_returns(return_type))
-        return self._create_new_returns_object(return_type, data=rtns, attributes=self.attributes)
+        return self._create_new_returns_object(return_type, data=rtns)
 
     def select_subset_dates(self, dates):
         return self.loc[dates].deepcopy()
@@ -577,10 +509,6 @@ class CTimeSeries(pd.DataFrame):
 
     def select_subset_labels(self, labels):
         return self.get(labels).deepcopy()
-
-    def select_subset_attribute(self, attribute_name, attribute_values):
-        idx = self.attributes.loc[attribute_name].isin([attribute_values]).values
-        return self.iloc[:, idx].deepcopy()
 
     def select_subset_year(self, year):
         return self.loc[self.index.year == year].deepcopy()
@@ -689,119 +617,41 @@ class CTimeSeries(pd.DataFrame):
 
     ############### Methods Associated with Attributes ##################
 
-    def reset_attributes(self):
-        self.set_attributes()
-
     def set_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame]] = None) -> None:
+        pass
 
-        if attributes is None:
-            self.__setattr__('_added_attributes', pd.DataFrame())
-        else:
-            if isinstance(attributes, pd.Series):
-               attributes = attributes.to_frame(self.columns)
+    def select_subset_attribute(self, attribute_name, attribute_values):
+        return FrameUtils.select_subset_level(self, attribute_name, attribute_values)
 
-            if attributes is None:
-               attributes = pd.DataFrame(columns=self.columns)
-
-            atts = attributes.T.reindex(self.columns)
-            self.__setattr__('_added_attributes', atts.T)
-
-    def set_attribute_single(self, attribute_name, attribute_values):
-
-        if (not DateUtils.is_iterable(attribute_values) or
-           len(attribute_values) == 1):
-           attribute_values = [attribute_values] * self.number_of_cols
-
-        atts = self.attributes
-        if attribute_name in atts.index:
-           atts[attribute_name] = attribute_values
-        else:
-          new_att = pd.DataFrame(data=attribute_values, index=[attribute_name], columns=self.columns)
-          atts = pd.concat((atts, new_att))
-        self.set_attributes(atts)
-
-    def add_attribute_single_column(self, attribute_name, attribute_value, column_name):
-
-        if column_name not in self.columns:
-            return None
-
-        if (isinstance(self.columns, pd.MultiIndex) and
-            not isinstance(column_name, pd.MultiIndex)):
-            column_name = pd.MultiIndex.from_tuples([column_name])
-
-        atts = self.attributes
-        if attribute_name not in atts.index:
-            new_att = pd.DataFrame([np.nan] * self.number_of_cols, columns=[attribute_name], index=self.columns)
-            atts = pd.concat((atts, new_att.T), axis=0)
-
-        if isinstance(self.columns, pd.MultiIndex):
-           atts.loc[(attribute_name, column_name)] = attribute_value
-        else:
-           atts[attribute_name, column_name] = attribute_value
-        self.set_attributes(atts)
-
-    def add_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame]]) -> None:
-        set_diff = np.setdiff1d(self.attributes.index, attributes.index)
-        self.append_attributes(attributes.loc[set_diff])
-
-    def append_attributes(self, attributes: Optional[Union[pd.Series, pd.DataFrame]]) -> None:
-
-        if attributes is None:
-            return
-
-        if isinstance(attributes, pd.Series):
-           attributes = attributes.to_frame(attributes.name)
-
-        # Adjust Attributes Accordingly
-        set_diff = np.setdiff1d(self.attributes.index, attributes.index)
-
-        if (isinstance(self.columns, pd.MultiIndex) and
-                not isinstance(attributes.columns, pd.MultiIndex)):
-            attributes.columns = pd.MultiIndex.from_tuples([attributes.columns])
-        atts = pd.concat(objs=(self.attributes.loc[set_diff], attributes), axis=0)
-
-        # keep corresponding columns
-        self.set_attributes(atts.get(self.columns))
-
+    def set_attribute_single(self, attribute_name, attribute_value):
+        self._cast_derived_class(
+            FrameUtils.set_levels(self, attribute_value, attribute_name))
 
     def get_attribute(self, attribute_name):
-        if attribute_name in self.attributes.index:
-            return self.attributes.loc[[attribute_name]]
+        if attribute_name in self.attributes.names:
+           return list(self.attributes.get_level_values(attribute_name))
 
+    def drop_attribute(self, attribute_name):
+        if attribute_name in self.columns.names:
+            self.columns = self.columns.droplevel(attribute_name)
 
     def sort_by_attribute(self, attribute_name, inplace=True):
-
-        if attribute_name in self.attributes.index:
-
-           idx = self.get_attribute(attribute_name).astype(str)
-           klass = self.select_subset_columns(np.argsort(idx).flatten())
-           klass.set_attributes(self.attributes.get(klass.columns))
-           if inplace:
-              self._cast_derived_class(klass)
-           else:
-               return klass
+        sorted_frame = FrameUtils.sort_by_level(self, attribute_name)
+        if inplace:
+            self._cast_derived_class(sorted_frame)
         else:
-            if not inplace:
-               return self.deepcopy()
-
-
+            return sorted_frame.deepcopy()
 
     ###################
 
     def concat(self, time_series, ts_type=None):
-        new_atts = pd.concat(objs=(self.attributes, time_series.attributes), axis=1)
-        df_concat = pd.concat(objs=(self, time_series), axis=1)
-        if ts_type is None:
-           ts_type = self.type
-        return self.__class__(df_concat.sort_index(), ts_type=ts_type, attributes=new_atts, returns_type=self.returns_type)
+        df_concat = pd.concat(objs=(self, time_series), axis=1).sort_index()
+        return self.__class__(df_concat, ts_type=ts_type or self.type, returns_type=self.returns_type)
 
     def combine_left(self, time_series):
-        if self.size > 0 and time_series.size > 0:
-            return self.combine_first(time_series)
-        elif time_series.size > 0:
-            return time_series.deepcopy()
-        else:
-            return self.deepcopy()
+        if time_series.size > 0:
+            return self.combine_first(time_series) if self.size > 0 else time_series.deepcopy()
+        return self.deepcopy()
 
     def ind(self, ind_value):
         if self.is_levels:
@@ -827,7 +677,7 @@ class CTimeSeries(pd.DataFrame):
 
         self_with_backfill = not_in_backfill.concat(backfilled).select_subset_labels(self.columns)
         assert np.all(self_with_backfill.columns == self.columns), 'Error in backfill'
-        return self._create_new_returns_object(self.returns_type, data=self_with_backfill, attributes=self.attribute)
+        return self._create_new_returns_object(self.returns_type, data=self_with_backfill)
 
     def backfill_levels(self, backfill):
 
@@ -843,7 +693,7 @@ class CTimeSeries(pd.DataFrame):
         rescaled = backfilled_lvls.apply(lambda x: x * (self.get(x.name).loc[self.get(x.name).first_valid_index()] /
                                                         x.loc[self.get(x.name).first_valid_index()]))
         assert np.all(rescaled.columns == self.columns), 'Error in backfill'
-        return self._create_new_levels_object(rescaled, attributes=self.attributes, returns_type=self.returns_type)
+        return self._create_new_levels_object(rescaled, returns_type=self.returns_type)
 
     def backfill_series(self, backfill):
 
@@ -921,23 +771,15 @@ class CTimeSeries(pd.DataFrame):
 if __name__ == "__main__":
 
 
-    ds = CTimeSeries.get_timeseries_from_ticker('MSSPANL', fields='PI', ts_type=TimeSeriesType.LEVELS)
+    ds1 = CTimeSeries.get_timeseries_from_ticker('MSSPANL', fields='PI', ts_type=TimeSeriesType.LEVELS)
+    ds2 = CTimeSeries.get_timeseries_from_ticker('USESPON', fields='ER', ts_type=TimeSeriesType.LEVELS)
+    ds3 = CTimeSeries.get_timeseries_from_ticker('SPANPES', fields='ER', ts_type=TimeSeriesType.LEVELS)
 
-    ds1 = CTimeSeries.get_timeseries_from_ticker('MSSRIL$', fields='PI', ts_type=TimeSeriesType.LEVELS)
-    ds1.set_attribute_single('location','Europe')
+    ds = ds1.concat(ds2.concat(ds3))
 
-    ds2 = CTimeSeries.get_timeseries_from_ticker('MSSRIL$', fields='RI', ts_type=TimeSeriesType.LEVELS)
-    ds2.set_attribute_single('location', 'World')
+    ds.set_attribute_single('location',['Europe'])
+    ds1_prime = ds.iloc[:,0]
 
-    atts = pd.Series(['USD','Zoo'], index=['denominated', 'location'])
-    atts_1 = pd.Series(['EUR', 'GBP'], index=['denominated', 'exposure'])
-
-    ds.set_attributes(atts)
-    ds1.set_attributes(atts_1)
-    ds1.set_attribute_single('hedge_ratio', 0)
-
-    new = ds.concat(ds1.concat(ds2))
-    new.sort_by_attribute('location', inplace=True)
 
 
 

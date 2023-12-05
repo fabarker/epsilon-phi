@@ -177,8 +177,14 @@ class FXCurve(object):
         return hdg.get_returns(time_series.returns_type).to_time_series_type(time_series.type)
 
 
-    def hedge_time_series(self, time_series, target_currency, target_hedge_ratio, denominated_currency, exposure_currency=None, current_hedge_ratio=None, hedge_frequency=Frequency.BUSINESS_MONTHLY):
-
+    def hedge_time_series(self,
+                          time_series,
+                          target_currency,
+                          target_hedge_ratio,
+                          denominated_currency,
+                          exposure_currency=None,
+                          current_hedge_ratio=None,
+                          hedge_frequency=Frequency.BUSINESS_MONTHLY):
 
         lvls = time_series.get_levels()
         maturity_date = lvls.dates[0:-1] + Offsets.getOffset(hedge_frequency, 1)
@@ -376,26 +382,9 @@ class FXCurve(object):
 
 if __name__ == "__main__":
 
-    dates = pd.date_range('31-Dec-1980', '31-Dec-2002')
-    from_date = dates[0:-1]
-    to_date = dates[1:]
-    maturity = from_date + pd.tseries.offsets.BMonthEnd(1)
 
     curve = FXCurve()
+    fx = curve.get_fx_curve_single_currency('WLD/USD')
 
-
-    import timeit
-    number_of_executions = 1
-
-    # Timing curve.get_forward_prices
-    time_1 = timeit.timeit(lambda: curve.get_forward_prices('USDGBP', from_date, maturity),
-                           number=number_of_executions)
-
-    # Timing curve.get_forward_prices_2
-    time_2 = timeit.timeit(lambda: curve.get_forward_prices_old('USDGBP', from_date, maturity),
-                           number=number_of_executions)
-
-    print(f"Time for get_forward_prices: {time_1} seconds")
-    print(f"Time for get_forward_prices_2: {time_2} seconds")
 
 

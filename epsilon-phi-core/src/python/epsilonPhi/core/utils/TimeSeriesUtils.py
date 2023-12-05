@@ -48,8 +48,7 @@ class TimeSeriesUtils(object):
     def RI_from_TR(df):
         if df.is_levels:
             df = df._create_new_returns_object(returns_type=df.type,
-                                               data=df/100,
-                                               attributes=df.attributes)
+                                               data=df/100)
         return df.get_levels()
 
     @staticmethod
@@ -62,18 +61,15 @@ class TimeSeriesUtils(object):
 
     @staticmethod
     def RI_from_IN(df):
-        return df._create_new_levels_object(data=df+100,
-                                            attributes=df.attributes)
+        return df._create_new_levels_object(data=df+100)
 
     @staticmethod
     def RI_from_PI(df):
-        return df._create_new_levels_object(data=df,
-                                            attributes=df.attributes)
+        return df._create_new_levels_object(data=df)
 
     @staticmethod
     def RI_from_RI(df):
-        return df._create_new_levels_object(data=df,
-                                            attributes=df.attributes)
+        return df._create_new_levels_object(data=df)
 
     @staticmethod
     def RI_from_rate(df):

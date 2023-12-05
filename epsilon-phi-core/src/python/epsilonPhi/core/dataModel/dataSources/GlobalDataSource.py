@@ -55,6 +55,7 @@ class GlobalDataSource(object):
            df = df.to_frame()
 
         df.columns = pd.MultiIndex.from_tuples(list(zip([uid] * df.shape[1], df.columns)))
+        df.columns.names = ['uid', 'field']
         return df
 
     def get_dataframe_from_ticker(self, ticker: str, cols=None, index_col=None):
@@ -62,7 +63,7 @@ class GlobalDataSource(object):
         uid = self._session_mgr.get_uid_from_ticker(ticker)
         df_ = self.get_dataframe_from_uid(uid, cols, index_col)
 
-        df_.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in df_.columns.get_level_values(1)])
+        df_.columns = pd.MultiIndex.from_tuples([(ticker, x) for x in df_.columns.get_level_values(1)], names=['ticker','field'])
         return df_.copy()
 
     def get_dataframe_from_tickers(self, tickers: list, cols=None, index_col=None):
@@ -239,25 +240,23 @@ if __name__ == "__main__":
     self = GlobalDataSource()
     session = self._session
 
-    uids = [1984, 2436, 3784, 1980, 3777, 2516]
+    uids = [2322, 3525, 2291, 3518]
 
     rates = pd.DataFrame()
     for uid in uids:
         df = self.get_dataframe_from_uid(uid)
         rates = pd.concat((rates, df), axis=1)
 
-    tickers = ['MSWRLD$']
-    _dfs = CTimeSeries()
-    for ticker in tickers:
-        df = self.get_excess_return_series_from_ticker(ticker)
-        _dfs = _dfs.concat(df)
 
+###################
 
+    gds = GlobalDataSource()
+    df = gds.get_time_series_data_from_ticker('MSUSAM$', 'RI')
 
     df = CTimeSeries(df, ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
     df = df.get_bmonthly_returns()
     df = df['31-Jan-1985':]
 
-    US_EQ_AUD_HEDGED = self.fx_convert_timeseries_to_currency_hedged(df, 'AUD', 0.5, 'USD', 'USD')
-    US_EQ_GBP_HEDGED_VIA_AUD = self.fx_convert_timeseries_to_currency_hedged(US_EQ_AUD_HEDGED, 'GBP', 1, 'AUD', 'USD', 0.5)
-    US_EQ_GBP_HEDGED = self.fx_convert_timeseries_to_currency_hedged(df, 'GBP', 1, 'USD', 'USD')
+    US_EQ_AUD_HEDGED = self.fx_convert_timeseries_to_currency_hedged(df, 'AUD', 1, 'USD')
+    US_EQ_GBP_HEDGED_VIA_AUD = self.fx_convert_timeseries_to_currency_hedged(US_EQ_AUD_HEDGED, 'GBP', 1, 'AUD', 'USD', 1)
+    US_EQ_GBP_HEDGED = self.fx_convert_timeseries_to_currency_hedged(df, 'GBP', 1, 'USD')

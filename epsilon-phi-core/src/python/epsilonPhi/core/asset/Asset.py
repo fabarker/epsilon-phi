@@ -224,7 +224,7 @@ if __name__ == "__main__":
 
     gds = GlobalDataSource()
 
-    df = gds.get_time_series_data_from_ticker('MSWRLD$','RI')
+    df = gds.get_time_series_data_from_ticker('MSWRLDL','RI')
     rtns = df.get_returns()
 
     from epsilonPhi.core.schema.Schema import ContextCreator

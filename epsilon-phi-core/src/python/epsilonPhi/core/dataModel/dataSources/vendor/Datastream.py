@@ -289,11 +289,15 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    df = pd.read_excel(r'C:\Users\fabar\OneDrive\Desktop\data\Bond Data.xlsx')
-    tickers = df.Symbol.to_list()
+    from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg
+    from epsilonPhi.core.dataModel.alchemist.DataModel import *
+    from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+    session = SessionMgr().getSessionFactory()
 
-    fields = ['MV','LF','DM','RI','RY','CP','GP','VO','VA']
-    from_date = datetime.date(year=1945, month=12, day=31)
+
+    tickers = ['SPANPES','SPANP1F','USDOLLR','USDOL1F']
+    fields = ['ER']
+    from_date = datetime.date(year=1969, month=12, day=31)
     to_date = datetime.date.today()
     frame = pyDatastream.fetch(tickers, fields, from_date=from_date, frequency='D')
 

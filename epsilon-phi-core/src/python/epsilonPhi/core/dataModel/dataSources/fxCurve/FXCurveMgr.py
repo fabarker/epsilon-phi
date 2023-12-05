@@ -13,7 +13,8 @@ class FXCurveManager(object):
     _DEFAULT_PRICING_LOCATION = PricingLocation.LONDON.value
     _DEFAULT_PROVIDERS = [Provider.WMR.value,
                           Provider.REFINITIV.value,
-                          Provider.BBI.value]
+                          Provider.BBI.value,
+                          Provider.MSCI.value]
 
     _fx_cache = pd.DataFrame()
     _cached_pairs = list()
@@ -121,6 +122,11 @@ class FXCurveManager(object):
 
         print('Constructing {} {} {} FX Curve...'.format(bbid, provider, pricing_location))
 
+        if (self.is_composite_currency(bbid[0:3]) or
+            self.is_composite_currency(bbid[3:])):
+            self._construct_composite_forward_rates(bbid, provider, pricing_location)
+            return
+
 
         rvs_bbid = self.parse_reverse_currency_pair(bbid)
         bbid_spec = pd.concat((self.get_bbid_spec(bbid, provider),
@@ -155,11 +161,8 @@ class FXCurveManager(object):
                 mat_df = mat_df.concat(_rates)
 
             for single_provider in provider:
-                tmp = mat_df.get(single_provider, CTimeSeries(columns=mat_df.columns, returns_type=ReturnsType.SIMPLE, ts_type=TimeSeriesType.LEVELS))
-                tmp._added_attributes = tmp._added_attributes.get(single_provider, pd.DataFrame(columns=mat_df.columns))
-
+                tmp = mat_df.get(single_provider, pd.DataFrame(columns=mat_df.columns))
                 tmp.columns = tmp.columns.droplevel('uid')
-                tmp._added_attributes.columns = tmp.columns
 
                 df_p = tmp.T.groupby(lambda x: x).first().T.dropna(how='all')
                 curve_df = curve_df.combine_left(df_p)
@@ -247,7 +250,7 @@ class FXCurveManager(object):
         gds = GlobalDataSource()
 
         if self.is_composite_currency(currency):
-            self.construct_composite_forward_rates(currency)
+            self._construct_composite_forward_rates(currency)
 
         # Construct the regions forward rates from interest rate carry and index implied spot rates
         subregion = self._sessionMgr.get_region_from_currency(currency)
@@ -257,23 +260,22 @@ class FXCurveManager(object):
 
         # Get the carry from the database, if it exists, we use it where data is available
         fwd_carry = gds.get_fx_carry([currency + 'USD'], '1m', 'mid')
-        fwd_carry_copy = fwd_carry.copy()
-        fwd_carry = pd.DataFrame()
         if fwd_carry.size > 0:
             fwd_carry.columns = carry.columns
             fx_carry = pd.concat((carry[carry.index < fwd_carry.index.min()],
                                       fwd_carry), axis=0).sort_index()
         else:
             fx_carry = carry.copy()
-            fx_carry.columns = spt.columns
-        return fx_carry.copy(), fwd_carry_copy
+            fx_carry.columns = carry.columns
+        return fx_carry.copy()
 
-    def construct_composite_forward_rates(self, currency):
+    def _construct_composite_forward_rates(self, bbid, provider, pricing_location):
 
         from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
         from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import MSCIActivityPanel
         gds = GlobalDataSource()
 
+        currency = bbid.replace('USD','')
         if not self.is_composite_currency(currency):
             raise ValueError('Error - currency {} is not a defined composite fx'.format(currency))
 
@@ -282,18 +284,13 @@ class FXCurveManager(object):
         unique_currencies = np.unique(currency_activity.columns.get_level_values('Currency'))
 
         carry_rates = CTimeSeries(ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
-        carry_chk = CTimeSeries(ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
         MVs = CTimeSeries(ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)
         for region_currency in unique_currencies:
             print(region_currency)
 
             # Get the regions carry rate
-            carry, fwd_carry = self.get_xUSD_carry(region_currency)
+            carry = self.get_xUSD_carry(region_currency)
             carry.columns = [region_currency]
-
-            currency_carry = pd.concat((carry, fwd_carry), axis=1)
-            currency_carry.columns = pd.MultiIndex.from_tuples([(region_currency, 'Rates'), (region_currency, 'Forwards')])
-            carry_chk = carry_chk.concat(currency_carry)
 
             # We need to multiply the forward rates by the Market Value in the Index
             ticker = self._get_regional_equity_index(region_currency, 'USD')
@@ -313,21 +310,28 @@ class FXCurveManager(object):
         wts = MVs / MVs.sum(axis=1, skipna=True).to_frame('MV').values
         fx_carry = carry_rates.multiply_over_common_dates(wts.get(carry_rates.columns)).sum(axis=1)
 
+        # Get the spot levels
         spt = self.get_msci_composite_xUSD_spot_rates(currency)
-        fwds = spt.multiply_over_common_dates(np.exp(fx_carry.to_frame('carry') * (1 / 12)))
-        return fwds
 
-    def get_msci_composite_xUSD_fwd_rates(self, currency):
+        # Get the 1m forwards
+        fwd = spt.multiply_over_common_dates(np.exp(fx_carry.to_frame('carry') * (1 / 12)))
+        fwd.set_attribute_single('maturity', '1m')
+        fwd[fwd.columns.copy().set_levels(['3m'], level='maturity')] = spt.values + 3 * (fwd.values - spt.values)
+        curve_df = spt.concat(fwd)
 
-        if self.is_composite_currency(currency):
-           return  self.construct_composite_forward_rates(currency)
+        rvs_curve = self.reverse_fx_curve(curve_df)
+        bbid_ = curve_df.columns.get_level_values('bbid').unique()[0]
+        rvs_bbid = self.parse_reverse_currency_pair(bbid_)
 
-        # Get the spot rate for the currency region
-        spt = self.get_msci_composite_xUSD_spot_rates(currency)
-        fx_carry = self.get_xUSD_carry(currency)
+        self._save_currency_curve_to_pickles(curve_df, bbid_, provider, pricing_location)
+        self._save_currency_curve_to_pickles(rvs_curve, rvs_bbid, provider, pricing_location)
+        self.reset_cache()
 
-        fwds = spt.multiply_over_common_dates(np.exp(fx_carry * (1 / 12)))
-        return fwds.copy()
+        id = self._get_pickle_uid(bbid, provider, pricing_location)
+        rvs_id = self._get_pickle_uid(rvs_bbid, provider, pricing_location)
+
+        self._fx_curve_cache[id] = curve_df.copy()
+        self._fx_curve_cache[rvs_id] = rvs_curve.copy()
 
     def is_composite_currency(self, currency):
         return currency in CompositeFXRates.composite_currencies
@@ -380,55 +384,21 @@ class FXCurveManager(object):
 
         fx = Foreign.division_over_common_dates(Local)
         fx.columns = [currency + 'USD']
+
         rebase = 1
-
-        #db_spts = gds.get_fx_spot_rates([currency + 'USD'], 'mid')
-        #if db_spts.size > 0:
-        #    rebase = (db_spts.loc[max(np.intersect1d(fx.index, db_spts.index))].values /
-        #          fx.loc[max(np.intersect1d(fx.index, db_spts.index))].values)
-        #else:
-        #    rebase = 1
-
         rebased_fx = fx * rebase
-        rebased_fx.columns = [base + 'USD']
-        return rebased_fx
+        rebased_fx.columns = pd.MultiIndex.from_tuples([(base + 'USD', '0m', 'LDN', 'mid')])
+        rebased_fx.columns.names=['bbid','maturity','pricing_location','quote']
+        return rebased_fx.copy()
 
 
 if __name__ == "__main__":
 
     from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
-    from epsilonPhi.core.utils.FrameUtils import FrameUtils
     from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import MSCIActivityPanel
 
     mgr = FXCurveManager()
 
     currency = 'WLD'
-    spt = mgr.get_msci_composite_xUSD_spot_rates('ACW')
-    fwd = mgr.get_msci_composite_xUSD_fwd_rates('ACW')
+    curve = mgr.get_msci_composite_xUSD_fwd_rates('WLD')
 
-
-
-    panel = MSCIActivityPanel.get_activity_panel_single_index('AC World')
-    currencies = panel.columns.get_level_values('Currency')
-    gds = GlobalDataSource()
-
-    mgr = FXCurveManager()
-    failed = list()
-
-    fxdf = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
-    for currency in np.unique(currencies):
-
-        if currency == 'USD':
-            continue
-
-        if currency == 'QAD':
-            currency = 'QAR'
-
-        print(currency)
-
-        df_fwds = mgr.get_msci_implied_xUSD_fwd_rates(currency)
-        fxdf = fxdf.concat(df_fwds)
-
-    xrates = ['USD' + x for x in currencies]
-    xrate_spt = gds.get_fx_spot_rates(xrates, 'mid')
-    self = FXCurveManager()

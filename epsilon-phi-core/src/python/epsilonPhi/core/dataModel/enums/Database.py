@@ -13,6 +13,7 @@ class Provider(Enum):
     BBI = 'Barclays Bank PLC'
     GTIS = 'GTIS - FTID/TR'
     GS = 'GS'
+    MSCI = 'MSCI'
 
 class PricingLocation(Enum):
     LONDON = 'LDN'

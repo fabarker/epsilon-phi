@@ -3,6 +3,13 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="/epsilon-phi-core/src/Scripts/fx_backfills.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/alchemist/SessionManager.py">
           <value>
             <Attribute>
@@ -18,6 +25,13 @@
           </value>
         </entry>
         <entry key="/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/fxCurve/FXCurve.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/vendor/Datastream.py">
           <value>
             <Attribute>
               <option name="separator" value="," />

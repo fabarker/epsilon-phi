@@ -1,5 +1,6 @@
 import pandas as pd
 from operator import add
+from epsilonPhi.core.utils.DateUtils import DateUtils
 import numpy as np
 import collections, re, six
 
@@ -12,8 +13,17 @@ class FrameUtils(object):
                 and not isinstance(arg, six.string_types))
 
     @staticmethod
-    def add_index_to_multi_index(multiIndex, new_index, index_name):
-        return pd.MultiIndex.from_tuples(list(map(add, multiIndex, zip(new_index))), names=multiIndex.names + [index_name])
+    def add_level(multiIndex, new_index, index_name):
+
+        if not DateUtils.is_iterable(new_index):
+           new_index = [new_index]
+
+        if len(new_index) == 1:
+           new_index = new_index * len(multiIndex)
+
+        assert len(new_index) == len(multiIndex), 'Error in multi-index'
+        return pd.MultiIndex.from_tuples([(*mi, ni) for mi, ni in zip(multiIndex, new_index)],
+                                         names=multiIndex.names + [index_name])
 
     @staticmethod
     def select_subset_level(df, level_name, values):
@@ -46,7 +56,7 @@ class FrameUtils(object):
         if isinstance(df.columns, pd.MultiIndex)\
                 and level_name in df.columns.names \
                 and np.isin(df.columns.get_level_values(level_name), values).any():
-           new_df = df.loc[:, ~df.columns.get_level_values('maturity').isin(values)]
+           new_df = df.loc[:, ~df.columns.get_level_values(level_name).isin(values)]
            new_df.columns = pd.MultiIndex.from_tuples(new_df.columns.values)
            new_df.columns.names = df.columns.names
            return new_df.copy()
@@ -59,10 +69,10 @@ class FrameUtils(object):
         level_names = df.columns.names
         if level_name in level_names:
            df.columns = df.columns.droplevel(level_name)
-           df.columns = FrameUtils.add_index_to_multi_index(df.columns, level_values, level_name)
+           df.columns = FrameUtils.add_level(df.columns, level_values, level_name)
            df.columns = df.columns.reorder_levels(level_names)
         else:
-           df.columns = FrameUtils.add_index_to_multi_index(df.columns, level_values, level_name)
+           df.columns = FrameUtils.add_level(df.columns, level_values, level_name)
         return df.copy()
 
     @staticmethod

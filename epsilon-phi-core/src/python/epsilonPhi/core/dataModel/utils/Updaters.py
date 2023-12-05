@@ -5,7 +5,7 @@ from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
 from epsilonPhi.core.utils.ListUtils import ListUtils
 from datetime import timedelta
-from sqlalchemy import distinct
+from sqlalchemy import distinct, func
 from datetime import datetime
 from dateutil import parser
 import pandas as pd
@@ -318,8 +318,6 @@ class Updater:
     def _update_table_data_single_datasource(table, datasource):
         if datasource.lower() == 'datastream':
             DATASTREAM_UPDATER(table).run()
-        elif datasource.lower() == 'gs':
-            GSQUANT_UPDATER(table)
         else:
             print('datasource {} not recognised'.format(datasource))
 
@@ -536,7 +534,7 @@ class DATASTREAM_UPDATER(Updater):
 
 if __name__ == "__main__":
 
-    table_names = ['fx_rates']
+    table_names = ['fx_rates','bond_index','equity_index','interest_rate','yield_curve','commodity_index']
     for table in table_names:
         Updater.update_table_data(table)
 

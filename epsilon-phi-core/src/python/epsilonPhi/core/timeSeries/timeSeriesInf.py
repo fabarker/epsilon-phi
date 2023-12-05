@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-metadata = ["_added_attributes", "_type", "_returns_type"]
+metadata = ["_type", "_returns_type"]
 slice_metadata = metadata + ['_name']
 
 class AbstractTimeSeries(ABC):
