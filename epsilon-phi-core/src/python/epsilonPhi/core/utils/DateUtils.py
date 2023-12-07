@@ -175,7 +175,10 @@ class DateUtils(object):
             minDateDiff = int(minDateDiff / np.timedelta64(1,'D'))
 
         if minDateDiff == 1:
-            return 'D'
+            if np.any(date_range.dayofweek.isin([5, 6])):
+                return 'D'
+            else:
+                return 'B'
         elif 5 <= minDateDiff and minDateDiff <= 7:
             return 'W'
         elif 25 <= minDateDiff and minDateDiff <= 35:

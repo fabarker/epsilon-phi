@@ -195,18 +195,12 @@ class FXCurve(object):
 
         # Otherwise there has already been some fx translations applied
         assert current_hedge_ratio is not None, 'Error - time series has already undergone fx translations and must provide its current hedge ratio'
-
         fx_conversion = self.unhedged_time_series(time_series, denominated_currency, target_currency)
-
-        if current_hedge_ratio - target_hedge_ratio != 0:
-           fwds_leg_1 = (current_hedge_ratio - target_hedge_ratio) * self.get_forward_contract_return(exposure_currency + denominated_currency, lvls.dates, maturity_date)
-           fx_conversion = fx_conversion.addition_over_common_dates(fwds_leg_1)
-
-        if target_hedge_ratio != 0:
-            fwds_leg_2 = target_hedge_ratio * self.get_forward_contract_return(denominated_currency + target_currency, lvls.dates, maturity_date)
-            fx_conversion = fx_conversion.addition_over_common_dates(fwds_leg_2)
-
-        return fx_conversion.to_time_series_type(time_series.type)
+        fx_conversion = fx_conversion.get_returns(ReturnsType.LOG)
+        fwds_exp_den = current_hedge_ratio * self.get_forward_contract_return(exposure_currency + denominated_currency, lvls.dates, maturity_date)
+        fwds_exp_tar = target_currency * self.get_forward_contract_return(exposure_currency + target_currency, lvls.dates, maturity_date)
+        fx_conversion = fx_conversion.addition_over_common_dates(fwds_exp_den).subtract_over_common_dates(fwds_exp_tar)
+        return fx_conversion.get_returns(time_series.returns_type).to_time_series_type(time_series.type)
 
     def unhedged_time_series(self, time_series, from_currency, to_currency):
 
@@ -384,7 +378,7 @@ if __name__ == "__main__":
 
 
     curve = FXCurve()
-    fx = curve.get_fx_curve_single_currency('WLD/USD')
+    fx = curve.get_fx_curve_single_currency('BRL/USD')
 
 
 

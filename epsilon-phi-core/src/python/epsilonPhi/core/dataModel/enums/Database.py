@@ -1,5 +1,8 @@
 from enum import Enum
 
+class FX(Enum):
+    EUR_START_DATE = '1-Jan-1999'
+
 class Datatype(Enum):
 
     RETURN_INDEX = 'RI'
