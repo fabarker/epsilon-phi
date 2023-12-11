@@ -1,10 +1,11 @@
-import datetime
+from epsilonPhi.core.dataModel.enums.Composites import CompositeRiskFreeRates
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.dataModel.enums.Database import FX
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr, TimeSeriesSpec
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, TimeSeriesType, ReturnsType
 from epsilonPhi.core.utils.PickleUtils import PickleUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
-import os
+import datetime, os
 import pandas as pd
 import numpy as np
 import platform
@@ -16,10 +17,6 @@ if 'windows' in platform.system().lower():
 else:
     DIR_ = os.path.join(f_path_[:f_path_.find('epsilon-phi-core/') + len('epsilon-phi-core/')],
                         'src/resources/templates/MSCI Index Construction.xlsx')
-
-_COMPOSITE_RATES = ['AC World','World','Pacific ex-Japan','Pacific','European Union','Europe ex-UK','Europe','EMU','EM Latin America','EM Europe and Middle East','EM Europe','EM Asia','EM','AC World ex-US']
-_EUR_START_DATE = '1-Jan-1999'
-_PICKLE_NAME = 'MSCI_CONSTITUENTS'
 
 class CRiskFreeRate(object):
     _cache = dict()
@@ -52,8 +49,6 @@ class CRiskFreeRate(object):
                                                                              ts_type=TimeSeriesType.RETURNS,
                                                                              returns_type=ReturnsType.SIMPLE)
 
-
-
     @staticmethod
     def construct_risk_free_rate(region):
 
@@ -74,14 +69,14 @@ class CRiskFreeRate(object):
         DEM.columns =['Eurozone']
         EUR = CRiskFreeRate.construct_risk_free_rate('Eurozone').get_returns()
 
-        CRiskFreeRate._cache['Eurozone'] = pd.concat((EUR[_EUR_START_DATE:],
-                                       DEM[DEM.index < _EUR_START_DATE]),
+        CRiskFreeRate._cache['Eurozone'] = pd.concat((EUR[FX.EUR_START_DATE.value:],
+                                       DEM[DEM.index < FX.EUR_START_DATE.value]),
                                        axis=0).sort_index()
 
 
     @staticmethod
     def load_risk_free_rate(region):
-        if region in _COMPOSITE_RATES:
+        if region in CompositeRiskFreeRates.composite_rfr_regions:
            CRiskFreeRate.load_composite_risk_free_rate(region)
         elif region.lower() in ['eurozone', 'emu', 'european union']:
             CRiskFreeRate.load_EUR_risk_free_rate()
@@ -181,6 +176,7 @@ class MSCIActivityPanel(object):
     @staticmethod
     def get_activity_panel_single_index(index_name):
 
+        _PICKLE_NAME = 'MSCI_CONSTITUENTS'
         if PickleUtils.is_pickled(_PICKLE_NAME):
             panel_df = PickleUtils.load_pickle(_PICKLE_NAME)
         else:
@@ -308,18 +304,20 @@ class CCompositeRate(object):
     @staticmethod
     def get_composite_risk_free_rate(index_name):
 
-        if PickleUtils.is_pickled(index_name):
-            res = PickleUtils.load_pickle(index_name)
+        _PICKLE_NAME = index_name.upper().replace(' ', '_').replace('-', '') + '_RFR'
+        if PickleUtils.is_pickled(_PICKLE_NAME):
+            res = PickleUtils.load_pickle(_PICKLE_NAME)
             return CTimeSeries(res, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
         else:
             rfr = CCompositeRate(index_name)
             rfr.construct_history()
             rate = CTimeSeries(rfr._rfr, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
-            PickleUtils.pickle_it(rate, index_name)
+            PickleUtils.pickle_it(rate, _PICKLE_NAME)
             return rate
 
 
 
 if __name__ == "__main__":
 
-   rfr = CRiskFreeRate.get_risk_free_for_region('Eurozone')
+    for region in CompositeRiskFreeRates.composite_rfr_regions:
+        rfr = CRiskFreeRate.get_risk_free_for_region(region)

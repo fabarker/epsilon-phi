@@ -279,9 +279,6 @@ class Factor(object):
 
                 # High Minus Low Portfolio
                 wt = np.repeat(1/N, N)
-                #H = np.exp(long_excess.get(ranked_signal.index[-N:]) @ wt) - 1
-                #L = np.exp(short_excess.get(ranked_signal.index[0:N]) @ wt) - 1
-                #HML = H-L
 
                 H = np.sum(wt * np.exp(long_excess.get(ranked_signal.index[-N:]).fillna(0).cumsum()), axis=1)
                 L = np.sum(wt * np.exp(short_excess.get(ranked_signal.index[0:N]).fillna(0).cumsum()), axis=1)
@@ -289,51 +286,39 @@ class Factor(object):
                 H_rtns = np.exp(H.diff())-1
                 L_rtns = np.exp(L.diff())-1
 
+                bmk = np.mean(np.exp(long_spt.fillna(0).cumsum()), axis=1).diff()
                 HML_spt = np.exp((np.sum(wt * np.exp(long_spt.get(ranked_signal.index[-N:]).fillna(0).cumsum()), axis=1) -
                           np.sum(wt * np.exp(short_spt.get(ranked_signal.index[0:N]).fillna(0).cumsum()), axis=1)).diff()) - 1
 
                 # Linear in signal size
                 W_sig = (2/np.sum(np.abs(ranked_signal - np.mean(ranked_signal)))) * (ranked_signal - np.mean(ranked_signal))
-                lin_sig = np.exp((np.sum(W_sig[W_sig > 0] * np.exp(long_excess.get(W_sig[W_sig > 0].index).fillna(0).cumsum()), axis=1) +
-                              np.sum(W_sig[W_sig < 0] * np.exp(short_excess.get(W_sig[W_sig < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
+                lin_sig = np.exp((np.sum(W_sig[W_sig > 0].values * np.exp(long_excess.get(W_sig[W_sig > 0].index).fillna(0).cumsum()), axis=1) +
+                              np.sum(W_sig[W_sig < 0].values * np.exp(short_excess.get(W_sig[W_sig < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
 
-                lin_sig_spt = np.exp((np.sum(W_sig[W_sig > 0] * np.exp(long_spt.get(W_sig[W_sig > 0].index).fillna(0).cumsum()), axis=1) +
-                                  np.sum(W_sig[W_sig < 0] * np.exp(short_spt.get(W_sig[W_sig < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
-
-                #lin_sig = np.exp(short_excess.get(W_sig[W_sig < 0].index)) @ W_sig[W_sig < 0] +\
-                #          np.exp(long_excess.get(W_sig[W_sig > 0].index)) @ W_sig[W_sig > 0]
-
-                #lin_sig_spt = np.exp(short_spt.get(W_sig[W_sig < 0].index)) @ W_sig[W_sig < 0] + \
-                #            np.exp(long_spt.get(W_sig[W_sig > 0].index)) @ W_sig[W_sig > 0]
+                lin_sig_spt = np.exp((np.sum(W_sig[W_sig > 0].values * np.exp(long_spt.get(W_sig[W_sig > 0].index).fillna(0).cumsum()), axis=1) +
+                                  np.sum(W_sig[W_sig < 0].values * np.exp(short_spt.get(W_sig[W_sig < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
 
                 # Build Portfolio linear in rank
                 W_rank = 2 * ((ranked_signal.rank() - ranked_signal.rank().mean()) /\
                          ((ranked_signal.rank() - ranked_signal.rank().mean()).abs().sum()))
 
                 lin_rank = np.exp((np.sum(
-                    W_rank[W_rank > 0] * np.exp(long_excess.get(W_rank[W_rank > 0].index).fillna(0).cumsum()), axis=1) +
-                                  np.sum(W_rank[W_rank < 0] * np.exp(
+                    W_rank[W_rank > 0].values * np.exp(long_excess.get(W_rank[W_rank > 0].index).fillna(0).cumsum()), axis=1) +
+                                  np.sum(W_rank[W_rank < 0].values * np.exp(
                                       short_excess.get(W_rank[W_rank < 0].index).fillna(0).cumsum()), axis=1)).diff()) - 1
 
                 lin_rank_spt = np.exp((np.sum(
-                    W_rank[W_rank > 0] * np.exp(long_spt.get(W_rank[W_rank > 0].index).fillna(0).cumsum()), axis=1) +
-                                      np.sum(W_rank[W_rank < 0] * np.exp(
+                    W_rank[W_rank > 0].values * np.exp(long_spt.get(W_rank[W_rank > 0].index).fillna(0).cumsum()), axis=1) +
+                                      np.sum(W_rank[W_rank < 0].values * np.exp(
                                           short_spt.get(W_rank[W_rank < 0].index).fillna(0).cumsum()),
                                              axis=1)).diff()) - 1
 
-
-                #lin_rank = np.exp(short_excess.get(W_rank[W_rank < 0].index)) @ W_rank[W_rank < 0] +\
-                #          np.exp(long_excess.get(W_rank[W_rank > 0].index)) @ W_rank[W_rank > 0]
-
-                #lin_rank_spt = np.exp(short_spt.get(W_rank[W_rank < 0].index)) @ W_rank[W_rank < 0] + \
-                #               np.exp(long_spt.get(W_rank[W_rank > 0].index)) @ W_rank[W_rank > 0]
-
-                df = pd.concat([HML, L_rtns, H_rtns, HML_spt, lin_sig, lin_sig_spt, lin_rank, lin_rank_spt], axis=1).dropna()
+                df = pd.concat([HML, L_rtns, H_rtns, HML_spt, lin_sig, lin_sig_spt, lin_rank, lin_rank_spt, bmk], axis=1).dropna()
                 str_df = pd.concat((str_df, df), axis=0)
 
-        str_df.columns = ['HML', 'L', 'H', 'HML_spt', 'SIGNAL_WEIGHTED', 'SIGNAL_WEIGHTED_SPT', 'RANK_WEIGHTED', 'RANK_WEIGHTS_SPT']
+        str_df.columns = ['HML', 'L', 'H', 'HML_spt', 'SIGNAL_WEIGHTED', 'SIGNAL_WEIGHTED_SPT', 'RANK_WEIGHTED', 'RANK_WEIGHTS_SPT', 'Benchmark']
         self.strategies = CTimeSeries(str_df.reindex(self.pricing_dates), returns_type=ReturnsType.SIMPLE, ts_type=TimeSeriesType.RETURNS)
-        self.PnLs = self.strategies.get(['HML', 'SIGNAL_WEIGHTED', 'RANK_WEIGHTED'])
+        self.PnLs = self.strategies.get(['HML', 'SIGNAL_WEIGHTED', 'RANK_WEIGHTED', 'Benchmark'])
         self.PnLCurve = self.PnLs.get_levels()
 
 

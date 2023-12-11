@@ -5,7 +5,6 @@ class CompositeRiskFreeRates(object):
                               'World',
                               'Pacific ex-Japan',
                               'Pacific',
-                              'European Union',
                               'Europe ex-UK',
                               'Europe',
                               'EMU',
@@ -14,6 +13,10 @@ class CompositeRiskFreeRates(object):
                               'EM Europe',
                               'EM Asia',
                               'EM',
+                              'EAFE',
+                              'AC Europe and Middle East',
+                              'AC Asia Pacific',
+                              'AC Americas',
                               'AC World ex-US']
 
     def __init__(self):

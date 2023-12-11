@@ -89,6 +89,7 @@ class BaseModel(object):
     @property
     def return_factor_list(self):
         return self.__return_factor_list
+
     @property
     def risk_factor_list(self):
         return self.__risk_factor_list

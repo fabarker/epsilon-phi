@@ -28,6 +28,13 @@ class Signals(object):
         df_.columns = df_.columns.get_level_values('bbid')
         return df_.pct_change(days)
 
+    @staticmethod
+    def get_RVS(currency_pairs, horizon='1m'):
+        days = round(DateUtils.Rdate_to_mat(horizon) * 252)
+        df_ = _datasource.get_fx_spot_rates(currency_pairs, price_quotes='mid')
+        df_.columns = df_.columns.get_level_values('bbid')
+        return -1 * df_.pct_change(days)
+
 if __name__ == "__main__":
 
 

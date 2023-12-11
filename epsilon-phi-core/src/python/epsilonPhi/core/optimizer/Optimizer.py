@@ -115,9 +115,6 @@ class CVXOptimizer():
     def leastRegretOptimize(self):
         pass
 
-    def optimizeLeastRegret(self):
-        pass
-
     def optimizeTrackingError(self):
         pass
 

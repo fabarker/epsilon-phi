@@ -11,33 +11,30 @@ __date__ = '01/07/2023'
 class CAssetInf(ABC):
 
 
-    def _create_new_object_same_type(self, data=None, attributes=None, returns_type=None):
+    def _create_new_object_same_type(self, data=None, returns_type=None):
         return self.create_new_object(data=data,
                                       schema=self.schema,
                                       denominated_currency=self.denominated_currency,
                                       exposure_currency=self.exposure_currency,
                                       ts_hedge_ratio=self._ts_hedge_ratio,
-                                      attributes=attributes,
                                       returns_type=returns_type,
                                       ts_type=self.type)
 
-    def _create_new_levels_object(self, data=None, attributes=None, returns_type=None):
+    def _create_new_levels_object(self, data=None, returns_type=None):
         return self.create_new_object(data=data,
                                       schema=self.schema,
                                       denominated_currency=self.denominated_currency,
                                       exposure_currency=self.exposure_currency,
                                       ts_hedge_ratio=self._ts_hedge_ratio,
-                                      attributes=attributes,
                                       returns_type=returns_type,
                                       ts_type=TimeSeriesType.LEVELS)
 
-    def _create_new_returns_object(self, returns_type, data=None, attributes=None):
+    def _create_new_returns_object(self, returns_type, data=None):
         return self.create_new_object(data=data,
                                       schema=self.schema,
                                       denominated_currency=self.denominated_currency,
                                       exposure_currency=self.exposure_currency,
                                       ts_hedge_ratio=self._ts_hedge_ratio,
-                                      attributes=attributes,
                                       returns_type=returns_type,
                                       ts_type=TimeSeriesType.RETURNS)
     def _cast_derived_class(self, klass):
@@ -46,7 +43,6 @@ class CAssetInf(ABC):
                       denominated_currency=klass.denominated_currency,
                       exposure_currency=klass.exposure_currency,
                       ts_hedge_ratio=klass._ts_hedge_ratio,
-                      attributes=klass.attributes,
                       returns_type=klass.returns_type,
                       ts_type=klass.type)
 
@@ -60,8 +56,7 @@ class CAssetInf(ABC):
                                       exposure_currency=self.exposure_currency,
                                       ts_hedge_ratio=self._ts_hedge_ratio,
                                       ts_type=self.type,
-                                      returns_type=self.returns_type,
-                                      attributes=self.attributes)
+                                      returns_type=self.returns_type)
 
     @abstractmethod
     def get_historical_risk_premium(self):

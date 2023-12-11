@@ -9,6 +9,24 @@ class TimeSeriesUtils(object):
     pass
 
     @staticmethod
+    def count_consecutive(data):
+        """Counts consecutive data (like cumsum() with reset on zeroes)"""
+        def _count(data):
+            return data * np.array((data.groupby((data != data.shift(1)).cumsum()).cumcount() + 1))
+
+        if isinstance(data, pd.DataFrame):
+            for col in data.columns:
+                data[col] = _count(data[col])
+            return data
+        return _count(data)
+
+    @staticmethod
+    def remove_outliers(ts, quantile=0.95):
+        """Returns series of returns without the outliers"""
+        returns = ts.get_returns()
+        return returns[returns < returns.quantile(quantile)]
+
+    @staticmethod
     def convert_timeseries_to_return_index(df):
 
         ts_rtns = df._create_new_levels_object()
@@ -48,7 +66,8 @@ class TimeSeriesUtils(object):
     def RI_from_TR(df):
         if df.is_levels:
             df = df._create_new_returns_object(returns_type=df.type,
-                                               data=df/100)
+                                               data=df/100,
+                                               attributes=df.attributes)
         return df.get_levels()
 
     @staticmethod
@@ -61,15 +80,18 @@ class TimeSeriesUtils(object):
 
     @staticmethod
     def RI_from_IN(df):
-        return df._create_new_levels_object(data=df+100)
+        return df._create_new_levels_object(data=df+100,
+                                            attributes=df.attributes)
 
     @staticmethod
     def RI_from_PI(df):
-        return df._create_new_levels_object(data=df)
+        return df._create_new_levels_object(data=df,
+                                            attributes=df.attributes)
 
     @staticmethod
     def RI_from_RI(df):
-        return df._create_new_levels_object(data=df)
+        return df._create_new_levels_object(data=df,
+                                            attributes=df.attributes)
 
     @staticmethod
     def RI_from_rate(df):

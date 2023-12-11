@@ -37,8 +37,7 @@ class CFactor(CSlice):
         return self.create_new_object(data=self,
                                       name=self.name,
                                       ts_type=self.type,
-                                      returns_type=self.returns_type,
-                                      attributes=self.attributes)
+                                      returns_type=self.returns_type)
 
     def create_new_object(self, *args, **kwargs):
         return self.__class__(*args, **kwargs)

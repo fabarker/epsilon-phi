@@ -222,9 +222,11 @@ class CAsset(CAssetInf, CSlice):
 
 if __name__ == "__main__":
 
+    import pandas as pd
+
     gds = GlobalDataSource()
 
-    df = gds.get_time_series_data_from_ticker('MSWRLDL','RI')
+    df = gds.get_time_series_data_from_ticker('CSTMNFH','RI')
     rtns = df.get_returns()
 
     from epsilonPhi.core.schema.Schema import ContextCreator
@@ -242,28 +244,11 @@ if __name__ == "__main__":
 
     self.set_currency_hedge_ratio(0)
 
-    self.get_risk_premia()
+    rp = pd.DataFrame(self.get_risk_premia(), columns=self.schema.BaseModel.return_factor_list, index=['Risk Premia Factor Decomposition']).T
     vol = self.get_volatility()
     beta, idio = self.get_beta_and_idio_risk(0)
     rb = self.get_asset_risk_betas()
-    fx = self.get_fx_risk_betas()
 
-    rtn = self.get_historical_total_return()
-    sr = self.get_historical_sharpe_ratio()
-    vol = self.get_historical_volatility()
-    er = self.get_historical_risk_premium()
-    mdd = self.get_historical_worst_peak_to_trough()
-
-    beta = self.get_historical_equity_beta()
-    alpha = self.get_historical_alpha_over_equity()
-    skew = self.get_historical_skewness()
-
-    max_rtn = self.get_historical_best_period_return()
-    min_rtn = self.get_historical_worst_period_return()
-
-    var = self.get_historical_value_at_risk()
-    cvar = self.get_historical_conditional_value_at_risk()
-    pol = self.get_historical_probability_of_loss()
 
 
 
