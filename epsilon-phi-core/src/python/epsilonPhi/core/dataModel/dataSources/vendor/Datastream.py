@@ -113,6 +113,23 @@ class pyDatastream(object):
         return frames
 
     @staticmethod
+    def fetch_static(tickers: Optional[Union[list, np.array, str]] = None,
+                     fields: Optional[Union[list, np.array, str]] = None) -> pd.DataFrame:
+
+        N = pyDatastream.get_max_instruments_per_call(fields)
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), N)
+
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds(raise_on_error=False).fetch(chunk,
+                                                                fields=fields,
+                                                                static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+
+
+    @staticmethod
     def get_currency_ISO_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
         chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
         frames = pd.DataFrame()
@@ -163,6 +180,39 @@ class pyDatastream(object):
         for chunk in chunks:
             res = pyDatastream.pyds().fetch(chunk,
                                             fields='TIME',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
+    def get_contract_size_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='FLOT',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
+    def get_tick_size_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='TICKS',
+                                            static=True)
+            frames = pd.concat((frames, res))
+        return frames
+
+    @staticmethod
+    def get_tick_value_from_tickers(tickers: Union[list, str]) -> pd.DataFrame:
+        chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), 50)
+        frames = pd.DataFrame()
+        for chunk in chunks:
+            res = pyDatastream.pyds().fetch(chunk,
+                                            fields='TICKV',
                                             static=True)
             frames = pd.concat((frames, res))
         return frames
@@ -289,17 +339,52 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
+    from_date = datetime.date(year=1969, month=12, day=31)
+
     from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg
     from epsilonPhi.core.dataModel.alchemist.DataModel import *
     from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+
+    sessionMgr = SessionMgr()
     session = SessionMgr().getSessionFactory()
 
+    fullfile = '/Users/francisbarker/Desktop/Trend Following/Futures.xlsx'
+    futures_spec = pd.read_excel(fullfile, sheet_name='New Info', index_col=0)
+    tickers = futures_spec.index
 
-    tickers = ['SPANPES','SPANP1F','USDOLLR','USDOL1F']
-    fields = ['ER']
-    from_date = datetime.date(year=1969, month=12, day=31)
-    to_date = datetime.date.today()
-    frame = pyDatastream.fetch(tickers, fields, from_date=from_date, frequency='D')
+    flds = ['PS']
+    tickers = ['OMNC.01']
+
+
+    for ticker in tickers:
+
+        frame = pyDatastream.fetch([ticker], flds, from_date=from_date, frequency='D')
+
+        if frame.size > 0:
+
+            try:
+
+                df = frame.loc[ticker].dropna(how='all', axis=0)
+                df.index.name = 'date'
+                df = df.reset_index(drop=False)
+                uid = Bloomberg.get_uid_from_ticker(ticker)
+
+
+
+                for_db = df.copy()
+                for_db['uid'] = uid
+                for_db.to_sql(name='future',
+                              con=SessionMgr().getEngine(),
+                              if_exists='append',
+                              index=False)
+
+                print('Time series {} added'.format(ticker))
+            except:
+                session.rollback()
+                print('Error - could not add time series for ticker {}'.format(ticker))
+            finally:
+                session.close()
+    session.close()
 
 
 

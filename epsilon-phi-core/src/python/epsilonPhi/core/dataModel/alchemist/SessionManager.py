@@ -322,7 +322,7 @@ class SessionMgr(object):
 
     def show_table(self, table):
         import pandasgui
-        pandasgui.show(self.query_format_df(session.query(table)))
+        pandasgui.show(self.query_format_df(self.getSessionFactory().query(table)))
 
 @contextmanager
 def session_scope():
@@ -342,6 +342,17 @@ if __name__ == "__main__":
     sessionMgr = SessionMgr()
     session = sessionMgr.getSessionFactory()
 
+    from sqlalchemy import create_engine, Table, MetaData, Column, Float
 
-    sessionMgr.show_table(EquityIndexSpec)
+    metadata = MetaData()
+    future_spec_table = Table('future_spec', metadata, autoload_with=session.get_bind())
+    contract_size_column = Column('contract_size', Float, nullable=True)
+
+    # Add the column to the table
+    contract_size_column.create(future_spec_table)
+
+    df = sessionMgr.query_format_df(session.query(FutureSpec))
+
+    second_futures = df.ticker.apply(lambda x: x.replace('CS00','CS20'))
+
 

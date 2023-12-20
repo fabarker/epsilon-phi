@@ -495,9 +495,11 @@ class FutureSpec(TimeSeriesSpec):
 
       uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
 
+      future = Column(String(3), nullable=True, index=True)
       start_date = Column(DateTime, nullable=True)
       tick_size = Column(FloatOrNone,  index=True)
       tick_value = Column(FloatOrNone,  index=True)
+      contract_size = Column(FloatOrNone,  index=True, nullable=True, default=None)
       cycle = Column(String(100))
 
       exchange = Column(String(100), nullable=False, index=True)
@@ -511,6 +513,7 @@ class FutureSpec(TimeSeriesSpec):
       denominated_currency = Column(String(3), nullable=False, index=True)
       exposure_currency = Column(String(3), nullable=False, index=True)
       hedge_ratio = Column(FloatOrNone, nullable=True)
+      position_forward = Column(Integer, nullable=False, default=0)
 
       __mapper_args__ = {'polymorphic_identity': 'future_spec'}
 

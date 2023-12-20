@@ -39,6 +39,9 @@ class GlobalDataSource(object):
             self.load_dataframe_from_uid(uid)
         df = self._cache_df.get(uid)
 
+        if df.size == 0:
+            raise ValueError('Error - no data for uid {}'.format(uid))
+
         if index_col is not None and index_col in df.columns:
             df = df.set_index(index_col, drop=True)
         elif index_col is None and 'date' in df.columns:
@@ -78,13 +81,13 @@ class GlobalDataSource(object):
 
 
     # Methods associated with loading raw time series
-    def get_time_series_data_from_uid(self, uid, cols=None):
+    def get_time_series_data_from_uid(self, uid, cols=None, ts_type=TimeSeriesType.LEVELS):
         df = self.get_dataframe_from_uid(uid, cols=cols, index_col='date')
         spec = self._session_mgr.get_time_series_spec_from_uid(uid, True).set_index('uid', drop=True)
 
         ts_spec = pd.concat([spec] * df.shape[1])
         ts_spec.index = df.columns
-        return CTimeSeries(df, attributes=ts_spec.T)
+        return CTimeSeries(df, attributes=ts_spec.T, ts_type=ts_type)
 
     def get_time_series_data_from_ticker(self, ticker, cols=None, ts_type=TimeSeriesType.LEVELS):
 
@@ -188,6 +191,9 @@ class GlobalDataSource(object):
             fac_ts = pd.concat((fac_ts, df_), axis=1)
         return fac_ts.copy()
 
+    def get_futures_continuous_series(self, futures_code):
+        pass
+
 
     # Methods associated with querying datastream
     def get_time_series_data_from_datastream(self,
@@ -240,11 +246,11 @@ if __name__ == "__main__":
     self = GlobalDataSource()
     session = self._session
 
-    uids = [2322, 3525, 2291, 3518]
+    uids = [19421, 19438, 23293]
 
     rates = pd.DataFrame()
     for uid in uids:
-        df = self.get_dataframe_from_uid(uid)
+        df = self.get_dataframe_from_uid(uid, cols='PS')
         rates = pd.concat((rates, df), axis=1)
 
 
