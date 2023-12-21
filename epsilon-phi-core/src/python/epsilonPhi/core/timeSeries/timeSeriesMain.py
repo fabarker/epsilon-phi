@@ -631,6 +631,10 @@ class CTimeSeries(pd.DataFrame):
         if attribute_name in self.attributes.names:
            return list(self.attributes.get_level_values(attribute_name))
 
+    def drop_attributes(self, attribute_names):
+        for att in attribute_names:
+            self.drop_attribute(att)
+
     def drop_attribute(self, attribute_name):
         if attribute_name in self.columns.names:
             self.columns = self.columns.droplevel(attribute_name)

@@ -4,6 +4,7 @@ from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
+from epsilonPhi.ep_strategies.utils.StrategyUtils import StrategyUtils
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import pandas as pd
 import warnings
@@ -75,6 +76,9 @@ class Futures(object):
     def get_name_from_uid(self, uid: int):
         return self.get_field_value_for_uid(uid, 'name')
 
+    def get_security_from_uid(self, uid: int):
+        return self.get_field_value_for_uid(uid, 'security')
+
     def get_ticker_from_uid(self, uid: int):
         return self.get_field_value_for_uid(uid, 'ticker')
 
@@ -86,6 +90,7 @@ class Futures(object):
         res.set_attribute_single('mnemonic', self.get_futures_mnemonic_from_uid(uid))
         res.set_attribute_single('ticker', self.get_ticker_from_uid(uid))
         res.set_attribute_single('name', self.get_name_from_uid(uid))
+        res.set_attribute_single('security', self.get_security_from_uid(uid))
         res.columns = res.columns.swaplevel('mnemonic', res.columns.get_level_values(0).name)
         return res.deepcopy()
 
@@ -98,8 +103,14 @@ class Futures(object):
         # If we have uids, then fetch them
         ts = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
         for uid in uids:
-            ts = ts.concat(self.get_continuous_series_single_uid(uid))
+            tmp = self.get_continuous_series_single_uid(uid)
+            tmp.drop_attributes(['uid','ticker','name'])
+            ts = ts.combine_left(tmp)
         return ts.deepcopy()
+
+    def get_front_futures_continuous_series_settlement_price(self, mnemonic):
+        return (self.get_futures_continuous_series_settlement_price(mnemonic).
+                select_subset_attribute('forward', 0))
 
     def get_futures_continuous_series_settlement_price(self, mnemonic):
         return self.get_futures_continuous_series(mnemonic).select_subset_attribute('field', 'PS')
@@ -110,25 +121,48 @@ class Futures(object):
     def get_futures_continuous_volume(self, mnemonic):
         return self.get_futures_continuous_series(mnemonic).select_subset_attribute('field', 'VM')
 
-    def get_futures_instrument_liquidity(self):
-        pass
-
-    def get_futures_instrument_price_impact(self):
-        pass
+    def get_OHLC_for_continuous_future(self, mnemonic):
+        return self.get_futures_continuous_series(mnemonic).select_subset_attribute('field',
+                                                                        ['PO','PH','PL','PS'])
 
 
+    def estimate_bid_ask_prices_for_futures_continuous(self, mnemonic):
+        OHLC = self.get_OHLC_for_continuous_future(mnemonic).dropna(how='any', axis=0)
+        bid, ask = StrategyUtils.estimate_bid_ask_prices(open=OHLC.select_subset_attribute('field', 'PO'),
+                                                         high=OHLC.select_subset_attribute('field', 'PH'),
+                                                         low=OHLC.select_subset_attribute('field', 'PL'),
+                                                         close=OHLC.select_subset_attribute('field', 'PS'))
+        prices = bid.concat(ask)
+        prices.set_attribute_single('price_quote_type', ['bid', 'ask'])
+        return prices.copy()
 
-
+    def _print_futures_info(self):
+        sessionMgr.show_table(FutureSpec)
 
 
 if __name__ == "__main__":
 
 
+    fullfile = '/Users/francisbarker/Desktop/Trend Following/Moskowitz, Ooi and Pedersen.xlsx'
+    df = pd.read_excel(fullfile, sheet_name='Tickers', index_col=0)
+
     self = Futures()
-    mnemonic = 'OMN'
 
-    ts = self.get_futures_continuous_series_settlement_price(mnemonic)
+    df_ = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+    for name in df.index[0:1].tolist():
+        res = self.get_front_futures_continuous_series_settlement_price(name)
+        df_ = df_.concat(res)
 
+    rtns = df_.pct_change()
+
+
+    from epsilonPhi.ep_strategies.estimators.risk.Volatility import Volatility, VolFunction
+
+    AAP = self.get_OHLC_for_continuous_future('AAP').select_subset_attribute('forward', 0)
+    yzang = Volatility(VolFunction.yang_zhang)
+
+    OHLC = pd.DataFrame(AAP.values, columns=AAP.get_attribute('field'), index=AAP.index)
+    yzang.estimate(OHLC)
 
 
 

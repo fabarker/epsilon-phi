@@ -127,6 +127,12 @@ class pyDatastream(object):
             frames = pd.concat((frames, res))
         return frames
 
+    @staticmethod
+    def get_futures_meta(tickers: Optional[Union[list, np.array, str]] = None):
+        return pyDatastream.fetch_static(tickers,
+                                    ['FLOT','FEX','EXCODE','EXNAME','EXDSCD','EXMNEM','ISONAME','ISOCUR','DS.EXPNAME','NAME','FUTBDATE','TICKS','TICKV',
+                                           'TCYCLE','TYPE','FISN','UNITS','FUI','MIFUNAC','CFI','GEOG','GEOL','GEOLC','GEOLN'])
+
 
 
     @staticmethod
@@ -348,28 +354,59 @@ if __name__ == "__main__":
     sessionMgr = SessionMgr()
     session = SessionMgr().getSessionFactory()
 
-    fullfile = '/Users/francisbarker/Desktop/Trend Following/Futures.xlsx'
-    futures_spec = pd.read_excel(fullfile, sheet_name='New Info', index_col=0)
+    fullfile = '/Users/francisbarker/Desktop/Trend Following/Book6.xlsx'
+    futures_spec = pd.read_excel(fullfile, sheet_name='Sheet8', index_col=0)
     tickers = futures_spec.index
 
-    flds = ['PS']
-    tickers = ['OMNC.01']
-
-
+    flds = ['L','OI','PH','PL','PS','PO','VM']
     for ticker in tickers:
 
+        tmp_spec = futures_spec.loc[ticker]
         frame = pyDatastream.fetch([ticker], flds, from_date=from_date, frequency='D')
+        frame = frame.dropna(how='all')
 
         if frame.size > 0:
 
             try:
 
+                spec = FutureSpec()
+                spec.name = tmp_spec.get('long_name')
+
+                spec.denominated_currency = tmp_spec.get('denominated_currency')
+                spec.exposure_currency = tmp_spec.get('exposure_currency')
+                spec.ticker = tmp_spec.get('ticker')
+                spec.provider = tmp_spec.get('provider')
+                spec.frequency = tmp_spec.get('frequency')
+                spec.category = tmp_spec.get('category')
+                spec.contract_size = float(tmp_spec.get('contract_size'))
+                spec.tick_size = float(tmp_spec.get('tick_size'))
+                spec.tick_value = float(tmp_spec.get('tick_value'))
+                spec.symbol = tmp_spec.get('symbol')
+                spec.security = tmp_spec.get('security')
+                spec.security_name = tmp_spec.get('security_name')
+                spec.security_type = tmp_spec.get('security_type')
+                spec.security_unit = tmp_spec.get('security_unit')
+                spec.future = tmp_spec.get('future')
+                spec.hedge_ratio = int(tmp_spec.get('hedge_ratio'))
+
+                spec.cycle = tmp_spec.get('cycle')
+                spec.datasource = tmp_spec.get('datasource')
+                spec.exchange = tmp_spec.get('exchange')
+                spec.exchange_name = tmp_spec.get('exchange_name')
+                spec.position_forward = int(tmp_spec.get('position_forward'))
+                spec.region = tmp_spec.get('region')
+                spec.start_date = tmp_spec.get('start_date').strftime("%Y-%m-%d %H:%M:%S")
+                spec.ticker = ticker
+
+                spec.uid = Bloomberg.get_max_uid() + 1
+
+                session.add_all([spec])
+                session.commit()
+
                 df = frame.loc[ticker].dropna(how='all', axis=0)
                 df.index.name = 'date'
                 df = df.reset_index(drop=False)
                 uid = Bloomberg.get_uid_from_ticker(ticker)
-
-
 
                 for_db = df.copy()
                 for_db['uid'] = uid
