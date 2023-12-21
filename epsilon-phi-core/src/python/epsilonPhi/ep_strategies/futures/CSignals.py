@@ -1,6 +1,7 @@
 from epsilonPhi.ep_strategies.estimators.risk.Volatility import Volatility, Estimator
 from typing import Optional, Union
 import pandas as pd
+import numpy as np
 from enum import Enum
 
 # Signals consist of the following
@@ -26,56 +27,76 @@ class Signals(Enum):
     ACCELERATION = 15
 
 
-class SignalFactory():
+class SignalFactory(object):
 
     @staticmethod
-    def get_raw_MOVING_AVERAGE(prices, period):
-        pass
+    def get_raw_moving_average(prices, window):
+        prices.rolling(window=window, min_periods=1).mean()
 
     @staticmethod
-    def get_raw_MOVING_AVERAGE_CROSSOVER(prices, slow, fast):
-        pass
+    def get_raw_moving_average_crossover(prices, slow, fast):
+        return prices.rolling(window=fast, min_periods=1).mean() - prices.rolling(window=slow, min_periods=1).mean()
 
     @staticmethod
-    def get_raw_EXPONENTIAL_MOVING_AVERAGE(prices, span):
-        pass
+    def get_raw_exponential_moving_average(prices, span):
+        return prices.ewm(span=span, min_periods=1).mean()
 
     @staticmethod
-    def get_raw_EXPONENTIAL_MOVING_AVERAGE_CROSSOVER(prices, slow, fast):
-        pass
+    def get_raw_exponentially_weighted_moving_average_crossover(prices, slow, fast):
+        return prices.ewm(span=fast, min_periods=1).mean() - prices.ewm(span=slow, min_periods=1).mean()
 
     @staticmethod
-    def get_TIME_SERIES_MOMENTUM(prices, period):
-        pass
+    def get_time_series_momentum(prices, period):
+        return prices.pct_change(period)
 
     @staticmethod
     def get_realized_skewness(prices, period):
-        pass
+        return prices.rolling(span=period, min_periods=1).skewness()
 
     @staticmethod
-    def get_realized_kurtsis(prices, period):
-        pass
+    def get_realized_kurtosis(prices, period):
+        return prices.rolling(span=period, min_periods=1).kurtosis()
 
     @staticmethod
-    def get_realized_volatility(prices, period):
-        pass
+    def get_realized_volatility(prices, span):
+        return prices.ewm(span=span, min_periods=1).std()
 
     @staticmethod
-    def get_carry(prices, period):
-        pass
+    def get_realized_volatility_crossover(prices, fast, slow):
+        return prices.ewm(span=fast, min_periods=1).std() - prices.ewm(span=slow, min_periods=1).std()
 
     @staticmethod
-    def get_carry_momentum(prices, period):
-        pass
+    def get_carry(near_contract, far_contract):
+        return np.log(far_contract / near_contract)
 
+    @staticmethod
+    def get_carry_momentum(near_contract, far_contract, period):
+        carry = SignalFactory.get_carry(near_contract, far_contract)
+        return carry.ewm(span=period, min_periods=1).mean()
+
+    @staticmethod
+    def get_acceleration(price, fast, slow):
+        ewmac = SignalFactory.get_raw_exponentially_weighted_moving_average_crossover(price, fast, slow)
+        return ewmac - ewmac.shidt(fast)
+
+    @staticmethod
+    def get_breakout(prices, lookback, smooth=None):
+
+        rolling_min = prices.rolling(lookback, min_periods=int(min(len(prices), np.ceil(lookback / 2.0)))).max()
+        rolling_max = prices.rolling(lookback, min_periods=int(min(len(prices), np.ceil(lookback / 2.0)))).min()
+        rolling_mean = 0.5 * (rolling_max + rolling_min)
+
+        output = 40.0 * ((prices - rolling_mean) / (rolling_max - rolling_min))
+        return output.ewm(span=smooth, min_periods=np.ceil(smooth / 2.0)).mean()
+
+    @staticmethod
+    def cross_sectional_mean_reversion():
+        pass
 
     @staticmethod
     def get_value(prices, period):
         pass
 
-    @staticmethod
-    def get_breakout(prices, period):
-        pass
 
 
 
@@ -99,8 +120,8 @@ class CSignal(object):
         else:
             self._prices = prices.sort_index()
 
-    def set_vol_function(self, vol_function):
-        self._risk_estimator = vol_function
+    def set_risk_estimator(self, risk_estimator):
+        self._risk_estimator = risk_estimator
 
 
     def get_signal(self):

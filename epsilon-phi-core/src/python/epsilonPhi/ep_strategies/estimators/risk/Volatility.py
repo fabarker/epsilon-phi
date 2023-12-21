@@ -1,16 +1,11 @@
 from epsilonPhi.ep_strategies.estimators.risk.VolFunctions import vol_functions
 import pandas as pd
-from enum import Enum
 
 class Estimator(object):
 
-    __EQUAL_WEIGHTED_CLOSE_STD = 'close_close_equal_weighted_moving_std'
-    __EXP_WEIGHTED_CLOSE_STD = 'close_close_exponential_moving_std'
-    __ARCH = 'arch'
-    __GARCH = 'garch'
-    __YANG_ZHANG = 'yang_zhang'
-    __GARMAN_KLASS = 'garman_klass'
-    __ROGER_SATCHELL = 'roger_satchell'
+    class mixed_estimator(object):
+        def __init__(self):
+            pass
 
     class rolling_close_equal_weighted(object):
         def __init__(self, window):
