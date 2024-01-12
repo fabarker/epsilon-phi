@@ -6,6 +6,9 @@ import statsmodels.api as sm
 
 # Load data from a MATLAB .mat file
 import scipy.io
+
+
+
 data = scipy.io.loadmat('../data/spxfloatingfixedchanges4.mat')
 DIV = data['DIV']
 LIV = data['LIV']

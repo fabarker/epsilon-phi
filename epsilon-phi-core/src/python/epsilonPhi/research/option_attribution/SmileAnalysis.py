@@ -15,23 +15,28 @@ moments = 'momlap'
 data = sio.loadmat('../data/spxfloatingfixedchanges4.mat')
 
 # Extract the necessary variables
-DIV = data['DIV']
-LIV = data['LIV']
-PPV = data['PPV']
-DPV = data['DPV']
-DCV = data['DCV']
-PCV = data['PCV']
-Rv = data['Rv']
-Sv = data['Sv']
-ud = data['ud']
-xv = data['xv']
-mh = data['mh']
+DIV = data['DIV'] # Change in Log IV, t to t+!
+LIV = data['LIV'] # Level of Log IV on t
+PPV = data['PPV'] # Level of Put IV on t
+DPV = data['DPV'] # Change in Put Log IV, t to t+1
+DCV = data['DCV'] # Change in Call Log IV, t to t + 1
+PCV = data['PCV'] # Level of Call IV on t
+Rv = data['Rv'] # Log spot change
+Sv = data['Sv'] # Spot price
+ud = data['ud'] # pricing date
+xv = data['xv'] # moneyness
+mh = data['mh'] # maturities
 
+# Number of maturity points
 nm = len(mh)
+# Number of Moneyness points
 nk = len(xv)
+# Index for the ATMs
 inda = np.where(xv == 0)[0]
 xm = np.tile(xv, (1, nm)).reshape(-1)
+# Location of ATM in the 2D Surface array
 indam = np.where(xm == 0)[0]
+# Location of the
 indf = np.isfinite(np.sum(np.sum(DIV, axis=2), axis=1))
 T = np.sum(indf)
 ud = ud[indf]
@@ -81,10 +86,18 @@ if estimates:
         if t - LL + 1 > 0:
             # Historical TS estimates
             tv = np.arange(t - LL + 1, t + 1)
+
+            # squared change in log IV ATM over lookback period of 21 days for all maturities
+            # omega = (( dI / I ) ^ 2 ) / dt
             omegam[t, :] = np.mean(dAI[tv, :]**2, axis=0) * 252
+
+            # change in log IV of ATM across maturities multiplied by the spot price
+            # ((ds/s) * (dI/I))/dt
             gammam[t, :] = np.mean(dAI[tv, :] * Rva[tv, :], axis=0) * 252
 
+            # squared cahnge in log IV across wings
             omegaa[t, :] = np.mean(dA[tv, :]**2, axis=0) * 252
+            # change in the log IV across wings multiplied by spot price
             gammaa[t, :] = np.mean(dA[tv, :] * Rvm[tv, :], axis=0) * 252
 
         if t + LL <= T:
@@ -95,18 +108,32 @@ if estimates:
 
         # Current CS regression estimates
         for j in range(nm):
+
+            # IVVf is the level of implied vol at t
+            # A2 = A^2 which is ATM
             A2 = IVVf[t, inda, j]**2
+
+            # It is in the wings
             It = IVVf[t, indk, j]
+            # I^2
             I2 = It**2
+
+            # Spread between ATM and Wing Points, Our LHS of regression
             S = I2 - A2
+            # z-plus and z-minus, which are the factors on the RHS of regression equation
             zp = xv[indk] * It * np.sqrt(mh[j])
             zm = zp - I2 * mh[j]
+
             k = zp - 0.5 * I2 * mh[j]
+            # stack together our 2 factors
             X = np.column_stack((2 * zp, zp * zm))
+            # Run the regreession and extract the coefficients, which are, gamma and omega^2
             B = optimize.lsq_linear(X, S, bounds=([-np.inf, 0], [np.inf, np.inf]), method='trf')
             gammacs[t, j] = B[0]
             omegacs[t, j] = B[1]
+            # compute the erros
             e = S - X.dot(B)
+            # compute the RSQ
             R2v[t, j] = 1 - np.mean(e**2) / np.var(S)
 
             if t + fh <= T:
@@ -120,11 +147,20 @@ if estimates:
                 tv = (mh[j] * 365 - ud[t:t + fh] + ud[t]) / 365
                 stv = np.sqrt(tv)
                 Ka = 100 * np.exp(-0.5 * A2 * mh[j])
+
+                # Call Option Price, Call Option Delta, Call Option Vega
+                # Assume Forward price is 100 and Interest rates are 0
+                #callopt(Forward, Strike, Rate, Maturity, TimeSteps, ImpliedVol)
+                # Pa is price of option ATM
                 Pa, _, Vga = callopt(100, Ka, 0, mh[j], np.sqrt(mh[j]), np.sqrt(A2))
+                # Pk is price of option in the wings
                 Pk, _, Vgk = callopt(100, KV, 0, mh[j], np.sqrt(mh[j]), np.sqrt(I2))
                 PL = np.empty(nk)
+
+                # for all away from the money option, track the pnl of delta hedging each one to expiry
                 for kk in range(nk):
                     PL[kk] = fundeltahedgesputpl(np.sqrt(I2[kk]), FV, KV[kk], tv, stv, 0, 1)
+                # for the atm options, track the delta hedged PnL of each
                 PLA = fundeltahedgesputpl(np.sqrt(A2), FV, Ka, tv, stv, 0, 1)
                 PLS[t, :, j] = (PL * Vga / Vgk - PLA)
 

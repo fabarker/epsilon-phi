@@ -2,9 +2,44 @@ import pandas as pd
 import numpy as np
 from scipy.io import loadmat
 from epsilonPhi.research.option_attribution.Fundailydivstrip import Fundailydivstrip
+from epsilonPhi.core.dataModel.alchemist.DataModel import ImpliedVolatility, TimeSeriesSpec
+from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+from epsilonPhi.core.utils.DateUtils import DateUtils
+from sqlalchemy import distinct
+
+
+mgr = SessionMgr()
+session = mgr.getSessionFactory()
+
+
+uids_tups = session.query(TimeSeriesSpec).filter(
+    TimeSeriesSpec.ticker.startswith('SPX'),
+    TimeSeriesSpec.category == 'Implied Volatility',
+    TimeSeriesSpec.provider == 'GS').all()
+
+mats = uids_tups[0].ticker.split(':')[1]
+
+
+df = pd.DataFrame()
+for spec in uids_tups:
+    mat = spec.ticker.split(':')[1]
+
+    if DateUtils.Rdate_to_mat(mat) <= 1 and DateUtils.Rdate_to_mat(mat) >= (1/12)-(7/365):
+        df_ = mgr.get_dataframe_from_uid(spec.uid)
+        if df_.size > 0:
+           print(spec)
+           df_ts = df_[['date', 'mid']].set_index('date')
+           info = session.query(ImpliedVolatility.tenor, ImpliedVolatility.relative_strike, ImpliedVolatility.strike_reference).filter(ImpliedVolatility.uid == spec.uid).first()
+           df_ts.columns = pd.MultiIndex.from_tuples([info])
+           df_ts.columns.names = ['T', 'K', 'ref']
+           df = pd.concat((df, df_ts), axis=1)
+
 
 # Load data (assuming the .mat file has a similar structure to a Pandas DataFrame)
 data = loadmat('SPXChain.mat')  # Adjust the path as needed
+
+
+
 # Suppose 'IVS' is the key in the .mat file for the data we are interested in
 IVS = data['IVS']
 

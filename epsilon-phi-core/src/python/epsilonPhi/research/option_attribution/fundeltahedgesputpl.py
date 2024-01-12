@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 
+# Tracking PnL of delta-hedged option position
 
 def fundeltahedgesputpl(v, F, K, tv, stv, rv, BR):
     P, pdelta = putopt(F, K, rv, tv, stv, v)
