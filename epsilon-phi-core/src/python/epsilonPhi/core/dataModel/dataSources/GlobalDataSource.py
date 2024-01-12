@@ -81,13 +81,13 @@ class GlobalDataSource(object):
 
 
     # Methods associated with loading raw time series
-    def get_time_series_data_from_uid(self, uid, cols=None, ts_type=TimeSeriesType.LEVELS):
+    def get_time_series_data_from_uid(self, uid, cols=None, ts_type=TimeSeriesType.LEVELS, returnsType=ReturnsType.SIMPLE):
         df = self.get_dataframe_from_uid(uid, cols=cols, index_col='date')
         spec = self._session_mgr.get_time_series_spec_from_uid(uid, True).set_index('uid', drop=True)
 
         ts_spec = pd.concat([spec] * df.shape[1])
         ts_spec.index = df.columns
-        return CTimeSeries(df, attributes=ts_spec.T, ts_type=ts_type)
+        return CTimeSeries(df, attributes=ts_spec.T, ts_type=ts_type, returns_type=returnsType)
 
     def get_time_series_data_from_ticker(self, ticker, cols=None, ts_type=TimeSeriesType.LEVELS):
 

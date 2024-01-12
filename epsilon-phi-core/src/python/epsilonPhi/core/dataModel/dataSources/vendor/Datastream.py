@@ -354,9 +354,9 @@ if __name__ == "__main__":
     sessionMgr = SessionMgr()
     session = SessionMgr().getSessionFactory()
 
-    fullfile = '/Users/francisbarker/Desktop/Trend Following/Book6.xlsx'
-    futures_spec = pd.read_excel(fullfile, sheet_name='Sheet8', index_col=0)
-    tickers = futures_spec.index
+    fullfile = '/Users/francisbarker/Desktop/Trend Following/Moskowitz, Ooi and Pedersen.xlsx'
+    futures_spec = pd.read_excel(fullfile, sheet_name='Series to Add', index_col=0)
+    tickers = np.unique(futures_spec.index)
 
     flds = ['L','OI','PH','PL','PS','PO','VM']
     for ticker in tickers:

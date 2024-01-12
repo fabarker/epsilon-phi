@@ -6,6 +6,7 @@ from epsilonPhi.core.timeSeries.timeSeriesMain import *
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.ep_strategies.utils.StrategyUtils import StrategyUtils
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
+from sqlalchemy import desc
 import pandas as pd
 import warnings
 
@@ -24,6 +25,16 @@ class Futures(object):
 
     def __init__(self):
         pass
+
+    def get_field_value_for_ticker(self, ticker, field_name):
+
+        if field_name not in self._columns:
+            raise ValueError("Invalid field name")
+
+            # Use 'getattr' to dynamically get the field based on 'field_name'
+        field = getattr(FutureSpec, field_name, None)
+
+        return session.query(field).filter(FutureSpec.ticker == ticker).scalar()
 
     def get_field_value_for_uid(self, uid, field_name):
 
@@ -82,10 +93,17 @@ class Futures(object):
     def get_ticker_from_uid(self, uid: int):
         return self.get_field_value_for_uid(uid, 'ticker')
 
+    def get_available_forward_positions_from_instrument_menomic(self, mnemonic):
+        return np.unique(self.get_field_values_for_mnemonic(mnemonic, 'position_forward')).astype(int)
+
+    def get_continuous_series_single_ticker(self, ticker):
+        uid = self.get_field_value_for_ticker(ticker, 'uid')
+        return self.get_continuous_series_single_uid(uid)
+
     def get_continuous_series_single_uid(self, uid):
         from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource as gds
 
-        res = gds().get_time_series_data_from_uid(uid, ts_type=TimeSeriesType.LEVELS)
+        res = gds().get_time_series_data_from_uid(uid, ts_type=TimeSeriesType.LEVELS, returnsType=ReturnsType.DIFFERENCE)
         res.set_attribute_single('forward', self.get_series_position_forward_from_uid(uid))
         res.set_attribute_single('mnemonic', self.get_futures_mnemonic_from_uid(uid))
         res.set_attribute_single('ticker', self.get_ticker_from_uid(uid))
@@ -94,23 +112,43 @@ class Futures(object):
         res.columns = res.columns.swaplevel('mnemonic', res.columns.get_level_values(0).name)
         return res.deepcopy()
 
+    def _resolve_ticker_list(self, list):
+        return sorted(list, key=lambda x: x.replace('.', '~'))
+
+    def get_futures_continuous_series_forward(self, mnemonic, forward):
+
+        # query the database for the information we need
+        res = session.query(FutureSpec.ticker)\
+                       .filter(FutureSpec.future == mnemonic,
+                               FutureSpec.position_forward == int(forward))\
+                       .order_by(desc(FutureSpec.ticker))\
+                       .all()
+
+        ts = CTimeSeries(ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.DIFFERENCE)
+        for ticker in res:
+            tmp = self.get_continuous_series_single_ticker(ticker[0])
+            tmp.drop_attributes(['ticker', 'uid', 'name'])
+            ts = ts.backfill_levels(tmp)
+        return ts.deepcopy()
+
+
     def get_futures_continuous_series(self, mnemonic):
 
-        # Get all uids corresponding to this mnemonic,
-        # there may be more than 1 due to later contracts
-        uids = self.get_uids_from_instrument_mnemonic(mnemonic)
+        # Get the position forward for the mnemonic
+        fwds = self.get_available_forward_positions_from_instrument_menomic(mnemonic)
 
-        # If we have uids, then fetch them
         ts = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
-        for uid in uids:
-            tmp = self.get_continuous_series_single_uid(uid)
-            tmp.drop_attributes(['uid','ticker','name'])
-            ts = ts.combine_left(tmp)
+        for fwd in fwds:
+            ts = ts.concat(self.get_futures_continuous_series_forward(mnemonic, fwd))
         return ts.deepcopy()
 
     def get_front_futures_continuous_series_settlement_price(self, mnemonic):
         return (self.get_futures_continuous_series_settlement_price(mnemonic).
                 select_subset_attribute('forward', 0))
+
+    def get_back_futures_continuous_series_settlement_price(self, mnemonic):
+        return (self.get_futures_continuous_series_settlement_price(mnemonic).
+                select_subset_attribute('forward', 1))
 
     def get_futures_continuous_series_settlement_price(self, mnemonic):
         return self.get_futures_continuous_series(mnemonic).select_subset_attribute('field', 'PS')
@@ -125,6 +163,10 @@ class Futures(object):
         return self.get_futures_continuous_series(mnemonic).select_subset_attribute('field',
                                                                         ['PO','PH','PL','PS'])
 
+    def get_futures_carry_continuous(self, mnemonic):
+        front = self.get_front_futures_continuous_series_settlement_price(mnemonic)
+        back = self.get_back_futures_continuous_series_settlement_price(mnemonic)
+        return np.log(back.division_over_common_dates(front))
 
     def estimate_bid_ask_prices_for_futures_continuous(self, mnemonic):
         OHLC = self.get_OHLC_for_continuous_future(mnemonic).dropna(how='any', axis=0)
@@ -136,11 +178,13 @@ class Futures(object):
         prices.set_attribute_single('price_quote_type', ['bid', 'ask'])
         return prices.copy()
 
-    def _print_futures_info(self):
+    def display_futures_info(self):
         sessionMgr.show_table(FutureSpec)
 
 
 if __name__ == "__main__":
+
+
 
 
     fullfile = '/Users/francisbarker/Desktop/Trend Following/Moskowitz, Ooi and Pedersen.xlsx'
@@ -149,20 +193,14 @@ if __name__ == "__main__":
     self = Futures()
 
     df_ = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
-    for name in df.index[0:1].tolist():
+
+    carry = self.get_futures_carry_continuous('ABB')
+
+    labels = df.index.tolist()
+    for name in labels:
         res = self.get_front_futures_continuous_series_settlement_price(name)
         df_ = df_.concat(res)
 
-    rtns = df_.pct_change()
-
-
-    from epsilonPhi.ep_strategies.estimators.risk.Volatility import Volatility, VolFunction
-
-    AAP = self.get_OHLC_for_continuous_future('AAP').select_subset_attribute('forward', 0)
-    yzang = Volatility(VolFunction.yang_zhang)
-
-    OHLC = pd.DataFrame(AAP.values, columns=AAP.get_attribute('field'), index=AAP.index)
-    yzang.estimate(OHLC)
-
+    df_.to_clipboard()
 
 

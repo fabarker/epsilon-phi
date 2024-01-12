@@ -3,6 +3,7 @@ import pandas as pd
 from arch import arch_model
 import math
 
+
 class vol_functions:
 
     @staticmethod
@@ -51,6 +52,7 @@ class vol_functions:
         model_fit = model.fit(disp='off')
 
         return model_fit.conditional_volatility
+
     @staticmethod
     def arch(data, p, q):
 

@@ -26,11 +26,16 @@ class FrameUtils(object):
                                          names=multiIndex.names + [index_name])
 
     @staticmethod
-    def select_subset_level(df, level_name, values):
+    def select_subset_level(df, level_name, values, drop_nans=True):
         if isinstance(df.columns, pd.MultiIndex)\
                 and level_name in df.columns.names \
                 and np.isin(df.columns.get_level_values(level_name), values).any():
-           new_df = df.iloc[:, np.isin(df.columns.get_level_values(level_name), values)].dropna(how='all')
+
+           if drop_nans:
+              new_df = df.iloc[:, np.isin(df.columns.get_level_values(level_name), values)].dropna(how='all')
+           else:
+               new_df = df.iloc[:, np.isin(df.columns.get_level_values(level_name), values)]
+
            new_df.columns = pd.MultiIndex.from_tuples(new_df.columns.values)
            new_df.columns.names = df.columns.names
            return new_df.copy()

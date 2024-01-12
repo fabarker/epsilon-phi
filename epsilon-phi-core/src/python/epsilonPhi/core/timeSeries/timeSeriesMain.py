@@ -93,12 +93,12 @@ class CSlice(pd.Series):
 
     @property
     def frequency(self):
-        if self.index.freq:
-            return self.index.freq.name
-        elif self.index.inferred_freq:
-            return self.index.inferred_freq
+        if self.dates.freq:
+            return self.dates.freq.name
+        elif self.dates.inferred_freq:
+            return self.dates.inferred_freq
         else:
-            return DateUtils.get_daterange_frequency(self.index)
+            return DateUtils.get_daterange_frequency(self.dates)
 
     @property
     def type(self):
@@ -127,19 +127,22 @@ class CSlice(pd.Series):
         if self.returns_type in [ReturnsType.SIMPLE,
                                  ReturnsType.SIMPLE.value]:
             newobj = (1 + self).cumprod(axis=0)
+            insert_val = 1
         elif self.returns_type in [ReturnsType.LOG,
                                    ReturnsType.LOG.value]:
             newobj = np.exp(self.cumsum(axis=0))
+            insert_val = 1
         elif self.returns_type in [ReturnsType.DIFFERENCE,
                                    ReturnsType.DIFFERENCE.value]:
             newobj = self.cumsum(axis=0)
+            insert_val = 0
         else:
             raise ValueError('ERROR: {} not supported'.format(self.returns_type))
 
         # Update the time series type
         newobj.__setattr__('_type', TimeSeriesType.LEVELS)
         newobj.values[idx_nan] = np.nan
-        newobj.insert_date_val(DateUtils.shift_date(self.first_valid_index(), newobj.frequency, -1), 1)
+        newobj.insert_date_val(DateUtils.shift_date(self.first_valid_index(), newobj.frequency, -1), insert_val)
         return self._create_new_levels_object(newobj, returns_type=newobj.returns_type)
 
     def get_returns(self, return_type=ReturnsType.SIMPLE):
@@ -152,7 +155,7 @@ class CSlice(pd.Series):
             return self.deepcopy()
 
 
-        copyobject = self.get_levels()
+        copyobject = self.remove_empty_leading_trailing_rows().get_levels()
         nan_locs = copyobject.isna().values
         if return_type in [ReturnsType.SIMPLE,
                            ReturnsType.SIMPLE.value]:
@@ -294,9 +297,11 @@ class CSlice(pd.Series):
         if self.is_levels:
             raise ValueError('Error - backfill_returns only supports returns objects')
 
-        backfill_rtns = backfill.get_returns(self.returns_type)
+        backfill_rtns = backfill.get_returns(self.returns_type).remove_empty_leading_rows()
+        A = self.remove_empty_trailing_rows()
+
         assert self.name == backfill.name, 'Error - series must have the same names'
-        backfilled = pd.concat(objs=(backfill.loc[backfill_rtns.dates < min(self.index)], self), axis=0).sort_index()
+        backfilled = pd.concat(objs=(backfill_rtns.loc[backfill_rtns.dates < min(A.dates)], A), axis=0).sort_index()
         backfilled.name = self.name
 
         # preserve the attributes
@@ -332,7 +337,7 @@ class CSlice(pd.Series):
         return self.loc[:self.last_valid_index()].deepcopy()
 
     def remove_empty_trailing_rows(self):
-        return self.loc[:self.first_valid_index()].deepcopy()
+        return self.loc[self.first_valid_index():].deepcopy()
 
     def remove_empty_leading_trailing_rows(self):
         return self.remove_empty_trailing_rows().remove_empty_leading_rows()
@@ -670,6 +675,9 @@ class CTimeSeries(pd.DataFrame):
         if self.is_levels:
            raise ValueError('Error - _backfill_returns only supports returns objects')
 
+        if self.size == 0 and backfill.size > 0:
+           return backfill.deepcopy()
+
         backfill_rtns = backfill.get_returns(self.returns_type)
         common_labels = np.intersect1d(self.columns, backfill_rtns.columns)
         not_in_backfill = self.get(np.setdiff1d(self.columns, backfill.columns))
@@ -677,13 +685,16 @@ class CTimeSeries(pd.DataFrame):
         backfilled = self._create_new_returns_object(self.returns_type)
         for label in common_labels:
             backfilled = backfilled.concat(self.get(label).backfill_returns(backfill_rtns.get(label)))
-        backfilled.columns = self.columns
 
         self_with_backfill = not_in_backfill.concat(backfilled).select_subset_labels(self.columns)
+        self_with_backfill.columns = self.columns
         assert np.all(self_with_backfill.columns == self.columns), 'Error in backfill'
         return self._create_new_returns_object(self.returns_type, data=self_with_backfill)
 
     def backfill_levels(self, backfill):
+
+        if self.size == 0 and backfill.size > 0:
+           return backfill.deepcopy()
 
         # Make sure both objects are returns objects
         if self.is_returns:
@@ -694,8 +705,16 @@ class CTimeSeries(pd.DataFrame):
 
         backfilled_rtns = self_rtns.backfill_returns(backfill_rtns)
         backfilled_lvls = backfilled_rtns.get_levels()
-        rescaled = backfilled_lvls.apply(lambda x: x * (self.get(x.name).loc[self.get(x.name).first_valid_index()] /
-                                                        x.loc[self.get(x.name).first_valid_index()]))
+
+        # Rescaled the backfilled time series
+        if self.returns_type in [ReturnsType.DIFFERENCE,
+                                   ReturnsType.DIFFERENCE.value]:
+            rescaled = backfilled_lvls.apply(lambda x: x + (self.get(x.name).loc[self.get(x.name).first_valid_index()] -
+                                                            x.loc[self.get(x.name).first_valid_index()]))
+        else:
+            rescaled = backfilled_lvls.apply(lambda x: x * (self.get(x.name).loc[self.get(x.name).first_valid_index()] /
+                                                            x.loc[self.get(x.name).first_valid_index()]))
+
         assert np.all(rescaled.columns == self.columns), 'Error in backfill'
         return self._create_new_levels_object(rescaled, returns_type=self.returns_type)
 
