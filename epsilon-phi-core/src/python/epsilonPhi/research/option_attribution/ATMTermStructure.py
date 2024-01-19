@@ -60,11 +60,15 @@ for t in range(T):
             theta[t, :, j] = np.nanmean(A2[tt, :], axis=0)
 
 Ad = np.diff(np.log(A), axis=1)
+
 cAd = np.corrcoef(Rv[:-1], Ad, rowvar=False)[0, 1]
 cdA = np.corrcoef(Rv, dA, rowvar=False)[0, 1]
+
 t2a = [np.mean(A, axis=0), np.std(A, axis=0), np.min(A, axis=0), np.max(A, axis=0), np.correlate(A, A, mode='full')[len(A)-1:]]
+
 t2b = [252 * np.mean(Ad, axis=0), np.sqrt(252) * np.std(Ad, axis=0), 252 * np.min(Ad, axis=0),
        252 * np.max(Ad, axis=0), np.correlate(Ad, Ad, mode='full')[len(Ad)-1:], cAd]
+
 t2c = [252 * np.mean(dA, axis=0), np.sqrt(252) * np.std(dA, axis=0), 252 * np.min(dA, axis=0),
        252 * np.max(dA, axis=0), np.correlate(dA, dA, mode='full')[len(dA)-1:], cdA]
 

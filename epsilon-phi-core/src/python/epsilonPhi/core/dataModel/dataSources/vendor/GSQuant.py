@@ -128,3 +128,23 @@ if __name__ == "__main__":
             save_path = os.path.join(save_dir, id + '.csv')
             con_pd.loc[id].reset_index(drop=False).set_index('date').to_csv(save_path)
 
+    # Get data using data context
+    # https: // developer.gs.com / docs / gsquant / data / data - environment / data - context /
+
+    from datetime import date
+    from gs_quant.data import DataContext
+    from gs_quant.markets.securities import SecurityMaster, AssetIdentifier, ExchangeCode
+    import gs_quant.timeseries as ts
+
+    data_ctx = DataContext(start=date(2018, 1, 1), end=date(2023, 12, 31))  # Create a data context covering 2018
+    spx = SecurityMaster.get_asset('SPX', AssetIdentifier.TICKER,
+                                   exchange_code=ExchangeCode.NYSE)  # Lookup S&P 500 Index via Security Master
+
+    eur = SecurityMaster.get_asset('USDEUR', AssetIdentifier.BLOOMBERG_ID)
+
+    with data_ctx:  # Use the data context we setup
+        vol_delta_call_25 = ts.implied_volatility(spx, '1m', ts.VolReference.DELTA_CALL, 25)
+        vol_delta_call_50 = ts.implied_volatility(spx, '1m', ts.VolReference.DELTA_CALL, 50)
+
+    vol.tail()
+
