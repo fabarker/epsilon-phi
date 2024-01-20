@@ -6,6 +6,16 @@ from gs_quant.data import Dataset
 from gs_quant.session import GsSession, Environment
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.env.Env import GSQ_CLIENT_ID, GSQ_CLIENT_SECRET
+from gs_quant.data import DataMeasure, DataFrequency, Dataset, AssetMeasure
+from datetime import date
+import datetime
+from typing import List
+from gs_quant.data import DataContext
+from gs_quant.markets.securities import SecurityMaster, AssetIdentifier, ExchangeCode
+from gs_quant.api.gs.assets import GsAssetApi
+import gs_quant.timeseries as ts
+from gs_quant.timeseries.measures import VolReference
+
 
 class Datasets(Enum):
 
@@ -20,8 +30,11 @@ class Datasets(Enum):
 
     REF_EQUITY_FUTURES_EOD = 'TREOD'
 
+
 @SingletonDecorator
 class GSQuantManager(object):
+
+    _cache = {}
     def __init__(self):
         self.initialize()
 
@@ -49,6 +62,68 @@ class GSQuantManager(object):
         cov = ds.get_coverage(include_history=include_history)
         print("[DONE]")
         return cov
+
+    @staticmethod
+    def _resolve_identifier(identifier: List[str]) -> tuple:
+        response = GsAssetApi.resolve_assets(
+            identifier=identifier,
+            fields=['name', 'id', 'type', 'ticker', 'isin', 'bbid', 'gsid', 'exchange'],
+            limit=1,
+        )
+
+        res = response[identifier]
+        if len(res) > 0:
+           flds = res[0].keys()
+
+           if 'id' in flds:
+               return res[0].get('id'), AssetIdentifier.MARQUEE_ID
+           if 'ticker' in flds:
+               return res[0].get('ticker'), AssetIdentifier.TICKER
+           elif 'bbid' in flds:
+               return res[0].get('bbid'), AssetIdentifier.BLOOMBERG_ID
+           elif 'isin' in flds:
+               return res[0].get('isin'), AssetIdentifier.ISIN
+           else:
+               raise ValueError('Error - not compatible fields')
+        else:
+            raise ValueError('Error - identifier {} not recognised'.format(identifier))
+
+
+
+
+    @staticmethod
+    def get_security(asset_id):
+        if asset_id not in GSQuantManager()._cache.keys():
+            id, id_type = GSQuantManager()._resolve_identifier(asset_id)
+            GSQuantManager()._cache[asset_id] = SecurityMaster.get_asset(id, id_type=id_type)
+        return GSQuantManager()._cache[asset_id]
+
+
+    @staticmethod
+    def get_data_context(start_date, end_date):
+        return DataContext(start=pd.to_datetime(start_date),
+                           end=pd.to_datetime(end_date))
+
+    @staticmethod
+    def get_ivol(asset_id,
+                 start_date,
+                 end_date=date.today(),
+                 tenor='1m',
+                 vol_reference='spot',
+                 relative_strike=100):
+
+
+        asset = GSQuantManager().get_security(asset_id)
+        context = GSQuantManager().get_data_context(start_date, end_date)
+        with context:
+            res = ts.implied_volatility(asset,
+                                        tenor=tenor,
+                                        strike_reference=VolReference(vol_reference.lower()),
+                                        relative_strike=relative_strike)
+            df_ = res.to_frame(asset)
+            df_.columns = pd.MultiIndex.from_tuples([(asset_id, tenor, vol_reference, relative_strike)])
+            df_.columns.names = ['id', 'tenor', 'vol_reference', 'ref_strike']
+        return df_.copy()
 
 # class FXIVOL_V2_PREMIUM(GSQuantManager):
 #     _DATASET = Dataset('FXIVOL_V2_PREMIUM')
@@ -81,12 +156,37 @@ if __name__ == "__main__":
 
     _SAVE_PATH = r'C:\Users\fabar\Documents\Data\gsquant\equity\SPX'
 
-    ds = Dataset('EDRVOL_PERCENT_INTERNAL')
     gsq = GSQuantManager()
+
+    spx = gsq.get_security('SPX')
+    res = spx.get_close_prices(pd.to_datetime('31-Dec-2002').date(), date.today())
+
+    res = spx.get_data_series(DataMeasure.ASK_PRICE,
+                              frequency=DataFrequency.REAL_TIME,
+                              start=pd.to_datetime('31-Dec-2023'),
+                              end=pd.to_datetime(date.today()))
+
+
+
+
+    strikes = np.array(range(40, 180, 5))
+    strikes = np.array(range(90, 180, 5))
+
+    df_ = pd.DataFrame()
+    for k in strikes:
+        print(k)
+        res = gsq.get_ivol('SPX', '31-Dec-2004',  tenor='1w', vol_reference='spot', relative_strike=k)
+        df_ = pd.concat((df_, res), axis=1)
+
+    spx = gsq.get_security('SPX')
+    res = spx.get_data_series(measure=DataMeasure.TRADE_PRICE, frequency=DataFrequency.REAL_TIME)
+
+    res = ts.measures.hloc_prices(gsq.get_security('SPX'))
 
     tenors = ['1y']
     relative_strike = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
 
+    ds = Dataset('EDRVOL_PERCENT_INTERNAL')
     for tenor in tenors:
         for strike in relative_strike:
             res_1 = ds.get_data(start=datetime.date(year=2001, month=1, day=1), end=datetime.date(year=2010, month=1, day=1),
@@ -128,23 +228,5 @@ if __name__ == "__main__":
             save_path = os.path.join(save_dir, id + '.csv')
             con_pd.loc[id].reset_index(drop=False).set_index('date').to_csv(save_path)
 
-    # Get data using data context
-    # https: // developer.gs.com / docs / gsquant / data / data - environment / data - context /
 
-    from datetime import date
-    from gs_quant.data import DataContext
-    from gs_quant.markets.securities import SecurityMaster, AssetIdentifier, ExchangeCode
-    import gs_quant.timeseries as ts
-
-    data_ctx = DataContext(start=date(2018, 1, 1), end=date(2023, 12, 31))  # Create a data context covering 2018
-    spx = SecurityMaster.get_asset('SPX', AssetIdentifier.TICKER,
-                                   exchange_code=ExchangeCode.NYSE)  # Lookup S&P 500 Index via Security Master
-
-    eur = SecurityMaster.get_asset('USDEUR', AssetIdentifier.BLOOMBERG_ID)
-
-    with data_ctx:  # Use the data context we setup
-        vol_delta_call_25 = ts.implied_volatility(spx, '1m', ts.VolReference.DELTA_CALL, 25)
-        vol_delta_call_50 = ts.implied_volatility(spx, '1m', ts.VolReference.DELTA_CALL, 50)
-
-    vol.tail()
 
