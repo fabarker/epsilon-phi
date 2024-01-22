@@ -91,6 +91,8 @@ class DateUtils(object):
         for i in range(T):
             matStr = matStrs[i]
 
+            if re.search("st", matStr):
+                matStr = '1d'
             if re.search("on", matStr):
                 matStr = '1d'
             if re.search("tn", matStr):

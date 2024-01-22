@@ -45,6 +45,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/epsilon-phi-core/src/python/epsilonPhi/research/option_attribution/Replicating Paper.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

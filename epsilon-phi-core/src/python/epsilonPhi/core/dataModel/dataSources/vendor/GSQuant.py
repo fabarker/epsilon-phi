@@ -88,7 +88,18 @@ class GSQuantManager(object):
         else:
             raise ValueError('Error - identifier {} not recognised'.format(identifier))
 
+    @staticmethod
+    def get_security_tick_trade_data(security, month, year):
 
+        security = GSQuantManager().get_security(security)
+        SD = datetime.datetime(year=year, month=month, day=1)
+        ED = SD + pd.tseries.offsets.MonthEnd(1)
+
+        prices = security.get_data_series(DataMeasure.TRADE_PRICE,
+                                         frequency=DataFrequency.REAL_TIME,
+                                         start=SD,
+                                         end=ED.to_pydatetime())
+        return prices.to_frame(security.name)
 
 
     @staticmethod
@@ -153,55 +164,45 @@ if __name__ == "__main__":
     import os
     import datetime, os
     import numpy as np
+    import pandas as pd
 
-    _SAVE_PATH = r'C:\Users\fabar\Documents\Data\gsquant\equity\SPX'
+    _SAVE_PATH = r'/Users/francisbarker/Data/SPX Vols'
 
     gsq = GSQuantManager()
-
     spx = gsq.get_security('SPX')
-    res = spx.get_close_prices(pd.to_datetime('31-Dec-2002').date(), date.today())
-
-    res = spx.get_data_series(DataMeasure.ASK_PRICE,
-                              frequency=DataFrequency.REAL_TIME,
-                              start=pd.to_datetime('31-Dec-2023'),
-                              end=pd.to_datetime(date.today()))
-
-
-
 
     strikes = np.array(range(40, 180, 5))
-    strikes = np.array(range(90, 180, 5))
+    tenors = ['1w','1m','3m', '6m', '9m', '12m']
 
     df_ = pd.DataFrame()
-    for k in strikes:
-        print(k)
-        res = gsq.get_ivol('SPX', '31-Dec-2004',  tenor='1w', vol_reference='spot', relative_strike=k)
-        df_ = pd.concat((df_, res), axis=1)
+    for tenor in tenors:
+        for k in strikes:
+            print(str(k) + ' ' + tenor)
+            try:
+                res = gsq.get_ivol('SPX', '31-Dec-2004',  tenor=tenor, vol_reference='normalized', relative_strike=k)
+                res.to_csv(os.path.join(_SAVE_PATH, str(k) + '_' + tenor + '.csv'))
+            except:
+                pass
 
-    spx = gsq.get_security('SPX')
-    res = spx.get_data_series(measure=DataMeasure.TRADE_PRICE, frequency=DataFrequency.REAL_TIME)
-
-    res = ts.measures.hloc_prices(gsq.get_security('SPX'))
-
-    tenors = ['1y']
-    relative_strike = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+    tenors = ['1w','1m','3m','6m','9m','1y']
+    #relative_strike = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
 
     ds = Dataset('EDRVOL_PERCENT_INTERNAL')
+
+    _all_vols = pd.DataFrame()
     for tenor in tenors:
-        for strike in relative_strike:
-            res_1 = ds.get_data(start=datetime.date(year=2001, month=1, day=1), end=datetime.date(year=2010, month=1, day=1),
+        print(tenor)
+        res_1 = ds.get_data(start=datetime.date(year=1999, month=1, day=1), end=datetime.date(year=2010, month=1, day=1),
                               assetId='MA4B66MW5E27U8P32SB',
-                              strikeReference='delta',
-                              tenor=tenor,
-                              relativeStrike=strike)
-            res_2 = ds.get_data(start=datetime.date(year=2010, month=1, day=1), end=datetime.date.today(),
+                              strikeReference='normalized',
+                              tenor=tenor)
+        res_2 = ds.get_data(start=datetime.date(year=2010, month=1, day=1), end=datetime.date.today(),
                               assetId='MA4B66MW5E27U8P32SB',
-                              strikeReference='delta',
-                              tenor=tenor,
-                              relativeStrike=strike)
-            res = pd.concat((res_1, res_2), axis=0)
-            _FULL_FILE_SAVE = os.path.join(_SAVE_PATH, 'SPX_' + tenor + '_' + str(int(strike*100)) + '.csv')
-            res.to_csv(_FULL_FILE_SAVE)
+                              strikeReference='normalized',
+                              tenor=tenor)
+
+        res = pd.concat((res_1, res_2), axis=0)
+        _all_vols = pd.concat((_all_vols, res), axis=0)
 
 
 
