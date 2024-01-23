@@ -172,7 +172,7 @@ if __name__ == "__main__":
     spx = gsq.get_security('SPX')
 
     strikes = np.array(range(40, 180, 5))
-    tenors = ['1w','1m','3m', '6m', '9m', '12m']
+    tenors = ['2m']
 
     df_ = pd.DataFrame()
     for tenor in tenors:
@@ -184,7 +184,7 @@ if __name__ == "__main__":
             except:
                 pass
 
-    tenors = ['1w','1m','3m','6m','9m','1y']
+    tenors = ['1m', '2m', '3m', '6m', '1y']
     #relative_strike = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
 
     ds = Dataset('EDRVOL_PERCENT_INTERNAL')
@@ -192,13 +192,13 @@ if __name__ == "__main__":
     _all_vols = pd.DataFrame()
     for tenor in tenors:
         print(tenor)
-        res_1 = ds.get_data(start=datetime.date(year=1999, month=1, day=1), end=datetime.date(year=2010, month=1, day=1),
+        res_1 = ds.get_data(start=datetime.date(year=1999, month=1, day=1), end=datetime.date(year=2009, month=12, day=31),
                               assetId='MA4B66MW5E27U8P32SB',
-                              strikeReference='normalized',
+                              strikeReference='spot',
                               tenor=tenor)
         res_2 = ds.get_data(start=datetime.date(year=2010, month=1, day=1), end=datetime.date.today(),
                               assetId='MA4B66MW5E27U8P32SB',
-                              strikeReference='normalized',
+                              strikeReference='spot',
                               tenor=tenor)
 
         res = pd.concat((res_1, res_2), axis=0)
