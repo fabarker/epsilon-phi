@@ -2,14 +2,16 @@ import pandas as pd
 import numpy as np
 import os, sys
 import statsmodels.api as sm
-
+from epsilonPhi.research.option_attribution.callopt import *
 
 
 ds = pd.read_csv('/Users/francisbarker/Desktop/SPX Options 1.csv')
 ds = ds.set_index('date', drop=True)
 ds.index = pd.to_datetime(ds.index)
 ds = ds[['Z', 'T', 'dsig', 'sig', 's', 'rx']].sort_index()
-
+unique_dates = ds.index.unique()
+unique_mats = ds.get('T').unique()
+T = len(unique_dates)
 
 # Get the Vol Changes
 
@@ -58,7 +60,8 @@ print(mu_.describe().reindex(['mean','std','min','max']))
 # Check to see if We can Forecast Future Vol from Drift
 
 # X is the implied vol drift term
-# Y is the change in implied vol
+# Y is the change in implied vol oevr the next time step
+# Therefore these are prediction regressions over 1 day
 
 Xs = sm.add_constant(mu_)
 y = dsig.get(0) * 252
@@ -66,7 +69,68 @@ y = dsig.get(0) * 252
 for col in y.columns:
   X_ = Xs[['const', col]]
   y_ = y.get(col)
+  reg = np.linalg.lstsq(X_, y_)
 
-  model = sm.OLS(y_, X_)
-  results = model.fit()
+  betas = reg[0]
+  res = y_ - X_ @ reg[0]
+  r_sq = 1 - np.var(res) / np.var(y_)
 
+# Wing Analysis - Table 2 : Summary of ATM Implied Vol and Changes
+
+LL = 21 # Rolling Window Lookback
+fh = 20 # Holding Period for Trading Strategies
+
+dI = dsig.copy()
+dIsq = np.power(dI, 2)
+dA = dI.get(0)
+dAsq = dIsq.get(0)
+
+# rx is the spot return
+rx = ds.get('rx').drop_duplicates().reindex(dA.index).fillna(0)
+spt = ds.get('s').drop_duplicates().reindex(dA.index).ffill()
+
+dIdS = dI * rx.values.reshape(-1, 1)
+dAdS = dA * rx.values.reshape(-1, 1)
+
+omega = dIsq.rolling(window=LL).mean() * 252
+gamma = dIdS.rolling(window=LL).mean() * 252
+
+# Lag the Omega and Gammas so we can run regressions
+omega_f = omega.shift(-LL).get(0)
+gamma_f = gamma.shift(-LL).get(0)
+
+# S is the spread vols
+sig_sq = np.power(sig, 2)
+S = sig_sq - sig_sq.get(0)[sig.columns.get_level_values('T')].values
+
+X = np.array(S.columns.get_level_values(0)).reshape(1, -1).repeat(T, 0)
+M = np.array(S.columns.get_level_values(1)).reshape(1, -1).repeat(T, 0)
+
+z_plus = X * sig * np.sqrt(M)
+z_minus = z_plus - sig_sq * M
+k = z_plus - 0.5 * sig_sq * M
+
+strikes = np.exp(k) * 100
+call_prices, call_delta, call_vega = call_price(spt * 0 + 100, strikes, 0, M, np.sqrt(M), sig)
+put_prices, put_delta, put_vega = put_price(spt * 0 + 100, strikes, 0, M, np.sqrt(M), sig)
+
+_paths = np.array(range(0, T - 21)).reshape(1, T-21).repeat(21, 0) +\
+            np.array(range(21)).reshape(-1, 1).repeat(T - 21, 1)
+
+sim_paths = pd.DataFrame(_paths.T, index=put_prices.index[:T-21])
+ttms = pd.DataFrame((unique_mats.reshape(-1, 1).repeat(21, 1) -
+             ((1/365.25) * np.array(sim_paths.columns).reshape(1, -1).repeat(len(unique_mats), 0))), index=unique_mats)
+
+spt_paths = pd.DataFrame(spt.values[sim_paths.values], index=sim_paths.index)
+spt_paths = 100 * spt_paths / spt_paths.values[:,0].reshape(-1, 1)
+
+_vols_paths = pd.concat([sig.unstack()] * 21, axis=1)
+_strike_paths = pd.concat([strikes.unstack()] * 21, axis=1)
+_spt_paths = spt_paths.reindex(_vols_paths.index.get_level_values(2))
+_spt_paths.index = _vols_paths.index
+
+_mat_paths = ttms.loc[_vols_paths.index.get_level_values(1)]
+_mat_paths.index = _vols_paths.index
+
+call_prices_, _, _ = call_price(_spt_paths, _strike_paths, 0, _mat_paths, np.sqrt(_mat_paths), _vols_paths)
+put_prices_, _, _ = call_price(_spt_paths, _strike_paths, 0, _mat_paths, np.sqrt(_mat_paths), _vols_paths)
