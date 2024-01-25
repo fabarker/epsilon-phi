@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import lsq_linear
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
+from concurrent.futures import ProcessPoolExecutor
 import copy
+from statsmodels.api import add_constant
 from scipy.stats import norm
+from tqdm import tqdm
 
 class OptionAttributer(object):
 
@@ -11,10 +14,24 @@ class OptionAttributer(object):
     _DAYS_PER_YEAR = 365.25
     _STRATEGY_HOLDING_PERIODS = 21
     _HISTORICAL_ROLLING_PERIODS = 21
+    _STRATEGY_ESTIMATION_WINDOW = 4 * 252
 
     def __init__(self, start_date, end_date):
         self._process_data(start_date,
                            end_date)
+
+    def _process_data(self, start_date, end_date):
+
+        _df = pd.read_csv('/Users/francisbarker/Desktop/SPX Options 1.csv')
+        _df['date'] = pd.to_datetime(_df['date'])
+        _df = _df.set_index(['date', 'Z', 'T'], drop=True)
+
+        keep_rows = np.logical_and(_df.index.get_level_values('date') >= pd.to_datetime(start_date),
+                                   _df.index.get_level_values('date') <= pd.to_datetime(end_date))
+
+        self._ds = _df.iloc[keep_rows].copy()
+        self._start_date = self._ds.index.get_level_values('date').min()
+        self._end_date = self._ds.index.get_level_values('date').max()
 
     @property
     def T(self):
@@ -77,22 +94,8 @@ class OptionAttributer(object):
     def atm_sig_sq(self):
         return np.power(self.sig, 2).get(0).copy()
 
-    def _process_data(self, start_date, end_date):
-
-        _df = pd.read_csv('/Users/francisbarker/Desktop/SPX Options 1.csv')
-        _df['date'] = pd.to_datetime(_df['date'])
-        _df = _df.set_index(['date', 'Z', 'T'], drop=True)
-
-        keep_rows = np.logical_and(_df.index.get_level_values('date') >= pd.to_datetime(start_date),
-                                   _df.index.get_level_values('date') <= pd.to_datetime(end_date))
-
-        self._ds = _df.iloc[keep_rows].copy()
-        self._start_date = self._ds.index.get_level_values('date').min()
-        self._end_date = self._ds.index.get_level_values('date').max()
-
     def interpolate(self, strikes, maturities):
         pass
-
     def get_cross_sectional_spreads(self):
         return self.sig_sq - self.sig_sq.get(0)[self.sig_sq.columns.get_level_values('T')].values
     def get_omega(self):
@@ -170,7 +173,7 @@ class OptionAttributer(object):
     def get_cross_sectional_fitted_moments(self):
         if not hasattr(self, '_fitted_moments'):
             self._run_cross_sectional_spread_regressions()
-        return
+        return self._fitted_moments
 
     def _run_cross_sectional_spread_regressions(self):
 
@@ -183,15 +186,19 @@ class OptionAttributer(object):
         upper_bounds = [np.inf, np.inf]
 
         S = self.get_cross_sectional_spreads()
-        z_p = 2 * self.z_plus
-        z_m = self.z_plus * self.z_minus
+        keep_cols = np.abs(S.columns.get_level_values(0)) <= 1
+
+        S = S.iloc[:, keep_cols]
+        z_p = 2 * self.z_plus.get(np.unique(S.columns.get_level_values(0)))
+        z_m = (self.z_plus.get(np.unique(S.columns.get_level_values(0))) *
+               self.z_minus.get(np.unique(S.columns.get_level_values(0))))
 
         X = pd.concat((z_p.unstack(), z_m.unstack()), axis=1).reorder_levels([2, 1, 0], 0).sort_index()
-        Y = S.unstack().reorder_levels([2,1,0]).reindex(X.index)
+        Y = S.unstack().reorder_levels([2, 1, 0]).reindex(X.index)
 
         obs = X.index.droplevel('Z').unique()
         reg = np.ones((len(obs), 3)) * np.nan
-        for t in range(len(obs)):
+        for t in tqdm(range(len(obs)), desc="Processing"):
 
             result = lsq_linear(X.loc[obs[t]].values,
                                 Y.loc[obs[t]].values,
@@ -202,9 +209,9 @@ class OptionAttributer(object):
             e = Y.loc[obs[t]] - X.loc[obs[t]] @ result.x
             rsq = 1 - (np.power(e, 2).mean() / np.var(Y.loc[obs[t]].values))
 
-            reg[t,:] = omega, gamma, rsq
+            reg[t, :] = omega, gamma, rsq
 
-        self._fitted_moments = pd.DataFrame(reg, index=obs, columns=['omega','gamma','rsq'])
+        self._fitted_moments = pd.DataFrame(reg, index=obs, columns=['gamma', 'omega', 'rsq'])
 
     def run_pca(self, start_date=None, end_date=None):
 
@@ -275,7 +282,7 @@ class OptionAttributer(object):
             sim_paths = pd.DataFrame(_paths.T)
             dt = pd.DataFrame(self.dates.values[sim_paths.values])
             sim_paths['start'] = dt.get(0)
-            sim_paths['end'] =  dt.get(HP-1)
+            sim_paths['end'] = dt.get(HP-1)
 
             self._paths = sim_paths.set_index(['start', 'end'], drop=True)
         return self._paths.copy()
@@ -400,27 +407,168 @@ class OptionAttributer(object):
 
         # Realized Moments
         r_mnts = self.get_realized_moments(self._HISTORICAL_ROLLING_PERIODS)
+        omega_ts = r_mnts.get('omega').get(0) * 252
+        gamma_ts = r_mnts.get('gamma').get(0) * 252
 
         # Cross Sectional Moments
         c_mnts = self.get_cross_sectional_fitted_moments()
+        omega_cs = c_mnts.get('omega').unstack()
+        gamma_cs = c_mnts.get('gamma').unstack()
 
-        # Dependant Variable
-        d_mnts = r_mnts.shift(-1*self._HISTORICAL_ROLLING_PERIODS)
+        b_cov = list()
+        b_var = list()
+        for mat in self.unique_maturities.flatten():
 
+            # Forecast Omega
+            y_o = omega_ts.dropna().shift(-21).get(mat).dropna()
+            X_o = pd.concat((omega_cs.get(mat), omega_ts.get(mat)), axis=1).reindex(y_o.index)
+            X_o_prime = pd.concat((X_o.iloc[:, 0] * 0 + 1, X_o), axis=1)
+            B_o, _, _, _ = np.linalg.lstsq(X_o_prime, y_o, rcond=None)
+            res_o = y_o - X_o_prime @ B_o
+            rsq_o = 1 - np.var(res_o) / np.var(y_o)
+            b_var.extend([np.append(B_o, rsq_o)])
 
+            # Forecast Gamma
+            y_g = gamma_ts.dropna().shift(-21).get(mat).dropna()
+            X_g = pd.concat((gamma_cs.get(mat), gamma_ts.get(mat)), axis=1).reindex(y_o.index)
+            X_g_prime = pd.concat((X_g.iloc[:, 0] * 0 + 1, X_g), axis=1)
+            B_g, _, _, _ = np.linalg.lstsq(X_g_prime, y_g, rcond=None)
+            res_g = y_g - X_g_prime @ B_g
+            rsq_g = 1 - np.var(res_g) / np.var(y_g)
+            b_cov.extend([np.append(B_g, rsq_g)])
 
-        pass
+        res_var = pd.DataFrame(b_var, index=self.unique_maturities.flatten(), columns=['alpha', 'beta_cs', 'beta_ts', 'rsq'])
+        res_cov = pd.DataFrame(b_cov, index=self.unique_maturities.flatten(), columns=['alpha', 'beta_cs', 'beta_ts', 'rsq'])
+
+        print('Table 7: Predicted Realized Variance/Covariance with Cross-Sectional and Time Series Estimators')
+        print()
+        print('Panel A; Covariance')
+        print(res_cov)
+        print()
+        print('Panel B; Variance')
+        print(res_var)
 
     def run_risk_return_strategy(self):
-        pass
+
+        # The strategy forms weights on spread portfolios from
+        # rolling estimates of the conditional moments
+        # Realized Moments
+        r_mnts = self.get_realized_moments(self._HISTORICAL_ROLLING_PERIODS)
+        r_mnts = FrameUtils.set_levels(r_mnts, level_values='ts', level_name='estimator')
+        r_mnts.columns.names = ['measure', 'x', 'mat', 'estimator']
+        omega_ts = r_mnts.get('omega').get(0) * 252
+        gamma_ts = r_mnts.get('gamma').get(0) * 252
+
+        # Cross Sectional Moments
+        c_mnts = self.get_cross_sectional_fitted_moments()
+        c_mnts['estimator'] = 'cs'
+        c_mnts = c_mnts.reset_index(drop=False).set_index(['date', 'T', 'estimator'])
+        omega_cs = c_mnts.get('omega').unstack(level=[1, 2])
+        gamma_cs = c_mnts.get('gamma').unstack(level=[1, 2])
+
+        # Variables for regressions - Omegas
+        y_o = omega_ts.dropna().shift(-21)
+        X_o = pd.concat((omega_ts, omega_cs), axis=1)
+        # Variables for regressions - Gamma
+        y_g = gamma_ts.dropna().shift(-21)
+        X_g = pd.concat((gamma_ts, gamma_cs), axis=1)
+
+        # Get the estimation dates
+        win_size = 253 * 4 - self._STRATEGY_HOLDING_PERIODS
+        N = self.T - self._STRATEGY_HOLDING_PERIODS
+        idxs = (np.array(range(win_size)).reshape(-1, 1).repeat(repeats=N, axis=1) +
+                np.array(range(0, N)).reshape(1, -1).repeat(win_size, 0))
+
+        for mat in self.unique_maturities.flatten():
+            for t in range(N):
+                t_ = t + win_size + self._STRATEGY_HOLDING_PERIODS - 1
+
+                ############# Estimate it for Omega - Vol of Vol ############################
+                X_prime_o = X_o.iloc[idxs[:, t], :].dropna()
+                Xo = add_constant(X_prime_o.get(mat))
+                yo_prime = y_o.loc[Xo.index].get(mat)
+
+                # Fit Model Over History - 4 Years Minus One Month
+                B_omega = np.linalg.solve(Xo.T @ Xo + np.eye(3), Xo.T @ yo_prime)
+                # Using The Fitted Model - Forecast One Month Ahead
+                omega_predict = X_o.iloc[t_].loc[mat] @ B_omega[1:] + B_omega[0]
+
+                ############# Estimate it for Gamma - Spot/Vol Covariance ###################
+                X_prime_g = X_g.iloc[idxs[:, t], :].dropna()
+                Xg = add_constant(X_prime_g.get(mat))
+                yg_prime = y_g.loc[Xg.index].get(mat)
+
+                # Fit Model Over History - 4 Years Minus One Month
+                B_gamma = np.linalg.solve(Xg.T @ Xg + np.eye(3), Xg.T @ yg_prime)
+                # Using The Fitted Model - Forecast One Month Ahead
+                gamma_predict = X_g.iloc[t_].loc[mat] @ B_gamma[1:] + B_gamma[0]
+
+
+
+
+
 
     def run_stat_arb_strategy(self):
         pass
 
-    def print_paper_results(self):
-        pass
+    def _print_table(self, table_number):
+
+        assert table_number in [5, 6], 'Error - table number {} not supported'.format(table_number)
+        if table_number == 5:
+
+            vars_ = self.get_realized_moments(21) * 252
+
+            # Implied Vol Level
+            df = self.sig.describe().loc['mean'].unstack().T
+            df.columns.names = ['Strike']
+            df.index.names = ['Maturity']
+            print('Table 5: A : Mean Implied Vol Smile')
+            print(df)
+
+            # Covariance Estimates
+            gamma = vars_.get('gamma').describe().loc['mean'].unstack().T
+            gamma.columns.names = ['Strike']
+            gamma.index.names = ['Maturity']
+            print('Table 5: B : Historical Covariance (Skewness) Estimates')
+            print(gamma)
+
+            # Variance Estimates
+            omega = vars_.get('omega').describe().loc['mean'].unstack().T
+            omega.columns.names = ['Strike']
+            omega.index.names = ['Maturity']
+            print('Table 5: C : Historical Variance (Vol of Vol) Estimates')
+            print(omega)
+
+        if table_number == 6:
+            vars_ = self.get_cross_sectional_fitted_moments()
+
+            # Estimated Cross-Sectional Gamma
+            gamma = vars_.get('gamma').unstack().describe().loc[['mean', 'std', 'min', 'max']]
+            gamma.columns.names = ['Maturity']
+            print('Table 6: Cross-Sectional Regression Estimates of Variance and Covariance Rates')
+            print()
+            print('Panel A: Covariance Estimates')
+            print()
+            print(gamma)
+
+            # Estimated Cross-Sectional Omega
+            omega = vars_.get('omega').unstack().describe().loc[['mean', 'std', 'min', 'max']]
+            omega.columns.names = ['Maturity']
+            print('Panel B: Variance Estimates')
+            print()
+            print(omega)
+
+
+            # R-Squared
+            rsq = vars_.get('rsq').unstack().describe().loc[['mean', 'std', 'min', 'max']]
+            rsq.columns.names = ['Maturity']
+            print('Panel C: R-Squared')
+            print()
+            print(rsq)
+
+
 
 
 if __name__ == "__main__":
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    pnl = self.get_delta_hedged_single_option_strategy_pnl(-1, -1)
+    pnl = self._print_table(6)
