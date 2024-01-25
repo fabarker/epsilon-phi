@@ -132,5 +132,5 @@ _spt_paths.index = _vols_paths.index
 _mat_paths = ttms.loc[_vols_paths.index.get_level_values(1)]
 _mat_paths.index = _vols_paths.index
 
-call_prices_, _, _ = call_price(_spt_paths, _strike_paths, 0, _mat_paths, np.sqrt(_mat_paths), _vols_paths)
-put_prices_, _, _ = call_price(_spt_paths, _strike_paths, 0, _mat_paths, np.sqrt(_mat_paths), _vols_paths)
+calls, _, _ = call_price(_spt_paths, _strike_paths, 0, _mat_paths, np.sqrt(_mat_paths), _vols_paths)
+puts, _, _ = call_price(_spt_paths, _strike_paths, 0, _mat_paths, np.sqrt(_mat_paths), _vols_paths)
