@@ -98,6 +98,8 @@ class OptionAttributer(object):
         pass
     def get_cross_sectional_spreads(self):
         return self.sig_sq - self.sig_sq.get(0)[self.sig_sq.columns.get_level_values('T')].values
+    def get_variance_spread(self, dates):
+        return self.get_cross_sectional_spreads().loc[dates].reorder_levels([1, 0])
     def get_omega(self):
         return np.power(self.dsig, 2)
     def get_gamma(self):
@@ -338,7 +340,7 @@ class OptionAttributer(object):
                             np.sqrt(self.get_time_to_maturity_paths()),
                             self.get_vol_paths(), put_call)
 
-    def get_option_prices(self, put_call=1):
+    def get_option_prices(self, put_call=-1):
         return self.blsprice(self.get_spot_paths(),
                              self.get_strike_paths(),
                              0,
@@ -346,7 +348,7 @@ class OptionAttributer(object):
                              np.sqrt(self.get_time_to_maturity_paths()),
                              self.get_vol_paths(), put_call)
 
-    def get_option_pnls(self, put_calls=1, position=1):
+    def get_option_pnls(self, put_calls=-1, position=-1):
         prices = position * self.get_option_prices(put_calls)
         return prices.diff(axis=1).dropna(axis=1, how='all')
 
@@ -448,50 +450,117 @@ class OptionAttributer(object):
         print('Panel B; Variance')
         print(res_var)
 
+    def get_vega_weights(self):
+        bsvega = self.get_bsvega()
+        bsvega_atm = bsvega.iloc[bsvega.index.get_level_values(2) == 0, :].droplevel(2, axis=0)
+        bsvega_atm = bsvega_atm.loc[bsvega.index.droplevel(2)]
+        return (bsvega_atm.values / bsvega).get(0).to_frame()
+
+    def get_short_put_spread_pnls(self):
+        pnls = self.get_delta_hedged_single_option_strategy_pnl(put_call=-1, position=-1)
+
+        vega_neutral_wts = self.get_vega_weights()
+        pnls_vega_weighted = pnls * vega_neutral_wts.values
+
+        atm_pnls = pnls.iloc[pnls.index.get_level_values(2) == 0, :].droplevel(2, axis=0)
+        atm_pnls = atm_pnls.loc[pnls.index.droplevel(2)]
+        return pnls_vega_weighted - atm_pnls.values
+
+    def get_short_call_spread_pnls(self):
+        pnls = self.get_delta_hedged_single_option_strategy_pnl(put_call=1,position=-1)
+
+        vega_neutral_wts = self.get_vega_weights()
+        pnls_vega_weighted = pnls * vega_neutral_wts.values
+
+        atm_pnls = pnls.iloc[pnls.index.get_level_values(2) == 0, :].droplevel(2, axis=0)
+        atm_pnls = atm_pnls.loc[pnls.index.droplevel(2)]
+        return pnls_vega_weighted - atm_pnls.values
+
+    def get_2_z_plus(self):
+        return FrameUtils.set_levels(2 * self.z_plus, 'g', 'measure')
+
+    def get_z_plus_z_minus(self):
+        return FrameUtils.set_levels(self.z_plus * self.z_minus, 'g', 'measure')
+
+    def get_time_series_moments(self, moneyness=0):
+
+        ts = self.get_realized_moments(self._HISTORICAL_ROLLING_PERIODS)
+        ts = FrameUtils.set_levels(ts, level_values='ts', level_name='estimator')
+        ts.columns.names = ['measure', 'x', 'mat', 'estimator']
+        ts = ts.reorder_levels(['measure', 'mat', 'x', 'estimator'], axis=1)
+        if moneyness:
+            return ts.iloc[:, ts.columns.get_level_values('x') == moneyness]
+        else:
+            return ts.copy()
+
+    def get_cross_sectional_moments(self):
+
+        ts = self.get_cross_sectional_fitted_moments()
+        ts['estimator'] = 'cs'
+        ts = ts.reset_index(drop=False).set_index(['date', 'T', 'estimator']).unstack(level=[1, 2])
+        ts = FrameUtils.set_levels(ts, level_values=0, level_name='x')
+        ts.columns.names = ['measure', 'T', 'estimator', 'x']
+        ts = ts.reorder_levels(['measure', 'T', 'x', 'estimator'], axis=1)
+        ts.columns.names = ['measure', 'mat', 'z', 'estimator']
+        return ts[['gamma', 'omega']]
+
+    def get_cross_sectional_and_time_series_moments(self):
+        return pd.concat((self.get_cross_sectional_moments(),
+                          252 * self.get_time_series_moments()), axis=1)
+
+    def _build_idxs(self, T, N):
+        return (np.array(range(T)).reshape(-1, 1).repeat(repeats=N, axis=1) +
+                np.array(range(0, N)).reshape(1, -1).repeat(T, 0))
+
+    def _load_strategy_weights(self):
+        pass
+
+    def get_strategy_weights(self, strategy):
+        if strategy not in self._weights.keys():
+            self._load_strategy_weights()
+        return self._weights.get(strategy)
+
     def run_risk_return_strategy(self):
 
         # The strategy forms weights on spread portfolios from
         # rolling estimates of the conditional moments
         # Realized Moments
-        r_mnts = self.get_realized_moments(self._HISTORICAL_ROLLING_PERIODS)
-        r_mnts = FrameUtils.set_levels(r_mnts, level_values='ts', level_name='estimator')
-        r_mnts.columns.names = ['measure', 'x', 'mat', 'estimator']
-        omega_ts = r_mnts.get('omega').get(0) * 252
-        gamma_ts = r_mnts.get('gamma').get(0) * 252
 
-        # Cross Sectional Moments
-        c_mnts = self.get_cross_sectional_fitted_moments()
-        c_mnts['estimator'] = 'cs'
-        c_mnts = c_mnts.reset_index(drop=False).set_index(['date', 'T', 'estimator'])
-        omega_cs = c_mnts.get('omega').unstack(level=[1, 2])
-        gamma_cs = c_mnts.get('gamma').unstack(level=[1, 2])
+        # Get the data that forms our regression set and the forward values
+        ts_est = self.get_cross_sectional_and_time_series_moments()
+        ts_fwd = ts_est.dropna().shift(-21)
+
+        # Get the smile coefficients
+        zp = self.get_2_z_plus()
+        zm = self.get_z_plus_z_minus()
+        X = pd.concat((zp, zm), axis=1).reorder_levels([1, 0, 2], axis=1)
 
         # Variables for regressions - Omegas
-        y_o = omega_ts.dropna().shift(-21)
-        X_o = pd.concat((omega_ts, omega_cs), axis=1)
+        y_o = ts_fwd.get('omega')
+        X_o = ts_est.get('omega')
+
         # Variables for regressions - Gamma
-        y_g = gamma_ts.dropna().shift(-21)
-        X_g = pd.concat((gamma_ts, gamma_cs), axis=1)
+        y_g = ts_fwd.get('gamma')
+        X_g = ts_est.get('gamma')
 
         # Get the estimation dates
         win_size = 253 * 4 - self._STRATEGY_HOLDING_PERIODS
         N = self.T - self._STRATEGY_HOLDING_PERIODS
-        idxs = (np.array(range(win_size)).reshape(-1, 1).repeat(repeats=N, axis=1) +
-                np.array(range(0, N)).reshape(1, -1).repeat(win_size, 0))
+        idxs = self._build_idxs(win_size, N)
 
         for mat in self.unique_maturities.flatten():
             for t in range(N):
                 t_ = t + win_size + self._STRATEGY_HOLDING_PERIODS - 1
 
                 ############# Estimate it for Omega - Vol of Vol ############################
-                X_prime_o = X_o.iloc[idxs[:, t], :].dropna()
+                X_prime_o = X_o.iloc[idxs[:, t], :].dropna().get(mat)
                 Xo = add_constant(X_prime_o.get(mat))
                 yo_prime = y_o.loc[Xo.index].get(mat)
 
                 # Fit Model Over History - 4 Years Minus One Month
                 B_omega = np.linalg.solve(Xo.T @ Xo + np.eye(3), Xo.T @ yo_prime)
                 # Using The Fitted Model - Forecast One Month Ahead
-                omega_predict = X_o.iloc[t_].loc[mat] @ B_omega[1:] + B_omega[0]
+                omega_predict = (X_o.iloc[t_].loc[mat] @ B_omega[1:] + B_omega[0]).item()
 
                 ############# Estimate it for Gamma - Spot/Vol Covariance ###################
                 X_prime_g = X_g.iloc[idxs[:, t], :].dropna()
@@ -501,7 +570,25 @@ class OptionAttributer(object):
                 # Fit Model Over History - 4 Years Minus One Month
                 B_gamma = np.linalg.solve(Xg.T @ Xg + np.eye(3), Xg.T @ yg_prime)
                 # Using The Fitted Model - Forecast One Month Ahead
-                gamma_predict = X_g.iloc[t_].loc[mat] @ B_gamma[1:] + B_gamma[0]
+                gamma_predict = (X_g.iloc[t_].loc[mat] @ B_gamma[1:] + B_gamma[0]).item()
+
+                # Predict Spread
+                _bp = [gamma_predict, omega_predict]
+                _x = X.iloc[t_].get(mat).unstack()[['g','o']]
+                prd_spd = _x @ _bp
+
+                obs_spd = self.get_variance_spread(self.dates[t_]).get(mat)
+                atm = self.atm_sig_sq.loc[self.dates[t_]].get(mat)
+                wts = (obs_spd - prd_spd).to_frame('rr') * (1/atm)
+                wts['T'] = mat
+                wts['date'] = self.dates[t_]
+
+                bp_ = [gamma_cs.loc[self.dates[t_]].get(mat).values.item(),
+                       omega_cs.loc[self.dates[t_]].get(mat).values.item()]
+                prd_res = _x @ bp_
+                wts_arb = 10 * (obs_spd - prd_res).to_frame('arb') * (1/atm)
+                wts = pd.concat((wts, wts_arb), axis=1)
+
 
 
 
@@ -571,4 +658,5 @@ class OptionAttributer(object):
 
 if __name__ == "__main__":
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    pnl = self._print_table(6)
+    self.run_risk_return_strategy()
+
