@@ -7,6 +7,7 @@ import copy
 from statsmodels.api import add_constant
 from scipy.stats import norm
 from tqdm import tqdm
+import time
 
 class OptionAttributer(object):
 
@@ -15,6 +16,7 @@ class OptionAttributer(object):
     _STRATEGY_HOLDING_PERIODS = 21
     _HISTORICAL_ROLLING_PERIODS = 21
     _STRATEGY_ESTIMATION_WINDOW = 4 * 252
+    _TRUNCATE_SPREAD = np.abs(1)
 
     def __init__(self, start_date, end_date):
         self._process_data(start_date,
@@ -40,6 +42,12 @@ class OptionAttributer(object):
     def X(self):
         return pd.DataFrame(np.array(self.sig.columns.get_level_values('Z')).reshape(1, -1).repeat(self.T, 0),
                             index=self.dates, columns=self.sig.columns)
+    @property
+    def NM(self):
+        return len(self.unique_maturities.flatten())
+    @property
+    def NX(self):
+        return len(self.unique_strikes.flatten())
     @property
     def dates(self):
         return self._ds.index.get_level_values('date').unique()
@@ -129,7 +137,8 @@ class OptionAttributer(object):
         mu_ = self.get_mu()
         mu_.columns = pd.MultiIndex.from_tuples(list(zip(['mu']*mu_.shape[1], mu_.columns)))
         mu_.columns = FrameUtils.add_level(mu_.columns, 0, 'Z')
-        mu_.columns.names = ['measure','T','Z']
+        mu_.columns.names = ['measure', 'T', 'Z']
+        mu_ = mu_.reorder_levels(['measure', 'Z', 'T'], axis=1)
 
         # Get Omega
         omega_ = self.get_omega()
@@ -188,32 +197,39 @@ class OptionAttributer(object):
         upper_bounds = [np.inf, np.inf]
 
         S = self.get_cross_sectional_spreads()
-        keep_cols = np.abs(S.columns.get_level_values(0)) <= 1
+        S = S.iloc[:, np.abs(S.columns.get_level_values(0)) <= 1]
 
-        S = S.iloc[:, keep_cols]
-        z_p = 2 * self.z_plus.get(np.unique(S.columns.get_level_values(0)))
-        z_m = (self.z_plus.get(np.unique(S.columns.get_level_values(0))) *
-               self.z_minus.get(np.unique(S.columns.get_level_values(0))))
+        z_p = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= 1]
+        z_m = self.z_minus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= 1]
 
-        X = pd.concat((z_p.unstack(), z_m.unstack()), axis=1).reorder_levels([2, 1, 0], 0).sort_index()
-        Y = S.unstack().reorder_levels([2, 1, 0]).reindex(X.index)
+        X = pd.concat((2 * z_p.unstack(), (z_p * z_m).unstack()), axis=1).sort_index(level='date')
+        Y_prime = S.unstack().reindex(X.index).values
+        X_prime = X.values
 
-        obs = X.index.droplevel('Z').unique()
-        reg = np.ones((len(obs), 3)) * np.nan
-        for t in tqdm(range(len(obs)), desc="Processing"):
+        all_dates = X.index.get_level_values('date')
+        all_mats = X.index.get_level_values('T')
 
-            result = lsq_linear(X.loc[obs[t]].values,
-                                Y.loc[obs[t]].values,
-                                bounds=(lower_bounds, upper_bounds),
-                                verbose=0)
+        unique_dates = np.unique(all_dates)
+        unique_mats = np.unique(all_mats)
 
-            omega, gamma = result.x
-            e = Y.loc[obs[t]] - X.loc[obs[t]] @ result.x
-            rsq = 1 - (np.power(e, 2).mean() / np.var(Y.loc[obs[t]].values))
+        reg = list()
+        for t in tqdm(range(self.T), desc="Processing"):
+            for mat in unique_mats:
 
-            reg[t, :] = omega, gamma, rsq
+                locs = np.logical_and(all_dates == unique_dates[t],
+                                      all_mats == mat)
 
-        self._fitted_moments = pd.DataFrame(reg, index=obs, columns=['gamma', 'omega', 'rsq'])
+                result = lsq_linear(X_prime[locs, :],
+                                    Y_prime[locs],
+                                    bounds=(lower_bounds, upper_bounds),
+                                    verbose=0)
+
+                omega, gamma = result.x
+                e = Y_prime[locs] - X_prime[locs, :] @ result.x
+                rsq = 1 - (np.mean(np.power(e, 2)) / np.var(Y_prime[locs]))
+                reg.extend([(unique_dates[t], mat, omega, gamma, rsq)])
+
+        self._fitted_moments = pd.DataFrame(reg,  columns=['date', 'T', 'gamma', 'omega', 'rsq']).set_index(['date', 'T'])
 
     def run_pca(self, start_date=None, end_date=None):
 
@@ -476,11 +492,14 @@ class OptionAttributer(object):
         atm_pnls = atm_pnls.loc[pnls.index.droplevel(2)]
         return pnls_vega_weighted - atm_pnls.values
 
-    def get_2_z_plus(self):
-        return FrameUtils.set_levels(2 * self.z_plus, 'g', 'measure')
+    def _get_2_z_plus(self):
+        tr_z = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
+        return 2 * tr_z.reshape(self.T, self.NM, self.NX)
 
-    def get_z_plus_z_minus(self):
-        return FrameUtils.set_levels(self.z_plus * self.z_minus, 'g', 'measure')
+    def _get_z_plus_z_minus(self):
+        tr_zp = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
+        tr_zm = self.z_minus.iloc[:, np.abs(self.z_minus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
+        return tr_zp.reshape(self.T, self.NM, self.NX) * tr_zm.reshape(self.T, self.NM, self.NX)
 
     def get_time_series_moments(self, moneyness=0):
 
@@ -499,14 +518,13 @@ class OptionAttributer(object):
         ts['estimator'] = 'cs'
         ts = ts.reset_index(drop=False).set_index(['date', 'T', 'estimator']).unstack(level=[1, 2])
         ts = FrameUtils.set_levels(ts, level_values=0, level_name='x')
-        ts.columns.names = ['measure', 'T', 'estimator', 'x']
-        ts = ts.reorder_levels(['measure', 'T', 'x', 'estimator'], axis=1)
-        ts.columns.names = ['measure', 'mat', 'z', 'estimator']
+        ts.columns.names = ['measure', 'mat', 'estimator', 'x']
+        ts = ts.reorder_levels(['measure', 'mat', 'x', 'estimator'], axis=1)
         return ts[['gamma', 'omega']]
 
     def get_cross_sectional_and_time_series_moments(self):
-        return pd.concat((self.get_cross_sectional_moments(),
-                          252 * self.get_time_series_moments()), axis=1)
+        return pd.concat((252 * self.get_time_series_moments(),
+                          self.get_cross_sectional_moments()), axis=1)
 
     def _build_idxs(self, T, N):
         return (np.array(range(T)).reshape(-1, 1).repeat(repeats=N, axis=1) +
@@ -526,72 +544,64 @@ class OptionAttributer(object):
         # rolling estimates of the conditional moments
         # Realized Moments
 
+        # Get the estimation dates and build indexed panels
+        win_size_reg = self._STRATEGY_ESTIMATION_WINDOW - self._STRATEGY_HOLDING_PERIODS + 4
+
+        N = self.T - win_size_reg - self._STRATEGY_HOLDING_PERIODS
+        idx_x = self._build_idxs(win_size_reg, N)
+        idx_y = idx_x + self._STRATEGY_HOLDING_PERIODS
+
         # Get the data that forms our regression set and the forward values
         ts_est = self.get_cross_sectional_and_time_series_moments()
-        ts_fwd = ts_est.dropna().shift(-21)
+        ts_est = ts_est.reorder_levels(['measure', 'x', 'estimator', 'mat'], axis=1)
 
-        # Get the smile coefficients
-        zp = self.get_2_z_plus()
-        zm = self.get_z_plus_z_minus()
-        X = pd.concat((zp, zm), axis=1).reorder_levels([1, 0, 2], axis=1)
+        o_cs = ts_est.get('omega').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
+        o_ts = ts_est.get('omega').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
 
-        # Variables for regressions - Omegas
-        y_o = ts_fwd.get('omega')
-        X_o = ts_est.get('omega')
+        g_cs = ts_est.get('gamma').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
+        g_ts = ts_est.get('gamma').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
 
-        # Variables for regressions - Gamma
-        y_g = ts_fwd.get('gamma')
-        X_g = ts_est.get('gamma')
+        y_o_ts = ts_est.get('omega').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
+        y_o_cs = ts_est.get('omega').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
 
-        # Get the estimation dates
-        win_size = 253 * 4 - self._STRATEGY_HOLDING_PERIODS
-        N = self.T - self._STRATEGY_HOLDING_PERIODS
-        idxs = self._build_idxs(win_size, N)
+        y_g_ts = ts_est.get('gamma').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
+        y_g_cs = ts_est.get('gamma').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
 
-        for mat in self.unique_maturities.flatten():
-            for t in range(N):
-                t_ = t + win_size + self._STRATEGY_HOLDING_PERIODS - 1
+        Xs_o = np.concatenate((np.ones((N, 1, self.NM)), y_o_cs[-1, :, :].reshape(N, 1, self.NM), y_o_ts[-1, :, :].reshape(N, 1, self.NM)), axis=1)
+        Xs_g = np.concatenate((np.ones((N, 1, self.NM)), y_g_cs[-1, :, :].reshape(N, 1, self.NM), y_g_ts[-1, :, :].reshape(N, 1, self.NM)), axis=1)
 
-                ############# Estimate it for Omega - Vol of Vol ############################
-                X_prime_o = X_o.iloc[idxs[:, t], :].dropna().get(mat)
-                Xo = add_constant(X_prime_o.get(mat))
-                yo_prime = y_o.loc[Xo.index].get(mat)
+        z_plus = self._get_2_z_plus()
+        z_plus_minus = self._get_z_plus_z_minus()
 
-                # Fit Model Over History - 4 Years Minus One Month
-                B_omega = np.linalg.solve(Xo.T @ Xo + np.eye(3), Xo.T @ yo_prime)
-                # Using The Fitted Model - Forecast One Month Ahead
-                omega_predict = (X_o.iloc[t_].loc[mat] @ B_omega[1:] + B_omega[0]).item()
+        start_time = time.time()
+        for j in range(self.NM):
+            for t in range(idx_y.shape[1]):
 
-                ############# Estimate it for Gamma - Spot/Vol Covariance ###################
-                X_prime_g = X_g.iloc[idxs[:, t], :].dropna()
-                Xg = add_constant(X_prime_g.get(mat))
-                yg_prime = y_g.loc[Xg.index].get(mat)
+                X_prime_o = np.vstack((np.ones((win_size_reg)), o_cs[:, t, j], o_ts[:, t, j])).T
+                nan_locs = np.any(np.isnan(X_prime_o), axis=1)
+                B_omega = np.linalg.solve(X_prime_o[~nan_locs, :].T @ X_prime_o[~nan_locs, :] + np.eye(3), X_prime_o[~nan_locs, :].T @ y_o_ts[~nan_locs, t, j])
+                omega_predict = Xs_o[t, :, j] @ B_omega
 
-                # Fit Model Over History - 4 Years Minus One Month
-                B_gamma = np.linalg.solve(Xg.T @ Xg + np.eye(3), Xg.T @ yg_prime)
-                # Using The Fitted Model - Forecast One Month Ahead
-                gamma_predict = (X_g.iloc[t_].loc[mat] @ B_gamma[1:] + B_gamma[0]).item()
+                X_prime_g = np.vstack((np.ones((win_size_reg)), g_cs[:, t, j], g_ts[:, t, j])).T
+                nan_locs = np.any(np.isnan(X_prime_o), axis=1)
+                B_gamma = np.linalg.solve(X_prime_g[~nan_locs, :].T @ X_prime_g[~nan_locs, :] + np.eye(3), X_prime_g[~nan_locs, :].T @ y_g_ts[~nan_locs, t, j])
+                gamma_predict = Xs_g[t, :, j] @ B_gamma
 
-                # Predict Spread
+                # Given Our Forecast for Gamma and Omega, Predict the Spread
                 _bp = [gamma_predict, omega_predict]
-                _x = X.iloc[t_].get(mat).unstack()[['g','o']]
-                prd_spd = _x @ _bp
+                prd_spd = z_plus[idx_y[-1, t], j, :] @ _bp
 
                 obs_spd = self.get_variance_spread(self.dates[t_]).get(mat)
                 atm = self.atm_sig_sq.loc[self.dates[t_]].get(mat)
-                wts = (obs_spd - prd_spd).to_frame('rr') * (1/atm)
-                wts['T'] = mat
-                wts['date'] = self.dates[t_]
+                wts_rr = (obs_spd - prd_spd).to_frame('rr') * (1/atm)
+                wts_rr['T'] = mat
+                wts_rr['date'] = self.dates[t_]
 
-                bp_ = [gamma_cs.loc[self.dates[t_]].get(mat).values.item(),
-                       omega_cs.loc[self.dates[t_]].get(mat).values.item()]
+                bp_ = [X_g.iloc[t_].get(mat).get(0).get('cs'),
+                       X_o.iloc[t_].get(mat).get(0).get('cs')]
                 prd_res = _x @ bp_
                 wts_arb = 10 * (obs_spd - prd_res).to_frame('arb') * (1/atm)
-                wts = pd.concat((wts, wts_arb), axis=1)
-
-
-
-
+                wts = pd.concat((wts, pd.concat((wts_rr, wts_arb), axis=1)), axis=0)
 
 
 
