@@ -669,6 +669,8 @@ class OptionAttributer(object):
 
         # Compute Strategy PnL
         str_pnl = _wts.values.reshape(-1, 1).repeat(_pnls.shape[1], 1) * _pnls
+        str_pnl = str_pnl[str_pnl.index.get_level_values(2) != 0]
+
         stk_pnls = str_pnl.stack(0).to_frame()
         stk_pnls.index.names = ['start', 'mat', 'x', 'days']
 
@@ -689,7 +691,14 @@ class OptionAttributer(object):
 
         # Compute Strategy PnL
         str_pnl = _wts.values.reshape(-1, 1).repeat(_pnls.shape[1], 1) * _pnls
-        stk_pnls = str_pnl.stack(0).to_frame()
+        str_pnl.index.names = ['date', 'mat', 'x']
+
+        ptf_pnl = str_pnl.groupby(level=[0, 1]).mean()
+        ptf_pnl = ptf_pnl.reset_index()
+        ptf_pnl['x'] = np.inf
+        ptf_pnl = ptf_pnl.set_index(['date', 'mat', 'x'], drop=True)
+
+        stk_pnls = pd.concat((str_pnl, ptf_pnl), axis=0).stack(0).to_frame()
         stk_pnls.index.names = ['start', 'mat', 'x', 'days']
 
         stk_pnls['pricing_dates'] = (stk_pnls.index.get_level_values('start')
@@ -698,6 +707,17 @@ class OptionAttributer(object):
         pnls = stk_pnls.reset_index(drop=False).set_index(['pricing_dates', 'start', 'mat', 'x']).drop(columns=['days'])
         return pnls.unstack(level=[1, 2, 3])
 
+    def get_returns_table_for_strategy(self, strategy='sa'):
+
+        if strategy.lower() == 'sa':
+            _pnls = self.run_stat_arb_strategy()
+        else:
+            _pnls = self.run_risk_return_strategy()
+
+        _pnls_M = _pnls.droplevel(0, axis=1).sum(axis=0)
+        cml_pnls = _pnls_M.to_frame().unstack([1, 2]).droplevel(0, axis=1)
+        ann_rtns =  cml_pnls.mean(axis=0).unstack() * 12
+        return ann_rtns
 
     def _print_table(self, table_number):
 
@@ -759,5 +779,13 @@ class OptionAttributer(object):
 
 if __name__ == "__main__":
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    wts = self.run_stat_arb_strategy()
+
+    sa_pnls = self.run_stat_arb_strategy()
+    sa_pnls_M = sa_pnls.droplevel(0, axis=1).sum(axis=0)
+    cml_pnls_sa = sa_pnls_M.to_frame().unstack([1, 2]).droplevel(0, axis=1)
+    ann_rtns = cml_pnls_sa.mean(axis=0).unstack() * 12
+
+    rr_pnls = self.run_risk_return_strategy()
+
+
 
