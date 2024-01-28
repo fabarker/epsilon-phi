@@ -194,7 +194,7 @@ if __name__ == "__main__":
         print(tenor)
         res_1 = ds.get_data(start=datetime.date(year=1999, month=1, day=1), end=datetime.date(year=2009, month=12, day=31),
                               assetId='MA4B66MW5E27U8P32SB',
-                              strikeReference='spot',
+                              strikeReference='forward',
                               tenor=tenor)
         res_2 = ds.get_data(start=datetime.date(year=2010, month=1, day=1), end=datetime.date.today(),
                               assetId='MA4B66MW5E27U8P32SB',
@@ -228,6 +228,22 @@ if __name__ == "__main__":
         for id in uniqueIDs:
             save_path = os.path.join(save_dir, id + '.csv')
             con_pd.loc[id].reset_index(drop=False).set_index('date').to_csv(save_path)
+
+
+df = pd.read_csv('/Users/francisbarker/Desktop/SPX Normalized Vols.csv')
+df.date = pd.to_datetime(df.date, format='%d/%m/%Y')
+df = df.set_index('date', drop=True)
+
+spx = gsq.get_security('SPX')
+prices = spx.get_data_series(DataMeasure.CLOSE_PRICE,
+                             frequency=DataFrequency.DAILY,
+                             start='1990-12-31',
+                             end=df.index.max().strftime("%Y-%m-%d"))
+prices = prices.resample('D').asfreq().ffill()
+prices = prices.loc[df.index].to_frame('spot')
+vols = pd.concat((df, prices), axis=1)
+
+df = vols.to_csv('/Users/francisbarker/Desktop/SPX Normalized Vols.csv')
 
 
 

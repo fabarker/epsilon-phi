@@ -107,7 +107,15 @@ class OptionAttributer(object):
     def atm_sig_sq(self):
         return np.power(self.sig, 2).get(0).copy()
 
-    def interpolate(self, strikes, maturities):
+    def get_strike_bandwidth(self):
+        sig_zp = np.std(self.X, axis=1)
+        return 1 * np.power(4 / 3, 1 / 5) * sig_zp / np.power(self.NM * self.NX, 1 / 5)
+
+    def get_maturity_bandwidth(self):
+        sig_lm = np.std(np.log(self.maturities), axis=1)
+        return 2 * np.power(4 / 3, 1 / 5) * sig_lm / np.power(self.NM * self.NX, 1 / 5) * 0.1
+
+    def interpolate(self, interp):
 
         tgt_mat = (4/12)
         tgt_x = np.arange(self.unique_strikes.min(),
