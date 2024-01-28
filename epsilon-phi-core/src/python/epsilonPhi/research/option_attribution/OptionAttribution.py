@@ -13,12 +13,17 @@ class OptionAttributer(object):
 
     _DATA_PATH = '/Users/francisbarker/Desktop/SPX Options 1.csv'
     _DAYS_PER_YEAR = 365.25
+
     _STRATEGY_HOLDING_PERIODS = 21
     _HISTORICAL_ROLLING_PERIODS = 21
+
     _STRATEGY_ESTIMATION_WINDOW = 4 * 252
+    _STRATEGY_STARTING_WINDOW = 253 * 4
     _TRUNCATE_SPREAD = np.abs(1)
 
     def __init__(self, start_date, end_date):
+
+        self._weights = {}
         self._process_data(start_date,
                            end_date)
 
@@ -103,7 +108,40 @@ class OptionAttributer(object):
         return np.power(self.sig, 2).get(0).copy()
 
     def interpolate(self, strikes, maturities):
-        pass
+
+        tgt_mat = (4/12)
+        tgt_x = np.arange(self.unique_strikes.min(),
+                          self.unique_strikes.max(), 0.1)
+
+        N = len(tgt_x)
+
+        _T = np.repeat(tgt_x.reshape(1, -1).repeat(self.T, 0)[:, :, np.newaxis], N, axis=2)
+        _X = np.repeat(self.X.values[:, :, np.newaxis], N, axis=2)
+
+        _mat = self.maturities
+        _ln_mat = np.log(_mat)
+
+        nobs = _X.shape[1]
+
+        sig_x = np.std(self.X, axis=1)
+        sig_m = np.std(_mat, axis=1)
+
+        h_x = 1 * (4/3) ** (1 / 5) * sig_x / np.power(nobs, 1/5)
+        h_m = 0.1 * (2*(4/3) ** (1/5) * sig_m / np.power(nobs, 1/5))
+
+        x_diff = np.abs(_X - tgt_x) / h_x.values.reshape(-1, 1)
+        m_diff = np.abs(_ln_mat - np.log(tgt_mat)) / h_m.values.reshape(-1, 1)
+
+        k_wts = np.exp(-1 * x_diff / 2)
+        m_wts = np.exp(-1 * m_diff / 2)
+        wts = (k_wts * m_wts) / np.sum(k_wts * m_wts, axis=1).values.reshape(-1, 1)
+
+
+
+
+
+
+
     def get_cross_sectional_spreads(self):
         return self.sig_sq - self.sig_sq.get(0)[self.sig_sq.columns.get_level_values('T')].values
     def get_variance_spread(self, dates):
@@ -494,12 +532,18 @@ class OptionAttributer(object):
 
     def _get_2_z_plus(self):
         tr_z = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
-        return 2 * tr_z.reshape(self.T, self.NM, self.NX)
+        return 2 * tr_z.reshape(self.T, self.NM, int(tr_z.shape[1]/self.NM))
 
     def _get_z_plus_z_minus(self):
         tr_zp = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
         tr_zm = self.z_minus.iloc[:, np.abs(self.z_minus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
-        return tr_zp.reshape(self.T, self.NM, self.NX) * tr_zm.reshape(self.T, self.NM, self.NX)
+        return (tr_zp.reshape(self.T, self.NM, int(tr_zp.shape[1]/self.NM)) *
+                tr_zm.reshape(self.T, self.NM, int(tr_zm.shape[1]/self.NM)))
+
+    def _get_spreads(self):
+        spds = self.get_cross_sectional_spreads()
+        spd = spds.iloc[:, np.abs(spds.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
+        return spd.reshape(self.T, self.NM, int(spd.shape[1] / self.NM))
 
     def get_time_series_moments(self, moneyness=0):
 
@@ -530,83 +574,130 @@ class OptionAttributer(object):
         return (np.array(range(T)).reshape(-1, 1).repeat(repeats=N, axis=1) +
                 np.array(range(0, N)).reshape(1, -1).repeat(T, 0))
 
-    def _load_strategy_weights(self):
-        pass
-
     def get_strategy_weights(self, strategy):
         if strategy not in self._weights.keys():
             self._load_strategy_weights()
         return self._weights.get(strategy)
 
-    def run_risk_return_strategy(self):
+    def _load_strategy_weights(self):
 
         # The strategy forms weights on spread portfolios from
         # rolling estimates of the conditional moments
         # Realized Moments
 
         # Get the estimation dates and build indexed panels
-        win_size_reg = self._STRATEGY_ESTIMATION_WINDOW - self._STRATEGY_HOLDING_PERIODS + 4
+        T0 = self._STRATEGY_STARTING_WINDOW
+        L = self._STRATEGY_ESTIMATION_WINDOW
+        LL = self._HISTORICAL_ROLLING_PERIODS
 
-        N = self.T - win_size_reg - self._STRATEGY_HOLDING_PERIODS
-        idx_x = self._build_idxs(win_size_reg, N)
-        idx_y = idx_x + self._STRATEGY_HOLDING_PERIODS
-
-        # Get the data that forms our regression set and the forward values
         ts_est = self.get_cross_sectional_and_time_series_moments()
         ts_est = ts_est.reorder_levels(['measure', 'x', 'estimator', 'mat'], axis=1)
 
-        o_cs = ts_est.get('omega').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
-        o_ts = ts_est.get('omega').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
+        o_cs = ts_est.get('omega').get(0).get('cs').values
+        o_ts = ts_est.get('omega').get(0).get('ts').values
 
-        g_cs = ts_est.get('gamma').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
-        g_ts = ts_est.get('gamma').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_x, 0, :]
-
-        y_o_ts = ts_est.get('omega').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
-        y_o_cs = ts_est.get('omega').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
-
-        y_g_ts = ts_est.get('gamma').get(0).get('ts').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
-        y_g_cs = ts_est.get('gamma').get(0).get('cs').values.reshape(self.T, 1, self.NM)[idx_y, 0, :]
-
-        Xs_o = np.concatenate((np.ones((N, 1, self.NM)), y_o_cs[-1, :, :].reshape(N, 1, self.NM), y_o_ts[-1, :, :].reshape(N, 1, self.NM)), axis=1)
-        Xs_g = np.concatenate((np.ones((N, 1, self.NM)), y_g_cs[-1, :, :].reshape(N, 1, self.NM), y_g_ts[-1, :, :].reshape(N, 1, self.NM)), axis=1)
+        g_cs = ts_est.get('gamma').get(0).get('cs').values
+        g_ts = ts_est.get('gamma').get(0).get('ts').values
 
         z_plus = self._get_2_z_plus()
         z_plus_minus = self._get_z_plus_z_minus()
+        spreads = self._get_spreads()
 
-        start_time = time.time()
-        for j in range(self.NM):
-            for t in range(idx_y.shape[1]):
+        atms = np.power(self.atm_sig.values, 2)
+        wings = self.unique_strikes[np.abs(self.unique_strikes) <= self._TRUNCATE_SPREAD]
+        weights = np.full((self.T-LL-T0+1, len(wings), self.NM, 2), np.nan)
 
-                X_prime_o = np.vstack((np.ones((win_size_reg)), o_cs[:, t, j], o_ts[:, t, j])).T
+        for j in tqdm(range(self.NM), desc="Processing"):
+            for t in range(T0-1, self.T-LL):
+
+                idx_1 = np.arange(np.maximum(t-L-LL, 0), t-LL+1)
+                idx_2 = idx_1 + LL
+
+                X_prime_o = np.vstack((np.ones((len(idx_1))), o_ts[idx_1, 0], o_cs[idx_1, 0])).T
                 nan_locs = np.any(np.isnan(X_prime_o), axis=1)
-                B_omega = np.linalg.solve(X_prime_o[~nan_locs, :].T @ X_prime_o[~nan_locs, :] + np.eye(3), X_prime_o[~nan_locs, :].T @ y_o_ts[~nan_locs, t, j])
-                omega_predict = Xs_o[t, :, j] @ B_omega
+                B_omega = np.round(np.linalg.solve(X_prime_o[~nan_locs, :].T @ X_prime_o[~nan_locs, :] + np.eye(3), X_prime_o[~nan_locs, :].T @ o_ts[idx_2[~nan_locs], j]), 5)
+                omega_predict = [1 , o_ts[t, 0], o_cs[t, 0]] @ B_omega
 
-                X_prime_g = np.vstack((np.ones((win_size_reg)), g_cs[:, t, j], g_ts[:, t, j])).T
+                X_prime_g = np.vstack((np.ones((len(idx_1))), g_ts[idx_1, 0], g_cs[idx_1, 0])).T
                 nan_locs = np.any(np.isnan(X_prime_o), axis=1)
-                B_gamma = np.linalg.solve(X_prime_g[~nan_locs, :].T @ X_prime_g[~nan_locs, :] + np.eye(3), X_prime_g[~nan_locs, :].T @ y_g_ts[~nan_locs, t, j])
-                gamma_predict = Xs_g[t, :, j] @ B_gamma
+                B_gamma = np.linalg.solve(X_prime_g[~nan_locs, :].T @ X_prime_g[~nan_locs, :] + np.eye(3), X_prime_g[~nan_locs, :].T @ g_ts[idx_2[~nan_locs], j])
+                gamma_predict = [1 , g_ts[t, 0], g_cs[t, 0]] @ B_gamma
+
+                #########  Risk and Return Strategy
 
                 # Given Our Forecast for Gamma and Omega, Predict the Spread
                 _bp = [gamma_predict, omega_predict]
-                prd_spd = z_plus[idx_y[-1, t], j, :] @ _bp
+                pred_spread_ts = np.vstack((z_plus[t, j, :],  z_plus_minus[t, j, :])).T @ _bp
 
-                obs_spd = self.get_variance_spread(self.dates[t_]).get(mat)
-                atm = self.atm_sig_sq.loc[self.dates[t_]].get(mat)
-                wts_rr = (obs_spd - prd_spd).to_frame('rr') * (1/atm)
-                wts_rr['T'] = mat
-                wts_rr['date'] = self.dates[t_]
+                ############ Stat Arb Strategy #########
 
-                bp_ = [X_g.iloc[t_].get(mat).get(0).get('cs'),
-                       X_o.iloc[t_].get(mat).get(0).get('cs')]
-                prd_res = _x @ bp_
-                wts_arb = 10 * (obs_spd - prd_res).to_frame('arb') * (1/atm)
-                wts = pd.concat((wts, pd.concat((wts_rr, wts_arb), axis=1)), axis=0)
+                bp_ = [g_cs[t, j], o_cs[t, j]]
+                pred_spread_cs = np.vstack((z_plus[t, j, :],  z_plus_minus[t, j, :])).T @ bp_
 
+                # Construct the weights from the signals
+                # get the ATM variance for risk
+                atm = atms[t, j]
 
+                # get the observed spread
+                obs_spread = spreads[t, j, :]
+
+                weights[t-T0+1, :, j, 0] = np.round((obs_spread - pred_spread_ts) / atm, 4)
+                weights[t-T0+1, :, j, 1] = np.round((10/atm) * (obs_spread-pred_spread_cs), 4)
+
+        rr = [pd.DataFrame(weights[:, :, x, 0], columns=list(zip(wings, len(wings)*[self.unique_maturities[0][x]]))) for x in range(weights.shape[2])]
+        rr = pd.concat(rr, axis=1)
+        rr.index = self.dates[np.arange(T0-1, self.T-LL)]
+        rr.columns = pd.MultiIndex.from_tuples(rr.columns)
+
+        sa = [pd.DataFrame(weights[:, :, x, 1], columns=list(zip(wings, len(wings)*[self.unique_maturities[0][x]]))) for x in range(weights.shape[2])]
+        sa = pd.concat(sa, axis=1)
+        sa.index = self.dates[np.arange(T0 - 1, self.T - LL)]
+        sa.columns = pd.MultiIndex.from_tuples(sa.columns)
+
+        self._weights['rr'] = rr.copy()
+        self._weights['sa'] = sa.copy()
 
     def run_stat_arb_strategy(self):
-        pass
+
+        # Get Strategy Weights
+        _wts = self.get_strategy_weights('sa')
+        _wts = _wts.unstack().reorder_levels([2, 1, 0]).sort_index(level=0)
+
+        # Get Asset PnLs
+        _pnls = self.get_short_put_spread_pnls()
+        _pnls = _pnls.reindex(_wts.index)
+
+        # Compute Strategy PnL
+        str_pnl = _wts.values.reshape(-1, 1).repeat(_pnls.shape[1], 1) * _pnls
+        stk_pnls = str_pnl.stack(0).to_frame()
+        stk_pnls.index.names = ['start', 'mat', 'x', 'days']
+
+        stk_pnls['pricing_dates'] = (stk_pnls.index.get_level_values('start')
+                                     + pd.to_timedelta(stk_pnls.index.get_level_values('days'), unit='D'))
+
+        pnls = stk_pnls.reset_index(drop=False).set_index(['pricing_dates', 'start', 'mat', 'x']).drop(columns=['days'])
+        return pnls.unstack(level=[1, 2, 3])
+
+    def run_risk_return_strategy(self):
+
+        _wts = self.get_strategy_weights('rr')
+        _wts = _wts.unstack().reorder_levels([2, 1, 0]).sort_index(level=0)
+
+        # Get Asset PnLs
+        _pnls = self.get_short_put_spread_pnls()
+        _pnls = _pnls.reindex(_wts.index)
+
+        # Compute Strategy PnL
+        str_pnl = _wts.values.reshape(-1, 1).repeat(_pnls.shape[1], 1) * _pnls
+        stk_pnls = str_pnl.stack(0).to_frame()
+        stk_pnls.index.names = ['start', 'mat', 'x', 'days']
+
+        stk_pnls['pricing_dates'] = (stk_pnls.index.get_level_values('start')
+                                     + pd.to_timedelta(stk_pnls.index.get_level_values('days'), unit='D'))
+
+        pnls = stk_pnls.reset_index(drop=False).set_index(['pricing_dates', 'start', 'mat', 'x']).drop(columns=['days'])
+        return pnls.unstack(level=[1, 2, 3])
+
 
     def _print_table(self, table_number):
 
@@ -668,5 +759,5 @@ class OptionAttributer(object):
 
 if __name__ == "__main__":
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    self.run_risk_return_strategy()
+    wts = self.run_stat_arb_strategy()
 
