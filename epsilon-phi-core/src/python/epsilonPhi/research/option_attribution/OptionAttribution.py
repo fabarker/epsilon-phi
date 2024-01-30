@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import lsq_linear
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
+from epsilonPhi.core.utils.DateUtils import DateUtils
 from concurrent.futures import ProcessPoolExecutor
 import copy
 from statsmodels.api import add_constant
@@ -21,147 +22,204 @@ class OptionAttributer(object):
     _STRATEGY_STARTING_WINDOW = 253 * 4
     _TRUNCATE_SPREAD = np.abs(1)
 
+    _Z_SCORES = np.arange(-3, 3.5, 0.5)
+    _MATURITIES = [1/12, 2/12, 3/12, 6/12, 12/12]
+
     def __init__(self, start_date, end_date):
 
         self._weights = {}
-        self._process_data(start_date,
-                           end_date)
+        self.__load_raw_data(start_date, end_date)
+        self.__process_data()
 
-    def _process_data(self, start_date, end_date):
+    def __load_raw_data(self, start_date, end_date):
 
-        _df = pd.read_csv('/Users/francisbarker/Desktop/SPX Options 1.csv')
-        _df['date'] = pd.to_datetime(_df['date'])
-        _df = _df.set_index(['date', 'Z', 'T'], drop=True)
+        df_ = pd.read_csv('/Users/francisbarker/Desktop/SPX Vols by Moneyness.csv')
+        _df = df_.set_index('date', drop=True)
+        _df.index = pd.to_datetime(_df.index, format="%d/%m/%Y")
+        _df = _df.rename(columns={'absoluteStrike':'k','impliedVolatility':'sig'})
+        _df['lnm'] = np.log(df_.get('relativeStrike')).values
+        _df['mn'] = np.exp(_df['lnm'])
 
-        keep_rows = np.logical_and(_df.index.get_level_values('date') >= pd.to_datetime(start_date),
-                                   _df.index.get_level_values('date') <= pd.to_datetime(end_date))
+        _s = _df['spot'].drop_duplicates(keep='first').resample('D').asfreq().ffill()
+        _df['ds'] = np.log(_s).diff().shift(-1).loc[_df.index].values
+        _df['t'] = DateUtils.Rdate_to_mat(_df.get('tenor'))
 
-        self._ds = _df.iloc[keep_rows].copy()
-        self._start_date = self._ds.index.get_level_values('date').min()
-        self._end_date = self._ds.index.get_level_values('date').max()
+        rows = _df[['sig','mn','t']].reset_index(drop=False).set_index(['date','mn','t']).index
+        _sig = _df[['sig','mn','t']].reset_index(drop=False).set_index(['date','mn','t']).unstack(level=[1, 2])
+        dsig = np.log(_sig).diff().shift(-1).unstack().loc['sig'].reorder_levels(['date','mn','t'])
+        _df['dsig'] = dsig.loc[rows].values
+
+        _df['sigsq'] = np.power(_df.get('sig'), 2)
+        _df['zp'] = _df['lnm'] + 0.5 * _df['sigsq'] * _df.get('t')
+        _df['zm'] = _df['zp'] - _df['sigsq'] * _df['t']
+        _df['x'] = _df['zp'] / (_df.get('sig') * np.sqrt(_df['t']))
+        _df['lnmat'] = np.log(_df.get('t'))
+
+        nobs = _df.get('x').groupby('date').count()
+
+        sig_x = _df.get('x').groupby('date').std()
+        h_x = 1 * np.power(4 / 3, 1 / 5) * sig_x / np.power(nobs, 1 / 5)
+
+        sig_lm = _df.get('lnmat').groupby('date').std()
+        h_m = 2 * np.power(4 / 3, 1 / 5) * sig_lm / np.power(nobs, 1 / 5) * 0.1
+
+        _df['h_m'] = h_m.loc[_df.index].values
+        _df['h_x'] = h_x.loc[_df.index].values
+
+        keep_rows = np.logical_and(_df.index >= pd.to_datetime(start_date),
+                                   _df.index <= pd.to_datetime(end_date))
+
+        self._raw_data = _df.iloc[keep_rows].copy()
+        self._start_date = self._raw_data.index.min()
+        self._end_date = self._raw_data.index.max()
+
+    def __process_data(self):
+
+        ivols = self.interpolate(self._raw_data.index,
+                                 maturities=self._MATURITIES,
+                                 strikes=self._Z_SCORES)
+
+        N = len(ivols.index.get_level_values(0).unique())
+
+        # Get the various values we use in the analysis
+        self.__sig = ivols.unstack(level=[1,2]).get('sig').sort_index()
+        self.__dI = np.log(self.__sig).diff().shift(-1)
+        self.__sig_sq = np.power(self.__sig, 2)
+        self.__t = np.array(self.__sig.columns.droplevel('x')).reshape(1, -1).repeat(N, 0)
+        self.__x = np.array(self.__sig.columns.droplevel('t')).reshape(1, -1).repeat(N, 0)
+        self.__sqrt_t = np.sqrt(self.__t)
+
+        spt = self._raw_data.get('spot').drop_duplicates().resample('D').ffill()
+        self.__spot = spt.loc[self.__sig.index].to_frame('spot')
+
+        self.__zp = self.__sig * self.__x * self.__sqrt_t
+        self.__lnm = self.__zp - 0.5 * self.__sig_sq * self.__t
+        self.__nm = np.exp(self.__lnm)
+        self.__k = self.__spot.values  * self.__nm
+        self.__zm = self.__zp - self.__sig_sq * self.__t
+        self.__ds = ivols.copy()
 
     @property
     def T(self):
         return len(self.dates)
     @property
     def X(self):
-        return pd.DataFrame(np.array(self.sig.columns.get_level_values('Z')).reshape(1, -1).repeat(self.T, 0),
-                            index=self.dates, columns=self.sig.columns)
+        return pd.DataFrame(self.__x, index=self.dates, columns=self.__sig.columns)
+    @property
+    def k(self):
+        return self.__k
     @property
     def NM(self):
-        return len(self.unique_maturities.flatten())
+        return len(self.unique_maturities)
     @property
     def NX(self):
-        return len(self.unique_strikes.flatten())
+        return len(self.unique_strikes)
     @property
     def dates(self):
-        return self._ds.index.get_level_values('date').unique()
+        return self.__ds.index.get_level_values('date').unique()
     @property
     def unique_strikes(self):
-        return np.array(self._ds.index.get_level_values('Z').unique()).reshape(1, -1)
+        return np.unique(self.__ds.index.get_level_values('x'))
     @property
     def unique_maturities(self):
-        return np.array(self._ds.index.get_level_values('T').unique()).reshape(1, -1)
+        return np.unique(self.__ds.index.get_level_values('t'))
     @property
     def maturities(self):
-        return pd.DataFrame(np.array(self.sig.columns.get_level_values('T')).reshape(1, -1).repeat(self.T, 0),
-                            index=self.dates, columns=self.sig.columns)
+        return pd.DataFrame(self.__t, index=self.dates, columns=self._sig.columns)
     @property
     def log_moneyness(self):
-        return self.z_plus - 0.5 * self.sig_sq * self.maturities
+        return self.__lnm.copy()
     @property
     def strike_prices(self):
         return pd.concat([self.moneyness.unstack()] *
                          OptionAttributer._STRATEGY_HOLDING_PERIODS, axis=1) * 100
     @property
     def moneyness(self):
-        return np.exp(self.log_moneyness)
+        return self.__nm.copy()
     @property
     def spot(self):
-        return self._ds.get('s').droplevel([1, 2]).drop_duplicates().reindex(self.dates).ffill().to_frame().copy()
+        return self.__spot.reindex(self.dates).copy()
     @property
     def dS(self):
-        return self._ds.get('rx').droplevel([1, 2]).drop_duplicates().reindex(self.dates).fillna(0).to_frame().copy()
+        return np.log(self.spot).diff().shift(-1).dropna()
     @property
     def sig(self):
-        return self._ds.get('sig').to_frame().unstack([1, 2]).get('sig').reindex(self.dates).sort_index(axis=1, level=1).copy()
+        return self.__sig.reindex(self.dates).copy()
     @property
     def dsig(self):
-        return self._ds.get('dsig').to_frame().unstack([1, 2]).get('dsig').reindex(self.dates).sort_index(axis=1, level=1).copy()
+        return self.__dI.reindex(self.dates).dropna()
     @property
     def sig_sq(self):
-        return np.power(self.sig, 2).copy()
+        return self.__sig_sq.reindex(self.dates).copy()
     @property
     def atm_sig(self):
-        return self.sig.get(0).sort_index(axis=1).copy()
+        return self.__sig.get(0).sort_index(axis=1).reindex(self.dates).copy()
     @property
     def atm_dsig(self):
-        return self.dsig.get(0).sort_index(axis=1).copy()
-    @property
-    def z_plus(self):
-        return self.X * self.sig * np.sqrt(self.maturities)
-    @property
-    def z_minus(self):
-        return self.z_plus - self.sig_sq * self.maturities
+        return self.__dI.get(0).sort_index(axis=1).reindex(self.dates).dropna()
     @property
     def atm_sig_sq(self):
-        return np.power(self.sig, 2).get(0).copy()
+        return self.__sig_sq.get(0).sort_index(axis=1).reindex(self.dates).copy()
+    @property
+    def z_plus(self):
+        return self.__zp.reindex(self.dates).copy()
+    @property
+    def z_minus(self):
+        return self.__zm.reindex(self.dates).copy()
 
-    def get_strike_bandwidth(self):
-        sig_zp = np.std(self.X, axis=1)
-        return 1 * np.power(4 / 3, 1 / 5) * sig_zp / np.power(self.NM * self.NX, 1 / 5)
+    def interpolate(self, dates, maturities, strikes):
 
-    def get_maturity_bandwidth(self):
-        sig_lm = np.std(np.log(self.maturities), axis=1)
-        return 2 * np.power(4 / 3, 1 / 5) * sig_lm / np.power(self.NM * self.NX, 1 / 5) * 0.1
+        unique_dates = np.unique(dates)
+        unique_mats = np.unique(maturities).reshape(1, -1)
+        unique_xs = np.unique(strikes).reshape(1, -1)
 
-    def interpolate(self, interp):
+        NX = len(unique_xs.flatten())
+        NM = len(unique_mats.flatten())
+        ND = len(unique_dates)
 
-        tgt_mat = (4/12)
-        tgt_x = np.arange(self.unique_strikes.min(),
-                          self.unique_strikes.max(), 0.1)
+        interp = np.full(shape=(NX*NM, ND), fill_value=np.nan)
+        for t in tqdm(range(ND), desc="Interpolating Vol Surface"):
 
-        N = len(tgt_x)
+            unique_date = unique_dates[t]
+            tmp = self._raw_data.loc[unique_date][['t', 'x', 'sig', 'h_x', 'h_m']]
+            lnmat = np.log(tmp.get('t').values.reshape(-1, 1))
 
-        _T = np.repeat(tgt_x.reshape(1, -1).repeat(self.T, 0)[:, :, np.newaxis], N, axis=2)
-        _X = np.repeat(self.X.values[:, :, np.newaxis], N, axis=2)
+            diff_mat = np.abs(lnmat - np.log(unique_mats.repeat(tmp.shape[0], 0)))
+            diff_X = np.abs(tmp.get('x').values.reshape(-1, 1) - unique_xs.repeat(tmp.shape[0], 0))
 
-        _mat = self.maturities
-        _ln_mat = np.log(_mat)
+            m_diff = diff_mat / tmp.get('h_m').values[0]
+            x_diff = diff_X / tmp.get('h_x').values[0]
 
-        nobs = _X.shape[1]
+            x_wts = np.exp(-1 * x_diff / 2)
+            x_wts = np.repeat(x_wts[:, :, np.newaxis], unique_mats.size, axis=2)
 
-        sig_x = np.std(self.X, axis=1)
-        sig_m = np.std(_mat, axis=1)
+            m_wts = np.exp(-1 * m_diff / 2).reshape(m_diff.shape[0], 1, m_diff.shape[1])
+            m_wts = m_wts.repeat(x_wts.shape[1], 1)
 
-        h_x = 1 * (4/3) ** (1 / 5) * sig_x / np.power(nobs, 1/5)
-        h_m = 0.1 * (2*(4/3) ** (1/5) * sig_m / np.power(nobs, 1/5))
+            wts = (x_wts * m_wts) / np.sum(x_wts * m_wts, axis=0)
+            sig_mat = np.repeat(tmp.sig.values.reshape(-1, 1).repeat(wts.shape[1], 1)[:, :, np.newaxis], unique_mats.size, axis=2)
 
-        x_diff = np.abs(_X - tgt_x) / h_x.values.reshape(-1, 1)
-        m_diff = np.abs(_ln_mat - np.log(tgt_mat)) / h_m.values.reshape(-1, 1)
+            interp[:,t] = np.sum(wts * sig_mat, axis=0).flatten()
 
-        k_wts = np.exp(-1 * x_diff / 2)
-        m_wts = np.exp(-1 * m_diff / 2)
-        wts = (k_wts * m_wts) / np.sum(k_wts * m_wts, axis=1).values.reshape(-1, 1)
+        idx_m = unique_xs.T.repeat(NM, axis=0).flatten()
+        idx_x = unique_mats.repeat(NX, 0).flatten()
 
-
-
-
-
-
+        vols = pd.DataFrame(interp, columns=unique_dates)
+        vols.index = pd.MultiIndex.from_tuples(list(zip(idx_m, idx_x)), names=['x','t'])
+        vols.columns.names = ['date']
+        return vols.stack().reorder_levels([2, 0, 1]).to_frame('sig')
 
     def get_cross_sectional_spreads(self):
-        return self.sig_sq - self.sig_sq.get(0)[self.sig_sq.columns.get_level_values('T')].values
+        return self.sig_sq - self.sig_sq.get(0)[self.sig_sq.columns.get_level_values('t')].values
     def get_variance_spread(self, dates):
         return self.get_cross_sectional_spreads().loc[dates].reorder_levels([1, 0])
     def get_omega(self):
         return np.power(self.dsig, 2)
     def get_gamma(self):
         return self.dsig * self.dS.values
-
     def get_mu(self, maturity=None):
 
-        if not hasattr(self, '_mu'):
+        if not hasattr(self, '__mu'):
 
             Asq = self.atm_sig_sq
             Asq_tau = Asq * Asq.columns.to_numpy().reshape(1, -1)
@@ -173,18 +231,18 @@ class OptionAttributer(object):
             mu_[[Asq_tau.columns]] = np.nan
             mu = mu_.sort_index(axis=1).interpolate(axis=1)
             mu[mu.columns[0]] = mu_[mu_.columns[0]]
-            self._mu = mu.get(Asq.columns)
+            self.__mu = mu.get(Asq.columns)
 
-        return self._mu.get(maturity, self._mu.copy())
+        return self.__mu.get(maturity, self.__mu.copy())
 
     def get_realized_moments(self, rolling_window=None):
 
         # Get the volatility return
         mu_ = self.get_mu()
         mu_.columns = pd.MultiIndex.from_tuples(list(zip(['mu']*mu_.shape[1], mu_.columns)))
-        mu_.columns = FrameUtils.add_level(mu_.columns, 0, 'Z')
-        mu_.columns.names = ['measure', 'T', 'Z']
-        mu_ = mu_.reorder_levels(['measure', 'Z', 'T'], axis=1)
+        mu_.columns = FrameUtils.add_level(mu_.columns, 0, 'x')
+        mu_.columns.names = ['measure', 't', 'x']
+        mu_ = mu_.reorder_levels(['measure', 'x', 't'], axis=1)
 
         # Get Omega
         omega_ = self.get_omega()
@@ -209,7 +267,7 @@ class OptionAttributer(object):
         # Y is the change in implied vol oevr the next time step
         # Therefore these are prediction regressions over 1 day
 
-        mu = self.get_mu()
+        mu = self.get_mu().dropna()
         intercept = pd.DataFrame(np.ones(mu.shape[0]), columns=['constant'], index=mu.index)
 
         reg_stats = [pd.DataFrame()]
@@ -229,10 +287,10 @@ class OptionAttributer(object):
 
     def get_cross_sectional_fitted_moments(self):
         if not hasattr(self, '_fitted_moments'):
-            self._run_cross_sectional_spread_regressions()
+            self.run_cross_sectional_spread_regressions()
         return self._fitted_moments
 
-    def _run_cross_sectional_spread_regressions(self):
+    def run_cross_sectional_spread_regressions(self):
 
         # For each day, we compute the observed spread
         # of each IV to ATM and then regress this on
@@ -245,15 +303,17 @@ class OptionAttributer(object):
         S = self.get_cross_sectional_spreads()
         S = S.iloc[:, np.abs(S.columns.get_level_values(0)) <= 1]
 
-        z_p = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= 1]
-        z_m = self.z_minus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= 1]
+        idx_p = (np.abs(self.z_plus.columns.get_level_values(0)) <= 1) & (self.z_plus.columns.get_level_values(0) != 0)
+        idx_m = (np.abs(self.z_minus.columns.get_level_values(0)) <= 1) & (self.z_minus.columns.get_level_values(0) != 0)
+        z_p = self.z_plus.iloc[:, idx_p]
+        z_m = self.z_minus.iloc[:,idx_m]
 
         X = pd.concat((2 * z_p.unstack(), (z_p * z_m).unstack()), axis=1).sort_index(level='date')
         Y_prime = S.unstack().reindex(X.index).values
         X_prime = X.values
 
         all_dates = X.index.get_level_values('date')
-        all_mats = X.index.get_level_values('T')
+        all_mats = X.index.get_level_values('t')
 
         unique_dates = np.unique(all_dates)
         unique_mats = np.unique(all_mats)
@@ -286,6 +346,7 @@ class OptionAttributer(object):
         cov_mat = self.dsig[start_date:end_date].cov()
         L, V = np.linalg.eig(cov_mat)
         return pd.DataFrame(V, columns=L, index=self.dsig.columns).sort_index(axis=1, ascending=False)
+
     def bsdelta(self, F, K, r, t, st, sig, call_put=1):
         sv = sig * st
         d1 = (np.log(F / K) + 0.5 * sv ** 2) / sv
@@ -364,11 +425,14 @@ class OptionAttributer(object):
 
     def get_spot_paths(self):
         idx = self.get_strategy_paths()
-        spts = pd.DataFrame(100 * (self.spot.get('s').values[idx.values] /
-                self.spot.values[idx.values[:,0]]), index=self.get_strategy_open_dates())
+
+        spts = self.spot.values[idx.values].reshape(idx.shape[0], idx.shape[1])
+        _spts = pd.DataFrame(spts, index=self.get_strategy_open_dates())
+        norm = _spts / _spts[[0]].values
+
 
         strike_paths = self.get_strike_paths()
-        spts = spts.loc[strike_paths.index.get_level_values(0)]
+        spts = norm.loc[strike_paths.index.get_level_values(0)]
         spts.index = strike_paths.index
         return spts.copy()
 
@@ -381,7 +445,7 @@ class OptionAttributer(object):
     def get_time_to_maturity_paths(self):
         str_dates = self.get_strategy_dates()
         days_elapsed = (str_dates - str_dates.get(0).to_frame().values) / np.timedelta64(1, 'D')
-        tau = np.array(days_elapsed.index.get_level_values('T')).reshape(-1, 1) - (days_elapsed/self._DAYS_PER_YEAR)
+        tau = np.array(days_elapsed.index.get_level_values('t')).reshape(-1, 1) - (days_elapsed/self._DAYS_PER_YEAR)
         return tau.clip(lower=0)
 
     def get_vol_paths(self):
@@ -539,20 +603,20 @@ class OptionAttributer(object):
         return pnls_vega_weighted - atm_pnls.values
 
     def _get_2_z_plus(self):
-        tr_z = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
-        return 2 * tr_z.reshape(self.T, self.NM, int(tr_z.shape[1]/self.NM))
+        _locs = ((np.abs(self.X) <= self._TRUNCATE_SPREAD) & (self.X != 0)).values.any(axis=0)
+        tmp = (2 * self.z_plus.iloc[:,_locs]).sort_index(level='t', axis=1)
+        return tmp.values.reshape(self.T, self.NM, int(tmp.shape[1] / self.NM))
 
     def _get_z_plus_z_minus(self):
-        tr_zp = self.z_plus.iloc[:, np.abs(self.z_plus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
-        tr_zm = self.z_minus.iloc[:, np.abs(self.z_minus.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
-        return (tr_zp.reshape(self.T, self.NM, int(tr_zp.shape[1]/self.NM)) *
-                tr_zm.reshape(self.T, self.NM, int(tr_zm.shape[1]/self.NM)))
+        _locs = ((np.abs(self.X) <= self._TRUNCATE_SPREAD) & (self.X != 0)).values.any(axis=0)
+        tmp = (self.z_plus.iloc[:,_locs] * self.z_plus.iloc[:,_locs]).sort_index(level='t', axis=1)
+        return tmp.values.reshape(self.T, self.NM, int(tmp.shape[1] / self.NM))
 
     def _get_spreads(self):
         spds = self.get_cross_sectional_spreads()
-        spd = spds.iloc[:, np.abs(spds.columns.get_level_values(0)) <= self._TRUNCATE_SPREAD].values
-        return spd.reshape(self.T, self.NM, int(spd.shape[1] / self.NM))
-
+        _locs = ((np.abs(self.X) <= self._TRUNCATE_SPREAD) & (self.X != 0)).values.any(axis=0)
+        tmp = spds.iloc[:, _locs].sort_index(level='t', axis=1)
+        return tmp.values.reshape(self.T, self.NM, int(tmp.shape[1] / self.NM))
     def get_time_series_moments(self, moneyness=0):
 
         ts = self.get_realized_moments(self._HISTORICAL_ROLLING_PERIODS)
@@ -612,7 +676,9 @@ class OptionAttributer(object):
         spreads = self._get_spreads()
 
         atms = np.power(self.atm_sig.values, 2)
-        wings = self.unique_strikes[np.abs(self.unique_strikes) <= self._TRUNCATE_SPREAD]
+
+        idx_wings = (np.abs(self.unique_strikes) <= self._TRUNCATE_SPREAD) & (np.abs(self.unique_strikes) != 0)
+        wings = self.unique_strikes[idx_wings]
         weights = np.full((self.T-LL-T0+1, len(wings), self.NM, 2), np.nan)
 
         for j in tqdm(range(self.NM), desc="Processing"):
@@ -644,20 +710,16 @@ class OptionAttributer(object):
 
                 # Construct the weights from the signals
                 # get the ATM variance for risk
-                atm = atms[t, j]
-
                 # get the observed spread
-                obs_spread = spreads[t, j, :]
+                weights[t-T0+1, :, j, 0] = np.round((spreads[t, j, :] - pred_spread_ts) / atms[t, j], 4)
+                weights[t-T0+1, :, j, 1] = np.round((10/atms[t, j]) * (spreads[t, j, :]-pred_spread_cs), 4)
 
-                weights[t-T0+1, :, j, 0] = np.round((obs_spread - pred_spread_ts) / atm, 4)
-                weights[t-T0+1, :, j, 1] = np.round((10/atm) * (obs_spread-pred_spread_cs), 4)
-
-        rr = [pd.DataFrame(weights[:, :, x, 0], columns=list(zip(wings, len(wings)*[self.unique_maturities[0][x]]))) for x in range(weights.shape[2])]
+        rr = [pd.DataFrame(weights[:, :, x, 0], columns=list(zip(wings, len(wings)*[self.unique_maturities[x]]))) for x in range(weights.shape[2])]
         rr = pd.concat(rr, axis=1)
         rr.index = self.dates[np.arange(T0-1, self.T-LL)]
         rr.columns = pd.MultiIndex.from_tuples(rr.columns)
 
-        sa = [pd.DataFrame(weights[:, :, x, 1], columns=list(zip(wings, len(wings)*[self.unique_maturities[0][x]]))) for x in range(weights.shape[2])]
+        sa = [pd.DataFrame(weights[:, :, x, 1], columns=list(zip(wings, len(wings)*[self.unique_maturities[x]]))) for x in range(weights.shape[2])]
         sa = pd.concat(sa, axis=1)
         sa.index = self.dates[np.arange(T0 - 1, self.T - LL)]
         sa.columns = pd.MultiIndex.from_tuples(sa.columns)
@@ -787,6 +849,7 @@ class OptionAttributer(object):
 
 if __name__ == "__main__":
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
+    self.run_stat_arb_strategy()
 
     sa_pnls = self.run_stat_arb_strategy()
     sa_pnls_M = sa_pnls.droplevel(0, axis=1).sum(axis=0)

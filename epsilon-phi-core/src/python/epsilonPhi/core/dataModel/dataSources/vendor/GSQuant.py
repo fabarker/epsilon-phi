@@ -230,8 +230,8 @@ if __name__ == "__main__":
             con_pd.loc[id].reset_index(drop=False).set_index('date').to_csv(save_path)
 
 
-df = pd.read_csv('/Users/francisbarker/Desktop/SPX Normalized Vols.csv')
-df.date = pd.to_datetime(df.date, format='%d/%m/%Y')
+df = pd.read_csv('/Users/francisbarker/Desktop/SPX Vols by Moneyness.csv')
+df.date = pd.to_datetime(df.date)
 df = df.set_index('date', drop=True)
 
 spx = gsq.get_security('SPX')
@@ -243,7 +243,7 @@ prices = prices.resample('D').asfreq().ffill()
 prices = prices.loc[df.index].to_frame('spot')
 vols = pd.concat((df, prices), axis=1)
 
-df = vols.to_csv('/Users/francisbarker/Desktop/SPX Normalized Vols.csv')
+df = vols.to_csv('/Users/francisbarker/Desktop/SPX Vols by Moneyness.csv')
 
 
 
