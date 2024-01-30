@@ -22,7 +22,7 @@ class OptionAttributer(object):
     _STRATEGY_STARTING_WINDOW = 253 * 4
     _TRUNCATE_SPREAD = np.abs(1)
 
-    _Z_SCORES = np.arange(-3, 3.5, 0.5)
+    _Z_SCORES = np.arange(-2, 2.5, 0.5)
     _MATURITIES = [1/12, 2/12, 3/12, 6/12, 12/12]
 
     def __init__(self, start_date, end_date):
@@ -37,7 +37,8 @@ class OptionAttributer(object):
         _df = df_.set_index('date', drop=True)
         _df.index = pd.to_datetime(_df.index, format="%d/%m/%Y")
         _df = _df.rename(columns={'absoluteStrike':'k','impliedVolatility':'sig'})
-        _df['lnm'] = np.log(df_.get('relativeStrike')).values
+        _df = _df[_df.get('sig') > 0.01]
+        _df['lnm'] = np.log(_df.get('relativeStrike')).values
         _df['mn'] = np.exp(_df['lnm'])
 
         _s = _df['spot'].drop_duplicates(keep='first').resample('D').asfreq().ffill()
@@ -57,10 +58,10 @@ class OptionAttributer(object):
 
         nobs = _df.get('x').groupby('date').count()
 
-        sig_x = _df.get('x').groupby('date').std()
+        sig_x = _df.get('x').groupby('date').std(ddof=1)
         h_x = 1 * np.power(4 / 3, 1 / 5) * sig_x / np.power(nobs, 1 / 5)
 
-        sig_lm = _df.get('lnmat').groupby('date').std()
+        sig_lm = _df.get('lnmat').groupby('date').std(ddof=1)
         h_m = 2 * np.power(4 / 3, 1 / 5) * sig_lm / np.power(nobs, 1 / 5) * 0.1
 
         _df['h_m'] = h_m.loc[_df.index].values
@@ -95,7 +96,7 @@ class OptionAttributer(object):
         self.__zp = self.__sig * self.__x * self.__sqrt_t
         self.__lnm = self.__zp - 0.5 * self.__sig_sq * self.__t
         self.__nm = np.exp(self.__lnm)
-        self.__k = self.__spot.values  * self.__nm
+        self.__k = self.__spot.values * self.__nm
         self.__zm = self.__zp - self.__sig_sq * self.__t
         self.__ds = ivols.copy()
 
@@ -125,7 +126,7 @@ class OptionAttributer(object):
         return np.unique(self.__ds.index.get_level_values('t'))
     @property
     def maturities(self):
-        return pd.DataFrame(self.__t, index=self.dates, columns=self._sig.columns)
+        return pd.DataFrame(self.__t, index=self.dates, columns=self.__sig.columns)
     @property
     def log_moneyness(self):
         return self.__lnm.copy()
@@ -190,16 +191,16 @@ class OptionAttributer(object):
             m_diff = diff_mat / tmp.get('h_m').values[0]
             x_diff = diff_X / tmp.get('h_x').values[0]
 
-            x_wts = np.exp(-1 * x_diff / 2)
+            x_wts = np.exp(-1 * np.power(x_diff, 2) / 2)
             x_wts = np.repeat(x_wts[:, :, np.newaxis], unique_mats.size, axis=2)
 
-            m_wts = np.exp(-1 * m_diff / 2).reshape(m_diff.shape[0], 1, m_diff.shape[1])
+            m_wts = np.exp(-1 * np.power(m_diff, 2) / 2).reshape(m_diff.shape[0], 1, m_diff.shape[1])
             m_wts = m_wts.repeat(x_wts.shape[1], 1)
 
             wts = (x_wts * m_wts) / np.sum(x_wts * m_wts, axis=0)
             sig_mat = np.repeat(tmp.sig.values.reshape(-1, 1).repeat(wts.shape[1], 1)[:, :, np.newaxis], unique_mats.size, axis=2)
 
-            interp[:,t] = np.sum(wts * sig_mat, axis=0).flatten()
+            interp[:, t] = np.sum(wts * sig_mat, axis=0).flatten()
 
         idx_m = unique_xs.T.repeat(NM, axis=0).flatten()
         idx_x = unique_mats.repeat(NX, 0).flatten()
@@ -327,8 +328,8 @@ class OptionAttributer(object):
 
                 result = lsq_linear(X_prime[locs, :],
                                     Y_prime[locs],
-                                    bounds=(lower_bounds, upper_bounds),
-                                    verbose=0)
+                                    bounds=(lower_bounds, upper_bounds), lsmr_maxiter=None,
+                                    method='trf', lsq_solver=None, lsmr_tol=None, max_iter=200, tol=1e-8)
 
                 omega, gamma = result.x
                 e = Y_prime[locs] - X_prime[locs, :] @ result.x
@@ -388,7 +389,7 @@ class OptionAttributer(object):
         d2 = d1 - sv
         B = np.exp(-r * t)
 
-        prices = call_put * B * (F *  norm.cdf(call_put * d1) - K * norm.cdf(call_put * d2))
+        prices = call_put * B * (F * norm.cdf(call_put * d1) - K * norm.cdf(call_put * d2))
 
         # Replace expired options with their payoff
         locs = t == 0
@@ -434,7 +435,7 @@ class OptionAttributer(object):
         strike_paths = self.get_strike_paths()
         spts = norm.loc[strike_paths.index.get_level_values(0)]
         spts.index = strike_paths.index
-        return spts.copy()
+        return spts.copy() * 100
 
     def get_strike_paths(self):
         if not hasattr(self, '_strike_paths'):
@@ -849,7 +850,7 @@ class OptionAttributer(object):
 
 if __name__ == "__main__":
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    self.run_stat_arb_strategy()
+    pnl_opt = self.get_delta_hedged_single_option_strategy_pnl(-1, -1)
 
     sa_pnls = self.run_stat_arb_strategy()
     sa_pnls_M = sa_pnls.droplevel(0, axis=1).sum(axis=0)
