@@ -12,7 +12,6 @@ import time
 
 class OptionAttributer(object):
 
-    _DATA_PATH = '/Users/francisbarker/Desktop/SPX Options 1.csv'
     _DAYS_PER_YEAR = 365.25
 
     _STRATEGY_HOLDING_PERIODS = 21
@@ -523,6 +522,50 @@ class OptionAttributer(object):
     def get_delta_hedged_single_option_strategy_cumulative_pnl(self, put_call=-1, position=-1):
         return self.get_delta_hedged_single_option_strategy_pnl(put_call, position)
 
+    def run_delta_hedged_put_strategy(self, position=-1):
+        pnl_p = self.get_delta_hedged_single_option_strategy_pnl(put_call=-1, position=position).stack().to_frame('pnl') / 100
+        pnl_p.index.names = ['start', 't', 'x', 'days']
+        pnl_p['pricing_dates'] = (pnl_p.index.get_level_values('start') +
+                                  pd.to_timedelta(pnl_p.index.get_level_values('days'), unit='D'))
+
+        pnls = pnl_p.reset_index(drop=False).set_index(['pricing_dates', 'start', 't', 'x']).drop(columns=['days'])
+        pnls_ = pnls.unstack(level=[1, 2, 3])
+        d_PnL = pnls_.groupby(by=['t', 'x'], axis=1).mean()
+
+    def run_delta_hedged_call_strategy(self, position=-1):
+        return self.get_delta_hedged_single_option_strategy_pnl(put_call=1, position=position)
+
+    def run_delta_hedged_straddle_strategy(self, position=-1):
+
+        # Get delta hedged Put PnLs
+        pnl_p = self.get_delta_hedged_single_option_strategy_pnl(put_call=-1, position=1) / 100
+        idxs = pnl_p.index.get_level_values('x') == 0
+
+        # Get delta hedged Call PnLs
+        pnl_c = self.get_delta_hedged_single_option_strategy_pnl(put_call=1, position=1) / 100
+
+        pnl = (position * (pnl_p[idxs] + pnl_c[idxs])).stack().to_frame()
+        pnl.index.names = ['start','t','x','days']
+        pnl['pricing_dates'] = pnl.index.get_level_values('start') + pd.to_timedelta(pnl.index.get_level_values('days'), unit='D')
+        pnls = pnl.reset_index(drop=False).set_index(['pricing_dates', 'start', 't', 'x']).drop(columns=['days'])
+        pnls_ = pnls.unstack(level=[1, 2, 3])
+        d_PnL = pnls_.groupby(by=['t','x'], axis=1).mean()
+
+
+    def run_delta_hedged_strangle_strategy(self, put_call=-1, position=-1):
+        contracts = self.get_delta_hedged_single_option_strategy_pnl(put_call=put_call, position=position)
+        return contracts
+
+    def run_delta_hedged_butterfly_strategy(self, position=-1):
+        straddles = self.run_delta_hedged_straddle_strategy(position=1)
+        strangles = self.run_delta_hedged_strangle_strategy(position=position-1)
+        return straddles + strangles
+
+    def run_delta_hedged_risk_reversal_strategy(self, position):
+        puts = self.get_delta_hedged_single_option_strategy_pnl(put_call=-1, position=1)
+        calls = self.get_delta_hedged_single_option_strategy_pnl(put_call=1, position=1)
+        return position * (puts + calls)
+
     def run_spread_forecasting_regression(self):
 
         # For each day, predict the 1 month ahead realized covariance
@@ -610,7 +653,7 @@ class OptionAttributer(object):
 
     def _get_z_plus_z_minus(self):
         _locs = ((np.abs(self.X) <= self._TRUNCATE_SPREAD) & (self.X != 0)).values.any(axis=0)
-        tmp = (self.z_plus.iloc[:,_locs] * self.z_plus.iloc[:,_locs]).sort_index(level='t', axis=1)
+        tmp = (self.z_plus.iloc[:,_locs] * self.z_minus.iloc[:,_locs]).sort_index(level='t', axis=1)
         return tmp.values.reshape(self.T, self.NM, int(tmp.shape[1] / self.NM))
 
     def _get_spreads(self):
@@ -850,7 +893,28 @@ class OptionAttributer(object):
 
 if __name__ == "__main__":
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    pnl_opt = self.get_delta_hedged_single_option_strategy_pnl(-1, -1)
+
+    _pnls = self.run_stat_arb_strategy()
+    __pnls = _pnls.get(0).droplevel(0, axis=1).get(1 / 12)
+    rtns = __pnls.mean(axis=1)
+
+    put_spread_returns = self.get_short_put_spread_pnls()
+    put_pnls = put_spread_returns.stack().to_frame('pnl')
+    put_pnls.index.names = ['start','t','x','days']
+
+    put_pnls['pricing_dates'] = (put_pnls.index.get_level_values('start')
+                                 + pd.to_timedelta(put_pnls.index.get_level_values('days'), unit='D'))
+
+    pnls = put_pnls.reset_index(drop=False).set_index(['pricing_dates', 'start', 't', 'x']).drop(columns=['days'])
+    pnls = pnls.iloc[pnls.index.get_level_values(2) == (1/12)].unstack(level=[1, 2, 3]).get('pnl').droplevel(0, axis=1)
+    pnls = pnls.get(1/12)
+
+
+
+
+
+
+    pnl_opt = self.get_returns_table_for_strategy()
 
     sa_pnls = self.run_stat_arb_strategy()
     sa_pnls_M = sa_pnls.droplevel(0, axis=1).sum(axis=0)
