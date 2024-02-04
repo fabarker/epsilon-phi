@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import warnings
-from arch import arch_model
+#from arch import arch_model
 from sklearn import covariance
 from epsilonPhi.core.simulation.Bootstrap import TimeSeriesBootstrapper
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
@@ -474,10 +474,10 @@ class RiskFunctions:
 
         assert isinstance(prices.columns, pd.MultiIndex), \
             ('Error - dataframe must be multiindexed columns with level_0 asset name'
-             'and level_1 price quote type')
+             ' and level_1 price quote type')
 
         assert np.all(prices.fillna(0) >= 0), \
-            'Error - cannot estimate volatility with negative price series '
+            'Error - cannot estimate volatility with negative price series'
 
         n = len(prices)
         assets = list(set(prices.columns.get_level_values(0)))

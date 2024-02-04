@@ -2,6 +2,7 @@ import collections, re, six
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from typing import Union, Optional
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 
 class Offsets(object):
@@ -127,7 +128,7 @@ class DateUtils(object):
             return float(nYears)
 
     @staticmethod
-    def mat_to_Rdate(nYears: float) -> list:
+    def mat_to_Rdate(nYears: Optional[Union[float, np.array, list]]) -> list:
 
         if not DateUtils.is_iterable(nYears):
             nYears = [nYears]

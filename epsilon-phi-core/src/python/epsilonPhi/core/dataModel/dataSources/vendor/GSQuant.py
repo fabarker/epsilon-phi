@@ -171,6 +171,24 @@ if __name__ == "__main__":
     gsq = GSQuantManager()
     spx = gsq.get_security('SPX')
 
+    start = datetime.date(year=1980, month=1, day=1)
+    end = datetime.date.today()
+
+    O = spx.get_data_series(DataMeasure.ADJUSTED_OPEN_PRICE, frequency=DataFrequency.DAILY, start=start, end=end)
+    H = spx.get_data_series(DataMeasure.ADJUSTED_HIGH_PRICE, frequency=DataFrequency.DAILY, start=start, end=end)
+    L = spx.get_data_series(DataMeasure.ADJUSTED_LOW_PRICE, frequency=DataFrequency.DAILY, start=start, end=end)
+    C = spx.get_data_series(DataMeasure.ADJUSTED_CLOSE_PRICE, frequency=DataFrequency.DAILY, start=start, end=end)
+
+    dfs = (O.to_frame('open'),
+           H.to_frame('high'),
+           L.to_frame('low'),
+           C.to_frame('close'))
+
+    df = pd.concat(dfs, axis=1)
+
+    start = datetime.date(year=1999, month=1, day=1)
+    OHLC = spx.get_hloc_prices(start=start)
+
     strikes = np.array(range(40, 180, 5))
     tenors = ['2m']
 

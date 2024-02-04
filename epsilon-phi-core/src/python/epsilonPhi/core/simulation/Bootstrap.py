@@ -4,8 +4,10 @@ import pandas as pd
 
 class AbstractBootstrapper(object):
     _state = 5489
+    _R = np.random.RandomState(5489)
+
     def __init__(self):
-        self._R = np.random.RandomState(5489)
+        pass
 
     @staticmethod
     def stationary_block_bootstrap(T, N, q):
@@ -13,7 +15,7 @@ class AbstractBootstrapper(object):
         nRands = T * N
         R = np.random.RandomState(AbstractBootstrapper._state)
         blockLocations = R.choice(range(0, T), size=(nRands, 1), replace=True)
-        blockLengths = np.maximum(R.geometric(q, (nRands, 1)), T)
+        blockLengths = np.minimum(R.geometric(q, (nRands, 1)), T)
 
         block_locs_list = list()
         L = 0
@@ -35,6 +37,38 @@ class AbstractBootstrapper(object):
         del blockLocations
 
         return np.reshape(np.array(block_locs_list)[:nRands], (N, T)).T
+
+    @staticmethod
+    def random_generator(output_row, output_col, output_range, use_replacement=False):
+
+        low = 0
+        high = 0
+        if isinstance(output_range, range):
+            low = output_range[0]
+            high = len(output_range) + 1
+        elif isinstance(output_range, int):
+            high = output_range
+
+        return AbstractBootstrapper._R.choice(range(low, high), size=(output_row, output_col), replace=use_replacement)
+
+    @staticmethod
+    def block_bootstrap(T, N, q):
+
+        theta = np.zeros((T, N), dtype=int)
+        for strap in range(N):
+            t = 0
+            theta[t, strap] = AbstractBootstrapper.random_generator(1, 1, range(0, T-1))
+            while t < T-1:
+                t = t + 1
+                U = AbstractBootstrapper._R.random()
+                if U < q:
+                    theta[t, strap] = AbstractBootstrapper.random_generator(1, 1, range(0, T-1))
+                else:
+                    if theta[t-1, strap] + 1 > T-1:
+                        theta[t, strap] = 0
+                    else:
+                        theta[t, strap] = theta[t-1, strap] + 1
+        return theta
 
 
     def circular_bootstrap(self):

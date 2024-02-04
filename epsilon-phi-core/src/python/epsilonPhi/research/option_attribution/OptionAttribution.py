@@ -849,6 +849,20 @@ class OptionAttributer(object):
 
 
 if __name__ == "__main__":
+    
+    import pandas as pd
+    path = '/Users/francisbarker/Documents/MATLAB/Sim Vol Surface/Key Series.xlsx'
+    df = pd.read_excel(path, 'Key Series', index_col=0)
+
+    lvls = df[['DivYield','1w RFR','1m RFR','3m RFR','6m RFR', '9m RFR','12m RFR']].resample('D').asfreq().ffill()
+    rtns = df[['PriceReturns','TotalReturn']].resample('D').asfreq().fillna(0)
+    df_ = pd.concat((lvls, rtns), axis=1).resample('B').asfreq()
+
+    
+    
+    
+    
+    
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
     pnl_opt = self.get_delta_hedged_single_option_strategy_pnl(-1, -1)
 
