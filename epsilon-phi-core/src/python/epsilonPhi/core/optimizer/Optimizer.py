@@ -35,8 +35,7 @@ class ConstraintsParser(object):
                 pass
                # Do something
 
-
-class CVXOptimizer():
+class CVXOptimizer(object):
     def __init__(self):
         self._ws = None
 

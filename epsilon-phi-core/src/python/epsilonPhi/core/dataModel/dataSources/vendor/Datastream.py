@@ -346,11 +346,11 @@ class pyDatastreamFO(object):
 if __name__ == "__main__":
 
 
-    ticker = 'SPX03244160C'
-    fields = ['DZ','FV','GM','VL','OI','PA','PB','P','OX','TA','VG','VM']
+    ticker = ['CLGCS00', 'CTYCS20', 'CZNCS00']
+    fields = ['PS']
 
-    from_date = datetime.date(year=1969, month=12, day=31)
-    frame = pyDatastream.fetch([ticker], fields, from_date=from_date, frequency='D')
+    from_date = datetime.date(year=1984, month=3, day=23)
+    frame = pyDatastream.fetch(ticker, fields, from_date=from_date, frequency='D')
 
 
     from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg
