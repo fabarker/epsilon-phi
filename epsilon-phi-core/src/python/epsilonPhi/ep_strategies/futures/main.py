@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+from epsilonPhi.core.optimizer.riskBudgeting.allocation import EqualRiskContributionWithVolTargetandScores
 from abc import abstractmethod
 from scipy.optimize import minimize
 
@@ -534,7 +535,7 @@ class CStrategy(object):
         # 1. Get the normalized signals
         signals = self.get_signals_single_instrument(instrument_name)
 
-        # 2. Get the contract unit for the instrument we are tradung
+        # 2. Get the contract unit for the instrument we are trading
         _contract_unit = self.get_instrument_value_per_tick(instrument_name)
 
         # 3. Compute the vol multiplier - This ensures we are getting close to our annual vol target
@@ -652,6 +653,110 @@ class CStrategy(object):
         if iteration == total:
             print()
 
+    def get_asset_class_pnls(self):
+
+        pnls = self.get_signal_pnls()
+        cols = [(x.split(' ')[0], x) for x in pnls.columns]
+        pnls.columns = pd.MultiIndex.from_tuples(cols)
+        return pnls.T.groupby(level=0).mean().T
+
+    def get_asset_class_number_of_contracts(self):
+        pnls = self.get_asset_class_pnls()
+        pnl_c = self.get_instrument_contract_PnLs()
+        return (pnls / pnl_c.get(pnls.columns)).shift(-1)
+
+    def get_signal_number_of_contracts(self):
+
+        pnls = self.get_signal_pnls()
+
+        df_N = [pd.DataFrame()]
+        for col in pnls.columns:
+
+            sig_pnl = pnls.get(col)
+
+            instr_name = sig_pnl.name.split(' ')[0]
+            price_returns = self.get_instrument_returns(instr_name)
+            contract_unit = self.get_instrument_value_per_tick(instr_name)
+            df_N.extend([sig_pnl / (price_returns * contract_unit)])
+
+        N = pd.concat(df_N, axis=1)
+        N.columns = pnls.columns
+        return N.shift(-1)
+
+    def get_instrument_contract_PnL(self, instr_name):
+        return (self.get_instrument_returns(instr_name) *
+                self.get_instrument_value_per_tick(instr_name))
+
+    def get_instrument_contract_PnLs(self):
+
+        pnls = [pd.DataFrame()]
+        for i in instrument_list:
+            pnls.extend([self.get_instrument_contract_PnL(i)])
+        return pd.concat(pnls, axis=1)
+
+
+    def get_performance_attribution(self):
+        pass
+
+
+
+    def _optimize_strategy_equal_risk_contribution(self, rebalance_frequency='M', covar_lookback=1):
+
+        target_risk = self.get_equal_weighted_portfolio_returns().std(ddof=1) * np.sqrt(256)
+
+        returns = self._prices.pct_change()
+        covs = returns.ewm(min_periods=_DAYS_PER_YEAR, span=_DAYS_PER_YEAR * covar_lookback, ignore_na=True).cov() * _DAYS_PER_YEAR
+
+        unique_dates = covs.index.get_level_values(0).unique()
+        if rebalance_frequency == 'D':
+            rebalancing_dates = unique_dates
+        elif rebalance_frequency == 'W':
+            rebalancing_dates = unique_dates[unique_dates.dayofweek == 4];
+        elif rebalance_frequency == 'M':
+            yearMonths = unique_dates.month + unique_dates.year * 100
+            rebalancing_dates = [unique_dates[yearMonths == x].max() for x in np.unique(yearMonths)]
+        else:
+            rebalancing_dates = unique_dates
+
+        # Get Instrument Signals
+        signals = self.get_asset_class_number_of_contracts()
+        _signed_signals = np.sign(signals)
+
+
+        optWts = []
+        print('Optimizing Strategy....')
+        for date in rebalancing_dates:
+            idx = np.where(date == unique_dates)
+            self.print_progress_bar(idx[0][0] + 1, len(unique_dates))
+
+            try:
+                covmat = covs.loc[date].dropna(how='all', axis=0).dropna(how='all', axis=1)
+                score = _signed_signals.loc[date].iloc[_signed_signals.loc[date].values != 0].dropna()
+
+                common = np.intersect1d(covmat.columns, score.index)
+                cov_ = covmat.loc[common][common]
+                score_ = score.loc[common]
+
+                if covmat.size > 0:
+                    # Get the number of assets we have data for
+                    opt = EqualRiskContributionWithVolTargetandScores(cov_.values,
+                                                                      risk=target_risk.item(),
+                                                                      score=score_.values)
+                    opt.solve()
+                    optWts.append(pd.DataFrame(opt.x, index=covmat.index, columns=[date]).T)
+            except:
+                pass
+
+        self._optimal_weights = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
+        asset_pnls = self._capital * returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1)
+        ptf_pnls = np.sum(asset_pnls, axis=1).to_frame('PTF')
+        pnls = pd.concat((asset_pnls, ptf_pnls), axis=1)
+
+        cols = [(rebalance_frequency, covar_lookback, x) for x in pnls.columns]
+        pnls.columns = pd.MultiIndex.from_tuples(cols)
+        pnls.columns.names = ['freq','lookback','asset']
+        return pnls.copy()
+
     def _compute_optimal_weights(self):
 
         """
@@ -700,9 +805,9 @@ class CStrategy(object):
 
                 if covmat.size > 0:
                     # Get the number of assets we have data for
-                    opt = EqualRiskContributionWithVolTargetandScores(covmat.values,
+                    opt = EqualRiskContributionWithVolTargetandScores(cov_.values,
                                                                       risk=0.09,
-                                                                      score=score.values)
+                                                                      score=score_.values)
                     opt.solve()
                     optWts.append(pd.DataFrame(opt.x, index=covmat.index, columns=[date]).T)
             except:
@@ -757,7 +862,9 @@ if __name__ == "__main__":
 
     cum_pnl_single_instruments_crossover = ma_str.get_signal_cumulative_pnl()
     cum_pnl_equal_weighted_portfolio_crossover = ma_str.get_equal_weighted_portfolio_cumulative_pnl()
-    cum_pnl_covar_weighted_portfolio_crossover = ma_str.get_covariance_weighted_portfolio_cumulative_pnl()
+    self = ma_str
+
+    cum_pnl_covar_weighted_portfolio_crossover = ma_str._optimize_strategy_equal_risk_contribution(rebalance_frequency='D', covar_lookback=1)
 
     ############## Model 2 - Breakout Model ##############
 

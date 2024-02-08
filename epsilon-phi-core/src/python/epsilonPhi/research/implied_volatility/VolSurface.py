@@ -4,9 +4,13 @@ from epsilonPhi.core.simulation.Bootstrap import AbstractBootstrapper as strappe
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.utils.DateUtils import DateUtils
+from sklearn.linear_model import LinearRegression
 from scipy import stats
 
 _DATA_PATH = '/Users/francisbarker/Desktop/SPX Vols by Moneyness.csv'
+
+
+_KEY_SERIES = '/Users/francisbarker/Documents/MATLAB/Sim Vol Surface/Key Series.xlsx'
 gds = GlobalDataSource()
 
 
@@ -37,10 +41,15 @@ class VolSurface(object):
         self._q = 1/self._frequency.obs_per_year()
 
         # Surface Estimates
-        self._estimated = False
-        self._fits = {}
-        self._prin_comps = {}
-        self._coeffs = {}
+        self._var_estimated = False
+        self._var_fits = {}
+        self._var_prin_comps = {}
+        self._var_coeffs = {}
+
+        self._vol_estimated = False
+        self._vol_fits = {}
+        self._vol_prin_comps = {}
+        self._vol_coeffs = {}
 
         # Data
         self._ivols = None
@@ -83,6 +92,8 @@ class VolSurface(object):
 
     def load_data(self):
 
+        _series_df = pd.read_excel(_KEY_SERIES, index_col=0, sheet_name=None)
+
         # 1. Load ivol data
         df_ = pd.read_csv(_DATA_PATH, index_col=0)
         df_.index = pd.to_datetime(df_.index, format='%d/%m/%Y')
@@ -96,8 +107,9 @@ class VolSurface(object):
         self._moneyness = np.unique(self._ivols.columns.get_level_values('strike'))
 
         # 2. Load Underlier Data
-        self._spot = gds.get_dataframe_from_tickers(VolSurface._UNDERLIER).droplevel('ticker', axis=1)
-        self._spot = self._spot.resample('B').ffill()
+        self._spot = _series_df.get('Key Series')[['open','high','low','close','DivYield','PriceReturns','TotalReturns']]
+        self._spot = self._spot.rename(columns={'PriceReturns':'PI'})
+        self._spot = self._spot.rename(columns={'DivYield': 'DY'})
 
         # 3. Load Risk Free Rates
         T = DateUtils.mat_to_Rdate(self._maturities)
@@ -108,8 +120,51 @@ class VolSurface(object):
         rfrs.columns = DateUtils.Rdate_to_mat(rfrs.columns)
         self._rfr = rfrs.sort_index(axis=1).interpolate()
 
-        common_dates = np.intersect1d(pd.to_datetime(np.intersect1d(self._ivols.index, self._spot.index)), self._rfr.index)
-        self._dates = pd.date_range(min(common_dates), max(common_dates), freq=self._frequency.value)
+        common_dates = pd.to_datetime(np.intersect1d(self._ivols.index, self._spot.index))
+        M_Year = common_dates.year * 100 + common_dates.month
+        unique_MY = np.unique(M_Year)
+        self._dates = pd.to_datetime([ np.max(common_dates[M_Year == x]) for x in unique_MY ])
+
+    @staticmethod
+    def _simulate_atm_vol(mat):
+
+        # 1. Regress Implied ATM on Realized Vol
+        y = np.log(self.get_ATM(mat))
+        X = np.log(self.get_realized_vol(mat))
+        common_dates = np.intersect1d(y.index,
+                                      X.index)
+
+        T = len(common_dates)
+        N = self._nbstraps
+        y_hat = y.loc[common_dates].values.reshape(-1,1)
+        x_hat = X.loc[common_dates].values.reshape(-1,1)
+        reg = LinearRegression().fit(x_hat, y_hat)
+
+        dS = self.get_dS().dropna()
+        # 2. Bootstrap the realized variance and re-build ATM variances
+        idxs = strapper.stationary_block_bootstrap(T, N, 1/252)
+        _strapped = dS.values[idxs]
+        sig = pd.DataFrame(_strapped).rolling(window=21,
+                                              center=True,
+                                              min_periods=2).std() * np.sqrt(252)
+
+
+        sys = reg.intercept_.item() + np.log(sig.values) * reg.coef_.item()
+        idio = np.random.normal(size=(T, N)) * (np.std(y_hat) - np.std(sys))
+        sim = np.exp(sys + idio)
+
+    @staticmethod
+    def _extract_shocks(df_):
+
+        V = np.power(df_, 2)
+        Y = V.diff().dropna()
+        X = V.shift(1).dropna().values.reshape(-1, 1)
+
+        reg = LinearRegression().fit(X, Y)
+        shocks = Y - reg.predict(X)
+        kappa = -reg.coef_.item()
+        theta = reg.intercept_ / kappa
+        return kappa, theta, shocks
 
     def get_spot_price(self):
         return self._spot.get('PI')
@@ -118,51 +173,145 @@ class VolSurface(object):
         return self._rfr.get(maturity)
 
     def get_ivols(self, strike=None, maturity=None):
-        return self._ivols.get((strike, maturity), self._ivols).loc[self.dates]
+        idx = ((self._ivols.columns.get_level_values('strike') >= 0.7) &
+               (self._ivols.columns.get_level_values('strike') <= 1.3))
+        return self._ivols.iloc[:, idx].loc[self.dates]
 
     def get_dividend_yield(self):
         return self._spot.get('DY') / 100
 
+    def get_ATM(self, mat):
+        return self._ivols.reorder_levels([1, 0], axis=1).get(1).get(mat)
+
     def get_dS(self):
         return np.log(self.get_spot_price()).diff()
 
-    def get_dI(self):
-        return np.log(self.get_realized_vol()).diff()
+    def get_dI(self, mat):
+        return np.log(self.get_ATM(mat)).diff()
 
-    def get_dSdI(self):
-        return self.get_dS().reshape(-1, 1) * self.get_dI()
+    def get_dSdI(self, mat):
+        _ds = self.get_dS()
+        _dI = self.get_dI(mat)
 
-    def get_dIdI(self):
-        return np.power(self.get_dI(), 2)
+        _common_dates = np.intersect1d(_ds.index, _dI.index)
+        return _ds.loc[_common_dates] * _dI.loc[_common_dates]
+
+    def get_dIdI(self, mat):
+        return np.power(self.get_dI(mat), 2)
 
     def get_dSdS(self):
         return np.power(self.get_dS(), 2)
 
+    def get_moving_function(self, df, window, function, **kwargs):
+        return df.rolling(window, min_periods=2, center=True).apply(lambda x: function(x, **kwargs))
+
+    def get_trading_days_per_period(self, freq):
+        if isinstance(freq, str):
+            freq = DateUtils.Rdate_to_mat(freq)
+        return round(freq * self._TRADING_DAYS_PER_YEAR)
+
+    def get_realized_dSdI(self, mat):
+        dSdI = self.get_dSdI(mat)
+
+        _per_period = self.get_trading_days_per_period(mat)
+        res =  self.get_moving_function(dSdI, window=_per_period, function=np.mean) * self._TRADING_DAYS_PER_YEAR
+        return res.to_frame('dSdI')
+
+    def get_realized_dI(self, mat):
+        dI = self.get_dI(mat)
+
+        _per_period = self.get_trading_days_per_period(mat)
+        res = self.get_moving_function(dI, window=_per_period, function=np.mean) * self._TRADING_DAYS_PER_YEAR
+        return res.to_frame('dI')
+
+    def get_realized_dIdI(self, mat):
+        dIdI = self.get_dIdI(mat)
+
+        _per_period = self.get_trading_days_per_period(mat)
+        res = self.get_moving_function(dIdI, window=_per_period, function=np.sum)
+        res = res.to_frame('dIdI')
+        return self._TRADING_DAYS_PER_YEAR * (res / (_per_period - 1))
+
+    def get_realized_dSdS(self, mat):
+
+        dSdS = self.get_dSdS()
+
+        _per_period = self.get_trading_days_per_period(mat)
+        res = self.get_moving_function(dSdS, window=_per_period, function=np.sum)
+        res = res.to_frame('dSdS')
+        return self._TRADING_DAYS_PER_YEAR * (res / (_per_period-1))
+
     def get_realized_vol(self, mat):
-        vol = self._spot.get('PI').pct_change().rolling(round(mat*self._TRADING_DAYS_PER_YEAR), min_periods=1).std()
-        return vol.loc[self.dates] * np.sqrt(self._TRADING_DAYS_PER_YEAR)
+        ln_rtns = np.log(self._spot.get('PI')).diff()
+
+        _per_period = self.get_trading_days_per_period(mat)
+        sig = self.get_moving_function(ln_rtns, _per_period, np.std, ddof=1)
+        return sig * np.sqrt(self._TRADING_DAYS_PER_YEAR)
 
     def get_realized_moments(self, mat):
-        return self.get_realized_vol(mat)
+        if not hasattr(self, '_moments'):
+            _moments = (self.get_realized_dI(mat),
+                        self.get_realized_dSdS(mat),
+                        self.get_realized_dIdI(mat),
+                        self.get_realized_dSdI(mat))
+            self._moments = pd.concat(_moments, axis=1).dropna()
+        return self._moments.loc[self.dates]
 
     def get_principle_components(self, series):
-        L, V = np.linalg.eig(series.iloc[1:, :].cov())
-        loadings = pd.DataFrame(V, index=series.columns)
-        PCs = series @ loadings
-        PCs.columns = L
-        return PCs, loadings
+        L, coeff = np.linalg.eig(series.cov())
+
+        p, d = coeff.shape
+        maxind = np.argmax(np.abs(coeff), axis=0)
+        colsign = np.sign(coeff[maxind, np.arange(d)])
+        coeff = coeff * colsign
+
+        prin_comps = pd.DataFrame(series @ coeff)
+        prin_comps.columns = L
+        return prin_comps, pd.DataFrame(coeff, index=series.columns)
+
+    def get_estimated_var_surface(self, mat=None):
+        if self._var_estimated is False:
+           self.estimate_variance_surface()
+        return self._var_fits.get(mat, self._var_fits)
 
     def get_estimated_vol_surface(self, mat=None):
-        if self._estimated is False:
-           self.estimate_vol_surface()
-        return self._fits.get(mat, self._fits)
+        if self._vol_estimated is False:
+            self.estimate_vol_surface()
+        return self._vol_fits.get(mat, self._vol_fits)
+
+    def estimate_variance_surface(self):
+
+        for mat in self._maturities:
+
+            # Get Implied Vol Surface
+            ivars = np.power(self.get_ivols().loc[self.dates].get(mat), 2)
+
+            # Extract Principle Components
+            pcs, coeffs = self.get_principle_components(ivars)
+
+            # Get Realized Moments
+            rvars = self.get_realized_moments(mat=mat)
+
+            regs = list()
+            reg = {}
+            for t in range(coeffs.shape[1]):
+                tmp = LinearRegression().fit(rvars.values, pcs.iloc[:, t].values.reshape(-1, 1))
+                reg['beta'] = tmp.coef_
+                reg['alpha'] = tmp.intercept_
+                reg['sigma'] = np.std(pcs.iloc[:, t].values.reshape(-1, 1) - tmp.predict(rvars.values), ddof=1)
+                regs.extend([reg.copy()])
+
+            self._var_fits[mat] = regs
+            self._var_prin_comps[mat] = pcs.copy()
+            self._var_coeffs[mat] = coeffs.copy()
+
 
     def estimate_vol_surface(self):
 
         ivols = self.get_ivols().loc[self.dates]
         for mat in self._maturities:
             imp_vols = ivols.get(mat)
-            rvols = self.get_realized_moments(mat)
+            rvols = self.get_realized_vol(mat)
 
             log_ivols = np.log(imp_vols)
             log_rvols = np.log(rvols)
@@ -172,18 +321,21 @@ class VolSurface(object):
 
             regs = list()
             for t in range(coeffs.shape[1]):
-                reg = stats.linregress(pcs.iloc[:, t], log_rvols)
-                reg.sigma = np.std(log_rvols - reg.slope * pcs.iloc[:, t] + reg.intercept, ddof=1)
+                reg = stats.linregress(log_rvols, pcs.iloc[:, t])
+                res = pcs.iloc[:, t] - reg.slope * log_rvols - reg.intercept
+                reg.sigma = np.std(res, ddof=1)
                 regs.extend([reg])
 
-            self._fits[mat] = regs
-            self._prin_comps[mat] = pcs.copy()
-            self._coeffs[mat] = coeffs.copy()
+            self._vol_fits[mat] = regs
+            self._vol_prin_comps[mat] = pcs.copy()
+            self._vol_coeffs[mat] = coeffs.copy()
 
     def get_bootstrapped_underlier_moments(self, mat):
         idx = self.get_bootstrap_indicies()
-        realized_vol = self.get_realized_moments(mat)
-        return realized_vol.values[idx]
+        realized = self.get_realized_moments(mat)
+
+        strapped = np.stack([realized.values[idx, x] for x in range(realized.shape[1])], 2)
+        return strapped.transpose((0,2,1))
 
     def get_simulated_principle_components(self):
         for mat in self._maturities:
@@ -192,26 +344,27 @@ class VolSurface(object):
 
     def get_simulated_principle_components_single_maturity(self, mat):
 
-        vol_0 = self.get_realized_vol(mat).values[-1] * np.ones((1, self._nbstraps))
+        vol_0 = self.get_realized_moments(mat).values[-1,:].reshape(1, -1)
+        vol_0 = vol_0.repeat(self._nbstraps, 0).reshape((1, vol_0.size, self._nbstraps))
 
         sim_underlier_vol = self.get_bootstrapped_underlier_moments(mat)
-        log_underlier_vol = np.log(np.vstack((vol_0, sim_underlier_vol)))
-        VS = self.get_estimated_vol_surface(mat)
+        log_underlier_vol = np.vstack((vol_0, sim_underlier_vol))
+        VS = self.get_estimated_var_surface(mat)
 
         sim_pc = np.full((self._sim_horizon+1, self._nbstraps, self._NUMBER_OF_PCs), np.nan)
         for k in range(self._NUMBER_OF_PCs):
 
-            beta_0 = VS[k].intercept
-            beta_1 = VS[k].slope
-            sigma = VS[k].sigma
+            beta_0 = VS[k].get('alpha').item()
+            beta_1 = VS[k].get('beta')
+            sigma = VS[k].get('sigma')
 
             # We use the last value of the principle component to seed from
-            sim_pc[0, :, k] = self._prin_comps.get(mat).values[-1, k]
+            sim_pc[0, :, k] = self._var_prin_comps.get(mat).values[-1, k]
             # We simulate from the end to the begining to capture the relationship between impled and realized vol
-            sim_pc[-1, :, k] = sigma * np.random.normal(size=self._nbstraps) + beta_1 * log_underlier_vol[self._sim_horizon, :] + beta_0
-            for tm in range(1, self._sim_horizon):
+            sim_pc[-1, :, k] = sigma * np.random.normal(size=self._nbstraps) + beta_1 @ log_underlier_vol[self._sim_horizon, :, :] + beta_0
+            for tm in range(1, self._sim_horizon+1):
                 t = self._sim_horizon - tm + 1
-                sys_sim = beta_0 + beta_1 * log_underlier_vol[t, :]
+                sys_sim = beta_0 + beta_1 @ log_underlier_vol[t, :, :]
                 ido_sim = sigma * np.random.normal(size=self._nbstraps)
                 sim_pc[t, :, k] = sys_sim + ido_sim
         return sim_pc
@@ -227,14 +380,16 @@ class VolSurface(object):
     def get_simulated_ivols(self):
 
         princomps = self.get_simulated_principle_components()
+        _bootstrapped_VS = dict()
         for mat in princomps.keys():
 
             _cross_section = princomps.get(mat)
-            _coeffs = self._coeffs.get(mat)
+            _coeffs = self._var_coeffs.get(mat)
 
             IV = np.full((_coeffs.shape[0], _cross_section.shape[1], _cross_section.shape[0]), np.nan)
             for t in range(_cross_section.shape[0]):
-                IV[:, :, t] = np.exp(_coeffs.iloc[:, :self._NUMBER_OF_PCs] @ _cross_section[t, :, :].T).values
+                IV[:, :, t] = np.sqrt((_coeffs.iloc[:, :self._NUMBER_OF_PCs] @ _cross_section[t, :, :].T).values)
+
 
 
 
@@ -243,5 +398,6 @@ class VolSurface(object):
 if __name__ == "__main__":
 
         self = VolSurface()
+        self._simulate_atm_vol(self._maturities[0])
         vols = self.get_simulated_ivols()
 
