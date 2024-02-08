@@ -166,6 +166,22 @@ class DataHandler(object):
             return sig * np.sqrt(_DAYS_PER_YEAR)
         return sig
 
+    def get_contract_unit(self, instrument_name):
+        return _VALUE_OF_CONTRACT_PRICE_MOVE_.get(instrument_name)
+
+    def get_contract_units(self, instruments):
+        return np.array([self.get_contract_unit(x) for x in instruments])
+
+    def get_instrument_price_pnl(self, instrument_name):
+        return self.get_price_series(instrument_name).diff()
+
+    def get_instrument_contract_pnl(self, instrument_name):
+        return (self.get_instrument_price_pnl(instrument_name) *
+                self.get_contract_unit(instrument_name))
+
+    def get_instruments_contract_pnls(self):
+        return pd.concat([self.get_instrument_contract_pnl(x) for x in self.labels], axis=1)
+
 
 class CSignal(object):
 
@@ -705,13 +721,14 @@ class CStrategy(object):
         target_risk = self.get_equal_weighted_portfolio_returns().std(ddof=1) * np.sqrt(256)
 
         returns = self._prices.pct_change()
+        returns.loc['10-Jun-2020':'1-Jan-2022', 'NIKKEI'] = np.nan
         covs = returns.ewm(min_periods=_DAYS_PER_YEAR, span=_DAYS_PER_YEAR * covar_lookback, ignore_na=True).cov() * _DAYS_PER_YEAR
 
         unique_dates = covs.index.get_level_values(0).unique()
         if rebalance_frequency == 'D':
             rebalancing_dates = unique_dates
         elif rebalance_frequency == 'W':
-            rebalancing_dates = unique_dates[unique_dates.dayofweek == 4];
+            rebalancing_dates = unique_dates[unique_dates.dayofweek == 4]
         elif rebalance_frequency == 'M':
             yearMonths = unique_dates.month + unique_dates.year * 100
             rebalancing_dates = [unique_dates[yearMonths == x].max() for x in np.unique(yearMonths)]
@@ -721,6 +738,11 @@ class CStrategy(object):
         # Get Instrument Signals
         signals = self.get_asset_class_number_of_contracts()
         _signed_signals = np.sign(signals)
+
+        # DUE TO POTENITAL DATA ERRORS - POSITIONS IN NIKKEI ARE FORCED TO ZERO FOR THIS PERIOD
+        #if instrument_name == 'NIKKEI':
+        #    positions['10-Jun-2020':'1-Jan-2022'] = np.nan
+        #return positions.copy()
 
 
         optWts = []
@@ -743,80 +765,138 @@ class CStrategy(object):
                                                                       risk=target_risk.item(),
                                                                       score=score_.values)
                     opt.solve()
-                    optWts.append(pd.DataFrame(opt.x, index=covmat.index, columns=[date]).T)
+                    optWts.append(pd.DataFrame(opt.x, index=cov_.index, columns=[date]).T)
             except:
                 pass
 
         self._optimal_weights = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
-        asset_pnls = self._capital * returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1)
-        ptf_pnls = np.sum(asset_pnls, axis=1).to_frame('PTF')
-        pnls = pd.concat((asset_pnls, ptf_pnls), axis=1)
+        pnls = self._capital * returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1)
 
         cols = [(rebalance_frequency, covar_lookback, x) for x in pnls.columns]
         pnls.columns = pd.MultiIndex.from_tuples(cols)
         pnls.columns.names = ['freq','lookback','asset']
         return pnls.copy()
 
-    def _compute_optimal_weights(self):
+class Evaluator(object):
 
-        """
+    def __init__(self, strategy_pnls, benchmark_pnls, capital=100000):
 
-            Method for computing optimal portfolio weights
-            which seeks to minimize the difference between each
-            assets risk contribution and to average risk contribution across
-            all assets, subject to a volatility target constraint.
+        self._capital = capital
+        self._strategy_pnls = strategy_pnls[strategy_pnls.first_valid_index():]
+        self._benchmark_pnls = benchmark_pnls[benchmark_pnls.first_valid_index():]
+        self._ds = DataHandler.get_instance()
 
-         """
+        self._start_date = np.maximum(np.min(self._strategy_pnls.index), np.min(self._benchmark_pnls.index))
+        self._end_date = np.maximum(np.max(self._strategy_pnls.index), np.max(self._benchmark_pnls.index))
 
-        # Get the returns streams for each instrument/strategy
-        sig_returns = self.get_signal_returns()
-        returns = self._prices.pct_change()
+    def get_cumulative_pnls(self):
+        return pd.concat((self.get_strategy_cumulative_pnl(),
+                          self.get_benchmark_cumulative_pnl()), axis=1)
+    def get_strategy_instrument_pnl_contribution(self):
+        return self._strategy_pnls[self._start_date:self._end_date].fillna(0)
+    def get_benchmark_instrument_pnl_contribution(self):
+        return self._benchmark_pnls[self._start_date:self._end_date].T.groupby(level=0).sum().T
+    def get_strategy_pnl(self):
+        return self.get_strategy_instrument_pnl_contribution().sum(axis=1).to_frame('strategy')
+    def get_benchmark_pnl(self):
+        return self.get_benchmark_instrument_pnl_contribution().sum(axis=1).to_frame('benchmark')
+    def get_strategy_instrument_cumulative_pnl_contribution(self):
+        return self.get_strategy_instrument_pnl_contribution().cumsum(axis=0)
+    def get_benchmark_instrument_cumulative_pnl_contribution(self):
+        return self.get_benchmark_instrument_pnl_contribution().cumsum(axis=0)
+    def get_strategy_cumulative_pnl(self):
+        return self.get_strategy_pnl().cumsum(axis=0)
 
-        # Get Instrument Signals
-        signals = self.get_instrument_signals()
-        _signed_signals = np.sign(signals)
-        _signed_signals.columns = pd.MultiIndex.from_tuples(zip(signals.columns, [x.split(' ')[0] for x in signals.columns]))
-        _signed_S = np.sign(_signed_signals.T.groupby(level=1).sum().T)
+    def get_benchmark_cumulative_pnl(self):
+        return self.get_benchmark_pnl().cumsum(axis=0)
+    def get_strategy_instrument_return_contribution(self):
+        return self.get_strategy_instrument_pnl_contribution() / self._capital
+    def get_benchmark_instrument_return_contribution(self):
+        return self.get_benchmark_instrument_pnl_contribution() / self._capital
+    def get_strategy_instrument_attribution(self):
 
-        # Get the exponentially weighted covariance matrix of the returns streams
-        covs = returns.ewm(min_periods=_DAYS_PER_YEAR, span=_DAYS_PER_YEAR * 4, ignore_na=True).cov() * _DAYS_PER_YEAR
+        bmk = self.get_benchmark_instrument_cumulative_pnl_contribution()
+        str = self.get_strategy_instrument_cumulative_pnl_contribution()
 
-        from epsilonPhi.core.optimizer.riskBudgeting.allocation import EqualRiskContributionWithVolTargetandScores
+        unique_dates = bmk.index.append(str.index).unique()
 
-        # Extract Month Ends
-        unique_dates = covs.index.get_level_values(0).unique()
-        yearMonths = unique_dates.month + unique_dates.year * 100
-        MEnds = [unique_dates[yearMonths == x].max() for x in np.unique(yearMonths)]
+        bmk_ = bmk.reindex(unique_dates).ffill()
+        str_ = str.reindex(unique_dates).ffill()
+        return str_ - bmk_.get(str_.columns)
 
-        optWts = []
+    def get_strategy_performance_attribution(self):
+        return self.get_strategy_instrument_attribution().sum(axis=1)
 
-        print('Optimizing Strategy....')
-        for date in unique_dates:
-            idx = np.where(date == unique_dates)
-            self.print_progress_bar(idx[0][0] + 1, len(unique_dates))
+    def get_strategy_returns(self):
+        return self.get_strategy_pnl() / self._capital
 
-            try:
-                covmat = covs.loc[date].dropna(how='all', axis=0).dropna(how='all', axis=1)
-                score = _signed_S.loc[date].iloc[_signed_S.loc[date].values != 0].dropna()
+    def get_benchmark_returns(self):
+        return self.get_benchmark_pnl() / self._capital
 
-                common = np.intersect1d(covmat.columns, score.index)
-                cov_ = covmat.loc[common][common]
-                score_ = score.loc[common]
+    def get_instrument_contract_pnl(self, instr_name):
+        return self._ds.get_instrument_contract_pnl(instr_name)
 
-                if covmat.size > 0:
-                    # Get the number of assets we have data for
-                    opt = EqualRiskContributionWithVolTargetandScores(cov_.values,
-                                                                      risk=0.09,
-                                                                      score=score_.values)
-                    opt.solve()
-                    optWts.append(pd.DataFrame(opt.x, index=covmat.index, columns=[date]).T)
-            except:
-                pass
+    def get_strategy_instrument_number_of_contracts(self):
+        pos_pnl = self.get_strategy_instrument_pnl_contribution()
+        con_pnls = self._ds.get_instruments_contract_pnls().get(pos_pnl.columns).reindex(pos_pnl.index)
+        return (pos_pnl / con_pnls.values).shift(-1).dropna(how='all')
 
-        self._optimal_weights = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
+    def get_benchmark_instrument_number_of_contracts(self):
+        pos_pnl = self.get_benchmark_instrument_pnl_contribution()
+        con_pnls = self._ds.get_instruments_contract_pnls().get(pos_pnl.columns).reindex(pos_pnl.index)
+        return (pos_pnl / con_pnls.values).shift(-1).dropna(how='all')
 
-        raw_rtns = np.sum(returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1), axis=1)
-        pnl = raw_rtns.replace(0, np.nan) * self._capital
+    def get_strategy_instrument_position_value(self):
+        prices = self._ds._df.copy()
+        return (prices *
+                self.get_strategy_instrument_number_of_contracts().get(prices.columns) *
+                self._ds.get_contract_units(prices.columns))
+
+    def get_benchmark_instrument_position_value(self):
+        prices = self._ds._df.copy()
+        return (prices *
+                self.get_benchmark_instrument_number_of_contracts().get(prices.columns) *
+                self._ds.get_contract_units(prices.columns))
+
+    def get_strategy_effective_weights(self):
+        return self.get_strategy_instrument_position_value() / self._capital
+
+    def get_benchmark_effective_weights(self):
+        return self.get_benchmark_instrument_position_value() / self._capital
+
+    @staticmethod
+    def run_risk_decomposition(_df, period=256):
+        covs = _df.rolling(period).cov()
+
+        frames = [pd.DataFrame()]
+        for d in covs.index.unique(level=0):
+
+            tmp = covs.loc[d].dropna(how='all', axis=0).dropna(how='all', axis=1)
+            N, _ = tmp.shape
+
+            sig_sq = np.ones(N) @ tmp @ np.ones(N)
+            sig = np.sqrt(np.ones(N) @ tmp @ np.ones(N)) * np.sqrt(256)
+            cont = (sig * ((tmp.dot(np.ones(tmp.shape[0])) * np.ones(tmp.shape[0])) / sig_sq)).to_frame(d)
+            frames.extend([cont])
+        return pd.concat(frames, axis=1).T
+
+    def get_benchmark_volatility_decomposition(self, period=256):
+        rtns = self.get_benchmark_instrument_return_contribution()
+        return Evaluator.run_risk_decomposition(rtns, period)
+
+    def get_strategy_volatility_decomposition(self, period=256):
+        rtns = self.get_strategy_instrument_return_contribution()
+        return Evaluator.run_risk_decomposition(rtns, period)
+
+    def get_benchmark_risk_decomposition(self, period=256):
+        rtns = self.get_benchmark_instrument_return_contribution()
+        vol = Evaluator.run_risk_decomposition(rtns, period)
+        return vol / vol.sum(axis=1).values.reshape(-1, 1)
+
+    def get_strategy_risk_decomposition(self, period=256):
+        rtns = self.get_strategy_instrument_return_contribution()
+        vol = Evaluator.run_risk_decomposition(rtns, period)
+        return vol / vol.sum(axis=1).values.reshape(-1, 1)
 
 
 if __name__ == "__main__":
@@ -857,83 +937,38 @@ if __name__ == "__main__":
     # 1d. Add this signal class to the strategy object
     ma_str.add_signal_to_strategy(ma_signal)
 
-    # 1e. Get strategy and single instrument performance measures
-    returns_single_signals_instruments_crossover = ma_str.get_signal_returns()
+    benchmark_pnls = ma_str.get_signal_pnls()
+    cols = [(x.split(' ')[0], x) for x in benchmark_pnls.columns]
+    benchmark_pnls.columns = pd.MultiIndex.from_tuples(cols)
+    benchmark_pnls.columns.names = ['instrument', 'signal']
 
-    cum_pnl_single_instruments_crossover = ma_str.get_signal_cumulative_pnl()
-    cum_pnl_equal_weighted_portfolio_crossover = ma_str.get_equal_weighted_portfolio_cumulative_pnl()
-    self = ma_str
+    N = benchmark_pnls.shape[1] - benchmark_pnls.isna().sum(axis=1)
+    benchmark_pnls_contribution = (benchmark_pnls / N.values.reshape(-1, 1))
 
-    cum_pnl_covar_weighted_portfolio_crossover = ma_str._optimize_strategy_equal_risk_contribution(rebalance_frequency='D', covar_lookback=1)
+    strategy_pnls = ma_str._optimize_strategy_equal_risk_contribution(rebalance_frequency='D', covar_lookback=1)
+    strategy_pnls = strategy_pnls.droplevel([0, 1], axis=1)
+    strategy_pnls.columns.names = ['instrument']
 
-    ############## Model 2 - Breakout Model ##############
+    #################
 
-    # 2a. Instantiate a Moving Average Signal Class
-    breakout_signal = BreakoutSignal()
+    self = Evaluator(strategy_pnls, benchmark_pnls_contribution)
 
-    # 2b. Populate the class paramters using the signal set method, which supports any number of EWMC signals
-    breakout_signal.set_single_breakout_signal_params(lookback=16, cap_lower=-20, cap_upper=20)
-    breakout_signal.set_single_breakout_signal_params(lookback=64, cap_lower=-20, cap_upper=20)
-    breakout_signal.set_single_breakout_signal_params(lookback=256, cap_lower=-20, cap_upper=20)
+    # 1. Get Cumulative PnLs
+    cum_pnls = self.get_strategy_cumulative_pnl()
 
-    # 2c. Instantiate Strategy Class
-    bo_str = CStrategy(instrument_list=instrument_list,
-                       base_currency=base_currency,
-                       capital=capital,
-                       target_annual_vol=target_annualized_percentage_volatility)
+    # 2. Get Relative PnLs
+    rel_pnls = self.get_strategy_performance_attribution()
 
-    # 2d. Add this signal class to the strategy object
-    bo_str.add_signal_to_strategy(breakout_signal)
+    # 3. Asset Class Attribution
+    rel_pnl_inst = self.get_strategy_instrument_attribution()
 
-    # 2e. Get strategy and single instrument performance measures
-    returns_single_signals_instruments_breakout = bo_str.get_signal_returns()
+    #4. Get Number of Contracts
+    bmk_contracts = self.get_benchmark_instrument_number_of_contracts()
+    str_contracts = self.get_strategy_instrument_number_of_contracts()
 
-    cum_pnl_single_instruments_breakout = bo_str.get_signal_cumulative_pnl()
-    cum_pnl_equal_weighted_portfolio_breakout = bo_str.get_equal_weighted_portfolio_cumulative_pnl()
-    cum_pnl_covar_weighted_portfolio_breakout = bo_str.get_covariance_weighted_portfolio_cumulative_pnl()
-
-    ############## Compare Strategy Performance ##############
-
-    import matplotlib.pyplot as plt
-
-    # Plot the Portfolio Cumulative PnLs for all Portfolios
-    fig, axs = plt.subplots(3, 2, figsize=(20, 20))
-    plt.tight_layout(pad=20)
-
-    cum_pnl_equal_weighted_portfolio_crossover.plot(ax=axs[0, 0], title='Portfolio Cumulative PnLs')
-    cum_pnl_equal_weighted_portfolio_breakout.plot(ax=axs[0, 0])
-    cum_pnl_covar_weighted_portfolio_crossover.plot(ax=axs[0, 0])
-    cum_pnl_covar_weighted_portfolio_breakout.plot(ax=axs[0, 0])
-    handles, labels = axs[0, 0].get_legend_handles_labels()
-    axs[0, 0].legend(handles, ['Equal Weighted: Moving Average', 'Equal Weighted: Breakout','Covariance Weighted: Moving Average','Covariance Weighted: Breakout'])
-
-    # Plot the Cumulative PnLs for each sub-signal moving average
-    cum_pnl_single_instruments_breakout.plot(ax=axs[1, 0], title='Single Instrument/Signal Pair Cumulative PnLs: Breakout')
-    axs[1, 0].legend().set_draggable(True)
-
-    # Plot the cumulative PnLs for each sub-signal breakout
-    cum_pnl_single_instruments_crossover.plot(ax=axs[2, 0], title='Single Instrument/Signal Pair Cumulative PnLs: Moving Average')
-    axs[2, 0].legend().set_draggable(True)
-
-    # Plot the Sharpe Ratios
-    ma_ew_ptf_srs = (np.sqrt(256) * ma_str.get_equal_weighted_portfolio_returns().mean() / ma_str.get_equal_weighted_portfolio_returns().std())
-    ma_cw_ptf_srs = (np.sqrt(256) * ma_str.get_covariance_weighted_portfolio_returns().mean() / ma_str.get_covariance_weighted_portfolio_returns().std())
-    bo_ew_ptf_srs = (np.sqrt(256) * bo_str.get_equal_weighted_portfolio_returns().mean() / bo_str.get_equal_weighted_portfolio_returns().std())
-    bo_cw_ptf_srs = (np.sqrt(256) * bo_str.get_covariance_weighted_portfolio_returns().mean() / bo_str.get_covariance_weighted_portfolio_returns().std())
-
-    combined_srs = pd.concat([ma_ew_ptf_srs, ma_cw_ptf_srs, bo_ew_ptf_srs, bo_cw_ptf_srs])
-    combined_srs.index = ['Equal Weighted:MA', 'Covariance Weighted:MA', 'Equal Weighted: Breakout', 'Covariance Weighted: Breakout']
-    combined_srs.plot(kind='bar', x=combined_srs.index, y=combined_srs.values, ax=axs[0, 1], title='Annualized Sharpe Ratios: Portfolios')
-
-    sr_bo = np.sqrt(256) * (returns_single_signals_instruments_breakout.mean(
-            axis=0) / returns_single_signals_instruments_breakout.std(axis=0))
-    sr_bo.plot(kind='bar', x=sr_bo.index, y=sr_bo.values, ax=axs[1, 1], title='Annualized Sharpe Ratios: Breakout')
-
-    sr_ma = np.sqrt(256) * (returns_single_signals_instruments_crossover.mean(
-        axis=0) / returns_single_signals_instruments_crossover.std(axis=0))
-    sr_bo.plot(kind='bar', x=sr_bo.index, y=sr_bo.values, ax=axs[2, 1], title='Annualized Sharpe Ratios: Moving Average')
-
-
+    #5. Risk Decomposition
+    str_risk_decomp = self.get_strategy_risk_decomposition()
+    bmk_risk_decomp = self.get_benchmark_risk_decomposition()
 
 
 
