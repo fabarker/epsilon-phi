@@ -1,9 +1,15 @@
 import pandas as pd
 import numpy as np
 import os
-from epsilonPhi.core.optimizer.riskBudgeting.allocation import EqualRiskContributionWithVolTargetandScores
+from epsilonPhi.core.optimizer.riskBudgeting.allocation import EqualRiskContributionWithVolTargetandScores, RiskBudgetWithERandVolTarget
+from sklearn.svm import SVR
+from sklearn.preprocessing import StandardScaler
 from abc import abstractmethod
+import statsmodels.api as sm
+from numba import jit
+import scipy.stats as sps
 from scipy.optimize import minimize
+import math
 
 __author__ = 'francis barker'
 __date__ = '13/12/2023'
@@ -181,6 +187,57 @@ class DataHandler(object):
 
     def get_instruments_contract_pnls(self):
         return pd.concat([self.get_instrument_contract_pnl(x) for x in self.labels], axis=1)
+
+    @staticmethod
+    @jit('float64(float64[:])', nopython=True)
+    def hurst_exponent(log_returns):
+
+        log_returns = log_returns.flatten()
+        n = log_returns.shape[0]
+        N = np.floor(np.log(n) / np.log(2))
+
+        X = np.arange(2, N+1)
+        Y = np.empty(X.shape[0])
+        for p_idx, p in enumerate(X):
+
+            m = int(2**p)
+            s = int(2**(N-p))
+            rs_array = np.empty(s)
+            for i in range(s):
+                tmp = log_returns[i*m:(i+1)*m]
+                mu = np.mean(tmp)
+                deviate = np.cumsum(tmp-mu)
+                diff_d = np.max(deviate) - np.min(deviate)
+                sig = np.std(tmp)
+                scaled_rng = diff_d / sig if sig != 0 else 0
+                rs_array[i] = scaled_rng
+            Y[p_idx] = np.log2(np.mean(rs_array))
+
+        X_prime = np.vstack((np.ones(X.shape[0]), X)).T
+        XtX = np.dot(X_prime.T, X_prime)
+        XtY = np.dot(X_prime.T, Y)
+        beta = np.linalg.solve(XtX, XtY)
+
+        #residuals = Y - np.dot(X_prime, beta)
+        #degrees_of_freedom = X_prime.shape[0] - X_prime.shape[1]
+        #sigma_squared = np.dot(residuals.T, residuals) / degrees_of_freedom
+
+        # Calculate covariance matrix of the coefficients
+        #cov_matrix = sigma_squared * np.linalg.inv(XtX)
+
+        # Standard error of the coefficients is the square root of the diagonal of the covariance matrix
+        #tstat = (beta - 0.5) / np.sqrt(np.diag(cov_matrix))
+        return beta[1]
+
+    def get_contract_hurst_exponent(self, instrument, start_date=None, end_date=None):
+        prices = self.get_price_series(instrument).loc[start_date:end_date]
+        logRtns = np.log(prices).diff().replace(0, np.nan).dropna()
+        return DataHandler.hurst_exponent(logRtns.values.flatten())
+
+    def get_contract_rolling_hurst_exponent(self, instrument, window=256):
+        logRtns = np.log(self.get_price_series(instrument)).diff().dropna()
+        return logRtns.rolling(window=window).apply(lambda x: DataHandler.hurst_exponent(x.values))
+
 
 
 class CSignal(object):
@@ -573,6 +630,44 @@ class CStrategy(object):
             positions['10-Jun-2020':'1-Jan-2022'] = np.nan
         return positions.copy()
 
+    @staticmethod
+    def fast_linear_regressor_forecaster(y, X):
+        pass
+
+    def get_instrument_expected_return(self, instrument, horizon=21):
+
+        signals = self.get_signals_single_instrument(instrument).dropna(how='all')
+        prices = self.get_instrument_prices(instrument)
+        returns = prices.pct_change(horizon)
+
+        y = returns.loc[signals.index].shift(-horizon).dropna()
+        X = signals.loc[y.index]
+
+        scalar = StandardScaler()
+        _svr = SVR()
+
+        _all_dates = X.index
+        _forecast_dates = _all_dates[22:]
+        N = len(_forecast_dates)
+
+        y_np = y.values
+        X_np = X.values
+        rtns = np.ones((N,)) * np.nan
+
+        for i in range(22, N):
+            self.print_progress_bar(i, N)
+
+            y_prime = y_np[max(0, i-5*253):i-1]
+            x_prime = X_np[max(0, i-5*253):i, :]
+            x_prime = scalar.fit_transform(x_prime[:,~np.any(np.isnan(x_prime), axis=0)])
+
+
+            _fit = _svr.fit(x_prime[:-1, :], y_prime)
+            rtns[i] = _fit.predict(x_prime[-1, :].reshape(1, -1))
+
+        return pd.DataFrame(rtns, columns=[instrument], index=_forecast_dates)
+
+
     def get_instrument_signals(self):
         pnl_df = []
         for instrument in self.instrument_list:
@@ -678,7 +773,7 @@ class CStrategy(object):
 
     def get_asset_class_number_of_contracts(self):
         pnls = self.get_asset_class_pnls()
-        pnl_c = self.get_instrument_contract_PnLs()
+        pnl_c = self._ds.get_instruments_contract_pnls()
         return (pnls / pnl_c.get(pnls.columns)).shift(-1)
 
     def get_signal_number_of_contracts(self):
@@ -699,24 +794,75 @@ class CStrategy(object):
         N.columns = pnls.columns
         return N.shift(-1)
 
-    def get_instrument_contract_PnL(self, instr_name):
-        return (self.get_instrument_returns(instr_name) *
-                self.get_instrument_value_per_tick(instr_name))
+    def get_asset_class_expected_returns(self):
+        rt_df = []
+        for x in self.instrument_list:
+            tmp = self.get_instrument_expected_return(x, horizon=2*21)
+            rt_df.append(tmp)
+        return pd.concat(rt_df, axis=1)
 
-    def get_instrument_contract_PnLs(self):
+    def optimize_strategy_equal_risk_with_return_estimates(self, rebalance_frequency='D', covar_lookback=1):
 
-        pnls = [pd.DataFrame()]
-        for i in instrument_list:
-            pnls.extend([self.get_instrument_contract_PnL(i)])
-        return pd.concat(pnls, axis=1)
+        target_risk = self.get_equal_weighted_portfolio_returns().std(ddof=1) * np.sqrt(256)
+
+        returns = self._prices.pct_change()
+        returns.loc['10-Jun-2020':'1-Jan-2022', 'NIKKEI'] = np.nan
+        covs = returns.ewm(min_periods=_DAYS_PER_YEAR, span=_DAYS_PER_YEAR * covar_lookback, ignore_na=True).cov() * _DAYS_PER_YEAR
+
+        unique_dates = covs.index.get_level_values(0).unique()
+        if rebalance_frequency == 'D':
+            rebalancing_dates = unique_dates
+        elif rebalance_frequency == 'W':
+            rebalancing_dates = unique_dates[unique_dates.dayofweek == 4]
+        elif rebalance_frequency == 'M':
+            yearMonths = unique_dates.month + unique_dates.year * 100
+            rebalancing_dates = [unique_dates[yearMonths == x].max() for x in np.unique(yearMonths)]
+        else:
+            rebalancing_dates = unique_dates
+
+        # Get Instrument Signals
+        signals = self.get_asset_class_expected_returns()
+
+        # DUE TO POTENITAL DATA ERRORS - POSITIONS IN NIKKEI ARE FORCED TO ZERO FOR THIS PERIOD
+        #if instrument_name == 'NIKKEI':
+        #    positions['10-Jun-2020':'1-Jan-2022'] = np.nan
+        #return positions.copy()
 
 
-    def get_performance_attribution(self):
-        pass
+        optWts = []
+        print('Optimizing Strategy....')
+        for date in rebalancing_dates:
+            idx = np.where(date == unique_dates)
+            self.print_progress_bar(idx[0][0] + 1, len(unique_dates))
+
+            try:
+                covmat = covs.loc[date].dropna(how='all', axis=0).dropna(how='all', axis=1)
+                score = signals.loc[date].iloc[signals.loc[date].values != 0].dropna()
+
+                common = np.intersect1d(covmat.columns, score.index)
+                cov_ = covmat.loc[common][common]
+                score_ = score.loc[common]
+
+                if covmat.size > 0:
+                    # Get the number of assets we have data for
+                    opt = RiskBudgetWithERandVolTarget(cov_.values,
+                                                       risk=target_risk.item(),
+                                                       pi=score_.values)
+                    opt.solve()
+                    optWts.append(pd.DataFrame(opt.x, index=cov_.index, columns=[date]).T)
+            except:
+                pass
+
+        self._optimal_weights = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
+        pnls = self._capital * returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1)
+
+        cols = [(x, 'strategy') for x in pnls.columns]
+        pnls.columns = pd.MultiIndex.from_tuples(cols)
+        pnls.columns.names = ['instrument', 'strategy']
+        return pnls.copy()
 
 
-
-    def _optimize_strategy_equal_risk_contribution(self, rebalance_frequency='M', covar_lookback=1):
+    def _optimize_strategy_equal_risk_contribution(self, rebalance_frequency='D', covar_lookback=1):
 
         target_risk = self.get_equal_weighted_portfolio_returns().std(ddof=1) * np.sqrt(256)
 
@@ -772,17 +918,63 @@ class CStrategy(object):
         self._optimal_weights = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
         pnls = self._capital * returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1)
 
-        cols = [(rebalance_frequency, covar_lookback, x) for x in pnls.columns]
+        cols = [(x, 'strategy') for x in pnls.columns]
         pnls.columns = pd.MultiIndex.from_tuples(cols)
-        pnls.columns.names = ['freq','lookback','asset']
+        pnls.columns.names = ['instrument', 'strategy']
         return pnls.copy()
+
+    def get_benchmark_pnl_contributions(self):
+        benchmark_pnls = self.get_signal_pnls()
+        cols = [(x.split(' ')[0], x, 'benchmark') for x in benchmark_pnls.columns]
+        benchmark_pnls.columns = pd.MultiIndex.from_tuples(cols)
+        benchmark_pnls.columns.names = ['instrument', 'signal', 'strategy']
+
+        N = benchmark_pnls.shape[1] - benchmark_pnls.isna().sum(axis=1)
+        return (benchmark_pnls / N.values.reshape(-1, 1))
+
+    def get_strategy_pnl_contributions(self):
+        #return self._optimize_strategy_equal_risk_contribution()
+        return self.optimize_strategy_equal_risk_with_return_estimates()
+
+    @staticmethod
+    def get_moving_average_strategy():
+
+        instrument_list = ['US10', 'EDOLLAR', 'SP500', 'WHEAT', 'JPY', 'LEANHOG', 'NIKKEI', 'BITCOIN', 'GOLD', 'COPPER']
+        ma_signal = MovingAverageSignal()
+
+        ma_signal.set_single_moving_average_signal_params(fast=4, slow=16, cap_lower=-20, cap_upper=20)
+        ma_signal.set_single_moving_average_signal_params(fast=16, slow=64, cap_lower=-20, cap_upper=20)
+        ma_signal.set_single_moving_average_signal_params(fast=64, slow=256, cap_lower=-20, cap_upper=20)
+        str = CStrategy(instrument_list=instrument_list,
+                        base_currency='USD',
+                        capital=100000,
+                        target_annual_vol=0.2)
+        str.add_signal_to_strategy(ma_signal)
+        return str
+
+    @staticmethod
+    def get_breakout_strategy():
+
+        instrument_list = ['US10', 'EDOLLAR', 'SP500', 'WHEAT', 'JPY', 'LEANHOG', 'NIKKEI', 'BITCOIN', 'GOLD', 'COPPER']
+        breakout_signal = BreakoutSignal()
+        breakout_signal.set_single_breakout_signal_params(lookback=16, cap_lower=-20, cap_upper=20)
+        breakout_signal.set_single_breakout_signal_params(lookback=64, cap_lower=-20, cap_upper=20)
+        breakout_signal.set_single_breakout_signal_params(lookback=256, cap_lower=-20, cap_upper=20)
+
+        # 2c. Instantiate Strategy Class
+        bo_str = CStrategy(instrument_list=instrument_list,
+                           base_currency='USD',
+                           capital=100000,
+                           target_annual_vol=0.2)
+        bo_str.add_signal_to_strategy(breakout_signal)
+        return bo_str
 
 class Evaluator(object):
 
     def __init__(self, strategy_pnls, benchmark_pnls, capital=100000):
 
         self._capital = capital
-        self._strategy_pnls = strategy_pnls[strategy_pnls.first_valid_index():]
+        self._strategy_pnls = strategy_pnls[strategy_pnls.first_valid_index():].droplevel('strategy', axis=1)
         self._benchmark_pnls = benchmark_pnls[benchmark_pnls.first_valid_index():]
         self._ds = DataHandler.get_instance()
 
@@ -813,6 +1005,18 @@ class Evaluator(object):
         return self.get_strategy_instrument_pnl_contribution() / self._capital
     def get_benchmark_instrument_return_contribution(self):
         return self.get_benchmark_instrument_pnl_contribution() / self._capital
+
+    def get_strategy_instrument_pnl_attribution(self):
+
+        bmk = self.get_benchmark_instrument_pnl_contribution()
+        str = self.get_strategy_instrument_pnl_contribution()
+
+        unique_dates = bmk.index.append(str.index).unique()
+
+        bmk_ = bmk.reindex(unique_dates).ffill()
+        str_ = str.reindex(unique_dates).ffill()
+        return str_ - bmk_.get(str_.columns)
+
     def get_strategy_instrument_attribution(self):
 
         bmk = self.get_benchmark_instrument_cumulative_pnl_contribution()
@@ -866,7 +1070,7 @@ class Evaluator(object):
 
     @staticmethod
     def run_risk_decomposition(_df, period=256):
-        covs = _df.rolling(period).cov()
+        covs = _df.ewm(min_periods=period, span=period, ignore_na=True).cov()
 
         frames = [pd.DataFrame()]
         for d in covs.index.unique(level=0):
@@ -898,10 +1102,47 @@ class Evaluator(object):
         vol = Evaluator.run_risk_decomposition(rtns, period)
         return vol / vol.sum(axis=1).values.reshape(-1, 1)
 
+    def get_single_instrument_number_of_contrcts(self, instr_name):
+        bmk = self.get_benchmark_instrument_number_of_contracts()
+        str = self.get_strategy_instrument_number_of_contracts()
+        cols = (str.get(instr_name).to_frame((instr_name, 'str')),
+                bmk.get(instr_name).to_frame((instr_name, 'bmk')))
+        return pd.concat(cols, axis=1)
+
+    def get_signal_distribution(self, strategy):
+
+        dist = [strategy.get_signals_single_instrument(x).dropna().mean(axis=1).to_frame(x).describe()
+                for x in strategy.instrument_list]
+        return pd.concat(dist, axis=1)
+
+    def get_average_instrument_exposure_in_signal_buckets(self, strategy, instrument):
+
+        # Benchmark Number of Contracts
+        _pnls = self.get_instrument_contract_pnl(instrument).replace(0, np.nan).dropna()
+        _rtns = np.log(self._ds.get_price_series(instrument)).diff().dropna()
+        bmk = self.get_benchmark_instrument_number_of_contracts().get(instrument).dropna()
+        str = self.get_strategy_instrument_number_of_contracts().get(instrument).dropna()
+
+        common_dates = np.intersect1d(np.intersect1d(bmk.index, str.index), _pnls.index)
+
+        _sigs = strategy.get_signals_single_instrument(instrument).mean(axis=1).dropna().to_frame('sig').loc[common_dates]
+
+        _sigs['q'] = pd.qcut(_sigs.values.flatten(), 5, labels=False)
+        _sigs['bmk'] = bmk.loc[common_dates].values
+        _sigs['str'] = str.loc[common_dates].values
+        _sigs['pnl'] = _pnls.loc[common_dates].values
+        _sigs['return_contribution'] = _sigs['pnl'] / strategy._capital
+        _sigs['ds'] = _rtns.loc[common_dates].values * 252
+        _sigs = _sigs.reset_index(drop=False).set_index(['dates','q'])
+
+        t = _sigs.groupby(level='q').mean()
+        t['vol'] = _sigs.get('ds').divide(252).groupby(level='q').std(ddof=1) * np.sqrt(252)
+        t['return_contribution_vol'] = _sigs.get('return_contribution').groupby(level='q').std(ddof=1) * np.sqrt(252)
+        return t.copy()
+
 
 if __name__ == "__main__":
 
-    
     # Define the path to the spreadsheet
     path = r'/Users/francisbarker/Desktop/Trend Following'
     workbook_name = 'Keridion Candidate Project Data.xlsx'
@@ -910,65 +1151,116 @@ if __name__ == "__main__":
     # Instantiate the data handler, inputs are the path to the sheet containing instrument data
     handler = DataHandler(fullfile_path, sheet_name='Data')
 
-    # Define the instrument list - which represents tradable instruments
-    instrument_list = ['US10', 'EDOLLAR', 'SP500', 'WHEAT', 'JPY', 'LEANHOG', 'NIKKEI', 'BITCOIN', 'GOLD', 'COPPER']
+    ##
 
-    # Define some other parameters for the strategy
-    base_currency = 'USD'  # USD currently the only supported currency
-    capital = 100000  # In base currency units
-    target_annualized_percentage_volatility = 0.2  # Volatility we will target
+    ma_str = CStrategy.get_moving_average_strategy()
+    ma_str_pnls = ma_str.get_strategy_pnl_contributions()
+    ma_bmk_pnls = ma_str.get_benchmark_pnl_contributions()
 
-    ############## Model 1 - Moving Average Model ##############
 
-    # 1a. Instantiate a Moving Average Signal Class
-    ma_signal = MovingAverageSignal()
-
-    # 1b. Populate the class paramters using the signal set method, which supports any number of EWMC signals
-    ma_signal.set_single_moving_average_signal_params(fast=4, slow=16, cap_lower=-20, cap_upper=20)
-    ma_signal.set_single_moving_average_signal_params(fast=16, slow=64, cap_lower=-20, cap_upper=20)
-    ma_signal.set_single_moving_average_signal_params(fast=64, slow=256, cap_lower=-20, cap_upper=20)
-
-    # 1c. Instantiate Strategy Class
-    ma_str = CStrategy(instrument_list=instrument_list,
-                       base_currency=base_currency,
-                       capital=capital,
-                       target_annual_vol=target_annualized_percentage_volatility)
-
-    # 1d. Add this signal class to the strategy object
-    ma_str.add_signal_to_strategy(ma_signal)
-
-    benchmark_pnls = ma_str.get_signal_pnls()
-    cols = [(x.split(' ')[0], x) for x in benchmark_pnls.columns]
-    benchmark_pnls.columns = pd.MultiIndex.from_tuples(cols)
-    benchmark_pnls.columns.names = ['instrument', 'signal']
-
-    N = benchmark_pnls.shape[1] - benchmark_pnls.isna().sum(axis=1)
-    benchmark_pnls_contribution = (benchmark_pnls / N.values.reshape(-1, 1))
-
-    strategy_pnls = ma_str._optimize_strategy_equal_risk_contribution(rebalance_frequency='D', covar_lookback=1)
-    strategy_pnls = strategy_pnls.droplevel([0, 1], axis=1)
-    strategy_pnls.columns.names = ['instrument']
+    bo_str = CStrategy.get_breakout_strategy()
+    bo_str_pnls = bo_str.get_strategy_pnl_contributions()
+    bo_bmk_pnls = bo_str.get_benchmark_pnl_contributions()
 
     #################
 
-    self = Evaluator(strategy_pnls, benchmark_pnls_contribution)
+    ma = Evaluator(ma_str_pnls, ma_bmk_pnls)
+    bo = Evaluator(bo_str_pnls, bo_bmk_pnls)
+
+    # 0. Exposure Analysis
+    E_MA = ma.get_average_instrument_exposure_in_signal_buckets(ma_str, 'EDOLLAR')
+    L_MA = ma.get_average_instrument_exposure_in_signal_buckets(ma_str, 'LEANHOG')
+    J_MA = ma.get_average_instrument_exposure_in_signal_buckets(ma_str, 'JPY')
+
+    E_BO = ma.get_average_instrument_exposure_in_signal_buckets(bo_str, 'EDOLLAR')
+    L_BO = ma.get_average_instrument_exposure_in_signal_buckets(bo_str, 'LEANHOG')
+    J_BO = ma.get_average_instrument_exposure_in_signal_buckets(bo_str, 'JPY')
 
     # 1. Get Cumulative PnLs
-    cum_pnls = self.get_strategy_cumulative_pnl()
+    ma_perf_att = ma.get_strategy_performance_attribution().to_frame('Moving Average')
+    bo_perf_att = bo.get_strategy_performance_attribution().to_frame('Breakout')
 
     # 2. Get Relative PnLs
-    rel_pnls = self.get_strategy_performance_attribution()
+    risk_decomp_ma_str = ma.get_strategy_volatility_decomposition(period=252*1)
+    risk_decomp_ma_bmk = ma.get_benchmark_volatility_decomposition(period=252 * 1)
 
     # 3. Asset Class Attribution
-    rel_pnl_inst = self.get_strategy_instrument_attribution()
+    rel_pnl_inst = ma.get_strategy_instrument_attribution()
 
-    #4. Get Number of Contracts
-    bmk_contracts = self.get_benchmark_instrument_number_of_contracts()
-    str_contracts = self.get_strategy_instrument_number_of_contracts()
+    # 4. Get Number of Contracts
+    bmk_contracts = ma.get_benchmark_instrument_number_of_contracts()
+    str_contracts = ma.get_strategy_instrument_number_of_contracts()
 
-    #5. Risk Decomposition
-    str_risk_decomp = self.get_strategy_risk_decomposition()
-    bmk_risk_decomp = self.get_benchmark_risk_decomposition()
+    # 5. Vol of Vol and Kurtosis Analysis for JPY
+    prices = handler.get_price_series('JPY')
+
+    rtns = np.log(prices).diff().dropna()
+    _dates = rtns.index
+
+    sig = rtns.rolling(window=21).std(ddof=1).dropna() * np.sqrt(252)
+    rtns['sig'] = sig.reindex(_dates)
+
+    sigsig = np.power(np.log(sig).diff(), 2).dropna()
+    rtns['sigsig'] = sigsig.reindex(_dates)
+
+    volofvol = np.log(sig).diff().rolling(window=21).std().dropna() * np.sqrt(252)
+    rtns['volofvol'] = volofvol.reindex(_dates)
+
+    _rtns = rtns.dropna()
+
+    qs = pd.DataFrame()
+    for col in _rtns.columns:
+
+        bmk_tmp = ma.get_benchmark_instrument_pnl_contribution().get('JPY').to_frame('bmk')
+        str_tmp = ma.get_strategy_instrument_pnl_contribution().get('JPY').to_frame('str')
+        tmp_pnls = pd.concat((str_tmp, bmk_tmp), axis=1)
+
+        _tmp = _rtns.get(col).reindex(bmk_tmp.index)
+        q = pd.DataFrame(pd.qcut(_tmp.values.flatten(), 5, labels=False), index=_tmp.index, columns=[col])
+
+        tmp_pnls[col] = _tmp.values.flatten()
+        tmp_pnls.index = q.values.flatten()
+        tmp_pnls.index.names = ['q']
+
+        tmp_t = tmp_pnls.groupby('q').mean()
+        tmp_t.columns = pd.MultiIndex.from_tuples([ (x, col) for x in tmp_t.columns ])
+        qs = pd.concat((qs, tmp_t), axis=1)
+
+    # Vol of Vol for all instruments
+    ins_rtns = np.log(handler._df).diff()
+    inst_sig = ins_rtns.rolling(window=21).std() * np.sqrt(21)
+    inst_sigsig = np.log(inst_sig).diff().rolling(window=21).std().dropna(how='all') * np.sqrt(252)
+    sigsig_vec = inst_sigsig.stack().reset_index().set_index(['dates','level_1'])
+    sigsig_vec.index.names = ['dates', 'instrument']
+    sigsig_vec.columns = ['Vol of Vol']
+
+
+    # Get Relative PnL for all instruments
+    pnl_attribution = ma.get_strategy_instrument_pnl_attribution()
+    pnl_attribution = pnl_attribution.replace(0, np.nan)
+    pnls = pnl_attribution.fillna(0).rolling(window=21).mean().dropna(how='all').replace(0, np.nan)
+    pnl_vec = pnls.stack().reset_index().set_index(['dates','instrument'])
+    pnl_vec.index.names = ['dates', 'instrument']
+    pnl_vec.columns = ['PnL']
+
+    vec = pd.concat((sigsig_vec, pnl_vec), axis=1).dropna()
+
+    qtiles = pd.qcut(vec.values[:,0], 5, labels=False)
+    vec_q = vec.copy()
+    vec_q['q'] = qtiles
+    vec_q.reset_index(drop=True).set_index('q').groupby('q').mean()
+
+
+    # Measure the degree of trendiness
+    H = handler.get_contract_rolling_hurst_exponent('JPY', window=256).dropna()
+    YR = np.log(handler.get_price_series('JPY')).diff().dropna().rolling(window=256).sum().dropna()
+
+    OYR = pnl_attribution.get('JPY').fillna(0).rolling(window=256).mean()
+
+
+
+
+
 
 
 

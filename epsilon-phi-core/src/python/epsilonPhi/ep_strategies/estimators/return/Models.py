@@ -89,7 +89,7 @@ class Predictor(object):
         elif self._model_type == PREDICTOR_TYPE.BAGGING_CLASSIFICATION:
             self._model = BaggingClassifier(**self._kwargs)
         elif self._model_type == PREDICTOR_TYPE.NAIVE_BAYES_CLASSIFIER:
-            self._model =  GaussianNB(**self._kwargs)
+            self._model = GaussianNB(**self._kwargs)
         elif self._model_type == PREDICTOR_TYPE.XGBOOST_CLASSIFIER:
             self._model = xgb.XGBClassifier(**self._kwargs)
         else:
@@ -161,22 +161,6 @@ if __name__ == "__main__":
     from epsilonPhi.core.dataModel.dataSources.futures.Futures import Futures
     from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
     from epsilonPhi.ep_strategies.futures.signals.BaseSignals import SignalFactory
-
-    gds = GlobalDataSource()
-
-    future = Futures()
-    prices = future.get_futures_continuous_series_settlement_price('BEJ')
-    price_rx = prices.get_returns()
-
-    emac_4_16 = SignalFactory.univariate_signal.exponential_moving_average_crossover(prices, fast=4, slow=16)
-    emac_16_32 = SignalFactory.univariate_signal.exponential_moving_average_crossover(prices, fast=16, slow=32)
-    emac_32_250 = SignalFactory.univariate_signal.exponential_moving_average_crossover(prices, fast=32, slow=250)
-    signals = SignalFactory.multivariate_signal(emac_4_16,
-                                                emac_16_32,
-                                                emac_32_250)
-
-    emac_4_16.get_normalized_signal()
-
 
     common_dates = np.intersect1d(price_rx.dates, factor.index)
     X = factor.loc[common_dates]

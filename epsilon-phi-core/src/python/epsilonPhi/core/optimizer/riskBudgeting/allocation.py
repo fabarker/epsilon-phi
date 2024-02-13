@@ -384,6 +384,39 @@ class ConstrainedRiskBudgeting(RiskBudgetingWithER):
 
         return tools.to_array(RC)
 
+class RiskBudgetWithERandVolTarget(RiskBudgetingWithER):
+
+    def __init__(self, cov, risk=None, pi=None, c=1, budgets=None):
+        RiskBudgetingWithER.__init__(self, cov, budgets=budgets, pi=pi, c=c)
+        self._risk = risk
+
+    def get_scores(self):
+        return np.sign(np.array(self.pi))
+
+    def get_score_matrix(self):
+
+        if self.pi is None:
+            return np.divide(self.cov, self.cov)
+
+        _scores = self.get_scores()
+        return np.multiply(_scores.repeat(len(_scores), 1), _scores.T.repeat(len(_scores), 0))
+
+    def get_signed_covariance(self):
+        _std_devs = np.sqrt(np.diag(self.cov))
+        _corrs = self.cov / np.outer(_std_devs, _std_devs)
+        _sgn_corr = np.multiply(_corrs, self.get_score_matrix())
+        return np.multiply(_sgn_corr, np.outer(_std_devs, _std_devs))
+
+    def solve(self):
+
+        _sgn_cov = self.get_signed_covariance()
+        x = solve_rb_ccd(cov=_sgn_cov, budgets=self.budgets, pi=np.abs(self.pi), c=self.c)
+        _x = tools.to_array(x / x.sum())
+        _x = _x * self._risk / np.sqrt(_x @ _sgn_cov @ _x)
+        self._x = _x * self.get_scores().flatten()
+        self.lambda_star = -self.get_expected_return() + self.get_volatility() * self.c
+
+
 class EqualRiskContributionWithRiskTarget(EqualRiskContribution):
 
     def __init__(self, cov, risk):
@@ -407,6 +440,8 @@ class EqualRiskContributionWithRiskTarget(EqualRiskContribution):
         _x = tools.to_array(x / x.sum())
         self._x = _x * self._risk / np.sqrt(_x @ self.cov @ _x)
         self.lambda_star = self.get_volatility()
+
+
 
 class EqualRiskContributionWithVolTargetandScores(EqualRiskContributionWithRiskTarget):
 
@@ -445,23 +480,19 @@ class EqualRiskContributionWithVolTargetandScores(EqualRiskContributionWithRiskT
 if __name__ == "__main__":
 
     import pandas as pd
-    from epsilonPhi.core.dataModel.dataSources.futures.Futures import Futures
-    ds = Futures()
+    import os
+    from epsilonPhi.ep_strategies.futures.main import DataHandler
 
-    insturments = ['','']
-    score = np.array([1, 1, 1, 1, 1, 1, -1, 1])
+    path = r'/Users/francisbarker/Desktop/Trend Following'
+    workbook_name = 'Keridion Candidate Project Data.xlsx'
+    fullfile_path = os.path.join(path, workbook_name)
 
-    prices = pd.DataFrame()
-    for i in insturments:
-        res = ds.get_front_futures_continuous_series_settlement_price(i)
-        prices = pd.concat((prices, res), axis=1)
-
-    rtns = prices.dropna().pct_change().dropna()
+    # Instantiate the data handler, inputs are the path to the sheet containing instrument data
+    handler = DataHandler(fullfile_path, sheet_name='Data')
 
     # 1. Get Covariance Matrix -
-    cov = rtns.cov()
+    rtns = np.log(handler._df).diff().dropna()
+    covann = rtns.cov() * 252
+    rtnann = rtns.mean().values*252
+    rtnann[0] = rtnann[0] - 0.08
 
-
-    ERC = EqualRiskContributionWithVolTargetandScores(cov, 0.2/np.sqrt(252), score)
-    ERC.solve()
-    wts = ERC.x
