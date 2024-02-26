@@ -350,6 +350,18 @@ class HedgeFundIndex(TimeSeries):
 # ############### Implied Volatility ################
 
 @auto_repr
+class ImpliedVolatilitySpec(Base):
+    __tablename__ = 'implied_volatility_spec'
+
+    security = Column(String(100), primary_key=True, nullable=False, index=True)
+    category = Column(String(100), nullable=False, index=True)
+    region = Column(String(100), nullable=False, index=True)
+    currency = Column(String(3), nullable=False, index=True)
+    name = Column(String(100), nullable=False, index=True)
+    ticker = Column(String(100), nullable=False, index=True)
+
+
+@auto_repr
 class ImpliedVolatility(TimeSeries):
     __tablename__ = 'implied_volatility'
 

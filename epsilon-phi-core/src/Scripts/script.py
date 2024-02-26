@@ -1,5 +1,4 @@
-from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
-from epsilonPhi.ep_strategies.fx.factor import Factor, Signals, PriceQuote
+from epsilonPhi.ep_strategies.fx.linear.factor import Factor, Signals, PriceQuote
 from epsilonPhi.core.reporting import quantstats as report
 import datetime as dt
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency

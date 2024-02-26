@@ -1,5 +1,5 @@
 from epsilonPhi.core.env.Env import DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DRIVER, DB_DATABASE_NAME
-from sqlalchemy import create_engine, exists
+from sqlalchemy import create_engine, exists, distinct
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
@@ -266,6 +266,11 @@ class SessionMgr(object):
 
         return self.query_format_df(q)
 
+    def get_interest_rate_maturities_for_region(self, region):
+        q = self.getSessionFactory().query(distinct(InterestRateSpec.maturity)).filter(InterestRateSpec.region.in_([region])).all()
+        if len(q) > 0:
+            return [x[0] for x in q]
+
     def get_interest_rate_tickers_from_region(self, region, maturity=None, type=None):
 
         q = self.getSessionFactory().query(InterestRateSpec.uid,
@@ -341,6 +346,8 @@ if __name__ == "__main__":
 
     sessionMgr = SessionMgr()
     session = sessionMgr.getSessionFactory()
+
+    sessionMgr.get_interest_rate_maturities_for_region('United States')
 
     from sqlalchemy import create_engine, Table, MetaData, Column, Float
 

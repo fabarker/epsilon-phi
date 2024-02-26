@@ -8,7 +8,7 @@ from epsilonPhi.core.dataModel.enums.Database import PriceQuote
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.utils.DateUtils import DateUtils
-from epsilonPhi.ep_strategies.fx.signals import Signals
+from epsilonPhi.ep_strategies.fx.linear.signals import Signals
 import numpy as np
 
 

@@ -4,6 +4,7 @@ from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
+from epsilonPhi.core.dataModel.dataSources.futures.Futures import Futures
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
 from epsilonPhi.core.utils.TimeSeriesUtils import TimeSeriesUtils
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
@@ -138,6 +139,10 @@ class GlobalDataSource(object):
         from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
         return CRiskFreeRate.get_interest_rates_for_region(region, maturities)
 
+    def get_interest_rate_curve_for_region(self, region):
+        from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
+        return CRiskFreeRate.get_interest_rate_curve_from_region(region)
+
     def get_consumer_price_index_for_region(self, region):
 
         df_ = self._session_mgr.get_consumer_price_index_tickers_from_region(region)
@@ -191,9 +196,8 @@ class GlobalDataSource(object):
             fac_ts = pd.concat((fac_ts, df_), axis=1)
         return fac_ts.copy()
 
-    def get_futures_continuous_series(self, futures_code):
-        pass
-
+    def get_front_futures_continuous_series_settlement_price(self, futures_code):
+        return Futures().get_front_futures_continuous_series_settlement_price(futures_code)
 
     # Methods associated with querying datastream
     def get_time_series_data_from_datastream(self,

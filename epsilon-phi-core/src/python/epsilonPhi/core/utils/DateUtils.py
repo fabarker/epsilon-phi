@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import Union, Optional
+from numba import jit
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 
 class Offsets(object):
@@ -83,14 +84,14 @@ class DateUtils(object):
     def Rdate_to_mat(Rdate):
 
         if not DateUtils.is_iterable(Rdate):
-            matStrs = [Rdate.lower()]
+            matStrs = [Rdate]
         else:
-            matStrs = [x.lower() for x in Rdate]
+            matStrs = Rdate
 
         T = len(matStrs)
         nYears = np.array(["Nan"] * T, dtype=float)
         for i in range(T):
-            matStr = matStrs[i]
+            matStr = matStrs[i].lower()
 
             if re.search("st", matStr):
                 matStr = '1d'

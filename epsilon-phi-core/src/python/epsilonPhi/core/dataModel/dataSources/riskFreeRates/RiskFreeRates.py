@@ -98,6 +98,22 @@ class CRiskFreeRate(object):
         else:
             raise ValueError('Currency {} not supported'.format(currency))
 
+    @staticmethod
+    def get_interest_rate_curve_from_region(region, type=None):
+        _mats = CRiskFreeRate._sessionMgr.get_interest_rate_maturities_for_region(region)
+        rates = CRiskFreeRate.get_interest_rates_for_region(region, _mats)
+
+        if type is not None:
+            _cols = np.isin(rates.columns.get_level_values(3), type)
+            rates = rates.iloc[:, _cols].dropna(how='all', axis=1)
+
+        _rates = rates.T.groupby(level=2).mean().T
+
+        mats = DateUtils.Rdate_to_mat(_rates.columns)
+        cols = list(zip(mats, _rates.columns))
+        _rates.columns = pd.MultiIndex.from_tuples(cols)
+        _rates.columns.names = ['maturity', 'tenor']
+        return _rates.sort_index(axis=1, level=0).dropna(how='all', axis=1)
 
 class MSCIActivityPanel(object):
     def __init__(self):
@@ -318,6 +334,8 @@ class CCompositeRate(object):
 
 
 if __name__ == "__main__":
+
+    rates = CRiskFreeRate.get_interest_rate_curve_from_region('United States')
 
     for region in CompositeRiskFreeRates.composite_rfr_regions:
         rfr = CRiskFreeRate.get_risk_free_for_region(region)

@@ -1,9 +1,8 @@
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
-from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Database import PriceQuote
-from epsilonPhi.ep_strategies.fx.factor import Factor as Carry
-from epsilonPhi.ep_strategies.fx.factor import Signals
+from epsilonPhi.ep_strategies.fx.linear.factor import Factor as Carry
+from epsilonPhi.ep_strategies.fx.linear.factor import Signals
 from epsilonPhi.core.factor.Factor import CFactor
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 import datetime as dt
