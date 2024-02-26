@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
 import os
-from epsilonPhi.core.optimizer.riskBudgeting.allocation import EqualRiskContributionWithVolTargetandScores, RiskBudgetWithERandVolTarget
+from epsilonPhi.core.optimizer.riskBudgeting.allocation import LongShortRiskParity, RiskBudgetWithERandVolTarget, LongShortRiskBudgeting
 from sklearn.svm import SVR
 from sklearn.preprocessing import StandardScaler
 from abc import abstractmethod
+from tqdm import tqdm
+
 import statsmodels.api as sm
 from numba import jit
 import scipy.stats as sps
@@ -14,6 +16,8 @@ import math
 __author__ = 'francis barker'
 __date__ = '13/12/2023'
 
+_scalar = StandardScaler()
+_svr = SVR()
 # %%
 
 # Use Days Per Year From Excel
@@ -187,6 +191,18 @@ class DataHandler(object):
 
     def get_instruments_contract_pnls(self):
         return pd.concat([self.get_instrument_contract_pnl(x) for x in self.labels], axis=1)
+
+    @staticmethod
+    def fast_linear_model(X_, y, x_star):
+
+        # Re-scalled Xs
+        X = (X_ - np.mean(X_)) / np.std(X_)
+
+        X_prime = np.vstack((np.ones(X.shape[0]), X)).T
+        XtX = np.dot(X_prime.T, X_prime)
+        XtY = np.dot(X_prime.T, y)
+        beta = np.linalg.solve(XtX, XtY)
+        return beta * x_star
 
     @staticmethod
     @jit('float64(float64[:])', nopython=True)
@@ -576,8 +592,8 @@ class CStrategy(object):
         """ Method to add a signal object to the strategy"""
         self._signals.extend([signal])
 
-    def get_signal_constraints_for_optimization(self):
-        signals = [np.sign(self.get_signals_single_instrument(x)) for x in self.instrument_list]
+    def get_signals_for_optimization(self):
+        signals = [self.get_signals_single_instrument(x).mean(axis=1).to_frame(x) for x in self.instrument_list]
         return pd.concat(signals, axis=1)
 
     def get_signals_single_instrument(self, instrument_name) -> pd.DataFrame:
@@ -630,42 +646,40 @@ class CStrategy(object):
             positions['10-Jun-2020':'1-Jan-2022'] = np.nan
         return positions.copy()
 
-    @staticmethod
-    def fast_linear_regressor_forecaster(y, X):
-        pass
-
-    def get_instrument_expected_return(self, instrument, horizon=21):
+    def get_instrument_expected_return(self, instrument, window=252, horizon=1):
 
         signals = self.get_signals_single_instrument(instrument).dropna(how='all')
-        prices = self.get_instrument_prices(instrument)
-        returns = prices.pct_change(horizon)
+        prices = self.get_instrument_prices(instrument).loc[signals.index]
+        returns = prices.pct_change(round(horizon))
 
-        y = returns.loc[signals.index].shift(-horizon).dropna()
-        X = signals.loc[y.index]
+        start = 21
+        end = signals.shape[0] - horizon + 1
+        rtns = np.ones((end, 1)) * np.nan
+        for i in tqdm(range(start + horizon, end), desc='Estimating returns for ' + instrument):
 
-        scalar = StandardScaler()
-        _svr = SVR()
+            K = i - horizon
+            T = max(0, K - window)
 
-        _all_dates = X.index
-        _forecast_dates = _all_dates[22:]
-        N = len(_forecast_dates)
+            # Get the necessary ranges
+            rng_X = np.arange(T, i, 1)
+            rng_X_reg = np.arange(T, K, 1)
+            rng_y = rng_X_reg + horizon
 
-        y_np = y.values
-        X_np = X.values
-        rtns = np.ones((N,)) * np.nan
+            # target variance
+            y_prime = returns.values[rng_y]
 
-        for i in range(22, N):
-            self.print_progress_bar(i, N)
+            # predictors
+            x_prior = signals.values[rng_X]
+            keepcols = ~np.any(np.isnan(x_prior), axis=0)
 
-            y_prime = y_np[max(0, i-5*253):i-1]
-            x_prime = X_np[max(0, i-5*253):i, :]
-            x_prime = scalar.fit_transform(x_prime[:,~np.any(np.isnan(x_prime), axis=0)])
+            x_prime = _scalar.fit_transform(x_prior[:,keepcols])
+            x__p = x_prime[rng_X_reg - rng_X_reg[0]]
+            x_star = x_prime[-1,:]
 
+            _fit = _svr.fit(x__p, y_prime)
+            rtns[i] = _fit.predict(x_star.reshape(1, -1))
 
-            _fit = _svr.fit(x_prime[:-1, :], y_prime)
-            rtns[i] = _fit.predict(x_prime[-1, :].reshape(1, -1))
-
-        return pd.DataFrame(rtns, columns=[instrument], index=_forecast_dates)
+        return pd.DataFrame(rtns, columns=[instrument], index=signals.index[:end])
 
 
     def get_instrument_signals(self):
@@ -794,50 +808,166 @@ class CStrategy(object):
         N.columns = pnls.columns
         return N.shift(-1)
 
-    def get_asset_class_expected_returns(self):
+    def get_asset_class_expected_returns(self, window=252, horizon=21):
         rt_df = []
         for x in self.instrument_list:
-            tmp = self.get_instrument_expected_return(x, horizon=2*21)
+            tmp = self.get_instrument_expected_return(x, horizon=horizon, window=window)
             rt_df.append(tmp)
         return pd.concat(rt_df, axis=1)
 
-    def optimize_strategy_equal_risk_with_return_estimates(self, rebalance_frequency='D', covar_lookback=1):
+    def _get_target_risk_for_optimiztion(self):
+        return self.get_equal_weighted_portfolio_returns().std().values.item() * np.sqrt(256)
 
-        target_risk = self.get_equal_weighted_portfolio_returns().std(ddof=1) * np.sqrt(256)
+    def _get_rebalancing_dates(self, dates, rebalance_frequency):
 
-        returns = self._prices.pct_change()
-        returns.loc['10-Jun-2020':'1-Jan-2022', 'NIKKEI'] = np.nan
-        covs = returns.ewm(min_periods=_DAYS_PER_YEAR, span=_DAYS_PER_YEAR * covar_lookback, ignore_na=True).cov() * _DAYS_PER_YEAR
-
-        unique_dates = covs.index.get_level_values(0).unique()
+        unique_dates = np.unique(dates)
         if rebalance_frequency == 'D':
-            rebalancing_dates = unique_dates
+            return pd.to_datetime(unique_dates)
         elif rebalance_frequency == 'W':
-            rebalancing_dates = unique_dates[unique_dates.dayofweek == 4]
+            return pd.to_datetime(unique_dates[unique_dates.dayofweek == 4])
         elif rebalance_frequency == 'M':
             yearMonths = unique_dates.month + unique_dates.year * 100
-            rebalancing_dates = [unique_dates[yearMonths == x].max() for x in np.unique(yearMonths)]
+            return pd.to_datetime([unique_dates[yearMonths == x].max() for x in np.unique(yearMonths)])
         else:
-            rebalancing_dates = unique_dates
+            return pd.to_datetime(unique_dates)
+
+    def get_covariance_matrix(self):
+
+        returns = self.get_instrument_returns_for_optimization()
+
+        _sig_f = returns.rolling(window=44, min_periods=7).std(ddof=0)
+        _sig_s = returns.rolling(window=10 * _DAYS_PER_YEAR, min_periods=7).std(ddof=0)
+        sig = _sig_f * 0.7 + _sig_s * 0.3
+
+        corrs = returns.ewm(span=252 * 5, min_periods=7).corr()
+        _unique_dates = np.intersect1d(sig.index, corrs.index.unique(0))
+
+        corrs = corrs.loc[_unique_dates]
+        sig = sig.loc[_unique_dates]
+
+        _sig = sig.loc[_unique_dates].values
+        _corrs = corrs.values
+
+        corr_dates = corrs.index.get_level_values(0)
+        corrmats = list()
+        for t in tqdm(range(len(_unique_dates))):
+            tmp = _corrs[corr_dates == _unique_dates[t], :] * np.outer(_sig[t], _sig[t])
+            corrmats.extend([tmp])
+        return pd.DataFrame(np.vstack(corrmats), columns=corrs.columns, index=corrs.index)
+
+    def optimize_strategy_hyperparameters(self):
+
+        alpha = [0.1]
+        beta = [0]
+        rho = [0.18, 0.2, 0.22]
+
+        bmk = self.get_benchmark_pnl_contributions()
+
+        hyperams = {}
+        for a in alpha:
+            for b in beta:
+                for r in rho:
+                    pnl = self.optimize_strategy_risk_budget(covar_lookback=r,
+                                                             cov_shrink=b,
+                                                             signal_shrink=a)
+                    ma = Evaluator(pnl, bmk)
+                    spread_ = ma.get_strategy_performance_attribution().values[-1]
+                    hyperams[(a, b, r)] = ma.get_strategy_performance_attribution().values[-1]
+                    print(spread_)
+
+
+
+
+    def optimize_strategy_risk_budget(self, rebalance_frequency='D',
+                                      covar_lookback=1,
+                                      cov_shrink=0,
+                                      signal_shrink=0.1):
+
+        # Get the target risk for the optimization
+        #risk = self._get_target_risk_for_optimiztion()
+        risk = 0.09461731341723605
+
+        # Get the returns for the instruments
+        returns = self.get_instrument_returns_for_optimization()
+
+        # Construct rolling covariance estimates
+        T = _DAYS_PER_YEAR * covar_lookback
+        covs_ = returns.ewm(min_periods=10, span=round(T), ignore_na=True).cov() * _DAYS_PER_YEAR
 
         # Get Instrument Signals
-        signals = self.get_asset_class_expected_returns()
+        sigs = self.get_signals_for_optimization()
+        sigs = sigs.clip(-20, 20).dropna(how='all')
+        mu_ = sigs.mean(axis=1).values.reshape(-1,1)
+        shrunk_signals_ = mu_ + (sigs - mu_) * signal_shrink
 
-        # DUE TO POTENITAL DATA ERRORS - POSITIONS IN NIKKEI ARE FORCED TO ZERO FOR THIS PERIOD
-        #if instrument_name == 'NIKKEI':
-        #    positions['10-Jun-2020':'1-Jan-2022'] = np.nan
-        #return positions.copy()
+        # Intersect of Unique Dates
+        unique_dates = np.intersect1d(covs_.index.unique(0),
+                                      shrunk_signals_.index)
 
+        # Get the rebalancing/re-optimization dates
+        signals = shrunk_signals_.loc[unique_dates].values
+        covs = covs_.loc[unique_dates].values
+        cov_dates = covs_.loc[unique_dates].index.get_level_values(0)
+
+        rebal_dates = self._get_rebalancing_dates(unique_dates, rebalance_frequency)
+
+        optWts = np.full((len(rebal_dates), covs.shape[1]), np.nan)
+        for t in tqdm(range(len(rebal_dates)), desc="Optimizing Strategy"):
+
+            try:
+                tmp_cov = covs[rebal_dates[t] == cov_dates, :]
+                tmp_sig = signals[t]
+
+                keep_sig = (~np.isnan(tmp_sig) & ~np.all(np.isnan(tmp_cov), axis=0))
+
+                cov_ = tmp_cov[keep_sig,:][:,keep_sig]
+                score_ = tmp_sig[keep_sig]
+                if cov_.size > 0:
+                    scovar = cov_shrink * np.diag(np.diag(cov_)) + (1-cov_shrink) * cov_
+                    opt = LongShortRiskBudgeting(scovar, risk, budgets=score_)
+                    opt.solve()
+                    optWts[t, keep_sig] = opt.x
+            except:
+                pass
+
+        _wts = pd.DataFrame(optWts, columns=covs_.columns, index=unique_dates)
+        _wts = _wts.reindex(returns.index).ffill()
+        _rtns = returns[_wts.columns].values * _wts.shift(1)
+
+        sig_mult = risk / (_rtns.sum(axis=1).std() * np.sqrt(256))
+        _pnls = self._capital * sig_mult * returns[_wts.columns].values * _wts.shift(1)
+
+        cols = [(x, 'risk_parity') for x in _pnls.columns]
+        _pnls.columns = pd.MultiIndex.from_tuples(cols)
+        _pnls.columns.names = ['instrument', 'strategy']
+        return _pnls.copy()
+
+    def optimize_strategy_risk_parity(self, rebalance_frequency='D', covar_lookback=1):
+
+        # Get the target risk for the optimization
+        risk = self._get_target_risk_for_optimiztion()
+
+        # Get the returns for the instruments
+        returns = self.get_instrument_returns_for_optimization()
+
+        # Construct rolling covariance estimates
+        T = _DAYS_PER_YEAR * covar_lookback
+        covs = returns.ewm(min_periods=10, span=round(T), ignore_na=True).cov() * _DAYS_PER_YEAR
+
+        # Get the rebalancing/re-optimization dates
+        rebal_dates = self._get_rebalancing_dates(covs.index.get_level_values(0), rebalance_frequency)
+
+        # Get Instrument Signals
+        signals = self.get_asset_class_number_of_contracts()
+        _signed_signals = np.sign(signals)
 
         optWts = []
-        print('Optimizing Strategy....')
-        for date in rebalancing_dates:
-            idx = np.where(date == unique_dates)
-            self.print_progress_bar(idx[0][0] + 1, len(unique_dates))
+        for t in tqdm(range(len(rebal_dates)), desc="Optimizing Strategy"):
+            date = rebal_dates[t]
 
             try:
                 covmat = covs.loc[date].dropna(how='all', axis=0).dropna(how='all', axis=1)
-                score = signals.loc[date].iloc[signals.loc[date].values != 0].dropna()
+                score = _signed_signals.loc[date].replace(0, np.nan).dropna()
 
                 common = np.intersect1d(covmat.columns, score.index)
                 cov_ = covmat.loc[common][common]
@@ -845,83 +975,92 @@ class CStrategy(object):
 
                 if covmat.size > 0:
                     # Get the number of assets we have data for
+                    target_risk = risk.loc[date].values.item()
+                    opt = LongShortRiskParity(cov_.values, risk=target_risk, score=score_.values)
+                    opt.solve()
+                    optWts.append(pd.DataFrame(opt.x, index=cov_.index, columns=[date]).T)
+            except:
+                pass
+
+        _wts = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
+        _pnls = self._capital * returns[_wts.columns].values * _wts.shift(1)
+
+        cols = [(x, 'risk_parity') for x in _pnls.columns]
+        _pnls.columns = pd.MultiIndex.from_tuples(cols)
+        _pnls.columns.names = ['instrument', 'strategy']
+        return _pnls.copy()
+
+
+    def optimize_strategy_risk_parity_with_return(self, rebalance_frequency='D', covar_lookback=1, horizon=1, window=252):
+
+
+        # Get the target risk for the optimization
+        target_risk = self._get_target_risk_for_optimiztion()
+
+        # Get the returns for the instruments
+        returns = self.get_instrument_returns_for_optimization()
+
+        # Construct rolling covariance estimates
+        T = _DAYS_PER_YEAR * covar_lookback
+        covs = returns.ewm(min_periods=10, span=round(T), ignore_na=True).cov() * _DAYS_PER_YEAR
+
+        # Get the rebalancing/re-optimization dates
+        rebal_dates = self._get_rebalancing_dates(covs.index.get_level_values(0), rebalance_frequency)
+
+        # Get Instrument Signals/Expected Returns
+        signals = self.get_asset_class_expected_returns(horizon=horizon, window=window)
+
+        optWts = []
+        for t in tqdm(range(len(rebal_dates)), desc="Optimizing Strategy"):
+            date = rebal_dates[t]
+
+            try:
+                covmat = covs.loc[date].dropna(how='all', axis=0).dropna(how='all', axis=1)
+                score = signals.loc[date].replace(0, np.nan).dropna()
+
+                common = np.intersect1d(covmat.columns, score.index)
+                cov_ = covmat.loc[common][common]
+                score_ = score.loc[common]
+
+                if covmat.size > 0:
+                    # Get the number of assets we have data for
+                    risk = target_risk.loc[date].values.item()
                     opt = RiskBudgetWithERandVolTarget(cov_.values,
-                                                       risk=target_risk.item(),
+                                                       risk=risk,
                                                        pi=score_.values)
                     opt.solve()
                     optWts.append(pd.DataFrame(opt.x, index=cov_.index, columns=[date]).T)
             except:
                 pass
 
-        self._optimal_weights = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
-        pnls = self._capital * returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1)
+        _wts = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
+        _pnls = self._capital * returns[_wts.columns].values * _wts.shift(1)
 
-        cols = [(x, 'strategy') for x in pnls.columns]
-        pnls.columns = pd.MultiIndex.from_tuples(cols)
-        pnls.columns.names = ['instrument', 'strategy']
-        return pnls.copy()
+        cols = [(x, 'rp_with_returns') for x in _pnls.columns]
+        _pnls.columns = pd.MultiIndex.from_tuples(cols)
+        _pnls.columns.names = ['instrument', 'strategy']
+        return _pnls.copy()
 
-
-    def _optimize_strategy_equal_risk_contribution(self, rebalance_frequency='D', covar_lookback=1):
-
-        target_risk = self.get_equal_weighted_portfolio_returns().std(ddof=1) * np.sqrt(256)
-
+    def get_instrument_returns_for_optimization(self):
         returns = self._prices.pct_change()
         returns.loc['10-Jun-2020':'1-Jan-2022', 'NIKKEI'] = np.nan
-        covs = returns.ewm(min_periods=_DAYS_PER_YEAR, span=_DAYS_PER_YEAR * covar_lookback, ignore_na=True).cov() * _DAYS_PER_YEAR
+        return returns.copy()
 
-        unique_dates = covs.index.get_level_values(0).unique()
-        if rebalance_frequency == 'D':
-            rebalancing_dates = unique_dates
-        elif rebalance_frequency == 'W':
-            rebalancing_dates = unique_dates[unique_dates.dayofweek == 4]
-        elif rebalance_frequency == 'M':
-            yearMonths = unique_dates.month + unique_dates.year * 100
-            rebalancing_dates = [unique_dates[yearMonths == x].max() for x in np.unique(yearMonths)]
+    def get_strategy_pnl_contributions(self,
+                                       method='rp',
+                                       rebalance_freq='D',
+                                       covar_lookback=256,
+                                       horizon=None,
+                                       window=None):
+
+        if method.lower() in ['rp','erc']:
+           return self.optimize_strategy_risk_parity(rebalance_freq, covar_lookback)
+        elif method.lower() in ['rb']:
+           return self.optimize_strategy_risk_budget(rebalance_freq, covar_lookback)
+        elif method.lower() in ['rpr']:
+           return self.optimize_strategy_risk_parity_with_return(rebalance_freq, covar_lookback, horizon, window)
         else:
-            rebalancing_dates = unique_dates
-
-        # Get Instrument Signals
-        signals = self.get_asset_class_number_of_contracts()
-        _signed_signals = np.sign(signals)
-
-        # DUE TO POTENITAL DATA ERRORS - POSITIONS IN NIKKEI ARE FORCED TO ZERO FOR THIS PERIOD
-        #if instrument_name == 'NIKKEI':
-        #    positions['10-Jun-2020':'1-Jan-2022'] = np.nan
-        #return positions.copy()
-
-
-        optWts = []
-        print('Optimizing Strategy....')
-        for date in rebalancing_dates:
-            idx = np.where(date == unique_dates)
-            self.print_progress_bar(idx[0][0] + 1, len(unique_dates))
-
-            try:
-                covmat = covs.loc[date].dropna(how='all', axis=0).dropna(how='all', axis=1)
-                score = _signed_signals.loc[date].iloc[_signed_signals.loc[date].values != 0].dropna()
-
-                common = np.intersect1d(covmat.columns, score.index)
-                cov_ = covmat.loc[common][common]
-                score_ = score.loc[common]
-
-                if covmat.size > 0:
-                    # Get the number of assets we have data for
-                    opt = EqualRiskContributionWithVolTargetandScores(cov_.values,
-                                                                      risk=target_risk.item(),
-                                                                      score=score_.values)
-                    opt.solve()
-                    optWts.append(pd.DataFrame(opt.x, index=cov_.index, columns=[date]).T)
-            except:
-                pass
-
-        self._optimal_weights = pd.concat(optWts, axis=0).reindex(returns.index).ffill()
-        pnls = self._capital * returns[self._optimal_weights.columns].values * self._optimal_weights.shift(1)
-
-        cols = [(x, 'strategy') for x in pnls.columns]
-        pnls.columns = pd.MultiIndex.from_tuples(cols)
-        pnls.columns.names = ['instrument', 'strategy']
-        return pnls.copy()
+            raise ValueError('Error - method {} not recognized'.format(method))
 
     def get_benchmark_pnl_contributions(self):
         benchmark_pnls = self.get_signal_pnls()
@@ -931,10 +1070,6 @@ class CStrategy(object):
 
         N = benchmark_pnls.shape[1] - benchmark_pnls.isna().sum(axis=1)
         return (benchmark_pnls / N.values.reshape(-1, 1))
-
-    def get_strategy_pnl_contributions(self):
-        #return self._optimize_strategy_equal_risk_contribution()
-        return self.optimize_strategy_equal_risk_with_return_estimates()
 
     @staticmethod
     def get_moving_average_strategy():
@@ -1154,17 +1289,27 @@ if __name__ == "__main__":
     ##
 
     ma_str = CStrategy.get_moving_average_strategy()
-    ma_str_pnls = ma_str.get_strategy_pnl_contributions()
+    ma_str.optimize_strategy_hyperparameters()
+
+    ma_str_pnls_rb_1 = ma_str.get_strategy_pnl_contributions(method='rb', rebalance_freq='D', covar_lookback=0.2)
+
+    ma_bmk_pnls = ma_str.get_benchmark_pnl_contributions()
+    ma = Evaluator(ma_str_pnls_rb_1, ma_bmk_pnls)
+
+    ma_str_pnls_er = ma_str.get_strategy_pnl_contributions(method='rpr', rebalance_freq='D', covar_lookback=1, horizon=21, window=252)
+    ma_str_pnls_rp = ma_str.get_strategy_pnl_contributions(method='rp', rebalance_freq='D', covar_lookback=1)
     ma_bmk_pnls = ma_str.get_benchmark_pnl_contributions()
 
 
     bo_str = CStrategy.get_breakout_strategy()
-    bo_str_pnls = bo_str.get_strategy_pnl_contributions()
+    bo_str_pnls = bo_str.get_strategy_pnl_contributions(method='rb', rebalance_freq='D', covar_lookback=1)
     bo_bmk_pnls = bo_str.get_benchmark_pnl_contributions()
+
+
 
     #################
 
-    ma = Evaluator(ma_str_pnls, ma_bmk_pnls)
+    ma = Evaluator(ma_str_pnls_rb_1, ma_bmk_pnls)
     bo = Evaluator(bo_str_pnls, bo_bmk_pnls)
 
     # 0. Exposure Analysis
@@ -1226,36 +1371,6 @@ if __name__ == "__main__":
         tmp_t.columns = pd.MultiIndex.from_tuples([ (x, col) for x in tmp_t.columns ])
         qs = pd.concat((qs, tmp_t), axis=1)
 
-    # Vol of Vol for all instruments
-    ins_rtns = np.log(handler._df).diff()
-    inst_sig = ins_rtns.rolling(window=21).std() * np.sqrt(21)
-    inst_sigsig = np.log(inst_sig).diff().rolling(window=21).std().dropna(how='all') * np.sqrt(252)
-    sigsig_vec = inst_sigsig.stack().reset_index().set_index(['dates','level_1'])
-    sigsig_vec.index.names = ['dates', 'instrument']
-    sigsig_vec.columns = ['Vol of Vol']
-
-
-    # Get Relative PnL for all instruments
-    pnl_attribution = ma.get_strategy_instrument_pnl_attribution()
-    pnl_attribution = pnl_attribution.replace(0, np.nan)
-    pnls = pnl_attribution.fillna(0).rolling(window=21).mean().dropna(how='all').replace(0, np.nan)
-    pnl_vec = pnls.stack().reset_index().set_index(['dates','instrument'])
-    pnl_vec.index.names = ['dates', 'instrument']
-    pnl_vec.columns = ['PnL']
-
-    vec = pd.concat((sigsig_vec, pnl_vec), axis=1).dropna()
-
-    qtiles = pd.qcut(vec.values[:,0], 5, labels=False)
-    vec_q = vec.copy()
-    vec_q['q'] = qtiles
-    vec_q.reset_index(drop=True).set_index('q').groupby('q').mean()
-
-
-    # Measure the degree of trendiness
-    H = handler.get_contract_rolling_hurst_exponent('JPY', window=256).dropna()
-    YR = np.log(handler.get_price_series('JPY')).diff().dropna().rolling(window=256).sum().dropna()
-
-    OYR = pnl_attribution.get('JPY').fillna(0).rolling(window=256).mean()
 
 
 

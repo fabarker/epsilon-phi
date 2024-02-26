@@ -173,6 +173,46 @@ class RiskBudgeting(RiskBudgetAllocation):
         return tools.to_array(RC)
 
 
+class LongShortRiskBudgeting(RiskBudgeting):
+    def __init__(self, cov, risk, budgets=None):
+
+        RiskBudgeting.__init__(self,
+                               cov=cov,
+                               budgets=np.abs(budgets) / np.sum(np.abs(budgets)))
+
+        self._risk = risk
+        if budgets is not None:
+            self._sign = np.sign(budgets)
+        else:
+            self._sign = np.ones((self.cov.shape[0], 1))
+
+    def get_scores(self):
+        return self._sign.reshape(-1, 1)
+
+    def get_score_matrix(self):
+
+        if self.pi is None:
+            return np.divide(self.cov, self.cov)
+
+        _scores = self.get_scores()
+        return np.multiply(_scores.repeat(len(_scores), 1), _scores.T.repeat(len(_scores), 0))
+
+    def get_signed_covariance(self):
+        _std_devs = np.sqrt(np.diag(self.cov))
+        _corrs = self.cov / np.outer(_std_devs, _std_devs)
+        _sgn_corr = np.multiply(_corrs, self.get_score_matrix())
+        return np.multiply(_sgn_corr, np.outer(_std_devs, _std_devs))
+
+    def solve(self):
+
+        _sgn_cov = self.get_signed_covariance()
+        x = solve_rb_ccd(cov=_sgn_cov, budgets=self.budgets)
+        _x = tools.to_array(x / x.sum())
+        _x = _x * self._risk / np.sqrt(_x @ _sgn_cov @ _x)
+        self._x = _x * self.get_scores().flatten()
+        self.lambda_star = self.get_volatility()
+
+
 class RiskBudgetingWithER(RiskBudgetAllocation):
     def __init__(self, cov, budgets=None, pi=None, c=1):
         """
@@ -443,7 +483,7 @@ class EqualRiskContributionWithRiskTarget(EqualRiskContribution):
 
 
 
-class EqualRiskContributionWithVolTargetandScores(EqualRiskContributionWithRiskTarget):
+class LongShortRiskParity(EqualRiskContributionWithRiskTarget):
 
     def __init__(self, cov, risk, score=None):
         EqualRiskContributionWithRiskTarget.__init__(self, cov, risk)
@@ -495,4 +535,13 @@ if __name__ == "__main__":
     covann = rtns.cov() * 252
     rtnann = rtns.mean().values*252
     rtnann[0] = rtnann[0] - 0.08
+
+    N = covann.shape[0]
+    _budgets = np.ones((N, 1)) / N
+    _budgets[0] = 0.05
+    _budgets[-1] = 0.15
+
+
+    rb = LongShortRiskBudgeting(covann, 0.09, budgets=rtnann / np.sum(rtnann))
+    rb.solve()
 
