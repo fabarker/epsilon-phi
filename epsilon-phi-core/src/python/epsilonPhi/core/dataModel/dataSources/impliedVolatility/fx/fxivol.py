@@ -1,4 +1,4 @@
-from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
+from epsilonPhi.core.dataModel.dataSources.curves.fxCurve import FXCurve
 class FXVols(object):
 
     def __init__(self, currency_pair):

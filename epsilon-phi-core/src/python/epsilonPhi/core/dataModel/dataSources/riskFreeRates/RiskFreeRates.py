@@ -99,6 +99,14 @@ class CRiskFreeRate(object):
             raise ValueError('Currency {} not supported'.format(currency))
 
     @staticmethod
+    def get_interest_rate_curve_from_currency(currency, type=None):
+        region = CRiskFreeRate._sessionMgr.get_region_from_currency(currency)
+        if region:
+            return CRiskFreeRate.get_interest_rate_curve_from_region(region, type)
+        else:
+            raise ValueError('Currency {} not supported'.format(currency))
+
+    @staticmethod
     def get_interest_rate_curve_from_region(region, type=None):
         _mats = CRiskFreeRate._sessionMgr.get_interest_rate_maturities_for_region(region)
         rates = CRiskFreeRate.get_interest_rates_for_region(region, _mats)

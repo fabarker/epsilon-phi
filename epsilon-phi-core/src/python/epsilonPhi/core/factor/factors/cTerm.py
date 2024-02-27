@@ -1,11 +1,10 @@
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
-from epsilonPhi.core.dataModel.dataSources.yieldCurve.YieldCurve import YieldCurve
+from epsilonPhi.core.dataModel.dataSources.curves.yieldCurve.YieldCurve import YieldCurve
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.factor.Factor import CFactor
 import pandas as pd
-import numpy as np
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 

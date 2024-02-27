@@ -1,14 +1,11 @@
-import pandas as pd
-
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
-from epsilonPhi.core.dataModel.dataSources.fxCurve.FXCurve import FXCurve
+from epsilonPhi.core.dataModel.dataSources.curves.fxCurve.FXCurve import FXCurve
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 from epsilonPhi.core.dataModel.dataSources.futures.Futures import Futures
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
 from epsilonPhi.core.utils.TimeSeriesUtils import TimeSeriesUtils
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
-from epsilonPhi.core.dataModel.enums.Database import PriceQuote
 
 
 @SingletonDecorator
@@ -142,6 +139,10 @@ class GlobalDataSource(object):
     def get_interest_rate_curve_for_region(self, region):
         from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
         return CRiskFreeRate.get_interest_rate_curve_from_region(region)
+
+    def get_interest_rate_curve_for_currency_region(self, currency):
+        from epsilonPhi.core.dataModel.dataSources.riskFreeRates.RiskFreeRates import CRiskFreeRate
+        return CRiskFreeRate.get_interest_rate_curve_from_currency(currency)
 
     def get_consumer_price_index_for_region(self, region):
 

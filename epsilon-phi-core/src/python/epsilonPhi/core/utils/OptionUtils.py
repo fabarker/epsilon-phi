@@ -1,6 +1,7 @@
 import numpy as np
 from numba import float64, int64, vectorize, njit
 from epsilonPhi.core.utils.Error import Error as FinError
+from scipy.special import ndtri
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.MathUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
@@ -40,6 +41,19 @@ def g(K, *args):
                            volatility,
                            delta_method_value,
                            option_type_value)
+
+def get_strike_from_spot_delta(spot, tdel, rd, rf, delta_target, volatility):
+
+    dom_df = np.exp(-rd * tdel)
+    for_df = np.exp(-rf * tdel)
+    phi = np.sign(delta_target)
+
+    F0T = spot * for_df / dom_df
+    vsqrtt = volatility * np.sqrt(tdel)
+    arg = delta_target * phi / for_df  # CHECK THIS !!!
+    norm_inv_delta = ndtri(arg)
+    K = F0T * np.exp(-vsqrtt * (phi * norm_inv_delta - vsqrtt / 2.0))
+    return K
 
 
 
@@ -183,8 +197,10 @@ def fast_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
 ###############################################################################
 
 
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64, int64)], fastmath=True, cache=True)
+#@vectorize([float64(float64, float64, float64, float64,
+#                    float64, float64, int64)], fastmath=True, cache=True)
+
+@vectorize(fastmath=True, cache=True)
 def bs_delta(s, t, k, r, q, v, option_type_value):
     """Price a derivative using Black-Scholes model."""
     if option_type_value == OptionTypes.EUROPEAN_CALL.value:

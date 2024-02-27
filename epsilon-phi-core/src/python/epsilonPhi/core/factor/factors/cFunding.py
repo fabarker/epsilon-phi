@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.stats import zscore
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
-from epsilonPhi.core.dataModel.dataSources.yieldCurve.YieldCurve import YieldCurve
+from epsilonPhi.core.dataModel.dataSources.curves.yieldCurve.YieldCurve import YieldCurve
 from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.timeSeries.regression import Regression
