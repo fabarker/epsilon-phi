@@ -1,7 +1,4 @@
-import numpy as np
-from numba import float64, int64, vectorize, njit
-from epsilonPhi.core.utils.Error import Error as FinError
-from scipy.special import ndtri
+from numba_stats import norm
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.MathUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
@@ -14,15 +11,7 @@ gNotebookMode = False
 
 class OptionTypes(Enum):
     EUROPEAN_CALL = 1
-    EUROPEAN_PUT = 2
-    AMERICAN_CALL = 3
-    AMERICAN_PUT = 4
-    DIGITAL_CALL = 5
-    DIGITAL_PUT = 6
-    ASIAN_CALL = 7
-    ASIAN_PUT = 8
-    COMPOUND_CALL = 9
-    COMPOUND_PUT = 10
+    EUROPEAN_PUT = -1
 
 @njit(fastmath=True, cache=True)
 def g(K, *args):
@@ -42,23 +31,7 @@ def g(K, *args):
                            delta_method_value,
                            option_type_value)
 
-def get_strike_from_spot_delta(spot, tdel, rd, rf, delta_target, volatility):
 
-    dom_df = np.exp(-rd * tdel)
-    for_df = np.exp(-rf * tdel)
-    phi = np.sign(delta_target)
-
-    F0T = spot * for_df / dom_df
-    vsqrtt = volatility * np.sqrt(tdel)
-    arg = delta_target * phi / for_df  # CHECK THIS !!!
-    norm_inv_delta = ndtri(arg)
-    K = F0T * np.exp(-vsqrtt * (phi * norm_inv_delta - vsqrtt / 2.0))
-    return K
-
-
-
-@njit(float64(float64, float64, float64, float64, int64, float64,
-              int64, float64), fastmath=True)
 def solve_for_strike(spot_fx_rate,
                      tdel, rd, rf,
                      option_type_value,
@@ -80,55 +53,47 @@ def solve_for_strike(spot_fx_rate,
     # places. It should however agree to 6-7 decimal places. Which is OK.
     # =========================================================================
 
-    if delta_method_value == DeltaType.SPOT_DELTA.value:
+    if delta_method_value in [DeltaType.SPOT_DELTA.value,
+                              DeltaType.SPOT_DELTA]:
 
         dom_df = np.exp(-rd*tdel)
         for_df = np.exp(-rf*tdel)
 
-        if option_type_value == OptionTypes.EUROPEAN_CALL.value:
-            phi = +1.0
-        else:
-            phi = -1.0
+        phi = np.sign(option_type_value)
 
         F0T = spot_fx_rate * for_df / dom_df
         vsqrtt = volatility * np.sqrt(tdel)
         arg = delta_target*phi/for_df  # CHECK THIS !!!
-        norm_inv_delta = norminvcdf(arg)
+        norm_inv_delta = norm.ppf(arg, 0.0, 1.0)
         K = F0T * np.exp(-vsqrtt * (phi*norm_inv_delta - vsqrtt/2.0))
         return K
 
-    elif delta_method_value == DeltaType.FORWARD_DELTA.value:
+    elif delta_method_value == [DeltaType.FORWARD_DELTA.value,
+                                DeltaType.FORWARD_DELTA]:
 
         dom_df = np.exp(-rd*tdel)
         for_df = np.exp(-rf*tdel)
 
-        if option_type_value == OptionTypes.EUROPEAN_CALL.value:
-            phi = +1.0
-        else:
-            phi = -1.0
+        phi = np.sign(option_type_value)
 
         F0T = spot_fx_rate * for_df / dom_df
         vsqrtt = volatility * np.sqrt(tdel)
         arg = delta_target*phi   # CHECK THIS!!!!!!!!
-        norm_inv_delta = norminvcdf(arg)
+        norm_inv_delta = norm.ppf(arg, 0.0, 1.0)
         K = F0T * np.exp(-vsqrtt * (phi*norm_inv_delta - vsqrtt/2.0))
         return K
 
-    elif delta_method_value == DeltaType.SPOT_DELTA_PREM_ADJ.value:
+    elif delta_method_value == [DeltaType.SPOT_DELTA_PREM_ADJ.value,
+                                DeltaType.SPOT_DELTA_PREM_ADJ]:
         argtuple = (spot_fx_rate, tdel, rd, rf, volatility,
                     delta_method_value, option_type_value, delta_target)
-        k = 0.0
-        return k
-    elif delta_method_value == DeltaType.FORWARD_DELTA_PREM_ADJ.value:
-        k = 0.0
-        return k
+        raise FinError('Error - not impletments')
+    elif delta_method_value == [DeltaType.FORWARD_DELTA_PREM_ADJ.value,
+                                DeltaType.FORWARD_DELTA_PREM_ADJ]:
+        raise FinError('Error - not impletments')
     else:
+        raise FinError("Unknown DeltaMethod")
 
-        raise FinError("Unknown FinFXDeltaMethod")
-
-
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64)], fastmath=True, cache=True)
 def d_plus(s, t, k, r, q, v):
 
     t = np.maximum(t, g_small)
@@ -139,24 +104,14 @@ def d_plus(s, t, k, r, q, v):
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
     return d1
 
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64)], fastmath=True, cache=True)
 def d_minus(s, t, k, r, q, v):
     d2 = d_plus(s, t, k, r, q, v) - np.maximum(v, g_small) * np.sqrt(t)
     return d2
 
-@vectorize([float64(float64, float64, float64, float64, float64, float64,
-                    int64)], fastmath=True, cache=True)
 def bs_value(s, t, k, r, q, v, option_type_value):
     """Price a derivative using Black-Scholes model."""
 
-    if option_type_value == OptionTypes.EUROPEAN_CALL.value:
-        phi = 1.0
-    elif option_type_value == OptionTypes.EUROPEAN_PUT.value:
-        phi = -1.0
-    else:
-        raise ValueError("Unknown option type value")
-
+    phi = np.sign(option_type_value)
     k = np.maximum(k, g_small)
     t = np.maximum(t, g_small)
     v = np.maximum(v, g_small)
@@ -167,26 +122,26 @@ def bs_value(s, t, k, r, q, v, option_type_value):
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
     d2 = d1 - v_sqrt_t
 
-    value = phi * ss * N(phi * d1) - phi * kk * N(phi * d2)
+    value = phi * ss * norm.cdf(phi * d1, 0.0, 1.0) - phi * kk * norm.cdf(phi * d2, 0.0, 1.0)
     return value
 
 ###############################################################################
 
-@njit(fastmath=True, cache=True)
+
 def fast_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
     """ Calculation of the option delta. Used in the determination of
     the volatility surface. """
 
     spot_delta = bs_delta(s, t, k, rd, rf, vol, option_type_value)
 
-    if deltaTypeValue == DeltaType.SPOT_DELTA.value:
+    if deltaTypeValue in [DeltaType.SPOT_DELTA, DeltaType.SPOT_DELTA.value]:
         delta = spot_delta
-    elif deltaTypeValue == DeltaType.FORWARD_DELTA.value:
+    elif deltaTypeValue == [DeltaType.FORWARD_DELTA, DeltaType.FORWARD_DELTA.value]:
         delta = spot_delta * np.exp(rf*t)
-    elif deltaTypeValue == DeltaType.SPOT_DELTA_PREM_ADJ.value:
+    elif deltaTypeValue == [DeltaType.SPOT_DELTA_PREM_ADJ, DeltaType.SPOT_DELTA_PREM_ADJ.value]:
         vpctf = bs_value(s, t, k, rd, rf, vol, option_type_value) / s
         delta = spot_delta - vpctf
-    elif deltaTypeValue == DeltaType.FORWARD_DELTA_PREM_ADJ.value:
+    elif deltaTypeValue == [DeltaType.FORWARD_DELTA_PREM_ADJ, DeltaType.FORWARD_DELTA_PREM_ADJ.value]:
         vpctf = bs_value(s, t, k, rd, rf, vol, option_type_value) / s
         delta = np.exp(rf*t) * (spot_delta - vpctf)
     else:
@@ -196,21 +151,10 @@ def fast_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
 
 ###############################################################################
 
-
-#@vectorize([float64(float64, float64, float64, float64,
-#                    float64, float64, int64)], fastmath=True, cache=True)
-
-@vectorize(fastmath=True, cache=True)
 def bs_delta(s, t, k, r, q, v, option_type_value):
     """Price a derivative using Black-Scholes model."""
-    if option_type_value == OptionTypes.EUROPEAN_CALL.value:
-        phi = +1.0
-    elif option_type_value == OptionTypes.EUROPEAN_PUT.value:
-        phi = -1.0
-    else:
-        raise FinError("Unknown option type value")
-        return 0.0
 
+    phi = np.sign(option_type_value)
     k = np.maximum(k, g_small)
     t = np.maximum(t, g_small)
     v = np.maximum(v, g_small)
@@ -219,14 +163,11 @@ def bs_delta(s, t, k, r, q, v, option_type_value):
     ss = s * np.exp(-q*t)
     kk = k * np.exp(-r*t)
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
-    delta = phi * np.exp(-q*t) * n_vect(phi * d1)
+    delta = phi * np.exp(-q*t) * norm.cdf(phi * d1, 0.0, 1.0)
     return delta
 
 ###############################################################################
 
-
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64)], fastmath=True, cache=True)
 def bs_gamma(s, t, k, r, q, v):
     """Price a derivative using Black-Scholes model."""
 
@@ -243,9 +184,6 @@ def bs_gamma(s, t, k, r, q, v):
 
 ###############################################################################
 
-
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64)], fastmath=True, cache=True)
 def bs_vega(s, t, k, r, q, v):
     """Price a derivative using Black-Scholes model."""
     k = np.maximum(k, g_small)
@@ -262,9 +200,6 @@ def bs_vega(s, t, k, r, q, v):
 
 ###############################################################################
 
-
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64, int64)], fastmath=True, cache=True)
 def bs_theta(s, t, k, r, q, v, option_type_value):
     """Price a derivative using Black-Scholes model."""
 
@@ -284,15 +219,12 @@ def bs_theta(s, t, k, r, q, v, option_type_value):
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
     d2 = d1 - v_sqrt_t
     theta = - ss * n_prime_vect(d1) * v / 2.0 / sqrt_t
-    theta = theta - phi * r * k * np.exp(-r*t) * n_vect(phi * d2)
-    theta = theta + phi * q * ss * n_vect(phi * d1)
+    theta = theta - phi * r * k * np.exp(-r*t) * norm.cdf(phi * d2, 0.0, 1.0)
+    theta = theta + phi * q * ss * norm.cdf(phi * d1, 0.0, 1.0)
     return theta
 
 ###############################################################################
 
-
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64, int64)], fastmath=True, cache=True)
 def bs_rho(s, t, k, r, q, v, option_type_value):
     """Price a derivative using Black-Scholes model."""
 
@@ -316,8 +248,6 @@ def bs_rho(s, t, k, r, q, v, option_type_value):
 
 ###############################################################################
 
-@vectorize([float64(float64, float64, float64, float64,
-                    float64, float64)], fastmath=True, cache=True)
 def bs_vanna(s, t, k, r, q, v):
     """Price a derivative using Black-Scholes model."""
 

@@ -1,4 +1,10 @@
 from enum import Enum
+class CrossSectionalSpace(Enum):
+    DELTA = 1
+    MONEYNESS = 2
+    Z_SCORE = 3
+    CONVEXITY_MN = 4
+    LN_MONEYNESS = 5
 
 class AtTheMoneyType(Enum):
     SPOT = 1  # Spot

@@ -1,4 +1,5 @@
 import numpy as np
+from numba_stats import norm
 from numba import float64, int64, vectorize, njit, jit
 
 #@jit(nopython=True, cache=True)
@@ -67,7 +68,7 @@ def norminv_vector(p_):
 
     return inverse_cdf
 
-@jit([float64(float64), float64[:](float64[:])], nopython=True, cache=True)
+#@jit([float64(float64), float64[:](float64[:])], nopython=True, cache=True)
 def norminv_scalar(p):
     """  This algorithm computes the inverse Normal CDF and is based on the
     algorithm found at (http:#home.online.no/~pjacklam/notes/invnorm/)
@@ -148,3 +149,4 @@ def norminv_scalar(p):
 
 p = np.random.uniform(low=1e-10, high=1.0-1e-10, size=1000000)
 res_2 = norminv_vector(p[0])
+res_1 = norminv_vector(p)
