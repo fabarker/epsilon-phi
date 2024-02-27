@@ -1,5 +1,7 @@
 from epsilonPhi.core.dataModel.alchemist.SessionManager import *
 from epsilonPhi.core.utils.DateUtils import DateUtils
+from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
+from epsilonPhi.core.utils.OptionUtils import *
 
 sessionMgr = SessionMgr()
 session = sessionMgr.getSessionFactory()
@@ -11,17 +13,20 @@ class VolSurfaceMgr(object):
 
         self._underlier = underlier
         self._pricing_location = pricing_location
+        self._strike_reference = None
         self._currency = None
         self._interest_rate_curve = None
         self._spec = None
         self._datasource = None
-
         self._validate_underlier()
+        self._construct_vol_surface_data()
 
-        self._load_vol_surface_data()
-        self._load_spot_prices()
-        self._load_interest_rate_curve()
-
+    @property
+    def pricing_location(self):
+        return self._pricing_location
+    @property
+    def strike_reference(self):
+        return self._strike_reference
     @property
     def security(self):
         return self.underlier
@@ -47,6 +52,9 @@ class VolSurfaceMgr(object):
     def category(self):
         return self._spec.get('category')
     @property
+    def delta_convention(self):
+        return deltaConvention.get(self.underlier, DeltaType.SPOT_DELTA)
+    @property
     def ds(self):
         if self._datasource is None:
             from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
@@ -68,7 +76,7 @@ class VolSurfaceMgr(object):
         self._spot_prices = spt.copy()
 
     def get_spot_prices(self):
-        if self._spot_prices in None:
+        if self._spot_prices is None:
            self._load_spot_prices()
         return self._spot_prices
 
@@ -79,6 +87,11 @@ class VolSurfaceMgr(object):
         if self._interest_rate_curve is None:
             self._load_interest_rate_curve()
         return self._interest_rate_curve.copy()
+
+    def get_vol_surface_data(self):
+        if self.underlier not in self._raw_cache.keys():
+            self._load_vol_surface_data()
+        return self._raw_cache.get(self.underlier)
 
     def _load_vol_surface_data(self):
 
@@ -107,6 +120,24 @@ class VolSurfaceMgr(object):
             self._raw_cache[self._underlier] = df__.drop(columns=['pricing_location', 'strike_reference'])
             _q = session.query(ImpliedVolatilitySpec).filter(ImpliedVolatilitySpec.security == self._underlier)
             self._spec = sessionMgr.query_format_df(_q).T.to_dict().get(0)
+
+    def _construct_data_from_delta_reference(self):
+        ivols = self.get_vol_surface_data()
+
+    def _construct_data_from_moneyness_reference(self):
+        pass
+
+    def _construct_vol_surface_data(self):
+        self._load_vol_surface_data()
+
+        if self.strike_reference.lower() == 'delta':
+            self._construct_data_from_delta_reference()
+        elif self.strike_reference.lower() in ['spot', 'forward']:
+            self._construct_data_from_moneyness_reference()
+        else:
+            raise ValueError('Error - {} not supported'.format(self.strike_reference))
+
+
 
     def _validate_underlier(self):
         if not session.query(exists().where(ImpliedVolatility.security ==

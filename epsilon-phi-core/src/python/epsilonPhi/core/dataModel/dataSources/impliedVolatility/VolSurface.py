@@ -77,6 +77,7 @@ class AbstractVolSurface(object):
 if __name__ == "__main__":
 
     self = AbstractVolSurface('SPX')
+    spt = self.get_spot_prices()
 
 
 
