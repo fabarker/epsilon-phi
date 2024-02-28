@@ -1,10 +1,12 @@
 from enum import Enum
-class CrossSectionalSpace(Enum):
-    DELTA = 1
-    MONEYNESS = 2
-    Z_SCORE = 3
-    CONVEXITY_MN = 4
-    LN_MONEYNESS = 5
+class StrikeReference(Enum):
+    SPOT_DELTA = 1
+    FORWARD_DELTA = 2
+    MONEYNESS = 4
+    Z_SCORE = 4
+    CONVEXITY_MN = 5
+    SPOT_DELTA_PREM_ADJ = 6
+    FORWARD_DELTA_PREM_ADJ = 7
 
 class AtTheMoneyType(Enum):
     SPOT = 1  # Spot

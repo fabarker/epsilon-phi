@@ -89,39 +89,39 @@ class DateUtils(object):
             matStrs = Rdate
 
         T = len(matStrs)
-        nYears = np.array(["Nan"] * T, dtype=float)
-        for i in range(T):
-            matStr = matStrs[i].lower()
+        nYears = np.full((T,), np.nan)
+        for rdate in np.unique(matStrs):
 
-            if re.search("st", matStr):
-                matStr = '1d'
-            if re.search("on", matStr):
-                matStr = '1d'
-            if re.search("tn", matStr):
-                matStr = '2d'
-            if re.search("sw", matStr):
-                matStr = '1w'
+            idx = rdate == matStrs
+            if re.search("st", rdate.lower()):
+                rdate = '1d'
+            if re.search("on", rdate.lower()):
+                rdate = '1d'
+            if re.search("tn", rdate.lower()):
+                rdate = '2d'
+            if re.search("sw", rdate.lower()):
+                rdate = '1w'
 
-            if re.search("d", matStr):
+            if re.search("d", rdate.lower()):
                 nPeriods = DateUtils.days_per_year
                 strg = "d"
-            elif re.search("w", matStr):
+            elif re.search("w", rdate.lower()):
                 nPeriods = DateUtils.days_per_year / 7
                 strg = "w"
-            elif re.search("m", matStr):
+            elif re.search("m", rdate.lower()):
                 nPeriods = 12
                 strg = "m"
-            elif re.search("q", matStr):
+            elif re.search("q", rdate.lower()):
                 nPeriods = 4
                 strg = "q"
-            elif re.search("y", matStr):
+            elif re.search("y", rdate.lower()):
                 nPeriods = 1
                 strg = "y"
             else:
-                raise Exception("Error - relative date {} not recongnized".format(matStr))
+                raise Exception("Error - relative date {} not recongnized".format(rdate))
 
-            loc = matStr.find(strg)
-            nYears[i] = round(float(matStr[0:loc]) / nPeriods, 10)
+            loc = rdate.find(strg)
+            nYears[idx] = round(float(rdate[0:loc]) / nPeriods, 10)
 
         if len(nYears) > 1:
             return nYears

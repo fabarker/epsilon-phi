@@ -1,4 +1,6 @@
 from epsilonPhi.core.dataModel.dataSources.impliedVolatility.VolSurfaceMgr import VolSurfaceMgr
+import pandas as pd
+import numpy as np
 
 class AbstractVolSurface(object):
     _cache = {}
@@ -8,13 +10,27 @@ class AbstractVolSurface(object):
                  pricing_location=None,
                  cross_section=None):
 
-        self._underlier = underlier
-        self._mgr = VolSurfaceMgr(underlier,
-                                  pricing_location,
-                                  cross_section)
-
-    def get_vol_surface_mgr(self):
-        return self._mgr
+        self._mgr = VolSurfaceMgr(underlier, pricing_location, cross_section)
+        self._mgr._load_ivols()
+        self._raw_data = self._mgr._ivols[self._mgr._underlier]
+    @property
+    def dates(self):
+        return pd.to_datetime(self._raw_data.index.get_level_values(0).unique())
+    @property
+    def unique_Xs(self):
+        return np.unique(self._raw_data.index.get_level_values(2))
+    @property
+    def unique_Ms(self):
+        return np.unique(self._raw_data.index.get_level_values(1))
+    @property
+    def T(self):
+        return len(self.dates)
+    @property
+    def NM(self):
+        return len(self.unique_Ms)
+    @property
+    def NX(self):
+        return len(self.unique_Xs)
 
     def get_spot_prices(self):
         return self._mgr.get_spot_prices()
@@ -25,15 +41,12 @@ class AbstractVolSurface(object):
     def get_funding_rate_curve(self, maturities=None):
         return self._mgr.get_funding_rate_curve(maturities=maturities)
 
-    def get_ivol_panel(self):
-        return self._mgr.get_ivols()
-
     def get_ivols(self):
-        return self.get_ivol_panel().get('mid')
+        return self._raw_data.get('mid')
 
     def get_ivol_tseries(self):
         ivols = self.get_ivols()
-        return ivols[~ivols.index.duplicated(keep='first')].unstack(level=[1,2])
+        return ivols[~ivols.index.duplicated(keep='first')].unstack(level=[1, 2])
 
     def get_option_prices(self):
         pass
@@ -89,7 +102,7 @@ class AbstractVolSurface(object):
 
 if __name__ == "__main__":
 
-    self = AbstractVolSurface('SPX', )
+    self = AbstractVolSurface('SPX')
     spt = self.get_ivol_panel()
 
 

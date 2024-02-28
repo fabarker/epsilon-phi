@@ -329,6 +329,40 @@ class SessionMgr(object):
         import pandasgui
         pandasgui.show(self.query_format_df(self.getSessionFactory().query(table)))
 
+    def get_ivols(self, underlier, pricing_location=None):
+
+        session = self.getSessionFactory()
+
+        _path = '/Users/francisbarker/Desktop/ivol cache/' + underlier + '.csv'
+        if os.path.exists(_path):
+           df = pd.read_csv(_path)
+        else:
+            print('Loading Vol Surface Data for Security {}'.format(underlier))
+            q = session.query(ImpliedVolatility).filter(ImpliedVolatility.security ==
+                                                        underlier)
+
+            if pricing_location:
+                q = q.filter(ImpliedVolatility.pricing_location == pricing_location)
+            df = self.query_format_df(q).dropna(how='all', axis=1)
+
+            # Swap Delta Neutral to Large Negative Number
+            df = df.replace('DN', '-99900')
+            df['relative_strike'] = df['relative_strike'].astype(float).astype(int) / 100
+            df.to_csv(_path, index=False)
+
+        _dates = pd.to_datetime(df.date.values)
+        drop_rows = (_dates.dayofweek == 5) | (_dates.dayofweek == 6)
+        _df = df.iloc[~drop_rows, :]
+        _df['date'] = pd.to_datetime(_df.date.values)
+        return _df
+
+    def get_ivol_spec(self, underlier):
+        session = self.getSessionFactory()
+        _q = (session.query(ImpliedVolatilitySpec).
+              filter(ImpliedVolatilitySpec.security == underlier))
+        return self.query_format_df(_q).T.to_dict().get(0)
+
+
 @contextmanager
 def session_scope():
     scoped_session = SessionMgr().getSessionFactory()
