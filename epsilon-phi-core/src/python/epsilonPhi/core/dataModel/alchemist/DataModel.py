@@ -360,6 +360,30 @@ class ImpliedVolatilitySpec(Base):
     name = Column(String(100), nullable=False, index=True)
     ticker = Column(String(100), nullable=False, index=True)
 
+@auto_repr
+class ImpliedVolatilityNew(TimeSeries):
+    __tablename__ = 'implied_volatility_new'
+
+    uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+    date = Column(DateTime, primary_key=True)
+
+    pricing_location = Column(String(6), primary_key=True)
+    strike_reference = Column(String(20), nullable=True, index=True)
+    relative_strike = Column(String(20), nullable=True, index=True)
+    tenor = Column(String(9), nullable=False, index=True)
+
+    bid = Column(FloatOrNone, nullable=True)
+    mid = Column(FloatOrNone, nullable=True)
+    ask = Column(FloatOrNone, nullable=True)
+
+    security = Column(String(100), nullable=False, index=True)
+
+    __mapper_args__ = {'polymorphic_identity': 'implied_volatility_new'}
+    _spec = relationship("TimeSeriesSpec", foreign_keys=[uid])
+
+    @property
+    def expiry(self):
+        return DateUtils.Rdate_to_mat(self.tenor)
 
 @auto_repr
 class ImpliedVolatility(TimeSeries):
