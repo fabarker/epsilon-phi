@@ -1,3 +1,5 @@
+import pandas as pd
+
 from epsilonPhi.core.dataModel.alchemist.SessionManager import *
 from epsilonPhi.core.dataModel.dataSources.curves.interestRateCurve.IRCurve import IRCurve
 from epsilonPhi.core.dataModel.dataSources.curves.abstractCurve.AbstractCurve import AbstractCurve
@@ -13,7 +15,7 @@ session = sessionMgr.getSessionFactory()
 _DROP_COLS = ['uid', 'pricing_location', 'relative_strike', 'strike_reference', 'tenor', 'security']
 
 # Default interpolation points for converting between strike reference space
-_DELTA_POINTS = np.hstack((np.arange(5, 50 + 2.5, 2.5), -1 * np.arange(5, 50 + 2.5, 2.5))) / 100
+_DELTA_POINTS = np.arange(0.05, 1, 0.05)
 _MONEYNESS_POINTS = np.arange(50, 155, 5)/100
 _ZSCORE_POINTS = np.arange(-3, 3.5, 0.5)
 _CONVEXITY_MNY_POINTS = np.arange(-3, 3.5, 0.1)
@@ -217,7 +219,7 @@ class VolSurfaceMgr(object):
             df['k'] = np.nan
             if 'spot' in _strike_references:
                 spt_locs = df.strike_reference.values == 'spot'
-                df.iloc[spt_locs, -1] =  self.get_strikes_from_moneyness(df['relative_strike'][spt_locs])
+                df.iloc[spt_locs, -1] = self.get_strikes_from_moneyness(df['relative_strike'][spt_locs])
 
             if 'forward' in _strike_references:
                 fwd_locs = df.strike_reference.values == 'forward'
@@ -237,12 +239,8 @@ class VolSurfaceMgr(object):
                                                                                df['t'][DN_locs],
                                                                                self.delta_convention)
 
-               df.loc[DN_locs, 'relative_strike']  = self.get_atm_delta_neutral_deltas(df['mid'][DN_locs],
-                                                                                        df['t'][DN_locs],
-                                                                                        self.delta_convention,
-                                                                                        -1)
-
             # Translate from current strike reference to target strike reference
+            self._interpolate_volga_vanna(df, self.strike_reference)
             self._ivols[self.underlier] = self.convert_to_strike_reference(df, self.strike_reference)
 
     def get_atm_delta_neutral_deltas(self, ivols, t, deltaTypeValue, option_type_value):
@@ -396,20 +394,55 @@ class VolSurfaceMgr(object):
     def convert_to_delta_strike_reference(self, df, strike_reference):
 
          # Compute Deltas for the quotes we have
-         _opts = [(-1, -1), (1, 1), (-1, 0), (1, 0)]
-         ivols = [pd.DataFrame()]
-         for opt in _opts:
-             ivols.extend([self.__solve_for_deltas(df, opt[0], opt[1], strike_reference.value)])
-         df = pd.concat(ivols, axis=0)
+         x = self.get_deltas_from_strikes(df['mid'], df['t'], df['k'], strike_reference.value, 1)
+         df['x'] = x.round(3)
+         interp_ = df.reset_index(drop=False).drop_duplicates(subset=['date', 't', 'x']).set_index('date')
 
          # Interpolate the deltas to points in the cross-section
-         ivols = self.interpolate(df, strikes=_DELTA_POINTS, maturities=df['t'])
+         ivols = self.interpolate(interp_, strikes=_DELTA_POINTS, maturities=df['t'])
+         # Compute the new impled strikes
          ivols['k'] = self.get_strikes_from_deltas(ivols['mid'], ivols['t'], ivols['x'], strike_reference.value)
+         # Express and OTM Puts and Calls
+         ivols.loc[ivols.x > 0.5, 'x'] = ivols.loc[ivols.x > 0.5, 'x'] - 1
          return ivols
+
+    def _interpolate_volga_vanna(self, df, strike_reference):
+
+        _TARGET_MATURITIES = self.maturities.reshape(-1, 1)
+        _TARGET_DELTAS = _DELTA_POINTS.reshape(-1, 1)
+
+        M = _TARGET_MATURITIES.repeat(_TARGET_DELTAS.shape[0], axis=1)
+        D = np.round(_TARGET_DELTAS.T.repeat(_TARGET_MATURITIES.shape[0], axis=0), 3)
+        TARGET = pd.MultiIndex.from_tuples(list(zip(M.reshape(-1), D.reshape(-1))))
+
+        # Extract all the delta points we need
+        VV = df[df.relative_strike.isin([-999, -0.25, 0.25])]
+        VV_ = VV.reset_index(drop=False).set_index(['date', 't', 'relative_strike']).get(['mid'])
+        VV__ = VV_[~VV_.duplicated()].unstack(level=[1, 2]).sort_index().get('mid').ffill()
+        VV__[np.setdiff1d(TARGET, VV__.columns)] = np.nan
+
+
+        res = self.vanna_volga(F, X, t, kput, katm, kcall, sigput, sigatm, sigcal)
+
+    @staticmethod
+    def vanna_volga(F, X, t, kput, katm, kcall, sigput, sigatm, sigcal):
+
+        w_put = (np.log(katm / X) * np.log(kcall / X)) / (np.log(katm / kput) * np.log(kcall / katm))
+        w_atm = (np.log(X / kput) * np.log(kcall / X)) / (np.log(katm / kput) * np.log(kcall / katm))
+        w_cal = (np.log(X / kput) * np.log(kcall / X)) / (np.log(katm / kput) * np.log(kcall / katm))
+
+        d1d2 = d1(F, t, katm, sigatm) * d1(F, t, katm, sigatm)
+
+        vv_fo = (w_put * sigput + w_atm * sigatm + w_cal * sigcal) - sigatm
+        vv_so = (w_put * d1(F, t, kput, sigput) * d2(F, t, kcall, sigput) * np.power(sigput - sigatm, 2) +
+                 w_cal * d1(F, t, kcall, sigcal) * d2(F, t, kcall, sigcal) * np.power(sigcal - sigatm, 2))
+
+        return sigatm + (-1 * np.sqrt(np.power(sigatm, 2) + d1d2 * (2 * sigatm * vv_fo + vv_so))) / d1d2
+
 
 
     @staticmethod
-    @jit(nopython=True, fastmath=True, cache=True)
+   # @jit(nopython=True, fastmath=True, cache=True)
     def interpolate_single_date(mat, unique_m, x, unique_x, mids):
 
         N = len(mids)
@@ -461,6 +494,7 @@ class VolSurfaceMgr(object):
         interp = np.full(shape=(NX*NM, ND), fill_value=np.nan)
         for t in tqdm(range(ND), desc="Interpolating Vol Surface"):
             idx = (unique_d[t] == _df.index)
+            T = ND - 1
             interp[:, t] = self.interpolate_single_date(t_vec[idx],
                                                          unique_m,
                                                          x_vec[idx],
@@ -483,7 +517,7 @@ class VolSurfaceMgr(object):
 if __name__ == "__main__":
 
     underlier = 'EURUSD'
-    self = VolSurfaceMgr(underlier, strike_reference=StrikeReference.SPOT_DELTA)
+    self = VolSurfaceMgr(underlier, strike_reference=StrikeReference.SPOT_DELTA, pricing_location='LDN')
     df = self.get_ivols()
 
     surf = df.loc['2023-06-30'].reset_index(drop=False).set_index(['x', 't']).get('mid').unstack()

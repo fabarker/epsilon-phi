@@ -338,11 +338,11 @@ class SessionMgr(object):
            df = pd.read_csv(_path)
         else:
             print('Loading Vol Surface Data for Security {}'.format(underlier))
-            q = session.query(ImpliedVolatility).filter(ImpliedVolatility.security ==
+            q = session.query(ImpliedVolatilityNew).filter(ImpliedVolatilityNew.security ==
                                                         underlier)
 
             if pricing_location:
-                q = q.filter(ImpliedVolatility.pricing_location == pricing_location)
+                q = q.filter(ImpliedVolatilityNew.pricing_location == pricing_location)
             df = self.query_format_df(q).dropna(how='all', axis=1)
 
             # Swap Delta Neutral to Large Negative Number
