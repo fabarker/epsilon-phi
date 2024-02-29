@@ -169,6 +169,19 @@ if __name__ == "__main__":
     _SAVE_PATH = r'/Users/francisbarker/Data/SPX Vols'
 
     gsq = GSQuantManager()
+    _DATASET = Dataset('FXIVOL_V2_PREMIUM')
+    cov = _DATASET.get_coverage()
+    coverage = pd.DataFrame([x.split() for x in cov.name])
+    coverage.columns = ['type', 'currency', 'tenor', 'delta', 'putcall']
+    coverage['assetID'] = cov.assetId
+    coverage.drop(columns='type')
+    coverage = coverage.set_index('assetID')
+    coverage['foreign'] = coverage['currency'].apply(lambda x: x[0:3])
+    coverage['domestic'] = coverage['currency'].apply(lambda x: x[3:])
+
+    #         return coverage.copy()
+
+
     spx = gsq.get_security('SPX')
 
     start = datetime.date(year=1980, month=1, day=1)

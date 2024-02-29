@@ -2,11 +2,11 @@ from enum import Enum
 class StrikeReference(Enum):
     SPOT_DELTA = 1
     FORWARD_DELTA = 2
-    MONEYNESS = 4
-    Z_SCORE = 4
-    CONVEXITY_MN = 5
-    SPOT_DELTA_PREM_ADJ = 6
-    FORWARD_DELTA_PREM_ADJ = 7
+    MONEYNESS = 5
+    Z_SCORE = 6
+    CONVEXITY_MN = 7
+    SPOT_DELTA_PREM_ADJ = 3
+    FORWARD_DELTA_PREM_ADJ = 4
 
 class AtTheMoneyType(Enum):
     SPOT = 1  # Spot

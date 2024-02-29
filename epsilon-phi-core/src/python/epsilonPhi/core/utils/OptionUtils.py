@@ -127,6 +127,42 @@ def bs_value(s, t, k, r, q, v, option_type_value):
 
 ###############################################################################
 
+def atm_delta_neutral_strike(s, t, rd, rf, vol, deltaTypeValue):
+
+    """ Calculation of the option delta. Used in the determination of
+       the volatility surface. """
+
+    dom_df = np.exp(-rd * t)
+    for_df = np.exp(-rf * t)
+    f = s * for_df / dom_df
+
+    if deltaTypeValue in [DeltaType.SPOT_DELTA, DeltaType.SPOT_DELTA.value]:
+        return f * np.exp(0.5 * vol * vol * t)
+    elif deltaTypeValue == [DeltaType.FORWARD_DELTA, DeltaType.FORWARD_DELTA.value]:
+        return f * np.exp(0.5 * vol * vol * t)
+    elif deltaTypeValue == [DeltaType.SPOT_DELTA_PREM_ADJ, DeltaType.SPOT_DELTA_PREM_ADJ.value]:
+        return f * np.exp(-0.5 * vol * vol * t)
+    elif deltaTypeValue == [DeltaType.FORWARD_DELTA_PREM_ADJ, DeltaType.FORWARD_DELTA_PREM_ADJ.value]:
+        return f * np.exp(-0.5 * vol * vol * t)
+    else:
+        raise FinError("Unknown DeltaMethod")
+
+def delta_from_delta_neutral_straddle_quote(t, rf, vol, deltaTypeValue, option_type_value):
+
+    """ Calculation of the option delta. Used in the determination of
+       the volatility surface. """
+
+    if deltaTypeValue in [DeltaType.SPOT_DELTA, DeltaType.SPOT_DELTA.value]:
+        return 0.5 * option_type_value * np.exp(-1 * rf * t)
+    elif deltaTypeValue == [DeltaType.FORWARD_DELTA, DeltaType.FORWARD_DELTA.value]:
+        return 0.5 * option_type_value
+    elif deltaTypeValue == [DeltaType.SPOT_DELTA_PREM_ADJ, DeltaType.SPOT_DELTA_PREM_ADJ.value]:
+        return 0.5 * option_type_value * np.exp(-1 * rf * t) * np.exp(-0.5 * vol * vol * t)
+    elif deltaTypeValue == [DeltaType.FORWARD_DELTA_PREM_ADJ, DeltaType.FORWARD_DELTA_PREM_ADJ.value]:
+        return 0.5 * option_type_value * np.exp(-0.5 * vol * vol * t)
+    else:
+        raise FinError("Unknown DeltaMethod")
+
 
 def fast_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
     """ Calculation of the option delta. Used in the determination of

@@ -1,12 +1,8 @@
-import pandas as pd
-
 from epsilonPhi.core.dataModel.alchemist.SessionManager import *
 from epsilonPhi.core.dataModel.dataSources.curves.interestRateCurve.IRCurve import IRCurve
 from epsilonPhi.core.dataModel.dataSources.curves.abstractCurve.AbstractCurve import AbstractCurve
 from epsilonPhi.core.utils.OptionUtils import *
-from numba import jit, vectorize
-from numba import float64
-
+from numba import jit
 from epsilonPhi.core.dataModel.enums.Database import PriceQuote
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import StrikeReference
 from tqdm import tqdm
@@ -20,7 +16,8 @@ _DROP_COLS = ['uid', 'pricing_location', 'relative_strike', 'strike_reference', 
 _DELTA_POINTS = np.hstack((np.arange(5, 50 + 2.5, 2.5), -1 * np.arange(5, 50 + 2.5, 2.5))) / 100
 _MONEYNESS_POINTS = np.arange(50, 155, 5)/100
 _ZSCORE_POINTS = np.arange(-3, 3.5, 0.5)
-_CONVEXITY_MNY_POINTS = np.arange(-3, 3.5, 0.5)
+_CONVEXITY_MNY_POINTS = np.arange(-3, 3.5, 0.1)
+
 
 class VolSurfaceMgr(object):
     _raw_cache = {}
@@ -128,8 +125,28 @@ class VolSurfaceMgr(object):
         else:
             return self._spot_prices.loc[dates].values.flatten()
 
+    def get_forward_prices(self, pricing_dates, maturities):
+
+        s = self.get_spot_prices(pricing_dates)
+        if isinstance(maturities, (pd.DataFrame, pd.Series)):
+           maturities = maturities.values
+
+        rf = self.get_funding_rates(pricing_dates, maturities)
+        rd = self.get_interest_rates(pricing_dates, maturities)
+        return s * np.exp(-rf * maturities) / np.exp(-rd * maturities)
+
     def _load_interest_rate_curve(self):
         self._interest_rate_curve = IRCurve(region=self.region, type=['Interbank', 'Deposit'])
+
+    def get_funding_rate_curve(self, maturities=None, stack=False):
+
+        if self._funding_rate_curve is None:
+            self._load_funding_rate_curve()
+
+        if stack:
+            return self._funding_rate_curve.get_curve(maturities).stack()
+        else:
+            return self._funding_rate_curve.get_curve(maturities)
 
     def get_interest_rate_curve(self, maturities=None, stack=False):
 
@@ -160,24 +177,20 @@ class VolSurfaceMgr(object):
         self._funding_rate_curve = AbstractCurve(rf)
 
     def get_interest_rates(self, pricing_dates, maturities):
+        if isinstance(maturities, (pd.DataFrame, pd.Series)):
+           maturities = maturities.values
+
         _curve = self.get_interest_rate_curve(np.unique(maturities), stack=True)
         idx = pd.MultiIndex.from_tuples(list(zip(pricing_dates, maturities)))
         return _curve.loc[idx].values.flatten()
 
     def get_funding_rates(self, pricing_dates, maturities):
+        if isinstance(maturities, (pd.DataFrame, pd.Series)):
+           maturities = maturities.values
+
         _curve = self.get_funding_rate_curve(np.unique(maturities), stack=True)
         idx = pd.MultiIndex.from_tuples(list(zip(pricing_dates, maturities)))
         return _curve.loc[idx].values.flatten()
-
-    def get_funding_rate_curve(self, maturities=None, stack=False):
-
-        if self._funding_rate_curve is None:
-            self._load_funding_rate_curve()
-
-        if stack:
-            return self._funding_rate_curve.get_curve(maturities).stack()
-        else:
-            return self._funding_rate_curve.get_curve(maturities)
 
     def get_ivols(self):
         if self.underlier not in self._ivols.keys():
@@ -192,24 +205,67 @@ class VolSurfaceMgr(object):
             df = sessionMgr.get_ivols(self._underlier, self._pricing_location)
             df = df.set_index('date', drop=True)
 
+            # pricing location
             self._pricing_location = df['pricing_location'].unique().item()
+
             # Insert the maturities
             df['t'] = DateUtils.Rdate_to_mat(df['tenor'].values)
             self._maturities = np.sort(df.t.unique())
 
-            _strike_reference = df.get('strike_reference').drop_duplicates().values[0]
-            if _strike_reference == 'spot':
-               df['k'] = self.get_strikes_from_moneyness(df['relative_strike'])
-            elif _strike_reference == 'forward':
-               df['k'] = self.get_strikes_from_moneyness(df['f'], df['relative_strike'])
-            elif _strike_reference == 'delta':
-               df['k'] = self.get_strikes_from_deltas(df['mid'], df['t'], df['relative_strike'])
-            else:
-                raise ValueError('Error - strike reference {} not supported'.format(_strike_reference))
+            # estimate th implied strikes
+            _strike_references = np.unique(df.get('strike_reference').values)
+            df['k'] = np.nan
+            if 'spot' in _strike_references:
+                spt_locs = df.strike_reference.values == 'spot'
+                df.iloc[spt_locs, -1] =  self.get_strikes_from_moneyness(df['relative_strike'][spt_locs])
+
+            if 'forward' in _strike_references:
+                fwd_locs = df.strike_reference.values == 'forward'
+                df.iloc[fwd_locs, -1] = self.get_strikes_from_forward_moneyness(df['relative_strike'][fwd_locs],
+                                                                                df['t'][fwd_locs])
+
+            if 'delta' in _strike_references:
+                del_locs = (df.strike_reference.values == 'delta') & (df.relative_strike > -999)
+                df.iloc[del_locs, -1] = self.get_strikes_from_deltas(df['mid'][del_locs],
+                                                                     df['t'][del_locs],
+                                                                     df['relative_strike'][del_locs],
+                                                                     self.delta_convention)
+
+            if np.any(df.relative_strike == -999):
+               DN_locs = df.relative_strike == -999
+               df.iloc[DN_locs, -1] = self.get_strikes_from_atm_delta_neutral(df['mid'][DN_locs],
+                                                                               df['t'][DN_locs],
+                                                                               self.delta_convention)
+
+               df.loc[DN_locs, 'relative_strike']  = self.get_atm_delta_neutral_deltas(df['mid'][DN_locs],
+                                                                                        df['t'][DN_locs],
+                                                                                        self.delta_convention,
+                                                                                        -1)
 
             # Translate from current strike reference to target strike reference
-            ivols = self.convert_to_strike_reference(df, self.strike_reference)
+            self._ivols[self.underlier] = self.convert_to_strike_reference(df, self.strike_reference)
 
+    def get_atm_delta_neutral_deltas(self, ivols, t, deltaTypeValue, option_type_value):
+        rf = self.get_forward_prices(ivols.index, t)
+        return delta_from_delta_neutral_straddle_quote(t,
+                                                       rf,
+                                                       ivols,
+                                                       deltaTypeValue,
+                                                       option_type_value)
+
+    def get_strikes_from_atm_delta_neutral(self, ivols, t, deltaTypeValue):
+        s = self.get_spot_prices(ivols.index)
+        rf = self.get_funding_rates(ivols.index, t)
+        rd = self.get_interest_rates(ivols.index, t)
+        return atm_delta_neutral_strike(s,
+                                        t,
+                                        rd,
+                                        rf,
+                                        ivols,
+                                        deltaTypeValue)
+
+    def get_strikes_from_forward_moneyness(self, x, t):
+        return x * self.get_forward_prices(x.index, t)
 
     def get_strikes_from_moneyness(self, x, s=None):
         if s is None:
@@ -221,11 +277,15 @@ class VolSurfaceMgr(object):
            s = self.get_spot_prices(x.index)
         return k / s
 
-    def get_strikes_from_log_moneyness(self, lnx, s=None):
-        return s * np.exp(lnx)
+    def get_strikes_from_log_moneyness(self, lnx, t, f=None):
+        if f is None:
+           f = self.get_forward_prices(lnx.index, t)
+        return f * np.exp(lnx)
 
-    def get_log_moneyness_from_strikes(self, k, s):
-        return np.log(k / s)
+    def get_log_moneyness_from_strikes(self, k, t, f=None):
+        if f is None:
+           f = self.get_forward_prices(k.index, t)
+        return np.log(k / f)
 
     def get_deltas_from_strikes(self, ivols, t, k, delta_type, option_type):
 
@@ -241,7 +301,7 @@ class VolSurfaceMgr(object):
                           delta_type,
                           option_type)
 
-    def get_strikes_from_deltas(self, ivols, t, delta):
+    def get_strikes_from_deltas(self, ivols, t, delta, delta_type):
 
         s = self.get_spot_prices(ivols.index)
         rf = self.get_funding_rates(ivols.index, t)
@@ -252,34 +312,48 @@ class VolSurfaceMgr(object):
                                 rf,
                                 np.sign(delta),
                                 delta,
-                                self.delta_convention,
+                                delta_type,
                                 ivols)
 
-    def get_strikes_from_zscore(self, df):
-        pass
+    def get_convexity_moneyness_from_strikes(self, ivols, k, t):
 
-    def get_convexity_moneyness_from_strikes(self, df):
-        sig = df['mid']
-        sigsq = np.power(df['mid'], 2)
-        lnm = self.get_log_moneyness_from_strikes(df)
+        # Compute the convexity adjusted moneyness measure
+        sigsq = np.power(ivols, 2)
+        lnm = self.get_log_moneyness_from_strikes(k, t)
+        zp = lnm + 0.5 * sigsq * t
+        return zp / (ivols * np.sqrt(t))
 
+    def get_strikes_from_convexity_moneyness(self, ivols, x, t):
 
-        zp = lnm + 0.5 * sigsq * df['t']
-        return zp / (df['mid'] * np.sqrt(df['t']))
+        # Compute the convexity adjusted moneyness measure
+        f = self.get_forward_prices(ivols.index, t)
+        sigsq = np.power(ivols, 2)
+        return f * np.exp(x * (ivols * np.sqrt(t)) - 0.5 * sigsq * t)
 
-    def get_strikes_from_convexity_moneyness(self, df):
-        pass
+    def get_zscore_from_strikes(self, ivols, k, t):
+        lmn = self.get_log_moneyness_from_strikes(k, t)
+        return lmn / (ivols * np.sqrt(t))
 
+    def get_strikes_from_zscore(self, ivols, x, t):
+        f = self.get_forward_prices(ivols.index, t)
+        return f * np.exp(x * (ivols * np.sqrt(t)))
 
     def __solve_for_deltas(self, _df, opt_type, mny_type, dlt_type):
 
-        s = self.get_spot_prices(_df.index)
+        if dlt_type == 1:
+           x = self.get_spot_prices(_df.index)
+        elif dlt_type == 2:
+           x = self.get_forward_prices(_df.index, _df['t'])
+        else:
+            raise ValueError('Error')
+
+        lnm = np.log(_df['k'].values / x)
         if np.sign(mny_type) == 0:
-            idx = _df['k'].values / s == 1
+            idx = lnm == 0
         elif np.sign(mny_type) == -1:
-            idx = _df['k'].values / s < 1
+            idx = lnm < 0
         elif np.sign(mny_type) == 1:
-            idx = _df['k'].values / s > 1
+            idx = lnm > 0
         else:
             raise ValueError('Error')
 
@@ -294,24 +368,30 @@ class VolSurfaceMgr(object):
         if strike_reference in [StrikeReference.MONEYNESS]:
             return self.convert_to_moneyness_strike_reference(df)
         if strike_reference in [StrikeReference.Z_SCORE]:
-            return self.convert_to_zscore_strike_reference(df, strike_reference)
+            return self.convert_to_zscore_strike_reference(df)
         if strike_reference in [StrikeReference.CONVEXITY_MN]:
-            return self.convert_to_convexity_moneynees_strike_reference(df, strike_reference)
+            return self.convert_to_convexity_moneyness_strike_reference(df)
         else:
             return df.copy()
 
-    def convert_to_zscore_strike_reference(self, df, strike_reference):
-        pass
+    def convert_to_zscore_strike_reference(self, df):
+        raise ValueError('Not Implemented')
 
-    def convert_to_convexity_moneynees_strike_reference(self, df, strike_reference):
-        pass
+    def convert_to_convexity_moneyness_strike_reference(self, df):
+
+        # Compute the convexity moneyness measures for the data we have
+        df['x'] = self.get_convexity_moneyness_from_strikes(df['mid'], df['k'], df['t'])
+        ivols = self.interpolate(df, strikes=_CONVEXITY_MNY_POINTS, maturities=df['t'])
+        ivols['k'] = self.get_strikes_from_convexity_moneyness(ivols['mid'], ivols['x'], ivols['t'])
+        return ivols.copy()
 
     def convert_to_moneyness_strike_reference(self, df):
-        df['x'] = df['k'] / df['s']
+
+        # Compute the moneyness measures for the data we have
+        df['x'] = df['k'] / self.get_spot_prices(df.index)
         ivols = self.interpolate(df, strikes=_MONEYNESS_POINTS, maturities=df['t'])
-        ivols = ivols.reset_index(drop=False).set_index('date')
-        ivols['k'] = self.get_strikes_from_moneyness(s, x)
-        return ivols.xopy()
+        ivols['k'] = self.get_strikes_from_moneyness(ivols['x'])
+        return ivols.copy()
 
     def convert_to_delta_strike_reference(self, df, strike_reference):
 
@@ -322,15 +402,10 @@ class VolSurfaceMgr(object):
              ivols.extend([self.__solve_for_deltas(df, opt[0], opt[1], strike_reference.value)])
          df = pd.concat(ivols, axis=0)
 
-         # Interpolate the deltas to points in the cross section
+         # Interpolate the deltas to points in the cross-section
          ivols = self.interpolate(df, strikes=_DELTA_POINTS, maturities=df['t'])
-         ivols['k'] = self.get_strikes_from_deltas(ivols['mid'], ivols['t'], ivols['x'])
+         ivols['k'] = self.get_strikes_from_deltas(ivols['mid'], ivols['t'], ivols['x'], strike_reference.value)
          return ivols
-
-    def _validate_underlier(self):
-        if not session.query(exists().where(ImpliedVolatility.security ==
-                                            self._underlier)).scalar():
-            raise ValueError('Error: {} ticker not supported'.format(self._underlier))
 
 
     @staticmethod
@@ -400,9 +475,15 @@ class VolSurfaceMgr(object):
         vols.columns.names = ['date']
         return vols.stack().reorder_levels([2, 0, 1]).to_frame('mid').reset_index(drop=False).set_index('date')
 
+    def _validate_underlier(self):
+        if not session.query(exists().where(ImpliedVolatility.security == self.underlier)).scalar():
+            raise ValueError('Error: {} ticker not supported'.format(self._underlier))
+
 
 if __name__ == "__main__":
 
-    underlier = 'SPX'
+    underlier = 'EURUSD'
     self = VolSurfaceMgr(underlier, strike_reference=StrikeReference.SPOT_DELTA)
     df = self.get_ivols()
+
+    surf = df.loc['2023-06-30'].reset_index(drop=False).set_index(['x', 't']).get('mid').unstack()
