@@ -94,14 +94,13 @@ def solve_for_strike(spot_fx_rate,
     else:
         raise FinError("Unknown DeltaMethod")
 
-def d1(F, t, k, v):
-    t = np.maximum(t, g_small)
-    v_sqrt_t = np.maximum(v, g_small) * np.sqrt(t)
-    d1 = np.log(F/k) / v_sqrt_t + v_sqrt_t / 2.0
+
+def d1(F, k, v, t):
+    d1 = (np.log(F / k) + 0.5 * (v ** 2) * t) / (v * np.sqrt(t))
     return d1
 
-def d2(F, t, k, v):
-    return d1(F, t, k, v) - np.maximum(v, g_small) * np.sqrt(t)
+def d2(F, k, v, t):
+    return  d1(F, k, v, t) - v * np.sqrt(t)
 
 def d_plus(s, t, k, r, q, v):
 

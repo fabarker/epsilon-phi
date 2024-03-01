@@ -1,5 +1,17 @@
 from enum import Enum
+
+class Interpolator(Enum):
+
+    VANNA_VOLGA = 1
+    KERNEL_SMOOTHING_1D = 2
+    KERNEL_SMOOTHING_2D = 3
+    POLYNOMIAL_REGRESSION_1D = 4
+    POLYNOMIAL_REGRESSION_2D = 5
+    CLAMPED_CUBIC_SPLINE = 6
+
+
 class StrikeReference(Enum):
+
     SPOT_DELTA = 1
     FORWARD_DELTA = 2
     MONEYNESS = 5

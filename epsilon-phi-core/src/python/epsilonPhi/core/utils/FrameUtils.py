@@ -3,9 +3,26 @@ from operator import add
 from epsilonPhi.core.utils.DateUtils import DateUtils
 import numpy as np
 import collections, re, six
+from epsilonPhi.core.utils.MathUtils import linear_interpolate
 
 class FrameUtils(object):
     pass
+
+    @staticmethod
+    def rowise_linear_interpolate_on_groups(df, x_var, x_lev, group):
+        return (df.groupby(axis=1, level=group).
+                apply(lambda x: FrameUtils.linear_interpolate_frame_rows(x, x_var, x_lev)))
+
+    @staticmethod
+    def linear_interpolate_frame_rows(x, x_var, x_lev=False):
+
+        if x_lev is False:
+            x_lev = np.array(x.columns)
+        else:
+            x_lev = np.array(x.columns.get_level_values(x_lev))
+        return linear_interpolate(x_lev,
+                                  x,
+                                  x_var).set_axis(x_var, axis=1)
 
     @staticmethod
     def is_iterable(arg):

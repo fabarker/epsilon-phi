@@ -54,7 +54,7 @@ class VolSurfaceMgr(object):
 
         # Load Data
         self._load_vol_surface_spec()
-        self._load_ivols()
+        #self._load_ivols()
 
 
     @property
@@ -406,40 +406,6 @@ class VolSurfaceMgr(object):
          ivols.loc[ivols.x > 0.5, 'x'] = ivols.loc[ivols.x > 0.5, 'x'] - 1
          return ivols
 
-    def _interpolate_volga_vanna(self, df, strike_reference):
-
-        _TARGET_MATURITIES = self.maturities.reshape(-1, 1)
-        _TARGET_DELTAS = _DELTA_POINTS.reshape(-1, 1)
-
-        M = _TARGET_MATURITIES.repeat(_TARGET_DELTAS.shape[0], axis=1)
-        D = np.round(_TARGET_DELTAS.T.repeat(_TARGET_MATURITIES.shape[0], axis=0), 3)
-        TARGET = pd.MultiIndex.from_tuples(list(zip(M.reshape(-1), D.reshape(-1))))
-
-        # Extract all the delta points we need
-        VV = df[df.relative_strike.isin([-999, -0.25, 0.25])]
-        VV_ = VV.reset_index(drop=False).set_index(['date', 't', 'relative_strike']).get(['mid'])
-        VV__ = VV_[~VV_.duplicated()].unstack(level=[1, 2]).sort_index().get('mid').ffill()
-        VV__[np.setdiff1d(TARGET, VV__.columns)] = np.nan
-
-
-        res = self.vanna_volga(F, X, t, kput, katm, kcall, sigput, sigatm, sigcal)
-
-    @staticmethod
-    def vanna_volga(F, X, t, kput, katm, kcall, sigput, sigatm, sigcal):
-
-        w_put = (np.log(katm / X) * np.log(kcall / X)) / (np.log(katm / kput) * np.log(kcall / katm))
-        w_atm = (np.log(X / kput) * np.log(kcall / X)) / (np.log(katm / kput) * np.log(kcall / katm))
-        w_cal = (np.log(X / kput) * np.log(kcall / X)) / (np.log(katm / kput) * np.log(kcall / katm))
-
-        d1d2 = d1(F, t, katm, sigatm) * d1(F, t, katm, sigatm)
-
-        vv_fo = (w_put * sigput + w_atm * sigatm + w_cal * sigcal) - sigatm
-        vv_so = (w_put * d1(F, t, kput, sigput) * d2(F, t, kcall, sigput) * np.power(sigput - sigatm, 2) +
-                 w_cal * d1(F, t, kcall, sigcal) * d2(F, t, kcall, sigcal) * np.power(sigcal - sigatm, 2))
-
-        return sigatm + (-1 * np.sqrt(np.power(sigatm, 2) + d1d2 * (2 * sigatm * vv_fo + vv_so))) / d1d2
-
-
 
     @staticmethod
    # @jit(nopython=True, fastmath=True, cache=True)
@@ -516,8 +482,111 @@ class VolSurfaceMgr(object):
 
 if __name__ == "__main__":
 
-    underlier = 'EURUSD'
-    self = VolSurfaceMgr(underlier, strike_reference=StrikeReference.SPOT_DELTA, pricing_location='LDN')
-    df = self.get_ivols()
+        from epsilonPhi.core.dataModel.dataSources.impliedVolatility.Models import *
 
-    surf = df.loc['2023-06-30'].reset_index(drop=False).set_index(['x', 't']).get('mid').unstack()
+        underlier = 'EURUSD'
+        self = VolSurfaceMgr(underlier, pricing_location='NYC', strike_reference=StrikeReference.SPOT_DELTA)
+
+        df = sessionMgr.get_ivols(self._underlier, self._pricing_location)
+        df = df.set_index('date', drop=True)
+        df['t'] = DateUtils.Rdate_to_mat(df.tenor)
+
+        df = df[df.relative_strike.isin([-999, -0.25, 0.25])].reset_index(drop=False)
+        df_ = df.set_index(['date','t','relative_strike'])
+        sigmas_ = df_[df_.index.duplicated()].get('mid').unstack(level=[1, 2]).sort_index()
+
+
+        ########### 1. Interpolate to the Horizons we want ##########
+
+        from epsilonPhi.core.utils.FrameUtils import FrameUtils
+        horizons = np.cumsum([1/365] * 31)
+        horizon_vols = FrameUtils.rowise_linear_interpolate_on_groups(sigmas_,
+                                                                      horizons,
+                                                                      0,
+                                                                      'relative_strike')
+
+        ############ 2. Get Strikes for Horizon Vols ###############
+
+
+
+
+
+        ############ 3. Interpolate the cross sections ############
+
+
+
+
+
+
+
+        #########
+
+        df_t['rd'] = self.get_interest_rates(df_t.index, df_t.t)
+        df_t['rf'] = self.get_funding_rates(df_t.index, df_t.t)
+        df_t['F'] = self.get_forward_prices(df_t.index, df_t.t)
+        df_t['S'] = self.get_spot_prices(df_t.index)
+        df_t = df_t[~df_t.relative_strike.isin([1, 0.45, 0.55])]
+        df_t['t'] = DateUtils.Rdate_to_mat(df_t.get('tenor'))
+        df_t = df_t.drop_duplicates(['relative_strike','tenor'])
+        df_t.loc[df_t.relative_strike < 0, 'relative_strike'] = df_t.loc[df_t.relative_strike < 0, 'relative_strike'] + 1
+        df_t.loc[df_t.relative_strike == -998, 'relative_strike'] = 0.5
+
+        _s = df_t.set_index(['t', 'relative_strike']).get('mid').unstack(level=0)
+        _s = _s.sort_index(axis=1)
+
+        # 1d polynomial regression
+        y = _s.get(1).values
+        x = np.array(_s.index)
+
+        # Fit the Polynomial Regression
+        udel = np.linspace(0.1, 0.9, 1000)
+        fit = polynomial_regression_1d(x, y, np.linspace(0.1, 0.9, 1000))
+        fit_ = gaussian_kernel_smoother_1d(x, y, np.linspace(0.1, 0.9, 1000), 0.2)
+
+
+        df_t['k'] = solve_for_strike(df_t['S'],
+                                      df_t['t'],
+                                      df_t['rd'],
+                                      df_t['rf'],
+                                      1,
+                                      df_t['relative_strike'],
+                                      1,
+                                      df_t['mid']).values
+
+        idx_L = np.logical_or((df_t['relative_strike'] == -0.25), (df_t['relative_strike'] == 0.75))
+        idx_U = np.logical_or((df_t['relative_strike'] == 0.25), (df_t['relative_strike'] == -0.75))
+        idx_A = df_t['relative_strike'] == 0.5
+
+        kput_ = df_t[idx_L][['mid','k','t','F']].sort_values('t')
+        katm_ = df_t[idx_A][['mid', 'k', 't']].sort_values('t')
+        kcal_ = df_t[idx_U][['mid', 'k', 't']].sort_values('t')
+
+        F = kput_['F'].values
+        t = kput_['t'].values
+
+        ks = np.linspace(df_t['k'].min(), df_t['k'].max(), 1000)
+
+
+        # strike, maturity pairs
+
+        sig_x = vanna_volga_2d(F,
+                               ks,
+                               t,
+                               kput_.get('k'),
+                               katm_.get('k'),
+                               kcal_.get('k'),
+                               kput_.get('mid'),
+                               katm_.get('mid'),
+                               kcal_.get('mid'))
+
+        # Fit the 1-d Gaussian Kernel
+        from matplotlib import pyplot as plt  # Change - use least squares
+
+        plt.scatter(x, y)
+        u = np.linspace(0.1, 0.9, 1000)
+        plt.plot(u, fit)
+        plt.show()
+
+        plt.plot(u, fit_)
+        plt.show()
+
