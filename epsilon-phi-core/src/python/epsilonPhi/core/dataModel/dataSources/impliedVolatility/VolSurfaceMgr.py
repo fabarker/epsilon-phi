@@ -54,7 +54,7 @@ class VolSurfaceMgr(object):
 
         # Load Data
         self._load_vol_surface_spec()
-        #self._load_ivols()
+        self._load_ivols()
 
 
     @property
@@ -199,13 +199,25 @@ class VolSurfaceMgr(object):
             self._load_ivols()
         return self._ivols.get(self.underlier)
 
+    def _process_spot_strike_reference_ivol_data(self, frame):
+        return self.get_strikes_from_moneyness(frame)
+
+    def _process_forward_strike_reference_ivol_data(self):
+        pass
+
+    def _process_delta_strike_reference_ivol_data(self):
+        pass
+
+
+
+
+
     def _load_ivols(self):
 
         if self.underlier not in self._ivols.keys():
 
             # Load raw ivols data from database
-            df = sessionMgr.get_ivols(self._underlier, self._pricing_location)
-            df = df.set_index('date', drop=True)
+            df = sessionMgr.get_ivols(self._underlier, self._pricing_location, index='date')
 
             # pricing location
             self._pricing_location = df['pricing_location'].unique().item()
@@ -213,34 +225,31 @@ class VolSurfaceMgr(object):
             # Insert the maturities
             df['t'] = DateUtils.Rdate_to_mat(df['tenor'].values)
             self._maturities = np.sort(df.t.unique())
-
-            # estimate th implied strikes
             _strike_references = np.unique(df.get('strike_reference').values)
-            df['k'] = np.nan
-            if 'spot' in _strike_references:
-                spt_locs = df.strike_reference.values == 'spot'
-                df.iloc[spt_locs, -1] = self.get_strikes_from_moneyness(df['relative_strike'][spt_locs])
 
-            if 'forward' in _strike_references:
-                fwd_locs = df.strike_reference.values == 'forward'
-                df.iloc[fwd_locs, -1] = self.get_strikes_from_forward_moneyness(df['relative_strike'][fwd_locs],
-                                                                                df['t'][fwd_locs])
+            # Estimate strikes from moneyness
+            _spt_idx = df.strike_reference.values == 'spot'
+            df.loc[_spt_idx, 'k'] = self.get_strikes_from_moneyness(df['relative_strike'][_spt_idx])
 
-            if 'delta' in _strike_references:
-                del_locs = (df.strike_reference.values == 'delta') & (df.relative_strike > -999)
-                df.iloc[del_locs, -1] = self.get_strikes_from_deltas(df['mid'][del_locs],
-                                                                     df['t'][del_locs],
-                                                                     df['relative_strike'][del_locs],
-                                                                     self.delta_convention)
+            # Estimate strikes from forwards
+            _fwd_idx = df.strike_reference.values == 'forward'
+            df.loc[_fwd_idx, 'k'] = self.get_strikes_from_forward_moneyness(df['relative_strike'][_fwd_idx],
+                                                                            df['t'][_fwd_idx])
 
-            if np.any(df.relative_strike == -999):
-               DN_locs = df.relative_strike == -999
-               df.iloc[DN_locs, -1] = self.get_strikes_from_atm_delta_neutral(df['mid'][DN_locs],
-                                                                               df['t'][DN_locs],
-                                                                               self.delta_convention)
+            # Estimates strikes from deltas
+            _del_idx = df.strike_reference.values == 'delta'
+            df.iloc[_del_idx, -1] = self.get_strikes_from_deltas(df['mid'][_del_idx],
+                                                                 df['t'][_del_idx],
+                                                                 df['relative_strike'][_del_idx],
+                                                                 self.delta_convention)
 
-            # Translate from current strike reference to target strike reference
-            self._interpolate_volga_vanna(df, self.strike_reference)
+            # Estimate the strikes for delta neutral points
+            _DN_idx = df.relative_strike == -999
+            df.iloc[_DN_idx, -1] = self.get_strikes_from_atm_delta_neutral(df['mid'][_DN_idx],
+                                                                           df['t'][_DN_idx],
+                                                                           self.delta_convention)
+
+            # Estimate all deltas from the strikes (We may need this for Vanna-Volga Interpolation)
             self._ivols[self.underlier] = self.convert_to_strike_reference(df, self.strike_reference)
 
     def get_atm_delta_neutral_deltas(self, ivols, t, deltaTypeValue, option_type_value):

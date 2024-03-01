@@ -329,7 +329,7 @@ class SessionMgr(object):
         import pandasgui
         pandasgui.show(self.query_format_df(self.getSessionFactory().query(table)))
 
-    def get_ivols(self, underlier, pricing_location=None):
+    def get_ivols(self, underlier, pricing_location=None, index=None):
 
         session = self.getSessionFactory()
 
@@ -354,7 +354,11 @@ class SessionMgr(object):
         drop_rows = (_dates.dayofweek == 5) | (_dates.dayofweek == 6)
         _df = df.iloc[~drop_rows, :]
         _df['date'] = pd.to_datetime(_df.date.values)
-        return _df
+
+        if index is not None:
+            return _df.set_index(index, drop=True)
+        else:
+            return _df.copy()
 
     def get_ivol_spec(self, underlier):
         session = self.getSessionFactory()
