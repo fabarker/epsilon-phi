@@ -25,26 +25,16 @@ def polynomial_regression_1d(x, y, x_prime):
 
 def vanna_volga_2d(f, ks, t, kput, katm, kcall, sigput, sigatm, sigcal):
 
-    k_prime = ks
-    N = k_prime.shape[1]
-
-    kput = kput.reshape(-1, 1).repeat(N, axis=1)
-    katm = katm.reshape(-1, 1).repeat(N, axis=1)
-    kcall = kcall.reshape(-1, 1).repeat(N, axis=1)
-
-    sigput = sigput.reshape(-1, 1).repeat(N, axis=1)
-    sigatm = sigatm.reshape(-1, 1).repeat(N, axis=1)
-    sigcal = sigcal.reshape(-1, 1).repeat(N, axis=1)
+    if np.isscalar(ks):
+       ks = np.array([ks])
 
     # First Interpolate the Cross-Section
-    w_put = (np.log(katm / k_prime) * np.log(kcall / k_prime)) / (np.log(katm / kput) * np.log(kcall / kput))
-    w_atm = (np.log(k_prime / kput) * np.log(kcall / k_prime)) / (np.log(katm / kput) * np.log(kcall / katm))
-    w_cal = (np.log(k_prime / kput) * np.log(k_prime / katm)) / (np.log(kcall / kput) * np.log(kcall / katm))
+    w_put = (np.log(katm / ks) * np.log(kcall / ks)) / (np.log(katm / kput) * np.log(kcall / kput))
+    w_atm = (np.log(ks / kput) * np.log(kcall / ks)) / (np.log(katm / kput) * np.log(kcall / katm))
+    w_cal = (np.log(ks / kput) * np.log(ks / katm)) / (np.log(kcall / kput) * np.log(kcall / katm))
 
     # First Interpolate the Cross-Section
-    f = f.reshape(-1, 1).repeat(N, axis=1)
-    t = t.reshape(-1, 1).repeat(f.shape[1], 1)
-    d1d2 = d1(f, k_prime, sigatm, t) * d2(f, k_prime, sigatm, t)
+    d1d2 = d1(f, ks, sigatm, t) * d2(f, ks, sigatm, t)
 
     # First Interpolate the Cross-Section
     vv_fo = (w_put * sigput + w_atm * sigatm + w_cal * sigcal) - sigatm
