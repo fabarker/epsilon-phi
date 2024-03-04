@@ -16,10 +16,17 @@ class FrameUtils(object):
     @staticmethod
     def linear_interpolate_frame_rows(x, x_var, x_lev=False):
 
+        if np.isscalar(x_var):
+           x_var = np.array([x_var])
+
         if x_lev is False:
+            x = x.sort_index(axis=1)
             x_lev = np.array(x.columns)
         else:
+            x = x.sort_index(axis=1, level=x_lev)
             x_lev = np.array(x.columns.get_level_values(x_lev))
+
+
         return linear_interpolate(x_lev,
                                   x,
                                   x_var).set_axis(x_var, axis=1)

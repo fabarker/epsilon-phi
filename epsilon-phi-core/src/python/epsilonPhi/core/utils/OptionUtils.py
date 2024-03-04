@@ -176,16 +176,23 @@ def fast_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
     """ Calculation of the option delta. Used in the determination of
     the volatility surface. """
 
+    assert vol.shape == k.shape, 'Error - K and V dim mis-match'
+    if k.ndim > 1:
+        s = s.reshape(-1, 1)
+        t = t.reshape(-1, 1)
+        rd = rd.reshape(-1, 1)
+        rf = rf.reshape(-1, 1)
+
     spot_delta = bs_delta(s, t, k, rd, rf, vol, option_type_value)
 
     if deltaTypeValue in [DeltaType.SPOT_DELTA, DeltaType.SPOT_DELTA.value]:
         delta = spot_delta
-    elif deltaTypeValue == [DeltaType.FORWARD_DELTA, DeltaType.FORWARD_DELTA.value]:
+    elif deltaTypeValue in [DeltaType.FORWARD_DELTA, DeltaType.FORWARD_DELTA.value]:
         delta = spot_delta * np.exp(rf*t)
-    elif deltaTypeValue == [DeltaType.SPOT_DELTA_PREM_ADJ, DeltaType.SPOT_DELTA_PREM_ADJ.value]:
+    elif deltaTypeValue in [DeltaType.SPOT_DELTA_PREM_ADJ, DeltaType.SPOT_DELTA_PREM_ADJ.value]:
         vpctf = bs_value(s, t, k, rd, rf, vol, option_type_value) / s
         delta = spot_delta - vpctf
-    elif deltaTypeValue == [DeltaType.FORWARD_DELTA_PREM_ADJ, DeltaType.FORWARD_DELTA_PREM_ADJ.value]:
+    elif deltaTypeValue in [DeltaType.FORWARD_DELTA_PREM_ADJ, DeltaType.FORWARD_DELTA_PREM_ADJ.value]:
         vpctf = bs_value(s, t, k, rd, rf, vol, option_type_value) / s
         delta = np.exp(rf*t) * (spot_delta - vpctf)
     else:
@@ -203,7 +210,7 @@ def bs_delta(s, t, k, r, q, v, option_type_value):
     t = np.maximum(t, g_small)
     v = np.maximum(v, g_small)
 
-    v_sqrt_t = v * np.sqrt(t)
+    v_sqrt_t = np.array(v * np.sqrt(t))
     ss = s * np.exp(-q*t)
     kk = k * np.exp(-r*t)
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0

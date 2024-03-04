@@ -1,4 +1,5 @@
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
+from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import pandas as pd
 import warnings
 
@@ -27,15 +28,6 @@ class AbstractCurve(object):
                               axis=1)
 
     def get_curve(self, maturities=None):
-
         if maturities is None:
            return self._curve_df.dropna(how='all', axis=0)
-
-        _mats = np.setdiff1d(maturities, self.tenors)
-        if len(_mats) > 0:
-            self._curve_df[_mats] = np.nan
-            self._curve_df = self._curve_df.interpolate(method='linear',
-                                                        fill_value="extrapolate",
-                                                        limit_direction="both",
-                                                        axis=1)
-        return self._curve_df[maturities].dropna(how='all', axis=0)
+        return FrameUtils.linear_interpolate_frame_rows(self._curve_df, maturities)

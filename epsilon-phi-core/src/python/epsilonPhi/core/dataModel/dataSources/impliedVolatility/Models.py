@@ -23,36 +23,38 @@ def polynomial_regression_1d(x, y, x_prime):
     b = np.linalg.lstsq(reg, y, rcond=-1)[0]
     return (x_prime**2)*b[2] + x_prime*b[1] + b[0]
 
-def vanna_volga_2d(F, k_prime, t, kput, katm, kcall, sigput, sigatm, sigcal):
+def vanna_volga_2d(f, ks, t, kput, katm, kcall, sigput, sigatm, sigcal):
 
-    k_d, m_d = np.meshgrid(k_prime, t)
+    k_prime = ks
+    N = k_prime.shape[1]
 
-    kput = np.array(kput).reshape(-1, 1).repeat(m_d.shape[1], axis=1)
-    katm = np.array(katm).reshape(-1, 1).repeat(m_d.shape[1], axis=1)
-    kcall = np.array(kcall).reshape(-1, 1).repeat(m_d.shape[1], axis=1)
-    sigput = np.array(sigput).reshape(-1, 1).repeat(k_d.shape[1], axis=1)
-    sigatm = np.array(sigatm).reshape(-1, 1).repeat(k_d.shape[1], axis=1)
-    sigcal = np.array(sigcal).reshape(-1, 1).repeat(k_d.shape[1], axis=1)
+    kput = kput.reshape(-1, 1).repeat(N, axis=1)
+    katm = katm.reshape(-1, 1).repeat(N, axis=1)
+    kcall = kcall.reshape(-1, 1).repeat(N, axis=1)
 
-    # First Interpolate the Cross-Section
-    w_put = (np.log(katm / k_d) * np.log(kcall / k_d)) / (np.log(katm / kput) * np.log(kcall / kput))
-    w_atm = (np.log(k_d / kput) * np.log(kcall / k_d)) / (np.log(katm / kput) * np.log(kcall / katm))
-    w_cal = (np.log(k_d / kput) * np.log(k_d / katm)) / (np.log(kcall / kput) * np.log(kcall / katm))
+    sigput = sigput.reshape(-1, 1).repeat(N, axis=1)
+    sigatm = sigatm.reshape(-1, 1).repeat(N, axis=1)
+    sigcal = sigcal.reshape(-1, 1).repeat(N, axis=1)
 
     # First Interpolate the Cross-Section
-    f = F.reshape(-1, 1).repeat(m_d.shape[1], axis=1)
-    T = t.reshape(-1, 1).repeat(f.shape[1], 1)
-    d1d2 = d1(f, k_d, sigatm, T) * d2(f, k_d, sigatm, T)
+    w_put = (np.log(katm / k_prime) * np.log(kcall / k_prime)) / (np.log(katm / kput) * np.log(kcall / kput))
+    w_atm = (np.log(k_prime / kput) * np.log(kcall / k_prime)) / (np.log(katm / kput) * np.log(kcall / katm))
+    w_cal = (np.log(k_prime / kput) * np.log(k_prime / katm)) / (np.log(kcall / kput) * np.log(kcall / katm))
+
+    # First Interpolate the Cross-Section
+    f = f.reshape(-1, 1).repeat(N, axis=1)
+    t = t.reshape(-1, 1).repeat(f.shape[1], 1)
+    d1d2 = d1(f, k_prime, sigatm, t) * d2(f, k_prime, sigatm, t)
 
     # First Interpolate the Cross-Section
     vv_fo = (w_put * sigput + w_atm * sigatm + w_cal * sigcal) - sigatm
-    vv_so = (w_put * d1(f, kput, sigput, T) * d2(f, kput, sigput, T) * np.power(sigput - sigatm, 2) +
-             w_atm * d1(f, katm, sigatm, T) * d2(f, katm, sigatm, T) * np.power(sigatm - sigatm, 2) +
-             w_cal * d1(f, kcall, sigcal, T) * d2(f, kcall, sigcal, T) * np.power(sigcal - sigatm, 2))
+    vv_so = (w_put * d1(f, kput, sigput, t) * d2(f, kput, sigput, t) * np.power(sigput - sigatm, 2) +
+             w_atm * d1(f, katm, sigatm, t) * d2(f, katm, sigatm, t) * np.power(sigatm - sigatm, 2) +
+             w_cal * d1(f, kcall, sigcal, t) * d2(f, kcall, sigcal, t) * np.power(sigcal - sigatm, 2))
 
-    # First Interpolate the Cross-Section
-    vol = sigatm + (-sigatm + np.sqrt(sigatm ** 2 + d1d2 * (2 * sigatm * vv_fo + vv_so))) / d1d2
-    return vol
+    radi = sigatm ** 2 + d1d2 * (2 * sigatm * vv_fo + vv_so)
+    radi[radi < 0] = np.nan
+    return sigatm + (-sigatm + np.sqrt(radi)) / d1d2
 
 def vanna_volga_1d(F, k_prime, t_prime, t, kput, katm, kcall, sigput, sigatm, sigcal):
 

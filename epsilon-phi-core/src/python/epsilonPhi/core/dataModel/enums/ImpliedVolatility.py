@@ -12,13 +12,11 @@ class Interpolator(Enum):
 
 class StrikeReference(Enum):
 
-    SPOT_DELTA = 1
-    FORWARD_DELTA = 2
-    MONEYNESS = 5
-    Z_SCORE = 6
-    CONVEXITY_MN = 7
-    SPOT_DELTA_PREM_ADJ = 3
-    FORWARD_DELTA_PREM_ADJ = 4
+    DELTA = 1
+    MONEYNESS = 2
+    Z_SCORE = 3
+    CONVEXITY_MN = 4
+    LOG_MONEYNESS = 5
 
 class AtTheMoneyType(Enum):
     SPOT = 1  # Spot
