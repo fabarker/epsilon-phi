@@ -1,5 +1,6 @@
+import numpy as np
 import pandas as pd
-
+from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.dataSources.impliedVolatility.Models import *
 
@@ -133,8 +134,8 @@ class VannaVolga(object):
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
     def k_rng(self):
-        return np.linspace(self.f * np.exp((-3 * self.sig_atm * np.sqrt(self.t))),
-                           self.f * np.exp((3 * self.sig_atm * np.sqrt(self.t))),
+        return np.linspace(self.f * np.exp((-5 * self.sig_atm * np.sqrt(self.t))),
+                           self.f * np.exp((5 * self.sig_atm * np.sqrt(self.t))),
                         1000)[:, :, 0].T
 
 
@@ -177,14 +178,75 @@ class VannaVolga(object):
     def get_ivols_moneyness_space(self, relative_strike=None):
 
         if relative_strike is None:
-           relative_strike = np.array(self._DEFAULT_DELTA_POINTS)
-        pass
-    def get_ivols_log_moneyness_space(self):
-        pass
-    def get_ivols_zscore_space(self):
-        pass
-    def get_ivols_convexity_moneyness_space(self):
-        pass
+           relative_strike = np.arange(0.4, 1.6, 0.1)
+
+        _strikes = self.f * np.array(relative_strike)
+        _vols = self.fit_strikes(_strikes)
+
+        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        res = pd.concat((_vols, _k), axis=1)
+        res.columns = pd.MultiIndex.from_tuples(res.columns)
+        return res.copy()
+
+    def get_ivols_log_moneyness_space(self, relative_strike=None):
+
+        if relative_strike is None:
+           relative_strike = np.round(np.arange(-0.4, 0.5, 0.05), 3)
+
+        _strikes = self.f * np.exp(relative_strike)
+        _vols = self.fit_strikes(_strikes)
+
+        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        res = pd.concat((_vols, _k), axis=1)
+        res.columns = pd.MultiIndex.from_tuples(res.columns)
+        return res.copy()
+
+    def get_ivols_zscore_space(self, relative_strike):
+
+        if relative_strike is None:
+           relative_strike = np.round(np.arange(-4, 4.5, 0.5), 3)
+
+        _strikes = self.f / np.exp(relative_strike * self.sig_atm * np.sqrt(self.t))
+        _vols = self.fit_strikes(_strikes)
+
+        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        res = pd.concat((_vols, _k), axis=1)
+        res.columns = pd.MultiIndex.from_tuples(res.columns)
+        return res.copy()
+
+    def get_ivols_convexity_moneyness_space(self, relative_strike=None):
+
+        if relative_strike is None:
+            relative_strike = np.round(np.arange(-3, 3.5, 0.5), 3)
+
+        # Get the number of relative strikes we want to solve for
+        T = len(relative_strike.flatten())
+
+        # Build the space of candidate strikes
+        k_rng = self.k_rng()
+
+        # Fit the implied vols across each candidate strike
+        ivols = self.fit_strikes(k_rng)
+
+        # For each strike and vol pair, compute the delta
+        cnx_mny = (np.log(self.f / k_rng)) / (ivols * np.sqrt(self.t))
+
+        # Find the location of the delta closest to our target deltas
+        _strikes = np.full((self.N, T), np.nan)
+        for k in range(T):
+            idx = np.abs(cnx_mny - relative_strike[k]) == np.min(np.abs(cnx_mny - relative_strike[k]), axis=1, keepdims=True)
+            keep_rows = np.any(idx, axis=1)
+            _strikes[keep_rows, k] = k_rng[keep_rows, :][idx[keep_rows, :]]
+
+
+        _vols = pd.DataFrame(self.fit_strikes(_strikes), columns=[('ivol', x) for x in relative_strike], index=self.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        res = pd.concat((_vols, _k), axis=1)
+        res.columns = pd.MultiIndex.from_tuples(res.columns)
+        return res
 
     def deltas(self, ivols, strikes, option_type, delta_type):
         return fast_delta(self.s,
@@ -207,13 +269,14 @@ class VannaVolga(object):
                               self.sig_atm,
                               self.sig_call)
 
+    def interpolate_term_structure(self, ivols, maturities):
+        group = np.setdiff1d(ivols.columns.names, 't').item()
+        return FrameUtils.rowise_linear_interpolate_on_groups(ivols,
+                                                              maturities,
+                                                              x_lev='t',
+                                                              group=group)
 
-    def fit_cross_sections(self):
-        pass
 
-
-    def fit_maturities(self):
-        pass
 
 if __name__ == "__main__":
 

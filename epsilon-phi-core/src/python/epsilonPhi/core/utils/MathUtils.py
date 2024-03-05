@@ -10,6 +10,23 @@ ONE_MILLION = 1000000
 TEN_MILLION = 10000000
 ONE_BILLION = 1000000000
 
+def flat_forward_interpolation(x_fix, y_fix, x_var):
+
+    x_fix = np.array(x_fix)
+    if np.isscalar(x_var):
+        x_var = np.array([x_var])
+
+    x_repeat = np.tile(x_var[:, None], (len(x_fix),))
+    distances = np.abs(x_repeat - x_fix)
+    x_indices = np.searchsorted(x_fix, x_var)
+
+    weights = np.zeros_like(distances)
+    idx = np.arange(len(x_indices))
+    weights[idx, x_indices] = distances[idx, x_indices - 1]
+    weights[idx, x_indices - 1] = distances[idx, x_indices]
+    weights /= np.sum(weights, axis=1)[:, None]
+    return (weights @ y_fix.T).T
+
 def linear_interpolate(x_fix, y_fix, x_var):
 
     x_fix = np.array(x_fix)
