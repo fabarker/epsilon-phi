@@ -14,23 +14,29 @@ class VannaVolga(object):
 
         self.set_pillar_vols(ivols)
 
-        self._t = np.array(self._ivols.index.get_level_values('t'))
+        # Set the spot rate dataframe
+        self._s = s.copy()
 
-        self._s = s.loc[self.dates]
-        assert np.all(self._s.index == self.dates), 'Error - axis not aligned'
+        # Set the domestic rate curve
+        self._rd = rd
 
-        self._rd = rd[~rd.index.duplicated()].loc[self._ivols.index]
-        assert np.all(self._rd.index == self._ivols.index), 'Error - axis not aligned'
+        # Set the funding rate curve
+        self._rf = rf
 
-        self._rf = rf[~rd.index.duplicated()].loc[self._ivols.index]
-        assert np.all(self._rf.index == self._ivols.index), 'Error - axis not aligned'
-
-        self._f = self.s * np.exp(-self.rf * self.t) / np.exp(-self.rd * self.t)
+        # Set the delta type
         self._delta_type = delta_type
 
-        # Set Pillar Strikes
-        self.set_strikes()
+    def set_date_maturity_pairs(self, dates, maturities):
 
+        if len(dates) == len(maturities):
+           self._index = FrameUtils.multiindex(dates, maturities)
+        self._index = zip(dates, maturities)
+
+    def set_dates(self, dates):
+        self._dates = self.dates
+
+    def set_maturities(self, maturities):
+        self._maturities = maturities
 
     def set_pillar_vols(self, ivols):
         ivols = ivols.reset_index(drop=False).set_index(['date', 't'])
@@ -82,9 +88,12 @@ class VannaVolga(object):
         return self._k.values[:, 1].reshape(-1, 1)
     @property
     def index(self):
-        return self._ivols.index
+        return self._index
     def get_sigma(self, strike):
         return self._ivols.get(strike).values.reshape(-1, 1)
+
+    def get_risk_free_rate(self):
+        pass
 
     def set_strikes(self):
 
@@ -271,10 +280,10 @@ class VannaVolga(object):
 
     def interpolate_term_structure(self, ivols, maturities):
         group = np.setdiff1d(ivols.columns.names, 't').item()
-        return FrameUtils.rowise_linear_interpolate_on_groups(ivols,
-                                                              maturities,
-                                                              x_lev='t',
-                                                              group=group)
+        return FrameUtils.rowise_flat_forward_interpolation_on_groups(ivols,
+                                                                      maturities,
+                                                                      x_lev='t',
+                                                                      group=group)
 
 
 
@@ -292,18 +301,20 @@ if __name__ == "__main__":
         ### Get ivols
         ivol_panel = vsm.get_ivols()
 
+        x = ivol_panel.get('date').values
+        y = ivol_panel.get('t').values
+        z = ivol_panel.get('relative_strike').values
+
+        idx = FrameUtils.multiindex(x, y, )
+
+
 
         ivols = ivol_panel.get(['mid','t','relative_strike']).reset_index(drop=False)
         ivols = ivols.drop_duplicates(['date', 't', 'relative_strike'])
+
         s = vsm.get_spot_prices()
-
-        rd = vsm.get_interest_rates(ivols.get('date'), ivols.get('t'))
-        rd = pd.DataFrame(rd)
-        rd.index = ivols.set_index(['date', 't']).index
-
-        rf = vsm.get_funding_rates(ivols.get('date'), ivols.get('t'))
-        rf = pd.DataFrame(rf)
-        rf.index = ivols.set_index(['date', 't']).index
+        rd = vsm._interest_rate_curve
+        rf = vsm._funding_rate_curve
 
         self = VannaVolga(ivols,
                               s,

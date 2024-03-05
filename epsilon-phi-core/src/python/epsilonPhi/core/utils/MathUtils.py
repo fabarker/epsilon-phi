@@ -22,10 +22,10 @@ def flat_forward_interpolation(x_fix, y_fix, x_var):
 
     weights = np.zeros_like(distances)
     idx = np.arange(len(x_indices))
-    weights[idx, x_indices] = distances[idx, x_indices - 1]
-    weights[idx, x_indices - 1] = distances[idx, x_indices]
+    weights[idx, x_indices - 1] = x_fix[x_indices-1] / x_var
+    weights[idx, x_indices] = (1-x_fix[x_indices-1] / x_var)
     weights /= np.sum(weights, axis=1)[:, None]
-    return (weights @ y_fix.T).T
+    return np.sqrt((weights @ np.power(y_fix.T, 2)).T)
 
 def linear_interpolate(x_fix, y_fix, x_var):
 

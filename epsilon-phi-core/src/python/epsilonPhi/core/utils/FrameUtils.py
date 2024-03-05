@@ -3,7 +3,7 @@ from operator import add
 from epsilonPhi.core.utils.DateUtils import DateUtils
 import numpy as np
 import collections, re, six
-from epsilonPhi.core.utils.MathUtils import linear_interpolate
+from epsilonPhi.core.utils.MathUtils import linear_interpolate, flat_forward_interpolation
 
 class FrameUtils(object):
     pass
@@ -12,6 +12,29 @@ class FrameUtils(object):
     def rowise_linear_interpolate_on_groups(df, x_var, x_lev, group):
         return (df.groupby(axis=1, level=group).
                 apply(lambda x: FrameUtils.linear_interpolate_frame_rows(x, x_var, x_lev)))
+
+    @staticmethod
+    def rowise_flat_forward_interpolation_on_groups(df, x_var, x_lev, group):
+        return (df.groupby(axis=1, level=group).
+                apply(lambda x: FrameUtils.flat_forward_interpolate_frame_rows(x, x_var, x_lev)))
+
+    @staticmethod
+    def flat_forward_interpolate_frame_rows(x, x_var, x_lev=False):
+
+        if np.isscalar(x_var):
+           x_var = np.array([x_var])
+
+        if x_lev is False:
+            x = x.sort_index(axis=1)
+            x_lev = np.array(x.columns)
+        else:
+            x = x.sort_index(axis=1, level=x_lev)
+            x_lev = np.array(x.columns.get_level_values(x_lev))
+
+
+        return flat_forward_interpolation(x_lev,
+                                          x,
+                                          x_var).set_axis(x_var, axis=1)
 
     @staticmethod
     def linear_interpolate_frame_rows(x, x_var, x_lev=False):
@@ -108,3 +131,8 @@ class FrameUtils(object):
     def sort_by_level(df, level_name):
         idx = np.argsort(df.columns.get_level_values(level_name))
         return df.get(df.columns[idx])
+
+    @staticmethod
+    def multiindex(*args):
+        return pd.MultiIndex.from_tuples(list(zip(*args)))
+
