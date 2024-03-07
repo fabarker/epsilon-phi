@@ -1,3 +1,5 @@
+import numpy as np
+
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import pandas as pd
@@ -27,7 +29,23 @@ class AbstractCurve(object):
                               limit_direction="both",
                               axis=1)
 
-    def get_curve(self, maturities=None):
+    def get_curve(self, dates=None, maturities=None):
+
         if maturities is None:
-           return self._curve_df.dropna(how='all', axis=0)
-        return FrameUtils.linear_interpolate_frame_rows(self._curve_df, maturities)
+           _curve = self._curve_df.dropna(how='all', axis=0)
+        else:
+           _unique_mats = np.unique(maturities)
+           _curve = FrameUtils.linear_interpolate_frame_rows(self._curve_df, _unique_mats)
+
+        if dates is None:
+           return _curve.copy()
+        else:
+           _unique_dates = np.unique(dates)
+           return _curve.loc[_unique_dates]
+
+    def get_stacked_curve(self, dates=None, maturity=None):
+        unique_dates = np.unique(dates)
+        unique_mats = np.unique(maturity)
+
+        idx = FrameUtils.multiindex(dates, maturity.flatten())
+        return self.get_curve(unique_dates, unique_mats).stack().loc[idx]

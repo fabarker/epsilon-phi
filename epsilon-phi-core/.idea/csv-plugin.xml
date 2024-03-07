@@ -3,10 +3,38 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/curves/abstractCurve/AbstractCurve.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/VolSurface.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/interpolators/gaussianKernelSmoother/GaussianKernel.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/src/python/epsilonPhi/ep_strategies/futures/main.py">
           <value>
             <Attribute>
               <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/ep_strategies/volatility/SmileStatArb.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
             </Attribute>
           </value>
         </entry>

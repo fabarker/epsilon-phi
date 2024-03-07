@@ -12,44 +12,52 @@ class VannaVolga(object):
 
     def __init__(self, ivols, s, rd, rf, delta_type):
 
+        # Extract and set the vv pillar vols (-25, ATM, 25) points
         self.set_pillar_vols(ivols)
 
-        # Set the spot rate dataframe
-        self._s = s.copy()
+        # Set the spot prices
+        self.set_spot_prices(s)
 
-        # Set the domestic rate curve
-        self._rd = rd
+        # Set interest and funding rate curves
+        self.set_risk_free_rate_curve(rd)
+        self.set_funding_rate_curve(rf)
 
-        # Set the funding rate curve
-        self._rf = rf
-
-        # Set the delta type
+        # Set the type of delta of the instrument
         self._delta_type = delta_type
 
-    def set_date_maturity_pairs(self, dates, maturities):
+        # Set the data maturities
+        self.set_dates(self._ivols.index.get_level_values(0))
+        self.set_maturities(self.maturities)
 
-        if len(dates) == len(maturities):
-           self._index = FrameUtils.multiindex(dates, maturities)
-        self._index = zip(dates, maturities)
+    def set_spot_prices(self, df):
+        self._spot = df.copy()
 
-    def set_dates(self, dates):
-        self._dates = self.dates
+    def set_risk_free_rate_curve(self, rd):
+        self._rate_curve = rd
 
-    def set_maturities(self, maturities):
-        self._maturities = maturities
+    def set_funding_rate_curve(self, rf):
+        self._funding_curve = rf
 
     def set_pillar_vols(self, ivols):
-        ivols = ivols.reset_index(drop=False).set_index(['date', 't'])
+        ivols = ivols.reset_index(drop=False).set_index(['date'])
         idx = ivols['relative_strike'].isin(self._DELTA_PILLARS)
-        ivols = ivols[idx].pivot(columns='relative_strike').get('mid')
-        self._ivols = ivols[self._DELTA_PILLARS]
+        ivols = ivols[idx].pivot(columns=['t','relative_strike']).get('mid')
+        self._ivols = ivols.sort_index(axis=1, level=0)
+
+    def set_dates(self, dates):
+        self._dates = dates
+
+    @property
+    def maturities(self):
+        return np.sort(np.unique(self._ivols.columns.get_level_values('t')))
 
     @property
     def pillar_references(self):
-        return self._ivols.columns.unique()
+        return np.unique(self._ivols.columns.get_level_values('relative_strike'))
     @property
     def dates(self):
-        return self._ivols.index.get_level_values(0)
+        return pd.to_datetime(self._dates)
+
     @property
     def N(self):
         return self.t.shape[0]
@@ -70,30 +78,61 @@ class VannaVolga(object):
         return self._rd.values.reshape(-1, 1)
     @property
     def sig_atm(self):
-        return self._ivols.values[:, 1].reshape(-1, 1)
+        return self._interp_vols.get(-999).values.reshape(-1, 1)
     @property
     def sig_call(self):
-        return self._ivols.values[:, 2].reshape(-1, 1)
+        return self._interp_vols.get(0.25).values.reshape(-1, 1)
     @property
     def sig_put(self):
-        return self._ivols.values[:, 0].reshape(-1, 1)
+        return self._interp_vols.get(-0.25).values.reshape(-1, 1)
     @property
     def k_put(self):
-        return self._k.values[:, 0].reshape(-1, 1)
+        return self._k.get(-0.25).values.reshape(-1, 1)
     @property
     def k_call(self):
-        return self._k.values[:, 2].reshape(-1, 1)
+        return self._k.get(0.25).values.reshape(-1, 1)
     @property
     def k_atm(self):
-        return self._k.values[:, 1].reshape(-1, 1)
-    @property
-    def index(self):
-        return self._index
-    def get_sigma(self, strike):
-        return self._ivols.get(strike).values.reshape(-1, 1)
+        return self._k.get(-999).values.reshape(-1, 1)
 
-    def get_risk_free_rate(self):
-        pass
+    def get_sigma(self, strike):
+        return self._interp_vols.get(strike).values.reshape(-1, 1)
+
+    def set_maturities(self, maturities=None):
+
+        # Make sure we have the maturity points we care about
+        if maturities is None:
+           maturities = self.maturities
+
+        mats = np.round(maturities, 10)
+        self.interpolate_term_structure(mats)
+
+        vols = FrameUtils.select_subset_level(self._ivols, 't', mats)
+        self._interp_vols = vols.stack(level='t')[self._DELTA_PILLARS]
+
+        # Set the dates in the object
+        self.set_dates(self._interp_vols.index.get_level_values('date'))
+        # Set the interpolated maturity vector
+        self._t = np.array(self._interp_vols.index.get_level_values('t'))
+
+        # Update the spot prices
+        self._s = s.loc[self.dates]
+        assert np.all(self._s.index == self.dates), 'Error - axis not aligned'
+
+        # Set the domestic rate in the object
+        self._rd = self._rate_curve.get_stacked_curve(self.dates, self._t)
+        assert np.all(self._rd.index.get_level_values(0) == self.dates), 'Error - axis not aligned'
+
+        # Set funding rates
+        self._rf = self._funding_curve.get_stacked_curve(self.dates, self._t)
+        assert np.all(self._rf.index.get_level_values(0) == self.dates), 'Error - axis not aligned'
+
+        # Set forward rates
+        self._f = self.s * np.exp(-self.rf * self.t) / np.exp(-self.rd * self.t)
+
+        # Set Pillar Strikes
+        self.set_strikes()
+
 
     def set_strikes(self):
 
@@ -107,7 +146,7 @@ class VannaVolga(object):
             elif strk in self._DELTA_PILLARS:
                 ks[:, t] = self.get_wing_strikes(strk,
                                                 self.get_sigma(strk)).flatten()
-        self._k = pd.DataFrame(ks, index=self.index, columns=self.pillar_references)
+        self._k = pd.DataFrame(ks, index=self._interp_vols.index, columns=self.pillar_references)
 
     def get_wing_strikes(self, delta, ivols):
         return solve_for_strike(self.s,
@@ -127,31 +166,40 @@ class VannaVolga(object):
                                         ivols,
                                         self._delta_type)
 
-    def get_ivols(self, pricing_dates, strike_reference, strikes, maturities):
+    def get_ivols(self, pricing_dates=None, strike_reference=None, strikes=None, maturities=None):
 
+        if pricing_dates is None:
+           pricing_dates = self.dates
+
+        # Set the maturities which interpolates in forward space
+        self.set_maturities(maturities)
+
+        # Compute the surface values for the strike reference we care about
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
-            return self.get_ivols_delta_space()
+            return self.get_ivols_delta_space(strikes).loc[pricing_dates]
         elif strike_reference in [StrikeReference.MONEYNESS, StrikeReference.MONEYNESS.value]:
-            return self.get_ivols_moneyness_space()
+            return self.get_ivols_moneyness_space(strikes).loc[pricing_dates]
         elif strike_reference in [StrikeReference.LOG_MONEYNESS, StrikeReference.LOG_MONEYNESS.value]:
-            return self.get_ivols_log_moneyness_space()
+            return self.get_ivols_log_moneyness_space(strikes).loc[pricing_dates]
         elif strike_reference in [StrikeReference.Z_SCORE, StrikeReference.Z_SCORE.value]:
-            return self.get_ivols_zscore_space()
+            return self.get_ivols_zscore_space(strikes).loc[pricing_dates]
         elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
-            return self.get_ivols_convexity_moneyness_space()
+            return self.get_ivols_convexity_moneyness_space(strikes).loc[pricing_dates]
         else:
-            raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
+            return None
 
     def k_rng(self):
         return np.linspace(self.f * np.exp((-5 * self.sig_atm * np.sqrt(self.t))),
                            self.f * np.exp((5 * self.sig_atm * np.sqrt(self.t))),
-                        1000)[:, :, 0].T
+                        100)[:, :, 0].T
 
 
     def get_ivols_delta_space(self, relative_strike=None):
 
         if relative_strike is None:
            relative_strike = np.array(self._DEFAULT_DELTA_POINTS)
+        else:
+           relative_strike = np.array(relative_strike)
 
         # Get the number of relative strikes we want to solve for
         T = len(relative_strike.flatten())
@@ -178,11 +226,11 @@ class VannaVolga(object):
                 keep_rows = np.any(idx, axis=1)
                 _strikes[keep_rows, k] = k_rng[keep_rows, :][idx[keep_rows, :]]
 
-        _vols = pd.DataFrame(self.fit_strikes(_strikes), columns=[('ivol', x) for x in relative_strike], index=self.index)
-        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        _vols = pd.DataFrame(self.fit_strikes(_strikes), columns=[('ivol', x) for x in relative_strike], index=self._interp_vols.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=_vols.index)
         res = pd.concat((_vols, _k), axis=1)
         res.columns = pd.MultiIndex.from_tuples(res.columns)
-        return res
+        return res.copy()
 
     def get_ivols_moneyness_space(self, relative_strike=None):
 
@@ -192,8 +240,8 @@ class VannaVolga(object):
         _strikes = self.f * np.array(relative_strike)
         _vols = self.fit_strikes(_strikes)
 
-        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self.index)
-        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self._interp_vols.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self._interp_vols.index)
         res = pd.concat((_vols, _k), axis=1)
         res.columns = pd.MultiIndex.from_tuples(res.columns)
         return res.copy()
@@ -206,13 +254,13 @@ class VannaVolga(object):
         _strikes = self.f * np.exp(relative_strike)
         _vols = self.fit_strikes(_strikes)
 
-        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self.index)
-        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self._interp_vols.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self._interp_vols.index)
         res = pd.concat((_vols, _k), axis=1)
         res.columns = pd.MultiIndex.from_tuples(res.columns)
         return res.copy()
 
-    def get_ivols_zscore_space(self, relative_strike):
+    def get_ivols_zscore_space(self, relative_strike=None):
 
         if relative_strike is None:
            relative_strike = np.round(np.arange(-4, 4.5, 0.5), 3)
@@ -220,8 +268,8 @@ class VannaVolga(object):
         _strikes = self.f / np.exp(relative_strike * self.sig_atm * np.sqrt(self.t))
         _vols = self.fit_strikes(_strikes)
 
-        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self.index)
-        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        _vols = pd.DataFrame(_vols, columns=[('ivol', x) for x in relative_strike], index=self._interp_vols.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self._interp_vols.index)
         res = pd.concat((_vols, _k), axis=1)
         res.columns = pd.MultiIndex.from_tuples(res.columns)
         return res.copy()
@@ -251,8 +299,8 @@ class VannaVolga(object):
             _strikes[keep_rows, k] = k_rng[keep_rows, :][idx[keep_rows, :]]
 
 
-        _vols = pd.DataFrame(self.fit_strikes(_strikes), columns=[('ivol', x) for x in relative_strike], index=self.index)
-        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self.index)
+        _vols = pd.DataFrame(self.fit_strikes(_strikes), columns=[('ivol', x) for x in relative_strike], index=self._interp_vols.index)
+        _k = pd.DataFrame(_strikes, columns=[('k', x) for x in relative_strike], index=self._interp_vols.index)
         res = pd.concat((_vols, _k), axis=1)
         res.columns = pd.MultiIndex.from_tuples(res.columns)
         return res
@@ -278,12 +326,20 @@ class VannaVolga(object):
                               self.sig_atm,
                               self.sig_call)
 
-    def interpolate_term_structure(self, ivols, maturities):
-        group = np.setdiff1d(ivols.columns.names, 't').item()
-        return FrameUtils.rowise_flat_forward_interpolation_on_groups(ivols,
-                                                                      maturities,
-                                                                      x_lev='t',
-                                                                      group=group)
+    def interpolate_term_structure(self, maturities):
+
+        if maturities is None:
+           return
+
+        unique_mats = np.setdiff1d(np.round(maturities, 10), self.maturities)
+        group = np.setdiff1d(self._ivols.columns.names, 't').item()
+        interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(self._ivols,
+                                                                        unique_mats,
+                                                                        x_lev='t',
+                                                                        group=group)
+        cols = np.setdiff1d(interp.columns, self._ivols.columns)
+        self._ivols = pd.concat((self._ivols, interp.get(cols)),
+                                axis=1).sort_index(axis=1, level='t')
 
 
 
@@ -300,15 +356,6 @@ if __name__ == "__main__":
 
         ### Get ivols
         ivol_panel = vsm.get_ivols()
-
-        x = ivol_panel.get('date').values
-        y = ivol_panel.get('t').values
-        z = ivol_panel.get('relative_strike').values
-
-        idx = FrameUtils.multiindex(x, y, )
-
-
-
         ivols = ivol_panel.get(['mid','t','relative_strike']).reset_index(drop=False)
         ivols = ivols.drop_duplicates(['date', 't', 'relative_strike'])
 
@@ -317,10 +364,17 @@ if __name__ == "__main__":
         rf = vsm._funding_rate_curve
 
         self = VannaVolga(ivols,
-                              s,
-                              rf,
-                              rd,
-                              1)
+                          s,
+                          rf,
+                          rd,
+                          1)
 
-        fxivols = self.get_ivols_delta_space()
+        dates = pd.to_datetime('31-Dec-2012')
+        strike_reference = StrikeReference.DELTA
+        strikes = [-0.1, -0.25, 0.5, 0.25, 0.1]
+        maturities = [1/12, 1.5/12, 2/12]
+        fxivols = self.get_ivols(dates, strike_reference, strikes, maturities)
+
+        fxivols_ = self.get_ivols(None, strike_reference=StrikeReference.Z_SCORE, maturities=maturities)
+
 

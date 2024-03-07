@@ -10,13 +10,17 @@ class FrameUtils(object):
 
     @staticmethod
     def rowise_linear_interpolate_on_groups(df, x_var, x_lev, group):
-        return (df.groupby(axis=1, level=group).
+        tmp = (df.groupby(axis=1, level=group).
                 apply(lambda x: FrameUtils.linear_interpolate_frame_rows(x, x_var, x_lev)))
+        tmp.columns = tmp.columns.rename({None: x_lev}).reorder_levels(df.columns.names)
+        return tmp.copy()
 
     @staticmethod
     def rowise_flat_forward_interpolation_on_groups(df, x_var, x_lev, group):
-        return (df.groupby(axis=1, level=group).
+        tmp =  (df.groupby(axis=1, level=group).
                 apply(lambda x: FrameUtils.flat_forward_interpolate_frame_rows(x, x_var, x_lev)))
+        tmp.columns = tmp.columns.rename({None:x_lev}).reorder_levels(df.columns.names)
+        return tmp.copy()
 
     @staticmethod
     def flat_forward_interpolate_frame_rows(x, x_var, x_lev=False):

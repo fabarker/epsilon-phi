@@ -1,4 +1,8 @@
 from epsilonPhi.core.dataModel.dataSources.impliedVolatility.VolSurfaceMgr import VolSurfaceMgr
+from epsilonPhi.core.dataModel.enums.ImpliedVolatility import Interpolator
+from epsilonPhi.core.dataModel.dataSources.impliedVolatility.interpolators.gaussianKernelSmoother.GaussianKernel import GaussianKernel
+from epsilonPhi.core.dataModel.dataSources.impliedVolatility.interpolators.vannaVolga.VannaVolga import VannaVolga
+from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 import pandas as pd
 import numpy as np
 
@@ -7,46 +11,67 @@ class AbstractVolSurface(object):
 
     def __init__(self,
                  underlier,
-                 pricing_location=None,
-                 cross_section=None):
+                 strike_reference=None,
+                 interpolation_method=None,
+                 pricing_location=None):
 
-        self._mgr = VolSurfaceMgr(underlier, pricing_location, cross_section)
-        self._mgr._load_ivols()
-        self._raw_data = self._mgr._ivols[self._mgr._underlier]
+        self._mgr = VolSurfaceMgr(underlier,
+                                  pricing_location,
+                                  strike_reference)
+        self.set_interpolator(interpolation_method)
+
+
     @property
     def dates(self):
-        return pd.to_datetime(self._raw_data.index.get_level_values(0).unique())
+        return self.raw.index
     @property
-    def unique_Xs(self):
-        return np.unique(self._raw_data.index.get_level_values(2))
+    def strike_reference(self):
+        return self._mgr.strike_reference
     @property
-    def unique_Ms(self):
-        return np.unique(self._raw_data.index.get_level_values(1))
+    def underlier(self):
+        return self._mgr.underlier
     @property
-    def T(self):
-        return len(self.dates)
+    def raw(self):
+        return self._mgr._ivol_cache[self.underlier].copy()
     @property
-    def NM(self):
-        return len(self.unique_Ms)
+    def rate_curve(self):
+        return self._mgr._rate_curve
     @property
-    def NX(self):
-        return len(self.unique_Xs)
+    def funding_curve(self):
+        return self._mgr._funding_curve
+    @property
+    def spot_prices(self):
+        return self._mgr._spot_prices
 
-    def get_spot_prices(self):
-        return self._mgr.get_spot_prices()
+    def set_interpolator(self, interpolator):
+        if interpolator in [ Interpolator.VANNA_VOLGA, Interpolator.VANNA_VOLGA.value ]:
+           self.interpolator = VannaVolga(self.raw)
+        elif interpolator in [ Interpolator.GAUSSIAN_KERNEL_SMOOTHING,
+                               Interpolator.GAUSSIAN_KERNEL_SMOOTHING.value ]:
+           self.interpolator = GaussianKernel(self.raw,
+                                              self.spot_prices,
+                                              self.rate_curve,
+                                              self.funding_curve)
+        else:
+            raise ValueError('Error - Interpolation scheme {} not supported'.format(interpolator))
 
-    def get_interest_rate_curve(self, maturities=None):
-        return self._mgr.get_interest_rate_curve(maturities=maturities)
+    def get_spot_prices(self, dates):
+        return self.spot_prices.loc[dates]
 
-    def get_funding_rate_curve(self, maturities=None):
-        return self._mgr.get_funding_rate_curve(maturities=maturities)
+    def get_forward_prices(self, dates, maturities):
+        return self._mgr.get_forward_prices(dates, maturities)
 
-    def get_ivols(self):
-        return self._raw_data.get('mid')
+    def get_risk_free(self, dates, maturities):
+        return self.rate_curve.get_curve(dates, maturities)
 
-    def get_ivol_tseries(self):
-        ivols = self.get_ivols()
-        return ivols[~ivols.index.duplicated(keep='first')].unstack(level=[1, 2])
+    def get_funding_rate(self, dates, maturities):
+        return self.funding_curve.get_curve(dates, maturities)
+
+    def get_ivols(self, pricing_dates=None, relative_strike=None, maturity=None):
+        return self.interpolator.get_ivols(pricing_dates,
+                                           strike_reference=self.strike_reference,
+                                           relative_strike=relative_strike,
+                                           maturities=maturity)
 
     def get_option_prices(self):
         pass
@@ -102,8 +127,21 @@ class AbstractVolSurface(object):
 
 if __name__ == "__main__":
 
-    self = AbstractVolSurface('SPX')
-    spt = self.get_ivol_panel()
+    self = AbstractVolSurface('SPX',
+                              strike_reference=StrikeReference.CONVEXITY_MN,
+                              interpolation_method=Interpolator.GAUSSIAN_KERNEL_SMOOTHING)
+
+    _Z_SCORES = np.arange(-2, 2.5, 0.5)
+    _MATURITIES = [1 / 12, 2 / 12, 3 / 12, 6 / 12, 12 / 12]
+
+    _t = np.array(self.raw.get('t'))
+
+    rd = self.get_risk_free(self.dates, _t)
+    rf = self.get_funding_rate(self.dates, _t)
+
+    vols = self.get_ivols(relative_strike=_Z_SCORES,
+                          maturity=_MATURITIES)
+
 
 
 

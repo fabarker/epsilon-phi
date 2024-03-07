@@ -37,6 +37,11 @@ class OptionAttributer(object):
         _df.index = pd.to_datetime(_df.index, format="%d/%m/%Y")
         _df = _df.rename(columns={'absoluteStrike':'k','impliedVolatility':'sig'})
         _df = _df[_df.get('sig') > 0.01]
+
+        _df = _df.reset_index(drop=False).drop_duplicates(['date', 'relativeStrike', 'tenor']).set_index('date')
+        drop_rows = (_df.index.dayofweek == 5) | (_df.index.dayofweek == 6)
+        _df = _df.iloc[~drop_rows, :]
+
         _df['lnm'] = np.log(_df.get('relativeStrike')).values
         _df['mn'] = np.exp(_df['lnm'])
 
@@ -57,10 +62,10 @@ class OptionAttributer(object):
 
         nobs = _df.get('x').groupby('date').count()
 
-        sig_x = _df.get('x').groupby('date').std(ddof=1)
+        sig_x = _df.get('x').groupby('date').apply(lambda x: np.std(x))
         h_x = 1 * np.power(4 / 3, 1 / 5) * sig_x / np.power(nobs, 1 / 5)
 
-        sig_lm = _df.get('lnmat').groupby('date').std(ddof=1)
+        sig_lm = _df.get('lnmat').groupby('date').apply(lambda x: np.std(x))
         h_m = 2 * np.power(4 / 3, 1 / 5) * sig_lm / np.power(nobs, 1 / 5) * 0.1
 
         _df['h_m'] = h_m.loc[_df.index].values
@@ -894,6 +899,7 @@ class OptionAttributer(object):
 if __name__ == "__main__":
 
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
+    self.run_cross_sectional_spread_regressions()
 
     _pnls = self.run_stat_arb_strategy()
     __pnls = _pnls.get(0).droplevel(0, axis=1).get(1 / 12)
