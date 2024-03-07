@@ -899,7 +899,7 @@ class OptionAttributer(object):
 if __name__ == "__main__":
 
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    self.run_cross_sectional_spread_regressions()
+    self.run_stat_arb_strategy()
 
     _pnls = self.run_stat_arb_strategy()
     __pnls = _pnls.get(0).droplevel(0, axis=1).get(1 / 12)

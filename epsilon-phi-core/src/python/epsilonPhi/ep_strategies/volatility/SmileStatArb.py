@@ -109,14 +109,13 @@ class SmileStatArb(object):
     def z_minus(self):
         return self.z_plus - self.sig_sq * self.t
     @property
-    def omega(self):
+    def omega_ts(self):
         return self.dsig_sq
-
     @property
-    def gamma(self):
+    def gamma_ts(self):
         return self.dsig * self.ds.values.reshape(-1, 1)
     @property
-    def mu(self):
+    def mu_ts(self):
         return self.get_mu()
     @property
     def omega_cs(self):
@@ -193,15 +192,8 @@ class SmileStatArb(object):
                 #e = Y_prime[idx] - X_prime[idx, :] @ result.x
                 #rsq = 1 - (np.mean(np.power(e, 2)) / np.var(Y_prime[idx]))
                 #reg.extend([(unique_dates[t], mat, omega, gamma, rsq)])
-        _df = pd.DataFrame(reg, columns=['date', 't', 'omega', 'gamma']).set_index(['date','t'])
+        _df = pd.DataFrame(reg, columns=['date', 't', 'omega', 'gamma']).set_index(['date', 't'])
         self._cross_sectional_estimates = _df.unstack(level=1)
-
-    def estimate_time_series_omega(self, rolling_window=1):
-        return self.omega.rolling(window=rolling_window).mean()
-    def estimate_time_series_gamma(self, rolling_window=1):
-        return self.gamma.rolling(window=rolling_window).mean()
-    def estimate_time_series_mu(self, rolling_window=1):
-        return self.mu.rolling(window=rolling_window).mean()
 
     def get_spot_prices(self, dates):
         return self._vol_surface.get_spot_prices(dates)
@@ -274,6 +266,20 @@ class SmileStatArb(object):
            self.load_strategy_weights()
         return self._weights.get('rr')
 
+    @property
+    def predictors(self):
+
+        _rolling_window = self._HISTORICAL_ROLLING_PERIODS
+
+        _ocs = self.omega_cs.stack().to_frame(1)
+        _gcs = self.gamma_cs.stack().to_frame(2)
+        _ots = self.omega_ts.get(0).rolling(_rolling_window).mean().stack().to_frame(3) * 252
+        _gts = self.gamma_ts.get(0).rolling(_rolling_window).mean().stack().to_frame(4) * 252
+        I = self.omega_cs.stack().to_frame(0) / _ocs.values
+        return pd.concat([I, _ocs, _gcs, _ots, _gts], axis=1)
+
+
+
     def load_strategy_weights(self):
 
         # The strategy forms weights on spread portfolios from
@@ -285,10 +291,33 @@ class SmileStatArb(object):
         L = self._STRATEGY_ESTIMATION_WINDOW
         LL = self._HISTORICAL_ROLLING_PERIODS
 
+        # Get the predictors for estimating 1 period ahead gamma and omega.
+        x = self.predictors.unstack()
+        z_p = 2 * self.z_plus.reindex(x.index)
+        z_pm = (self.z_plus * self.z_minus).reindex(x.index)
+        s = self.get_variance_spreads().reindex(x.index)
+
+        for j in tqdm(range(self.NM), desc="Processing"):
+            for t in range(T0-1, self.T-LL):
+
+                idx_1 = np.arange(np.maximum(t-L-LL, 0), t-LL+1)
+                idx_2 = idx_1 + LL
+
+                # 1. Predict 1 Period ahead omega: omega(t+1) = alpha + b(0) * omega(t, cs) + b(1) * omega(t, ts) + e(t+1)
+
+
+                #2 . Predict 1 Periof ahead gamma: gamma(t+1) = alpha + b(0) * gamma(t, cs) + b(1) * gamma(t, ts) + e(t+1)
+
+
+                # 3. From Omega and Gamma Estimates, Predict the Implied Variance Spread
+
+
+                # 4. Positions are proportional to the difference between observed and predicted spreads
+
         pass
 
 if __name__ == "__main__":
 
     self = SmileStatArb('SPX')
     self.set_vol_surface_parameters(Interpolator.GAUSSIAN_KERNEL_SMOOTHING)
-    self.run_cross_sectional_spread_regressions()
+    self.load_strategy_weights()
