@@ -192,7 +192,7 @@ class SmileStatArb(object):
                 #e = Y_prime[idx] - X_prime[idx, :] @ result.x
                 #rsq = 1 - (np.mean(np.power(e, 2)) / np.var(Y_prime[idx]))
                 #reg.extend([(unique_dates[t], mat, omega, gamma, rsq)])
-        _df = pd.DataFrame(reg, columns=['date', 't', 'omega', 'gamma']).set_index(['date', 't'])
+        _df = pd.DataFrame(reg, columns=['date', 't', 'gamma', 'omega']).set_index(['date', 't'])
         self._cross_sectional_estimates = _df.unstack(level=1)
 
     def get_spot_prices(self, dates):
@@ -270,15 +270,11 @@ class SmileStatArb(object):
     def predictors(self):
 
         _rolling_window = self._HISTORICAL_ROLLING_PERIODS
-
-        _ocs = self.omega_cs.stack().to_frame(1)
-        _gcs = self.gamma_cs.stack().to_frame(2)
-        _ots = self.omega_ts.get(0).rolling(_rolling_window).mean().stack().to_frame(3) * 252
-        _gts = self.gamma_ts.get(0).rolling(_rolling_window).mean().stack().to_frame(4) * 252
-        I = self.omega_cs.stack().to_frame(0) / _ocs.values
-        return pd.concat([I, _ocs, _gcs, _ots, _gts], axis=1)
-
-
+        _ocs = self.omega_cs.values.reshape(self.T, 1, self.NM)
+        _gcs = self.gamma_cs.values.reshape(self.T, 1, self.NM)
+        _ots = self.omega_ts.get(0).rolling(_rolling_window).mean().values.reshape(self.T, 1, self.NM) * 252
+        _gts = self.gamma_ts.get(0).rolling(_rolling_window).mean().values.reshape(self.T, 1, self.NM) * 252
+        return np.hstack((np.ones((_ocs.shape)), _ocs, _ots, _gcs, _gts))
 
     def load_strategy_weights(self):
 
@@ -292,7 +288,8 @@ class SmileStatArb(object):
         LL = self._HISTORICAL_ROLLING_PERIODS
 
         # Get the predictors for estimating 1 period ahead gamma and omega.
-        x = self.predictors.unstack()
+        x = self.predictors
+
         z_p = 2 * self.z_plus.reindex(x.index)
         z_pm = (self.z_plus * self.z_minus).reindex(x.index)
         s = self.get_variance_spreads().reindex(x.index)
