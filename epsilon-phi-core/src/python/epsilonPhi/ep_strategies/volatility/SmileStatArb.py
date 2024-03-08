@@ -6,6 +6,8 @@ from scipy.optimize import lsq_linear
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
+import itertools
+
 
 class SmileStatArb(object):
 
@@ -216,7 +218,7 @@ class SmileStatArb(object):
         rd_t = rd * np.array(rd.columns).reshape(1, -1).repeat(rd.shape[0], 0)
         rf_t = rf * np.array(rd.columns).reshape(1, -1).repeat(rd.shape[0], 0)
 
-        s_ = self.get_spot_prices(dates)
+        s_ = self.get_spot_prices(rf_t.index)
 
         return s_.values.reshape(-1, 1) * np.exp(-rf_t) / np.exp(-rd_t)
 
@@ -237,10 +239,10 @@ class SmileStatArb(object):
         ivols = self._vol_surface.get_ivols(relative_strike=self._Z_SCORES,
                                             maturity=self._MATURITIES)
 
-        self._ivols = ivols.get('vol').unstack(level=[0, 1]).sort_index()
+        self._ivols = ivols.get('sig').unstack(level=[1, 2]).sort_index()
         self._ivols.columns.names = ['k', 't']
         # Set the implied strike prices
-        self._k = ivols.get('k').unstack(level=[0, 1]).sort_index()
+        self._k = ivols.get('k').unstack(level=[1, 2]).sort_index()
         self._k.columns.names = ['k', 't']
         # Set spot rates
         self._s = self.get_spot_prices(self.dates)
@@ -383,7 +385,8 @@ class SmileStatArb(object):
         return self.ivols.stack(level=[0, 1]).loc[self.strategy_open_dates]
     @property
     def strategy_strike_prices(self):
-        return pd.concat([self.moneyness.stack(level=[0, 1])] * self.get_paths().shape[1], axis=1) * 100
+        return 100 * pd.concat([self.moneyness.stack(level=[0, 1])] *
+                                self.get_paths().shape[1], axis=1).loc[self.strategy_open_dates]
 
     def get_strategy_path_dates(self):
         _paths = self.get_paths()
@@ -391,21 +394,43 @@ class SmileStatArb(object):
         __d = _d.loc[self.strategy_open_vols.index.get_level_values(0)]
         __d.index = self.strategy_open_vols.index
         return __d.copy()
-    def get_strategy_ttm(self):
+    def get_ttm_paths(self):
 
         str_dates = self.get_strategy_path_dates()
         days_elapsed = (str_dates - str_dates.get(0).to_frame().values) / np.timedelta64(1, 'D')
         tau = np.array(days_elapsed.index.get_level_values('t')).reshape(-1, 1) - (days_elapsed / 365.25)
         return tau.clip(lower=0)
 
-    def get_sig_paths(self):
-        _pricing_dates = self.get_strategy_path_dates().values
-        _strikes = self.strategy_strike_prices.values
-        _mat = self.get_strategy_ttm().values
-        return self._vol_surface.get_ivols(pricing_dates=_pricing_dates,
-                                           strike_reference=StrikeReference.STRIKE_PRICE,
-                                           relative_strike=_strikes,
-                                           maturity=_mat)
+    def get_log_moneyness_paths(self):
+        _strikes = self.strategy_strike_prices
+        _fwds = self.get_forward_paths()
+        return np.log(_strikes.values / _fwds)
+
+    def get_ivol_paths(self):
+        ivols = pd.concat([self.strategy_open_vols] * self._STRATEGY_HOLDING_PERIODS, axis=1)
+
+        #_d = self.get_strategy_path_dates().stack()
+        #_k = self.get_strategy_log_moneyness().stack()
+        #_t = self.get_strategy_ttm().stack()
+
+        #_idx = list(zip(_d, _k, _t))
+
+        #ivols = self._vol_surface.get_ivols(pricing_dates=_d,
+        #                                    strike_reference=StrikeReference.LOG_MONEYNESS,
+        #                                    relative_strike=_k,
+        #                                    maturity=_t)
+        return ivols
+
+    def get_forward_paths(self):
+
+        if not hasattr(self, '_fwd_paths'):
+
+            _rf = self.get_funding_rate_paths()
+            _rd = self.get_risk_free_rate_paths()
+            _s = self.get_spot_paths()
+            _t = self.get_ttm_paths()
+            self._fwd_paths = _s * np.exp(_rf * _t) / np.exp(_rd * _t)
+        return self._fwd_paths
 
     def get_spot_paths(self):
         idx = self.get_paths()
@@ -423,14 +448,55 @@ class SmileStatArb(object):
             self.load_strategy_paths()
         return self._paths.copy()
 
-    def blsprice(self,
-                f,
-                t,
-                k,
-                rf,
-                v,
-                option_type):
-        return None
+    def get_risk_free_rate_paths(self):
+
+        if not hasattr(self, '_rd_paths'):
+            _t = self.get_ttm_paths().stack()
+            _d = self.get_strategy_path_dates().stack()
+
+            rd = self.get_risk_free_rate(_d.values, _t.values).stack()
+            _rd = rd.loc[zip(_d, _t)]
+            _rd.index = _d.index
+            self._rd_paths = _rd.unstack(level=3)
+
+        return self._rd_paths.copy()
+
+
+    def get_funding_rate_paths(self):
+
+        if not hasattr(self, '_rf_paths'):
+            _t = self.get_ttm_paths().stack()
+            _d = self.get_strategy_path_dates().stack()
+
+            rf = self.get_funding_rate(_d.values, _t.values).stack()
+            _rf = rf.loc[list(zip(_d, _t))]
+            _rf.index = _d.index
+            self._rf_paths = _rf.unstack(level=3)
+        return self._rf_paths.copy()
+
+    def blsprice(self, f, t, k, rf, v, option_type):
+        return blsprice(f, t, k, rf, v, option_type)
+
+    def get_option_prices(self, option_type=-1):
+        _f = self.get_forward_paths()
+        _t = self.get_ttm_paths()
+        _k = self.strategy_strike_prices
+        _rf = self.get_risk_free_rate_paths()
+        _v = self.get_ivol_paths()
+        return self.blsprice(_f, _t, _k, _rf, _v, option_type=option_type)
+
+    def get_path_option_pnls(self, put_calls=-1, position=-1):
+        prices = position * self.get_option_prices(put_calls)
+        return prices.diff(axis=1).dropna(axis=1, how='all')
+
+    def get_account_pnl(self, put_call=-1, position=-1):
+        prices = self.get_option_prices(put_call)
+        premium = position * prices.get(0).to_frame()
+
+        rates = self.get_rates()
+        t = self.get_time_to_maturity_paths()
+        return (np.exp(rates * t.diff(axis=1).abs()) - 1).dropna(axis=1) * premium.values
+
 
 
 
@@ -440,4 +506,4 @@ if __name__ == "__main__":
 
     self = SmileStatArb('SPX')
     self.set_vol_surface_parameters(Interpolator.GAUSSIAN_KERNEL_SMOOTHING)
-    self.get_sig_paths()
+    self.get_path_option_pnls()

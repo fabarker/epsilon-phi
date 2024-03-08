@@ -171,6 +171,9 @@ class VannaVolga(object):
         if pricing_dates is None:
            pricing_dates = self.dates
 
+        relative_strike = np.array(relative_strike)
+        maturities = np.array(maturities)
+
         # Set the maturities which interpolates in forward space
         self.set_maturities(maturities)
 

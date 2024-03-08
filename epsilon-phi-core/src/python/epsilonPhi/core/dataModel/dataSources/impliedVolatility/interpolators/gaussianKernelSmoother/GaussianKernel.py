@@ -33,6 +33,10 @@ class GaussianKernel(object):
         self._funding_curve = rf
 
     @property
+    def unique_dates(self):
+        return pd.to_datetime(np.unique(self.dates))
+
+    @property
     def ivols(self):
         return self._ivols.copy()
     @property
@@ -84,12 +88,9 @@ class GaussianKernel(object):
         lmn = self.log_moneyness()
         return lmn / (ivols * np.sqrt(self.t))
 
-    def get_ivols(self, pricing_dates=None, strike_reference=None, relative_strike=None, maturities=None):
+    def get_ivols(self, pricing_dates, strike_reference, relative_strike, maturities):
 
-        if maturities is None:
-           mats = self.maturities
-        else:
-           mats = np.round(maturities, 10)
+        mats = np.round(maturities, 10)
 
         # Compute the surface values for the strike reference we care about
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
@@ -107,7 +108,13 @@ class GaussianKernel(object):
         else:
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
-        _ivols = self.interpolate(pricing_dates, mats, relative_strike)
+        if pricing_dates is None:
+            _p, _t, _k = np.meshgrid(self.unique_dates, mats, relative_strike)
+            _ivols = self.interpolate(_p, _t, _k)
+        else:
+            assert pricing_dates.shape == mats.shape, 'Error - dimension mis-match'
+            assert pricing_dates.shape == relative_strike.shape, 'Error - dimension mis-match'
+            _ivols = self.interpolate(pricing_dates, mats, relative_strike)
         _strikes = self.get_strikes(_ivols, strike_reference)
         return pd.concat((_ivols, _strikes), axis=1)
 
@@ -155,12 +162,11 @@ class GaussianKernel(object):
         return k
 
     def get_strikes_from_log_moneyness(self, ivols):
-        _x = np.array(ivols.columns.get_level_values(1)).reshape(1, -1).repeat(ivols.shape[0], axis=0)
-        _t = np.array(ivols.index.get_level_values(1))
+        _x = np.array(ivols.index.get_level_values('x')).reshape(-1, 1)
+        _t = np.array(ivols.index.get_level_values('t'))
         _f = self.get_forward_prices(ivols.index.get_level_values(0),
                                      _t)
-        k = pd.DataFrame(_f * np.exp(_x), index=ivols.index)
-        k.columns = [('k', x) for x in ivols.columns.get_level_values(1)]
+        k = pd.DataFrame(_f * np.exp(_x), index=ivols.index, columns=['k'])
         return k
 
     def get_strikes_from_z_score(self, ivols):
@@ -201,71 +207,68 @@ class GaussianKernel(object):
 
     def interpolate(self, dates=None, maturities=None, strikes=None):
 
-        if dates is None:
-           dates = self.dates
+        assert dates.shape == maturities.shape, 'Error - dimension mis-match'
+        assert dates.shape == strikes.shape, 'Error - dimension mis-match'
 
-        unique_d = np.unique(dates)
-        unique_m = np.unique(maturities).reshape(1, -1).astype(float)
-        unique_x = np.unique(strikes).reshape(1, -1).astype(float)
+        _target_t = maturities.flatten().astype(float)
+        _target_k = strikes.flatten().astype(float)
+        _target_d = dates.flatten()
 
-        NX = len(unique_x.flatten())
-        NM = len(unique_m.flatten())
-        ND = len(unique_d.flatten())
+        _unique_d = np.unique(_target_d)
+        ND = len(_unique_d.flatten())
 
-        t_vec = self.t.astype(float).flatten()
-        x_vec = self.x.astype(float).flatten()
-        v_vec = self.sig.astype(float).flatten()
+        _t_vec = self.t.astype(float).flatten()
+        _x_vec = self.x.astype(float).flatten()
+        _v_vec = self.sig.astype(float).flatten()
+        _d_vec = self.dates
 
-        interp = np.full(shape=(NX*NM, ND), fill_value=np.nan)
+        interps = list()
         for t in tqdm(range(ND), desc="Interpolating Vol Surface"):
-            idx = (unique_d[t] == dates)
-            interp[:, t] = self.interpolate_single_date(t_vec[idx],
-                                                         unique_m,
-                                                         x_vec[idx],
-                                                         unique_x,
-                                                         v_vec[idx])
 
-        idx_m = unique_x.T.repeat(NM, axis=0).flatten()
-        idx_x = unique_m.repeat(NX, 0).flatten()
+            idx_T = _unique_d[t] == _target_d
+            idx_S = _unique_d[t] == _d_vec
 
-        vols = pd.DataFrame(interp, columns=unique_d)
-        vols.index = pd.MultiIndex.from_tuples(list(zip(idx_m, idx_x)), names=['x','t'])
-        vols.columns.names = ['date']
+            interp = self.interpolate_single_date(_t_vec[idx_S],
+                                                  _target_t[idx_T],
+                                                  _x_vec[idx_S],
+                                                  _target_k[idx_T],
+                                                  _v_vec[idx_S])
+
+            result = np.column_stack((interp, _target_d[idx_T].astype(float)))
+            interps.extend([result])
+
 
         # build ivols
-        _ivols = vols.stack().to_frame('vol')
-        return _ivols.copy()
+        _ivols = pd.DataFrame(np.vstack((interps)))
+        _ivols.columns = ['sig', 'x', 't', 'date']
+        _ivols.loc[:, 'date'] = pd.to_datetime(_ivols.get('date'))
+        _vols = _ivols.set_index(['date','x','t'], drop=True)
+        return _vols.copy()
 
     @staticmethod
     @jit(nopython=True, fastmath=True, cache=True)
     def interpolate_single_date(mat, unique_m, x, unique_x, mids):
-        N = len(mids)
+
+        _lnmat = np.log(mat).reshape((-1, 1))
+        _x = x.reshape((-1, 1))
 
         # get the std of the reference on each date
-        sig_x = np.std(x)
-        h_x = 1.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_x / np.power(N, 1.0 / 5.0)
+        sig_x = np.std(_x)
+        h_x = 1.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_x / np.power(len(mids), 1.0 / 5.0)
 
         # do the same in the maturity direction
-        sig_lm = np.log(mat).std()
-        h_m = 2.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_lm / np.power(N, 1.0 / 5.0) * 0.1
+        sig_lm = _lnmat.std()
+        h_m = 2.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_lm / np.power(len(mids), 1.0 / 5.0) * 0.1
 
-        lnmat_ = np.log(mat).reshape((-1, 1))
-
-        m_diff = np.abs(lnmat_ - np.log(unique_m.repeat(N).reshape((unique_m.size, N)).T)) / h_m
-        x_diff = np.abs(x.reshape((-1, 1)) - unique_x.repeat(N).reshape((unique_x.size, N)).T) / h_x
+        m_diff = _lnmat - np.log(unique_m.reshape((1, -1))) / h_m
+        x_diff = _x - unique_x.reshape((1, -1)) / h_x
 
         x_wts = np.exp(-1.0 * np.power(x_diff, 2.0) / 2.0)
-        x_wts = np.expand_dims(x_wts, -1).repeat(unique_m.size).reshape((x_wts.shape[0], x_wts.shape[1], unique_m.size))
+        m_wts = np.exp(-1.0 * np.power(m_diff, 2.0) / 2.0)
 
-        m_wts = np.exp(-1.0 * np.power(m_diff, 2.0) / 2.0).reshape((m_diff.shape[0], 1, m_diff.shape[1]))
-        m_wts_ = np.full(x_wts.shape, np.nan) * np.nan
-        for dim in range(x_wts.shape[1]):
-            m_wts_[:, dim, :] = m_wts[:, 0, :]
-
-        wts = (x_wts * m_wts) / np.sum(x_wts * m_wts_, axis=0)
-        ivol = mids.repeat(wts.shape[1] * unique_m.size).reshape(m_wts_.shape)
-        ivols = np.sum(wts * ivol, axis=0).flatten()
-        return ivols
+        wts = (x_wts * m_wts) / np.sum(x_wts * m_wts, axis=0)
+        ivols = np.sum(wts * mids.reshape((-1, 1)), axis=0)
+        return np.vstack((ivols, unique_x, unique_m)).T
 
 
 if __name__ == "__main__":
