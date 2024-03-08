@@ -166,7 +166,7 @@ class VannaVolga(object):
                                         ivols,
                                         self._delta_type)
 
-    def get_ivols(self, pricing_dates=None, strike_reference=None, strikes=None, maturities=None):
+    def get_ivols(self, pricing_dates=None, strike_reference=None, relative_strike=None, maturities=None):
 
         if pricing_dates is None:
            pricing_dates = self.dates
@@ -176,15 +176,15 @@ class VannaVolga(object):
 
         # Compute the surface values for the strike reference we care about
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
-            return self.get_ivols_delta_space(strikes).loc[pricing_dates]
+            return self.get_ivols_delta_space(relative_strike).loc[pricing_dates]
         elif strike_reference in [StrikeReference.MONEYNESS, StrikeReference.MONEYNESS.value]:
-            return self.get_ivols_moneyness_space(strikes).loc[pricing_dates]
+            return self.get_ivols_moneyness_space(relative_strike).loc[pricing_dates]
         elif strike_reference in [StrikeReference.LOG_MONEYNESS, StrikeReference.LOG_MONEYNESS.value]:
-            return self.get_ivols_log_moneyness_space(strikes).loc[pricing_dates]
+            return self.get_ivols_log_moneyness_space(relative_strike).loc[pricing_dates]
         elif strike_reference in [StrikeReference.Z_SCORE, StrikeReference.Z_SCORE.value]:
-            return self.get_ivols_zscore_space(strikes).loc[pricing_dates]
+            return self.get_ivols_zscore_space(relative_strike).loc[pricing_dates]
         elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
-            return self.get_ivols_convexity_moneyness_space(strikes).loc[pricing_dates]
+            return self.get_ivols_convexity_moneyness_space(relative_strike).loc[pricing_dates]
         else:
             return None
 

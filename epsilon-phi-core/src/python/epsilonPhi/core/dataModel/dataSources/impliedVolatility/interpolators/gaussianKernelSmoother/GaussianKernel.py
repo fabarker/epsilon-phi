@@ -102,6 +102,8 @@ class GaussianKernel(object):
             self.x = self.z_score()
         elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
             self.x = self.convexity_adj_moneyness()
+        elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
+            self.x = self.k
         else:
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
@@ -173,13 +175,13 @@ class GaussianKernel(object):
 
     def get_strikes_from_convexity_moneyness(self, ivols):
         sigsq = np.power(ivols, 2)
-        _t = np.array(ivols.index.get_level_values(1))
-        _f = self.get_forward_prices(ivols.index.get_level_values(0),
-                                     _t)
-        _x = np.array(ivols.columns.get_level_values(1)).reshape(1, -1).repeat(_t.shape[0], axis=0)
+
+        _t = np.array(ivols.index.get_level_values('t'))
+        _f = self.get_forward_prices(ivols.index.get_level_values('date'), _t)
+        _x = np.array(ivols.index.get_level_values('x')).reshape(-1, 1)
         _T = _t.reshape(-1, 1)
         k = _f * np.exp(_x * (ivols * np.sqrt(_T)) - 0.5 * sigsq * _T)
-        k.columns = [ ('k', x) for x in k.columns.get_level_values(1) ]
+        k.columns = ['k']
         return k
 
     def get_forward_prices(self, pricing_dates, maturities):
@@ -231,8 +233,7 @@ class GaussianKernel(object):
         vols.columns.names = ['date']
 
         # build ivols
-        _ivols = vols.T.stack(level=1)
-        _ivols.columns = pd.MultiIndex.from_tuples(list(zip(['vol'] * NX, _ivols.columns)))
+        _ivols = vols.stack().to_frame('vol')
         return _ivols.copy()
 
     @staticmethod

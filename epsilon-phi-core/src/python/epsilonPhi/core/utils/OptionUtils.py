@@ -133,6 +133,26 @@ def bs_value(s, t, k, r, q, v, option_type_value):
     value = phi * ss * norm.cdf(phi * d1, 0.0, 1.0) - phi * kk * norm.cdf(phi * d2, 0.0, 1.0)
     return value
 
+def blsprice(f, t, k, rf, v, option_type_value):
+
+    """Price a derivative using Black-Scholes model."""
+
+    phi = np.sign(option_type_value)
+    k = np.maximum(k, g_small)
+    t = np.maximum(t, g_small)
+    v = np.maximum(v, g_small)
+
+    v_sqrt_t = v * np.sqrt(t)
+    d1 = np.log(f/k) / v_sqrt_t + v_sqrt_t / 2.0
+    d2 = d1 - v_sqrt_t
+
+    ff = f * np.exp(-rf * t)
+    kk = k * np.exp(-rf * t)
+
+    value = phi * ff * norm.cdf(phi * d1, 0.0, 1.0) - phi * kk * norm.cdf(phi * d2, 0.0, 1.0)
+    return value
+
+
 ###############################################################################
 
 def atm_delta_neutral_strike(s, t, rd, rf, vol, deltaTypeValue):

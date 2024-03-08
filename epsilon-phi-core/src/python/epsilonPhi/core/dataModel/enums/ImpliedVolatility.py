@@ -17,6 +17,7 @@ class StrikeReference(Enum):
     Z_SCORE = 3
     CONVEXITY_MN = 4
     LOG_MONEYNESS = 5
+    STRIKE_PRICE = 6
 
 class AtTheMoneyType(Enum):
     SPOT = 1  # Spot

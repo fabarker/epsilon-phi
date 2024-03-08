@@ -1,4 +1,6 @@
 from epsilonPhi.core.dataModel.dataSources.impliedVolatility.VolSurface import AbstractVolSurface
+from epsilonPhi.core.utils.FrameUtils import FrameUtils
+from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 from scipy.optimize import lsq_linear
 import numpy as np
@@ -14,6 +16,7 @@ class SmileStatArb(object):
     _STRATEGY_STARTING_WINDOW = 253 * 4
     _TRUNCATE_SPREAD = np.abs(1)
 
+    _STRATEGY_STRIKE_CUTOFF = 1
     _Z_SCORES = np.arange(-2, 2.5, 0.5)
     _MATURITIES = [1 / 12, 2 / 12, 3 / 12, 6 / 12, 12 / 12]
 
@@ -45,6 +48,9 @@ class SmileStatArb(object):
     @property
     def NX(self):
         return len(self.unique_x)
+    @property
+    def strategy_strikes(self):
+        return self.unique_x[np.abs(self.unique_x) <= self._STRATEGY_STRIKE_CUTOFF]
     @property
     def dates(self):
         return self._ivols.index
@@ -104,16 +110,16 @@ class SmileStatArb(object):
         return np.exp(self.lnm)
     @property
     def z_plus(self):
-        return self.lnm + 0.5 * self.sig_sq * self.t
+        return (self.lnm + 0.5 * self.sig_sq * self.t).reindex(self.dates)
     @property
     def z_minus(self):
-        return self.z_plus - self.sig_sq * self.t
+        return (self.z_plus - self.sig_sq * self.t).reindex(self.dates)
     @property
     def omega_ts(self):
-        return self.dsig_sq
+        return self.dsig_sq.reindex(self.dates)
     @property
     def gamma_ts(self):
-        return self.dsig * self.ds.values.reshape(-1, 1)
+        return (self.dsig * self.ds.values.reshape(-1, 1)).reindex(self.dates)
     @property
     def mu_ts(self):
         return self.get_mu()
@@ -175,7 +181,7 @@ class SmileStatArb(object):
         unique_mats = np.unique(all_mats)
 
         reg = list()
-        for t in tqdm(range(self.T), desc="Processing"):
+        for t in tqdm(range(self.T), desc="Estimating Cross Sectional Moments"):
             for mat in unique_mats:
 
                 idx = ((all_dates == unique_dates[t]) &
@@ -193,7 +199,7 @@ class SmileStatArb(object):
                 #rsq = 1 - (np.mean(np.power(e, 2)) / np.var(Y_prime[idx]))
                 #reg.extend([(unique_dates[t], mat, omega, gamma, rsq)])
         _df = pd.DataFrame(reg, columns=['date', 't', 'gamma', 'omega']).set_index(['date', 't'])
-        self._cross_sectional_estimates = _df.unstack(level=1)
+        self._cross_sectional_estimates = _df.unstack(level=1).reindex(self.dates)
 
     def get_spot_prices(self, dates):
         return self._vol_surface.get_spot_prices(dates)
@@ -231,9 +237,11 @@ class SmileStatArb(object):
         ivols = self._vol_surface.get_ivols(relative_strike=self._Z_SCORES,
                                             maturity=self._MATURITIES)
 
-        self._ivols = ivols.get('vol').unstack(level=1).sort_index()
+        self._ivols = ivols.get('vol').unstack(level=[0, 1]).sort_index()
+        self._ivols.columns.names = ['k', 't']
         # Set the implied strike prices
-        self._k = ivols.get('k').unstack(level=1).sort_index()
+        self._k = ivols.get('k').unstack(level=[0, 1]).sort_index()
+        self._k.columns.names = ['k', 't']
         # Set spot rates
         self._s = self.get_spot_prices(self.dates)
         # Set the forward rates
@@ -266,8 +274,7 @@ class SmileStatArb(object):
            self.load_strategy_weights()
         return self._weights.get('rr')
 
-    @property
-    def predictors(self):
+    def get_predictors(self):
 
         _rolling_window = self._HISTORICAL_ROLLING_PERIODS
         _ocs = self.omega_cs.values.reshape(self.T, 1, self.NM)
@@ -275,6 +282,11 @@ class SmileStatArb(object):
         _ots = self.omega_ts.get(0).rolling(_rolling_window).mean().values.reshape(self.T, 1, self.NM) * 252
         _gts = self.gamma_ts.get(0).rolling(_rolling_window).mean().values.reshape(self.T, 1, self.NM) * 252
         return np.hstack((np.ones((_ocs.shape)), _ocs, _ots, _gcs, _gts))
+
+    def get_strategy_weights(self, strategy):
+        if not hasattr(self, '_weights'):
+            self.load_strategy_weights()
+        return self._weights.get(strategy)
 
     def load_strategy_weights(self):
 
@@ -288,33 +300,144 @@ class SmileStatArb(object):
         LL = self._HISTORICAL_ROLLING_PERIODS
 
         # Get the predictors for estimating 1 period ahead gamma and omega.
-        x = self.predictors
+        x = self.get_predictors()
 
-        z_p = 2 * self.z_plus.reindex(x.index)
-        z_pm = (self.z_plus * self.z_minus).reindex(x.index)
-        s = self.get_variance_spreads().reindex(x.index)
+        z_p = 2 * self.z_plus.get(self.strategy_strikes).reorder_levels([1, 0], axis=1)
+        z_p_ = np.stack([z_p.get(x).sort_index().values for x in self.unique_mats], axis=2)
 
-        for j in tqdm(range(self.NM), desc="Processing"):
+        z_pm = (self.z_plus * self.z_minus).get(self.strategy_strikes).reorder_levels([1, 0], axis=1)
+        z_pm_ = np.stack([z_pm.get(x).sort_index().values for x in self.unique_mats], axis=2)
+
+        s = self.get_variance_spreads().reindex(self.dates).get(self.strategy_strikes).reorder_levels([1, 0], axis=1)
+        s_ = np.stack([s.get(x).sort_index().values for x in self.unique_mats], axis=2)
+
+        atms = np.power(self.atm_sig, 2).reindex(self.dates).values
+
+        weights = np.full((self.T-LL-T0+1, len(self.strategy_strikes), self.NM, 2), np.nan)
+        for j in tqdm(range(self.NM), desc="Building Strategy Weights"):
             for t in range(T0-1, self.T-LL):
 
                 idx_1 = np.arange(np.maximum(t-L-LL, 0), t-LL+1)
                 idx_2 = idx_1 + LL
 
                 # 1. Predict 1 Period ahead omega: omega(t+1) = alpha + b(0) * omega(t, cs) + b(1) * omega(t, ts) + e(t+1)
-
+                # Intercept = 0, Omega CS = 1, Gamma TS = 2
+                x_0 = x[idx_1, :3, j]
+                _nan_loc = ~np.any(np.isnan(x_0), axis=1)
+                x_o = x_0[_nan_loc, :]
+                B_omega = np.round(np.linalg.solve(x_o.T @ x_o + np.eye(3), x_o.T @ x[idx_2[_nan_loc], 2, j]), 5)
+                omega_predict = [1, x[t, 1, j], x[t, 2, j]] @ B_omega
 
                 #2 . Predict 1 Periof ahead gamma: gamma(t+1) = alpha + b(0) * gamma(t, cs) + b(1) * gamma(t, ts) + e(t+1)
-
+                # Intercept = 0, Gamma CS = 3, Gamma TS = 4
+                x_G = x[idx_1, :, j][:, [0, 3, 4]]
+                _nan_loc = ~np.any(np.isnan(x_G), axis=1)
+                x_g = x_G[_nan_loc, :]
+                B_gamma = np.round(np.linalg.solve(x_g.T @ x_g + np.eye(3), x_g.T @ x[idx_2[_nan_loc], 4, j]), 5)
+                gamma_predict = [1, x[t, 3, j], x[t, 4, j]] @ B_gamma
 
                 # 3. From Omega and Gamma Estimates, Predict the Implied Variance Spread
+                _bp = [gamma_predict, omega_predict]
+                pred_spr_ts = np.vstack((z_p_[t, :, j], z_pm_[t, :, j])).T @ _bp
 
+                # 4. From The Cross Section Estimates for Omega and Gamma, Get Residuals
+                pred_spr_cs = np.vstack((z_p_[t, :, j], z_pm_[t, :, j])).T @ x[t, [3, 1], j]
 
                 # 4. Positions are proportional to the difference between observed and predicted spreads
+                weights[t-T0+1, :, j, 0] = (s_[t, :, j] - pred_spr_ts) / atms[t, j]
+                weights[t-T0+1, :, j, 1] = (10/atms[t, j]) * (s_[t, :, j] - pred_spr_cs)
 
-        pass
+            NX_ = len(self.strategy_strikes)
+
+            rr = [pd.DataFrame(weights[:, :, x, 0], columns=FrameUtils.multiindex(['rr'] * NX_, self.strategy_strikes, [self.unique_mats[x]] * NX_)) for x in range(self.NM)]
+            rr = pd.concat(rr, axis=1)
+            rr.index = self.dates[np.arange(T0-1, self.T-LL)]
+
+            sa = [pd.DataFrame(weights[:, :, x, 1], columns=FrameUtils.multiindex(['sa'] * NX_, self.strategy_strikes, [self.unique_mats[x]] * NX_)) for x in range(self.NM)]
+            sa = pd.concat(sa, axis=1)
+            sa.index = self.dates[np.arange(T0 - 1, self.T - LL)]
+            self._weights = pd.concat((rr, sa), axis=1)
+
+    def load_strategy_paths(self):
+
+        HP = self._STRATEGY_HOLDING_PERIODS
+        _paths = np.array(range(0, self.T - HP + 1)).reshape(1, self.T - HP + 1).repeat(HP, 0) + \
+                 np.array(range(HP)).reshape(-1, 1).repeat(self.T - HP + 1, 1)
+
+        sim_paths = pd.DataFrame(_paths.T)
+
+        dates_ = pd.DataFrame(self.dates.values[sim_paths.values])
+        dates_['start'] = dates_.get(0)
+        dates_['end'] = dates_.get(HP - 1)
+
+        sim_paths['start'] = dates_.get(0)
+        sim_paths['end'] = dates_.get(HP - 1)
+
+        self._paths = sim_paths.set_index(['start', 'end'], drop=True)
+
+    @property
+    def strategy_open_dates(self):
+        return pd.to_datetime(self.get_paths().index.get_level_values('start'))
+    @property
+    def strategy_open_vols(self):
+        return self.ivols.stack(level=[0, 1]).loc[self.strategy_open_dates]
+    @property
+    def strategy_strike_prices(self):
+        return pd.concat([self.moneyness.stack(level=[0, 1])] * self.get_paths().shape[1], axis=1) * 100
+
+    def get_strategy_path_dates(self):
+        _paths = self.get_paths()
+        _d = pd.DataFrame(self.dates.values[_paths.values], index=self.strategy_open_dates)
+        __d = _d.loc[self.strategy_open_vols.index.get_level_values(0)]
+        __d.index = self.strategy_open_vols.index
+        return __d.copy()
+    def get_strategy_ttm(self):
+
+        str_dates = self.get_strategy_path_dates()
+        days_elapsed = (str_dates - str_dates.get(0).to_frame().values) / np.timedelta64(1, 'D')
+        tau = np.array(days_elapsed.index.get_level_values('t')).reshape(-1, 1) - (days_elapsed / 365.25)
+        return tau.clip(lower=0)
+
+    def get_sig_paths(self):
+        _pricing_dates = self.get_strategy_path_dates().values
+        _strikes = self.strategy_strike_prices.values
+        _mat = self.get_strategy_ttm().values
+        return self._vol_surface.get_ivols(pricing_dates=_pricing_dates,
+                                           strike_reference=StrikeReference.STRIKE_PRICE,
+                                           relative_strike=_strikes,
+                                           maturity=_mat)
+
+    def get_spot_paths(self):
+        idx = self.get_paths()
+
+        spts = self.s.values[idx.values].reshape(idx.shape[0], idx.shape[1])
+        _spts = pd.DataFrame(spts, index=self.strategy_open_dates)
+        norm = _spts / _spts[[0]].values
+
+        spts = norm.loc[self.strategy_open_vols.index.get_level_values(0)]
+        spts.index = self.strategy_open_vols.index
+        return spts.copy() * 100
+
+    def get_paths(self):
+        if not hasattr(self, '_paths'):
+            self.load_strategy_paths()
+        return self._paths.copy()
+
+    def blsprice(self,
+                f,
+                t,
+                k,
+                rf,
+                v,
+                option_type):
+        return None
+
+
+
+
 
 if __name__ == "__main__":
 
     self = SmileStatArb('SPX')
     self.set_vol_surface_parameters(Interpolator.GAUSSIAN_KERNEL_SMOOTHING)
-    self.load_strategy_weights()
+    self.get_sig_paths()
