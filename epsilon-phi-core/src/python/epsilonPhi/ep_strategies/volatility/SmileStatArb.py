@@ -22,7 +22,7 @@ class SmileStatArb(object):
     _Z_SCORES = np.arange(-2, 2.5, 0.5)
     _MATURITIES = [1 / 12, 2 / 12, 3 / 12, 6 / 12, 12 / 12]
 
-    def __init__(self, underlier):
+    def __init__(self, underlier, start_date=None, end_date=None):
 
         # Set the underlier in the object
         self._underlier = underlier
@@ -52,7 +52,8 @@ class SmileStatArb(object):
         return len(self.unique_x)
     @property
     def strategy_strikes(self):
-        return self.unique_x[np.abs(self.unique_x) <= self._STRATEGY_STRIKE_CUTOFF]
+        return self.unique_x[(np.abs(self.unique_x) <= self._STRATEGY_STRIKE_CUTOFF) &
+                             (self.unique_x != 0)]
     @property
     def dates(self):
         return self._ivols.index
@@ -349,16 +350,16 @@ class SmileStatArb(object):
                 weights[t-T0+1, :, j, 0] = (s_[t, :, j] - pred_spr_ts) / atms[t, j]
                 weights[t-T0+1, :, j, 1] = (10/atms[t, j]) * (s_[t, :, j] - pred_spr_cs)
 
-            NX_ = len(self.strategy_strikes)
+        NX_ = len(self.strategy_strikes)
 
-            rr = [pd.DataFrame(weights[:, :, x, 0], columns=FrameUtils.multiindex(['rr'] * NX_, self.strategy_strikes, [self.unique_mats[x]] * NX_)) for x in range(self.NM)]
-            rr = pd.concat(rr, axis=1)
-            rr.index = self.dates[np.arange(T0-1, self.T-LL)]
+        rr = [pd.DataFrame(weights[:, :, x, 0], columns=FrameUtils.multiindex(['rr'] * NX_, self.strategy_strikes, [self.unique_mats[x]] * NX_)) for x in range(self.NM)]
+        rr = pd.concat(rr, axis=1)
+        rr.index = self.dates[np.arange(T0-1, self.T-LL)]
 
-            sa = [pd.DataFrame(weights[:, :, x, 1], columns=FrameUtils.multiindex(['sa'] * NX_, self.strategy_strikes, [self.unique_mats[x]] * NX_)) for x in range(self.NM)]
-            sa = pd.concat(sa, axis=1)
-            sa.index = self.dates[np.arange(T0 - 1, self.T - LL)]
-            self._weights = pd.concat((rr, sa), axis=1)
+        sa = [pd.DataFrame(weights[:, :, x, 1], columns=FrameUtils.multiindex(['sa'] * NX_, self.strategy_strikes, [self.unique_mats[x]] * NX_)) for x in range(self.NM)]
+        sa = pd.concat(sa, axis=1)
+        sa.index = self.dates[np.arange(T0 - 1, self.T - LL)]
+        self._weights = pd.concat((rr, sa), axis=1)
 
     def load_strategy_paths(self):
 
@@ -477,25 +478,164 @@ class SmileStatArb(object):
     def blsprice(self, f, t, k, rf, v, option_type):
         return blsprice(f, t, k, rf, v, option_type)
 
+    def blsdelta(self, option_type):
+
+        _s = self.get_spot_paths()
+        _t = self.get_ttm_paths()
+        _k = self.strategy_strike_prices
+        _rd = self.get_risk_free_rate_paths()
+        _rf = self.get_funding_rate_paths()
+        _vol = self.get_ivol_paths()
+
+        delta = fast_delta(_s,
+                          _t,
+                          _k,
+                          _rd,
+                          _rf,
+                          _vol,
+                          1,
+                          option_type)
+        return delta
+
+    def get_bsvega(self):
+        _s = self.get_spot_paths()
+        _k = self.strategy_strike_prices
+        _t = self.get_ttm_paths()
+        _v = self.get_ivol_paths()
+        _r = self.get_risk_free_rate_paths()
+        _q = self.get_funding_rate_paths()
+        return bs_vega(_s, _t, _k, _r, _q, _v)
+
     def get_option_prices(self, option_type=-1):
+
         _f = self.get_forward_paths()
         _t = self.get_ttm_paths()
         _k = self.strategy_strike_prices
         _rf = self.get_risk_free_rate_paths()
         _v = self.get_ivol_paths()
-        return self.blsprice(_f, _t, _k, _rf, _v, option_type=option_type)
+
+        prices = self.blsprice(_f, _t, _k, _rf, _v, option_type=option_type)
+
+        locs = _t == 0
+        intr_val = (option_type * (_f - _k)).clip(0)
+        prices.values[locs] = intr_val.values[locs]
+        return prices
 
     def get_path_option_pnls(self, put_calls=-1, position=-1):
         prices = position * self.get_option_prices(put_calls)
         return prices.diff(axis=1).dropna(axis=1, how='all')
 
+    def get_option_cumulative_pnl(self, put_call=-1, position=-1):
+        return self.get_path_option_pnls(put_call, position).cumsum(axis=1)
+
     def get_account_pnl(self, put_call=-1, position=-1):
         prices = self.get_option_prices(put_call)
         premium = position * prices.get(0).to_frame()
 
-        rates = self.get_rates()
-        t = self.get_time_to_maturity_paths()
+        rates = self.get_risk_free_rate_paths()
+        t = self.get_ttm_paths()
         return (np.exp(rates * t.diff(axis=1).abs()) - 1).dropna(axis=1) * premium.values
+
+    def get_delta_hedge_pnl(self, put_call=-1, position=-1):
+
+        option_deltas = self.blsdelta(put_call)
+        position_deltas = position * option_deltas
+
+        ds = self.get_forward_paths().diff(axis=1).dropna(axis=1)
+        return -1 * position_deltas.iloc[:, 0:-1].values * ds
+
+    def get_delta_hedge_account_pnl(self, put_call, position):
+
+        option_deltas = self.blsdelta(put_call)
+        position_deltas = position * option_deltas
+        balance = position_deltas * self.get_forward_paths()
+
+        rates = self.get_risk_free_rate_paths()
+        t = self.get_ttm_paths()
+        return balance.values[:, 0:-1] * (np.exp(rates * t.diff(axis=1).abs()) - 1).dropna(axis=1)
+
+    def get_vega_weights(self):
+        bsvega = self.get_bsvega()
+        bsvega_atm = bsvega.iloc[bsvega.index.get_level_values(1) == 0, :].droplevel(1, axis=0)
+        bsvega_atm = bsvega_atm.loc[bsvega.index.droplevel(1)]
+        return (bsvega_atm.values / bsvega).get(0).to_frame()
+
+    def get_delta_hedged_single_option_strategy_pnl(self, put_call=-1, position=-1):
+
+        pnl_opt = self.get_path_option_pnls(put_call, position)
+        pnl_int = self.get_account_pnl(put_call, position)
+        pnl_hdg = self.get_delta_hedge_pnl(put_call, position)
+        pnl_acc = self.get_delta_hedge_account_pnl(put_call, position)
+
+        return pnl_opt + pnl_int + pnl_hdg + pnl_acc
+
+    def get_short_put_spread_pnls(self):
+        pnls = self.get_delta_hedged_single_option_strategy_pnl(put_call=-1, position=-1)
+
+        vega_neutral_wts = self.get_vega_weights()
+        pnls_vega_weighted = pnls * vega_neutral_wts.values
+
+        atm_pnls = pnls.iloc[pnls.index.get_level_values(1) == 0, :].droplevel(1, axis=0)
+        atm_pnls = atm_pnls.loc[pnls.index.droplevel(1)]
+        return pnls_vega_weighted - atm_pnls.values
+
+    def run_stat_arb_strategy(self):
+
+        # Get Strategy Weights
+        _wts = self.get_strategy_weights('sa')
+        _wts = _wts.unstack().reorder_levels([2, 1, 0]).sort_index(level=0)
+
+        # Get Asset PnLs
+        _pnls = self.get_short_put_spread_pnls().reorder_levels([0, 2, 1])
+        _pnls = _pnls.reindex(_wts.index)
+
+        # Compute Strategy PnL
+        str_pnl = _wts.values.reshape(-1, 1).repeat(_pnls.shape[1], 1) * _pnls
+        str_pnl = str_pnl[str_pnl.index.get_level_values(1) != 0]
+
+        stk_pnls = str_pnl.stack(0).to_frame()
+        stk_pnls.index.names = ['start', 'mat', 'x', 'days']
+
+        stk_pnls['pricing_dates'] = (stk_pnls.index.get_level_values('start')
+                                     + pd.to_timedelta(stk_pnls.index.get_level_values('days'), unit='D'))
+
+        pnls = stk_pnls.reset_index(drop=False).set_index(['pricing_dates', 'start', 'mat', 'x']).drop(columns=['days'])
+        return pnls.unstack(level=[1, 2, 3])
+
+    def run_risk_return_strategy(self):
+
+        # Get Strategy Weights
+        _wts = self.get_strategy_weights('rr')
+        _wts = _wts.unstack().reorder_levels([2, 1, 0]).sort_index(level=0)
+
+        # Get Asset PnLs
+        _pnls = self.get_short_put_spread_pnls().reorder_levels([0, 2, 1])
+        _pnls = _pnls.reindex(_wts.index)
+
+        # Compute Strategy PnL
+        str_pnl = _wts.values.reshape(-1, 1).repeat(_pnls.shape[1], 1) * _pnls
+        str_pnl = str_pnl[str_pnl.index.get_level_values(1) != 0]
+
+        stk_pnls = str_pnl.stack(0).to_frame()
+        stk_pnls.index.names = ['start', 'mat', 'x', 'days']
+
+        stk_pnls['pricing_dates'] = (stk_pnls.index.get_level_values('start')
+                                     + pd.to_timedelta(stk_pnls.index.get_level_values('days'), unit='D'))
+
+        pnls = stk_pnls.reset_index(drop=False).set_index(['pricing_dates', 'start', 'mat', 'x']).drop(columns=['days'])
+        return pnls.unstack(level=[1, 2, 3])
+
+    def get_returns_table_for_strategy(self, strategy='sa'):
+
+        if strategy.lower() == 'sa':
+            _pnls = self.run_stat_arb_strategy()
+        else:
+            _pnls = self.run_risk_return_strategy()
+
+        _pnls_M = _pnls.droplevel(0, axis=1).sum(axis=0)
+        cml_pnls = _pnls_M.to_frame().unstack([1, 2]).droplevel(0, axis=1)
+        ann_rtns = cml_pnls.mean(axis=0).unstack() * 12
+        return ann_rtns
 
 
 
@@ -506,4 +646,4 @@ if __name__ == "__main__":
 
     self = SmileStatArb('SPX')
     self.set_vol_surface_parameters(Interpolator.GAUSSIAN_KERNEL_SMOOTHING)
-    self.get_path_option_pnls()
+    tb = self.get_returns_table_for_strategy('rr')

@@ -70,7 +70,7 @@ class AbstractVolSurface(object):
     def get_ivols(self, pricing_dates=None, strike_reference=None, relative_strike=None, maturity=None):
 
         if strike_reference is None:
-           strike_reference = self.strike_reference
+            strike_reference = self.strike_reference
         return self.interpolator.get_ivols(pricing_dates,
                                            strike_reference=strike_reference,
                                            relative_strike=relative_strike,

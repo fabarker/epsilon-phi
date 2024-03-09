@@ -899,36 +899,8 @@ class OptionAttributer(object):
 if __name__ == "__main__":
 
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    self.run_stat_arb_strategy()
+    tb = self.get_returns_table_for_strategy()
 
-    _pnls = self.run_stat_arb_strategy()
-    __pnls = _pnls.get(0).droplevel(0, axis=1).get(1 / 12)
-    rtns = __pnls.mean(axis=1)
-
-    put_spread_returns = self.get_short_put_spread_pnls()
-    put_pnls = put_spread_returns.stack().to_frame('pnl')
-    put_pnls.index.names = ['start','t','x','days']
-
-    put_pnls['pricing_dates'] = (put_pnls.index.get_level_values('start')
-                                 + pd.to_timedelta(put_pnls.index.get_level_values('days'), unit='D'))
-
-    pnls = put_pnls.reset_index(drop=False).set_index(['pricing_dates', 'start', 't', 'x']).drop(columns=['days'])
-    pnls = pnls.iloc[pnls.index.get_level_values(2) == (1/12)].unstack(level=[1, 2, 3]).get('pnl').droplevel(0, axis=1)
-    pnls = pnls.get(1/12)
-
-
-
-
-
-
-    pnl_opt = self.get_returns_table_for_strategy()
-
-    sa_pnls = self.run_stat_arb_strategy()
-    sa_pnls_M = sa_pnls.droplevel(0, axis=1).sum(axis=0)
-    cml_pnls_sa = sa_pnls_M.to_frame().unstack([1, 2]).droplevel(0, axis=1)
-    ann_rtns = cml_pnls_sa.mean(axis=0).unstack() * 12
-
-    rr_pnls = self.run_risk_return_strategy()
 
 
 

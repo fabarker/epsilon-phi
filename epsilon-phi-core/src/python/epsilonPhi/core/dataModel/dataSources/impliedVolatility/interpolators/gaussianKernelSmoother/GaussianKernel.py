@@ -246,22 +246,26 @@ class GaussianKernel(object):
         return _vols.copy()
 
     @staticmethod
-    @jit(nopython=True, fastmath=True, cache=True)
+    #@jit(nopython=True, fastmath=True, cache=True)
     def interpolate_single_date(mat, unique_m, x, unique_x, mids):
 
-        _lnmat = np.log(mat).reshape((-1, 1))
+        # Underscore is what we have already
+        _t = np.log(mat).reshape((-1, 1))
         _x = x.reshape((-1, 1))
+
+        t = np.log(unique_m.reshape((1, -1)))
+        x = unique_x.reshape((1, -1))
 
         # get the std of the reference on each date
         sig_x = np.std(_x)
         h_x = 1.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_x / np.power(len(mids), 1.0 / 5.0)
 
         # do the same in the maturity direction
-        sig_lm = _lnmat.std()
+        sig_lm = _t.std()
         h_m = 2.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_lm / np.power(len(mids), 1.0 / 5.0) * 0.1
 
-        m_diff = _lnmat - np.log(unique_m.reshape((1, -1))) / h_m
-        x_diff = _x - unique_x.reshape((1, -1)) / h_x
+        m_diff = (_t - t) / h_m
+        x_diff = (_x - x) / h_x
 
         x_wts = np.exp(-1.0 * np.power(x_diff, 2.0) / 2.0)
         m_wts = np.exp(-1.0 * np.power(m_diff, 2.0) / 2.0)

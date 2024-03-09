@@ -1,8 +1,9 @@
-from numba_stats import norm
+from scipy.stats import norm
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.MathUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 from epsilonPhi.core.utils.SolverUtils import *
+import pandas as pd
 from enum import Enum
 
 gDaysInYear = DateUtils.days_per_year
@@ -133,6 +134,7 @@ def bs_value(s, t, k, r, q, v, option_type_value):
     value = phi * ss * norm.cdf(phi * d1, 0.0, 1.0) - phi * kk * norm.cdf(phi * d2, 0.0, 1.0)
     return value
 
+
 def blsprice(f, t, k, rf, v, option_type_value):
 
     """Price a derivative using Black-Scholes model."""
@@ -146,10 +148,7 @@ def blsprice(f, t, k, rf, v, option_type_value):
     d1 = np.log(f/k) / v_sqrt_t + v_sqrt_t / 2.0
     d2 = d1 - v_sqrt_t
 
-    ff = f * np.exp(-rf * t)
-    kk = k * np.exp(-rf * t)
-
-    value = phi * ff * norm.cdf(phi * d1, 0.0, 1.0) - phi * kk * norm.cdf(phi * d2, 0.0, 1.0)
+    value = phi * np.exp(-rf * t) * (f * norm.cdf(phi * d1, 0.0, 1.0) - k * norm.cdf(phi * d2, 0.0, 1.0))
     return value
 
 
@@ -197,7 +196,7 @@ def fast_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
     the volatility surface. """
 
     assert vol.shape == k.shape, 'Error - K and V dim mis-match'
-    if k.ndim > 1:
+    if k.ndim > 1 and not isinstance(s, pd.DataFrame):
         s = s.reshape(-1, 1)
         t = t.reshape(-1, 1)
         rd = rd.reshape(-1, 1)
@@ -266,7 +265,7 @@ def bs_vega(s, t, k, r, q, v):
     ss = s * np.exp(-q*t)
     kk = k * np.exp(-r*t)
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
-    vega = ss * sqrt_t * n_prime_vect(d1)
+    vega = ss * sqrt_t * norm.pdf(d1, 0, 1)
     return vega
 
 ###############################################################################
