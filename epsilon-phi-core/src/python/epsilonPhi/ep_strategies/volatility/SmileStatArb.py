@@ -24,6 +24,9 @@ class SmileStatArb(object):
 
     def __init__(self, underlier, start_date=None, end_date=None):
 
+        self._start_date = start_date
+        self._end_date = end_date
+
         # Set the underlier in the object
         self._underlier = underlier
 
@@ -35,6 +38,9 @@ class SmileStatArb(object):
         self._rd = None
         self._rf = None
 
+    @property
+    def dates(self):
+        return self._ivols.index
     @property
     def T(self):
         return len(self.dates)
@@ -54,9 +60,6 @@ class SmileStatArb(object):
     def strategy_strikes(self):
         return self.unique_x[(np.abs(self.unique_x) <= self._STRATEGY_STRIKE_CUTOFF) &
                              (self.unique_x != 0)]
-    @property
-    def dates(self):
-        return self._ivols.index
     @property
     def ivols(self):
         return self._ivols.copy()
@@ -240,7 +243,7 @@ class SmileStatArb(object):
         ivols = self._vol_surface.get_ivols(relative_strike=self._Z_SCORES,
                                             maturity=self._MATURITIES)
 
-        self._ivols = ivols.get('sig').unstack(level=[1, 2]).sort_index()
+        self._ivols = ivols.get('sig').unstack(level=[1, 2]).sort_index().loc[self._start_date:self._end_date]
         self._ivols.columns.names = ['k', 't']
         # Set the implied strike prices
         self._k = ivols.get('k').unstack(level=[1, 2]).sort_index()
@@ -336,7 +339,7 @@ class SmileStatArb(object):
                 x_G = x[idx_1, :, j][:, [0, 3, 4]]
                 _nan_loc = ~np.any(np.isnan(x_G), axis=1)
                 x_g = x_G[_nan_loc, :]
-                B_gamma = np.round(np.linalg.solve(x_g.T @ x_g + np.eye(3), x_g.T @ x[idx_2[_nan_loc], 4, j]), 5)
+                B_gamma = np.linalg.solve(x_g.T @ x_g + np.eye(3), x_g.T @ x[idx_2[_nan_loc], 4, j])
                 gamma_predict = [1, x[t, 3, j], x[t, 4, j]] @ B_gamma
 
                 # 3. From Omega and Gamma Estimates, Predict the Implied Variance Spread
@@ -644,6 +647,20 @@ class SmileStatArb(object):
 
 if __name__ == "__main__":
 
-    self = SmileStatArb('SPX')
+    _start_date = pd.to_datetime('12-Dec-1996')
+    _end_date = pd.to_datetime('29-Apr-2016')
+
+    self = SmileStatArb('SPX', start_date=_start_date, end_date=_end_date)
     self.set_vol_surface_parameters(Interpolator.GAUSSIAN_KERNEL_SMOOTHING)
     tb = self.get_returns_table_for_strategy('rr')
+
+    _pnls = self.run_risk_return_strategy()
+
+    # Convert to cumulative PnLs
+    pnls = _pnls.get(0).stack(level=['start', 'x', 'mat']).reorder_levels([1,0,2,3])
+    pnls_ = pnls.unstack(level=['x','mat'])
+
+    _prices = prices.reorder_levels([1,2,0]).loc[-1].loc[np.round(1/12, 10)].stack().to_frame('p')
+    _prices['pricing_dates'] = (_prices.index.get_level_values(0)
+                                 + pd.to_timedelta(_prices.index.get_level_values(1), unit='D'))
+

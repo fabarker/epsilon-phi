@@ -3,12 +3,9 @@ import numpy as np
 from scipy.optimize import lsq_linear
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.utils.DateUtils import DateUtils
-from concurrent.futures import ProcessPoolExecutor
-import copy
-from statsmodels.api import add_constant
 from scipy.stats import norm
 from tqdm import tqdm
-import time
+
 
 class OptionAttributer(object):
 
@@ -33,14 +30,25 @@ class OptionAttributer(object):
     def __load_raw_data(self, start_date, end_date):
 
         df_ = pd.read_csv('/Users/francisbarker/Desktop/SPX Vols by Moneyness.csv')
+        df_new = pd.read_csv('/Users/francisbarker/Desktop/ivols.csv')
+
+
         _df = df_.set_index('date', drop=True)
+        _df_new = df_new.set_index('date', drop=True)
+
         _df.index = pd.to_datetime(_df.index, format="%d/%m/%Y")
         _df = _df.rename(columns={'absoluteStrike':'k','impliedVolatility':'sig'})
         _df = _df[_df.get('sig') > 0.01]
 
+        _df_new.index =  pd.to_datetime(_df_new.index, format="%Y-%m-%d")
+
         _df = _df.reset_index(drop=False).drop_duplicates(['date', 'relativeStrike', 'tenor']).set_index('date')
         drop_rows = (_df.index.dayofweek == 5) | (_df.index.dayofweek == 6)
         _df = _df.iloc[~drop_rows, :]
+
+        _df_new = _df_new.reset_index(drop=False).drop_duplicates(['date', 'x', 't']).set_index('date')
+        drop_rows = (_df_new.index.dayofweek == 5) | (_df_new.index.dayofweek == 6)
+        _df_new = _df_new.iloc[~drop_rows, :]
 
         _df['lnm'] = np.log(_df.get('relativeStrike')).values
         _df['mn'] = np.exp(_df['lnm'])
@@ -48,17 +56,31 @@ class OptionAttributer(object):
         _s = _df['spot'].drop_duplicates(keep='first').resample('D').asfreq().ffill()
         _df['ds'] = np.log(_s).diff().shift(-1).loc[_df.index].values
         _df['t'] = DateUtils.Rdate_to_mat(_df.get('tenor'))
+        _df_new['ds'] = np.log(_s).diff().shift(-1).loc[_df_new.index].values
 
         rows = _df[['sig','mn','t']].reset_index(drop=False).set_index(['date','mn','t']).index
         _sig = _df[['sig','mn','t']].reset_index(drop=False).set_index(['date','mn','t']).unstack(level=[1, 2])
         dsig = np.log(_sig).diff().shift(-1).unstack().loc['sig'].reorder_levels(['date','mn','t'])
         _df['dsig'] = dsig.loc[rows].values
 
+        rows = _df_new[['sig', 'x', 't']].reset_index(drop=False).set_index(['date', 'x', 't']).index
+        _sig = _df_new[['sig', 'x', 't']].reset_index(drop=False).set_index(['date', 'x', 't']).unstack(level=[1, 2])
+        dsig = np.log(_sig).diff().shift(-1).unstack().loc['sig'].reorder_levels(['date', 'x', 't'])
+        _df_new['dsig'] = dsig.loc[rows].values
+
         _df['sigsq'] = np.power(_df.get('sig'), 2)
         _df['zp'] = _df['lnm'] + 0.5 * _df['sigsq'] * _df.get('t')
         _df['zm'] = _df['zp'] - _df['sigsq'] * _df['t']
         _df['x'] = _df['zp'] / (_df.get('sig') * np.sqrt(_df['t']))
         _df['lnmat'] = np.log(_df.get('t'))
+
+        _df_new['sigsq'] = np.power(_df_new.get('sig'), 2)
+        _df_new['lnm'] = _df_new['x'] * _df_new['sig'] * np.sqrt(_df_new['t'])  - 0.5 * _df_new['sigsq'] * _df_new['t']
+        _df_new['mn'] = np.exp(_df_new['lnm'])
+
+        _df_new['zp'] = _df_new['lnm'] + 0.5 * _df_new['sigsq'] * _df_new.get('t')
+        _df_new['zm'] = _df_new['zp'] - _df_new['sigsq'] * _df_new['t']
+        _df_new['lnmat'] = np.log(_df_new.get('t'))
 
         nobs = _df.get('x').groupby('date').count()
 
@@ -74,28 +96,34 @@ class OptionAttributer(object):
         keep_rows = np.logical_and(_df.index >= pd.to_datetime(start_date),
                                    _df.index <= pd.to_datetime(end_date))
 
-        self._raw_data = _df.iloc[keep_rows].copy()
+        keep_rows_new = np.logical_and(_df_new.index >= pd.to_datetime(start_date),
+                                   _df_new.index <= pd.to_datetime(end_date))
+
+        self._raw_data = _df_new.iloc[keep_rows_new].copy()
         self._start_date = self._raw_data.index.min()
         self._end_date = self._raw_data.index.max()
 
     def __process_data(self):
 
-        ivols = self.interpolate(self._raw_data.index,
-                                 maturities=self._MATURITIES,
-                                 strikes=self._Z_SCORES)
+        #ivols = self.interpolate(self._raw_data.index,
+        #                         maturities=self._MATURITIES,
+        #                         strikes=self._Z_SCORES)
+
+        ivols = self._raw_data[['x','t','sig']].reset_index(drop=False).set_index(['date','x','t'])
 
         N = len(ivols.index.get_level_values(0).unique())
 
         # Get the various values we use in the analysis
-        self.__sig = ivols.unstack(level=[1,2]).get('sig').sort_index()
+        self.__sig = ivols.unstack(level=[1,2]).get('sig').sort_index().ffill()
         self.__dI = np.log(self.__sig).diff().shift(-1)
         self.__sig_sq = np.power(self.__sig, 2)
         self.__t = np.array(self.__sig.columns.droplevel('x')).reshape(1, -1).repeat(N, 0)
         self.__x = np.array(self.__sig.columns.droplevel('t')).reshape(1, -1).repeat(N, 0)
         self.__sqrt_t = np.sqrt(self.__t)
 
-        spt = self._raw_data.get('spot').drop_duplicates().resample('D').ffill()
-        self.__spot = spt.loc[self.__sig.index].to_frame('spot')
+        spt = self._raw_data.get('s')
+        spt = spt[~spt.index.duplicated()].loc[self.__sig.index]
+        self.__spot = spt.to_frame('spot')
 
         self.__zp = self.__sig * self.__x * self.__sqrt_t
         self.__lnm = self.__zp - 0.5 * self.__sig_sq * self.__t
@@ -229,7 +257,7 @@ class OptionAttributer(object):
             Asq = self.atm_sig_sq
             Asq_tau = Asq * Asq.columns.to_numpy().reshape(1, -1)
 
-            mu_ = ((1/2) * Asq.diff(axis=1) / Asq_tau.diff(axis=1)).dropna(axis=1)
+            mu_ = ((1/2) * Asq.diff(axis=1) / Asq_tau.diff(axis=1)).dropna(axis=1, how='all')
             X = 0.5 * Asq_tau.columns.values[0:-1] + 0.5 * Asq_tau.columns.values[1:]
             mu_.columns = X
 
@@ -760,8 +788,8 @@ class OptionAttributer(object):
                 # Construct the weights from the signals
                 # get the ATM variance for risk
                 # get the observed spread
-                weights[t-T0+1, :, j, 0] = np.round((spreads[t, j, :] - pred_spread_ts) / atms[t, j], 4)
-                weights[t-T0+1, :, j, 1] = np.round((10/atms[t, j]) * (spreads[t, j, :]-pred_spread_cs), 4)
+                weights[t-T0+1, :, j, 0] = (spreads[t, j, :] - pred_spread_ts) / atms[t, j]
+                weights[t-T0+1, :, j, 1] = (10/atms[t, j]) * (spreads[t, j, :]-pred_spread_cs)
 
         rr = [pd.DataFrame(weights[:, :, x, 0], columns=list(zip(wings, len(wings)*[self.unique_maturities[x]]))) for x in range(weights.shape[2])]
         rr = pd.concat(rr, axis=1)
@@ -899,7 +927,7 @@ class OptionAttributer(object):
 if __name__ == "__main__":
 
     self = OptionAttributer('31-Dec-1990', '31-Dec-2025')
-    tb = self.get_returns_table_for_strategy()
+    tb = self.get_returns_table_for_strategy('rr')
 
 
 
