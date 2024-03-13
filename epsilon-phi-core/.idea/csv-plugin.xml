@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/interpolators/cubicSpline/CubicSpline.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/interpolators/gaussianKernelSmoother/GaussianKernel.py">
           <value>
             <Attribute>

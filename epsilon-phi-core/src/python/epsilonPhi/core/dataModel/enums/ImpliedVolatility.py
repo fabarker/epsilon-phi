@@ -8,16 +8,17 @@ class Interpolator(Enum):
     POLYNOMIAL_REGRESSION_1D = 4
     POLYNOMIAL_REGRESSION_2D = 5
     CLAMPED_CUBIC_SPLINE = 6
+    CUBIC_SPLINE = 7
 
 
 class StrikeReference(Enum):
 
-    DELTA = 1
-    MONEYNESS = 2
-    Z_SCORE = 3
-    CONVEXITY_MN = 4
-    LOG_MONEYNESS = 5
-    STRIKE_PRICE = 6
+    DELTA = 'delta'
+    MONEYNESS = 'moneyness'
+    Z_SCORE = 'zscore'
+    CONVEXITY_MN = 'convextiy_moneyness'
+    LOG_MONEYNESS = 'log_moneyness'
+    STRIKE_PRICE = 'strike_price'
 
 class AtTheMoneyType(Enum):
     SPOT = 1  # Spot

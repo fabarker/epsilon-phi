@@ -24,6 +24,7 @@ _CONVEXITY_MNY_POINTS = np.arange(-3, 3.5, 0.1)
 class VolSurfaceMgr(object):
     _raw_cache = {}
     _ivol_cache = {}
+    _VOL_TOL = 0.02
 
     def __init__(self, 
                  underlier,
@@ -146,6 +147,8 @@ class VolSurfaceMgr(object):
                                       self.pricing_location,
                                       index='date')
 
+            df = df[df.mid > self._VOL_TOL]
+            df = df.reset_index(drop=False).drop_duplicates(subset=['date', 'relative_strike', 'tenor']).set_index('date', drop=True)
             # Estimate strikes from spot moneyness
             _spt_idx = df[_STRIKE_REFERENCE].values == 'spot'
             df.loc[_spt_idx, 'k'] = self.get_strikes_from_moneyness(df[_RELATIVE_STRIKE][_spt_idx])
@@ -167,7 +170,7 @@ class VolSurfaceMgr(object):
                                                                            self.delta_convention)
 
 
-            self._ivol_cache[self.underlier] = df[['mid','t','k']].copy()
+            self._ivol_cache[self.underlier] = df[['mid','t','k','relative_strike']].copy()
             self._ivol_cache[self.underlier][self.strike_reference] = self.get_strike_reference(self.strike_reference)
 
     def _load_vol_surface_spec(self):
@@ -373,9 +376,24 @@ if __name__ == "__main__":
 
         from epsilonPhi.core.dataModel.dataSources.impliedVolatility.Models import *
 
-        underlier = 'EURUSD'
+        underlier = 'GBPUSD'
         self = VolSurfaceMgr(underlier,
                              pricing_location='NYC',
                              strike_reference=StrikeReference.DELTA)
+
+        _DELTAS = [0.1, 0.25, 0.5, 0.75, 0.9]
+        _MATS = np.round([1/12, 3/12, 6/12, 12/12], 10)
+
+        _ivols = self.get_ivols().reset_index(drop=False).set_index(['date','t',StrikeReference.DELTA]).get('mid')
+        vols = _ivols[~_ivols.index.duplicated()]
+
+        idx_d = vols.index.get_level_values(2).isin([0.1, 0.25, 0.5, 0.75, 0.9])
+        idx_m = vols.index.get_level_values(1).isin(_MATS)
+        idx = np.logical_and(idx_d, idx_m)
+
+        _vol = vols.iloc[idx].unstack(level=[1, 2]).sort_index(axis=1).sort_index().loc['24-Jan-1996':'13-Oct-2022']
+        _vol = _vol[~_vol.index.dayofweek.isin([5, 6])]
+
+
 
 

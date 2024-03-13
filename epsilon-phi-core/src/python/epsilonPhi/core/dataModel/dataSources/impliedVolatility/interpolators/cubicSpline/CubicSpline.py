@@ -3,10 +3,13 @@ import pandas as pd
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from numba import jit
 from tqdm import tqdm
+from cubic_spline import *
+from scipy.interpolate import CubicSpline as spline
+
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 
-class GaussianKernel(object):
+class CubicSpline(object):
     def __init__(self, ivols, s, rd, rf):
 
         # Set ivols panel
@@ -18,11 +21,17 @@ class GaussianKernel(object):
         # Set interest and funding rate curves
         self.set_risk_free_rate_curve(rd)
         self.set_funding_rate_curve(rf)
+        self._keys = None
 
 
     def set_ivols(self, ivols):
-        _ivols = ivols.reset_index(drop=False)
-        self._ivols = _ivols.drop_duplicates(ivols.columns).set_index('date', drop=True)
+
+        _ivols = ivols.reset_index(drop=False).drop(labels=['relative_strike'], axis=1)
+        _loc = [ x not in ['date','mid','t','k','relative_strike'] for x in _ivols.columns ]
+
+        # Extract the strike reference and observations
+        self._strike_reference = _ivols.columns[_loc][0]
+        self._ivols = _ivols.drop_duplicates(['date', 't', self._strike_reference]).set_index('date', drop=True)
 
     def set_spot_prices(self, df):
         self._spot = df.copy()
@@ -32,6 +41,10 @@ class GaussianKernel(object):
 
     def set_funding_rate_curve(self, rf):
         self._funding_curve = rf
+
+    @property
+    def keys(self):
+        return self.ivols.reset_index(drop=False).set_index(['date', 't', self._strike_reference]).index
 
     @property
     def unique_dates(self):
@@ -209,76 +222,83 @@ class GaussianKernel(object):
 
     def get_spot_rates(self, pricing_dates):
         return self._spot.loc[pricing_dates].values.reshape(-1, 1)
-
-
     def interpolate(self, dates=None, maturities=None, strikes=None):
 
         assert dates.shape == maturities.shape, 'Error - dimension mis-match'
         assert dates.shape == strikes.shape, 'Error - dimension mis-match'
 
-        _target_t = maturities.flatten().astype(float)
-        _target_k = strikes.flatten().astype(float)
-        _target_d = dates.flatten()
+        # Interpolate along the time direction - Flat Forward Interpolation.
+        self.interpolate_term_structure(maturities)
 
-        _unique_d = np.unique(_target_d)
-        ND = len(_unique_d.flatten())
+        tau = FrameUtils.multiindex(dates.flatten(), maturities.flatten(), strikes.flatten())
+        _tau = tau.difference(self.keys)
 
-        _t_vec = self.t.astype(float).flatten()
-        _x_vec = self.x.astype(float).flatten()
-        _v_vec = self.sig.astype(float).flatten()
-        _d_vec = self.dates
+        _ds = tau.get_level_values(0)
+        _ts = tau.get_level_values(1).astype(float).to_numpy()
+        _xs = tau.get_level_values(2).astype(float).to_numpy()
+
+        _dates = np.unique(_ds)
+        ND = len(_ds)
+
+        ts_ = self.t.astype(float).flatten()
+        xs_ = self.x.astype(float).flatten()
+        sig = self.sig.astype(float).flatten()
+        ds_ = self.dates
 
         interps = list()
         for t in tqdm(range(ND), desc="Interpolating Vol Surface"):
 
-            idx_T = _unique_d[t] == _target_d
-            idx_S = _unique_d[t] == _d_vec
+            idx_T = _dates[t] == _ds
+            idx_S = _dates[t] == ds_
 
-            interp = self.interpolate_single_date(_t_vec[idx_S],
-                                                  _target_t[idx_T],
-                                                  _x_vec[idx_S],
-                                                  _target_k[idx_T],
-                                                  _v_vec[idx_S])
+            interp = self.interpolate_single_date(ts_[idx_S],
+                                                  np.unique(_ts[idx_T]),
+                                                  xs_[idx_S],
+                                                  np.unique(_xs[idx_T]),
+                                                  sig[idx_S])
 
-            result = np.column_stack((interp, _target_d[idx_T].astype(float)))
+            result = np.column_stack((interp, _ds[idx_T].astype(float)))
             interps.extend([result])
 
 
         # build ivols
         _ivols = pd.DataFrame(np.vstack((interps)))
-        _ivols.columns = ['sig', 'x', 't', 'date']
+        _ivols.columns = ['sig', 't', 'x', 'date']
         _ivols.loc[:, 'date'] = pd.to_datetime(_ivols.get('date'))
         _vols = _ivols.set_index(['date','x','t'], drop=True)
         return _vols.copy()
 
     @staticmethod
-    #@jit(nopython=True, fastmath=True, cache=True)
-    def interpolate_single_date(mat, unique_m, x, unique_x, mids):
+    def interpolate_single_date(z, z_dense, x, x_dense, y):
 
-        # Underscore is what we have already
-        _t = np.log(mat).reshape((-1, 1))
-        _x = x.reshape((-1, 1))
+        vols = np.full((len(z_dense), len(x_dense)), np.nan)
+        mats = z_dense.reshape((-1, 1)).repeat(len(x_dense), axis=1)
+        stks = x_dense.reshape((1, -11)).repeat(len(z_dense), axis=0)
+        for ctr in range(len(z_dense)):
+            idx = z_dense[ctr] == z
+            if np.sum(idx) > 2:
+               locs = np.argsort(x[idx])
+               v = cubic_y(x[idx][locs], x_dense, y[idx][locs])
+               vols[ctr,:] = v
+        return np.column_stack((vols.flatten(), mats.flatten(), stks.flatten()))
 
-        t = np.log(unique_m.reshape((1, -1)))
-        x = unique_x.reshape((1, -1))
+    def interpolate_term_structure(self, maturities):
 
-        # get the std of the reference on each date
-        sig_x = np.std(_x)
-        h_x = 1.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_x / np.power(len(mids), 1.0 / 5.0)
+        if maturities is None:
+           return
 
-        # do the same in the maturity direction
-        sig_lm = _t.std()
-        h_m = 2.0 * np.power(4.0 / 3.0, 1.0 / 5.0) * sig_lm / np.power(len(mids), 1.0 / 5.0) * 0.1
+        _ivols = self._ivols[['mid', 't', self._strike_reference]].pivot(columns=['t', self._strike_reference]).get('mid')
+        unique_mats = np.setdiff1d(np.round(maturities, 10), self.maturities)
+        group = np.setdiff1d(_ivols.columns.names, 't').item()
 
-        m_diff = (_t - t) / h_m
-        x_diff = (_x - x) / h_x
-
-        x_wts = np.exp(-1.0 * np.power(x_diff, 2.0) / 2.0)
-        m_wts = np.exp(-1.0 * np.power(m_diff, 2.0) / 2.0)
-
-        wts = (x_wts * m_wts) / np.sum(x_wts * m_wts, axis=0)
-        ivols = np.sum(wts * mids.reshape((-1, 1)), axis=0)
-        return np.vstack((ivols, unique_x, unique_m)).T
+        if len(unique_mats) > 0:
+            interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(_ivols,
+                                                                            unique_mats,
+                                                                            x_lev='t',
+                                                                            group=group)
+            cols = np.setdiff1d(interp.columns, self._ivols.columns)
+            self._ivols = pd.concat((self._ivols, interp.get(cols)),
+                                    axis=1).sort_index(axis=1, level='t')
 
 
 if __name__ == "__main__":
@@ -286,22 +306,29 @@ if __name__ == "__main__":
         from epsilonPhi.core.dataModel.dataSources.impliedVolatility.Models import *
         from epsilonPhi.core.dataModel.dataSources.impliedVolatility.VolSurfaceMgr import VolSurfaceMgr
 
-        underlier = 'EURUSD'
+        underlier = 'GBPUSD'
         vsm = VolSurfaceMgr(underlier,
                              pricing_location='NYC',
                              strike_reference=StrikeReference.DELTA)
 
 
         ### Get ivols
-        ivol_panel = vsm.get_ivols()
-        ivols = ivol_panel.get(['mid','t','k']).reset_index(drop=False)
-        ivols = ivols.drop_duplicates(['date', 't', 'k'])
+        ivols = vsm._ivol_cache[underlier].copy()
 
-        s = vsm.get_spot_prices()
-        rd = vsm._interest_rate_curve
-        rf = vsm._funding_rate_curve
+        s = vsm._spot_prices
+        rd = vsm._rate_curve
+        rf = vsm._funding_curve
 
-        # Gaussian Kernel Smoother
-        self = GaussianKernel(ivols, s, rd, rf)
-        fxivols_ = self.get_ivols(strike_reference=StrikeReference.CONVEXITY_MN,
-                                  relative_strike=[-3, -2, -1, 0, 1, 2, 3])
+        self = CubicSpline(ivols,
+                           s,
+                           rf,
+                           rd)
+
+        strike_reference = StrikeReference.DELTA
+        strikes = [0.1, 0.25, 0.5, 0.75, 0.9]
+        maturities = [1 / 12, 3 / 12, 6 / 12, 9/12, 12/12]
+        fxivols = self.get_ivols(None, strike_reference, strikes, maturities)
+
+        _vols = fxivols.get('sig').unstack(level=['x','t']).sort_index(level=0)
+
+        _ivols = _vols.loc['01/10/1997':'30/06/2023']

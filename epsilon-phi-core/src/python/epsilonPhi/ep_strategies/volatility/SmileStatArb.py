@@ -236,7 +236,7 @@ class SmileStatArb(object):
 
         print('Loading volatility surface....')
         self._vol_surface = AbstractVolSurface(self._underlier,
-                                               strike_reference=StrikeReference.CONVEXITY_MN,
+                                               strike_reference=StrikeReference.Z_SCORE,
                                                interpolation_method=interpolation_method)
 
         # Set the ivols in the object
@@ -245,6 +245,7 @@ class SmileStatArb(object):
 
         self._ivols = ivols.get('sig').unstack(level=[1, 2]).sort_index().loc[self._start_date:self._end_date]
         self._ivols.columns.names = ['k', 't']
+        self._ivols = self._ivols.dropna(how='any', axis=0)
         # Set the implied strike prices
         self._k = ivols.get('k').unstack(level=[1, 2]).sort_index()
         self._k.columns.names = ['k', 't']
@@ -648,11 +649,26 @@ class SmileStatArb(object):
 if __name__ == "__main__":
 
     _start_date = pd.to_datetime('12-Dec-1996')
-    _end_date = pd.to_datetime('29-Apr-2016')
+    _end_date = pd.to_datetime('29-Apr-2024')
 
     self = SmileStatArb('SPX', start_date=_start_date, end_date=_end_date)
     self.set_vol_surface_parameters(Interpolator.GAUSSIAN_KERNEL_SMOOTHING)
-    tb = self.get_returns_table_for_strategy('rr')
+
+    rr = self.get_returns_table_for_strategy('rr')
+    sa = self.get_returns_table_for_strategy('sa')
+
+    _sig = self.sig.stack(level=[0,1]).to_frame('sig')
+    _dsig = self.dsig.stack(level=[0,1]).to_frame('dsig')
+    _sigs = pd.concat((_sig, _dsig), axis=1)
+
+    _dates = _sig.index.get_level_values(0)
+    _s = self.s.loc[_dates].to_frame('s')
+    _ds = self.ds.loc[_dates].to_frame('ds')
+
+    _sigs['s'] = _s.values
+    _sigs['ds'] = _ds.values
+    _sigs.to_csv('For Matlab.csv')
+
 
     _pnls = self.run_risk_return_strategy()
 

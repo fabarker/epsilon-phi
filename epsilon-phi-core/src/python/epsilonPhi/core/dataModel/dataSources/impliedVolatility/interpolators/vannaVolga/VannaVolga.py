@@ -41,8 +41,9 @@ class VannaVolga(object):
     def set_pillar_vols(self, ivols):
         ivols = ivols.reset_index(drop=False).set_index(['date'])
         idx = ivols['relative_strike'].isin(self._DELTA_PILLARS)
-        ivols = ivols[idx].pivot(columns=['t','relative_strike']).get('mid')
-        self._ivols = ivols.sort_index(axis=1, level=0)
+        ivols_ = ivols[idx].pivot(columns=['t', 'relative_strike']).get('mid')
+        ivols_.columns.names = ['t', 'x']
+        self._ivols = ivols_.sort_index(axis=1, level=0)
 
     def set_dates(self, dates):
         self._dates = dates
@@ -116,7 +117,7 @@ class VannaVolga(object):
         self._t = np.array(self._interp_vols.index.get_level_values('t'))
 
         # Update the spot prices
-        self._s = s.loc[self.dates]
+        self._s = self._spot.loc[self.dates]
         assert np.all(self._s.index == self.dates), 'Error - axis not aligned'
 
         # Set the domestic rate in the object
@@ -358,13 +359,11 @@ if __name__ == "__main__":
 
 
         ### Get ivols
-        ivol_panel = vsm.get_ivols()
-        ivols = ivol_panel.get(['mid','t','relative_strike']).reset_index(drop=False)
-        ivols = ivols.drop_duplicates(['date', 't', 'relative_strike'])
+        ivols = vsm._ivol_cache[underlier].copy()
 
-        s = vsm.get_spot_prices()
-        rd = vsm._interest_rate_curve
-        rf = vsm._funding_rate_curve
+        s = vsm._spot_prices
+        rd = vsm._rate_curve
+        rf = vsm._funding_curve
 
         self = VannaVolga(ivols,
                           s,
@@ -376,7 +375,7 @@ if __name__ == "__main__":
         strike_reference = StrikeReference.DELTA
         strikes = [-0.1, -0.25, 0.5, 0.25, 0.1]
         maturities = [1/12, 1.5/12, 2/12]
-        fxivols = self.get_ivols(dates, strike_reference, strikes, maturities)
+        fxivols = self.get_ivols(None, strike_reference, strikes, maturities)
 
         fxivols_ = self.get_ivols(None, strike_reference=StrikeReference.Z_SCORE, maturities=maturities)
 
