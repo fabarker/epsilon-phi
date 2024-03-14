@@ -171,9 +171,8 @@ if __name__ == "__main__":
     gsq = GSQuantManager()
     _DATASET = Dataset('FXIVOL_V2_PREMIUM')
 
-    _SD = date(year=1996, month=1, day=1)
-    _ED = date.today()
-    data = gsq.get_ivol('GBPUSD', start_date=_SD, end_date=_ED, vol_reference='delta_call', relative_strike=25)
+    _SD = date(year=1997, month=10, day=1)
+    _ED = date(year=2023, month=6, day=30)
 
 
 
@@ -190,7 +189,7 @@ if __name__ == "__main__":
 
     _D = coverage[coverage.delta.isin(['10D', '25D', '50D', 'DN'])]
     _DFX = _D[_D.currency == 'GBPUSD']
-    _DFXM = _DFX[_DFX.tenor.isin(['1m', '3m', '6m', '9m', '12m'])]
+    _DFXM = _DFX[_DFX.tenor.isin(['1m'])]
 
 
     tickers = _DFXM.index

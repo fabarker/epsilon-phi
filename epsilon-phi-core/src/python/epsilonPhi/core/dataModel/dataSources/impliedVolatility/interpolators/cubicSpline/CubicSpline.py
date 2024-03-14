@@ -4,10 +4,10 @@ from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from numba import jit
 from tqdm import tqdm
 from cubic_spline import *
-from scipy.interpolate import CubicSpline as spline
-
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
+from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_y as cs
+
 
 class CubicSpline(object):
     def __init__(self, ivols, s, rd, rf):
@@ -21,17 +21,19 @@ class CubicSpline(object):
         # Set interest and funding rate curves
         self.set_risk_free_rate_curve(rd)
         self.set_funding_rate_curve(rf)
-        self._keys = None
+        self._x = None
 
 
     def set_ivols(self, ivols):
 
         _ivols = ivols.reset_index(drop=False).drop(labels=['relative_strike'], axis=1)
-        _loc = [ x not in ['date','mid','t','k','relative_strike'] for x in _ivols.columns ]
+        _loc = [x not in ['date', 'mid', 't', 'k', 'relative_strike'] for x in _ivols.columns]
 
         # Extract the strike reference and observations
         self._strike_reference = _ivols.columns[_loc][0]
-        self._ivols = _ivols.drop_duplicates(['date', 't', self._strike_reference]).set_index('date', drop=True)
+        vols = _ivols.drop_duplicates(['date', 't', self._strike_reference])
+        self._ivols = vols.set_index(['date', 't', self._strike_reference], drop=True)
+        self._ivols = self._ivols[~self._ivols.index.duplicated(keep='first')].sort_index(level='date')
 
     def set_spot_prices(self, df):
         self._spot = df.copy()
@@ -44,27 +46,28 @@ class CubicSpline(object):
 
     @property
     def keys(self):
-        return self.ivols.reset_index(drop=False).set_index(['date', 't', self._strike_reference]).index
-
+        return self.ivols.index
     @property
     def unique_dates(self):
         return pd.to_datetime(np.unique(self.dates))
-
     @property
     def ivols(self):
         return self._ivols.copy()
     @property
     def dates(self):
-        return pd.to_datetime(self.ivols.index)
+        return pd.to_datetime(self.ivols.index.get_level_values('date'))
     @property
     def maturities(self):
-        return np.sort(np.unique(self._ivols.get('t')))
+        return np.sort(np.unique(self.t))
     @property
     def sig(self):
         return self.ivols.get('mid').values.reshape(-1, 1)
     @property
+    def x(self):
+        return np.array(self.ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
+    @property
     def t(self):
-        return self.ivols.get('t').values.reshape(-1, 1)
+        return np.array(self.ivols.index.get_level_values('t')).reshape(-1, 1)
     @property
     def k(self):
         return self.ivols.get('k').values.reshape(-1, 1)
@@ -88,7 +91,7 @@ class CubicSpline(object):
                           self.rf,
                           self.sig,
                           1,
-                          1)
+                          -1)
     def convexity_adj_moneyness(self):
         lnm = self.log_moneyness()
         zp = lnm + 0.5 * np.power(self.sig, 2) * self.t
@@ -105,35 +108,45 @@ class CubicSpline(object):
     def get_ivols(self, pricing_dates, strike_reference, relative_strike, maturities):
 
         mats = np.round(maturities, 10)
-
-        # Compute the surface values for the strike reference we care about
-        if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
-            self.x = self.delta()
-        elif strike_reference in [StrikeReference.MONEYNESS, StrikeReference.MONEYNESS.value]:
-            self.x = self.moneyness()
-        elif strike_reference in [StrikeReference.LOG_MONEYNESS, StrikeReference.LOG_MONEYNESS.value]:
-            self.x = self.log_moneyness()
-        elif strike_reference in [StrikeReference.Z_SCORE, StrikeReference.Z_SCORE.value]:
-            self.x = self.z_score()
-        elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
-            self.x = self.convexity_adj_moneyness()
-        elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
-            self.x = self.k
-        else:
-            raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
-
         if pricing_dates is None:
             _p, _t, _k = np.meshgrid(self.unique_dates, mats, relative_strike)
-            _ivols = self.interpolate(_p, _t, _k)
         elif pricing_dates.shape != mats.shape:
             _p, _t, _k = np.meshgrid(pricing_dates, mats, relative_strike)
-            _ivols = self.interpolate(_p, _t, _k)
         else:
             assert pricing_dates.shape == mats.shape, 'Error - dimension mis-match'
             assert pricing_dates.shape == relative_strike.shape, 'Error - dimension mis-match'
-            _ivols = self.interpolate(pricing_dates, mats, relative_strike)
+            _p, _t, _k = pricing_dates, maturities, strike_reference
+
+        self.load_ivols(_p, _t, _k, strike_reference)
+        _vols = FrameUtils.multiindex(_p.flatten(), _t.flatten(), _k.flatten())
+        return self.ivols.loc[_vols]
+
+    def load_ivols(self, pricing_dates, maturities, relative_strike, strike_reference):
+
+        # Interpolate along the time direction - Flat Forward Interpolation.
+        self.interpolate_term_structure(maturities)
+
+        # Compute the surface values for the strike reference we care about
+        if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
+            self._x = self.delta()
+        elif strike_reference in [StrikeReference.MONEYNESS, StrikeReference.MONEYNESS.value]:
+            self._x = self.moneyness()
+        elif strike_reference in [StrikeReference.LOG_MONEYNESS, StrikeReference.LOG_MONEYNESS.value]:
+            self._x = self.log_moneyness()
+        elif strike_reference in [StrikeReference.Z_SCORE, StrikeReference.Z_SCORE.value]:
+            self._x = self.z_score()
+        elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
+            self._x = self.convexity_adj_moneyness()
+        elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
+            self._x = self.k
+        else:
+            raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
+
+        _ivols = self.interpolate(pricing_dates, maturities, relative_strike)
         _strikes = self.get_strikes(_ivols, strike_reference)
-        return pd.concat((_ivols, _strikes), axis=1)
+        _sig = pd.concat((_ivols, _strikes), axis=1)
+
+        self._ivols = pd.concat((self._ivols, _sig), axis=0).sort_index(level='date')
 
     def get_strikes(self, ivols, strike_reference):
 
@@ -154,7 +167,7 @@ class CubicSpline(object):
     def get_strikes_from_delta(self, ivols):
 
         _t = np.array(ivols.index.get_level_values('t'))
-        _x = np.array(ivols.index.get_level_values('x')).reshape(-1, 1)
+        _x = np.array(ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
         _T = _t.reshape(-1, 1)
 
         _rd = self.get_risk_free_rates(ivols.index.get_level_values(0), _t)
@@ -172,7 +185,7 @@ class CubicSpline(object):
         return k
 
     def get_strikes_from_moneyness(self, ivols):
-        _x = np.array(ivols.columns.get_level_values(1)).reshape(1, -1).repeat(ivols.shape[0], axis=0)
+        _x = np.array(ivols.columns.get_level_values(self._strike_reference)).reshape(1, -1).repeat(ivols.shape[0], axis=0)
         _t = np.array(ivols.index.get_level_values(1))
         _f = self.get_forward_prices(ivols.index.get_level_values(0),
                                      _t)
@@ -181,7 +194,7 @@ class CubicSpline(object):
         return k
 
     def get_strikes_from_log_moneyness(self, ivols):
-        _x = np.array(ivols.index.get_level_values('x')).reshape(-1, 1)
+        _x = np.array(ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
         _t = np.array(ivols.index.get_level_values('t'))
         _f = self.get_forward_prices(ivols.index.get_level_values(0),
                                      _t)
@@ -189,7 +202,7 @@ class CubicSpline(object):
         return k
 
     def get_strikes_from_z_score(self, ivols):
-        _x = np.array(ivols.columns.get_level_values(1)).reshape(1, -1).repeat(ivols.shape[0], axis=0)
+        _x = np.array(ivols.columns.get_level_values(self._strike_reference)).reshape(1, -1).repeat(ivols.shape[0], axis=0)
         _t = np.array(ivols.index.get_level_values(1))
         _f = self.get_forward_prices(ivols.index.get_level_values(0),
                                      _t)
@@ -203,7 +216,7 @@ class CubicSpline(object):
 
         _t = np.array(ivols.index.get_level_values('t'))
         _f = self.get_forward_prices(ivols.index.get_level_values('date'), _t)
-        _x = np.array(ivols.index.get_level_values('x')).reshape(-1, 1)
+        _x = np.array(ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
         _T = _t.reshape(-1, 1)
         k = _f * np.exp(_x * (ivols * np.sqrt(_T)) - 0.5 * sigsq * _T)
         k.columns = ['k']
@@ -227,21 +240,18 @@ class CubicSpline(object):
         assert dates.shape == maturities.shape, 'Error - dimension mis-match'
         assert dates.shape == strikes.shape, 'Error - dimension mis-match'
 
-        # Interpolate along the time direction - Flat Forward Interpolation.
-        self.interpolate_term_structure(maturities)
-
         tau = FrameUtils.multiindex(dates.flatten(), maturities.flatten(), strikes.flatten())
         _tau = tau.difference(self.keys)
 
-        _ds = tau.get_level_values(0)
-        _ts = tau.get_level_values(1).astype(float).to_numpy()
-        _xs = tau.get_level_values(2).astype(float).to_numpy()
+        _ds = _tau.get_level_values(0)
+        _ts = _tau.get_level_values(1).astype(float).to_numpy()
+        _xs = _tau.get_level_values(2).astype(float).to_numpy()
 
         _dates = np.unique(_ds)
-        ND = len(_ds)
+        ND = len(_dates)
 
         ts_ = self.t.astype(float).flatten()
-        xs_ = self.x.astype(float).flatten()
+        xs_ = self._x.astype(float).flatten()
         sig = self.sig.astype(float).flatten()
         ds_ = self.dates
 
@@ -252,53 +262,68 @@ class CubicSpline(object):
             idx_S = _dates[t] == ds_
 
             interp = self.interpolate_single_date(ts_[idx_S],
-                                                  np.unique(_ts[idx_T]),
+                                                  _ts[idx_T],
                                                   xs_[idx_S],
-                                                  np.unique(_xs[idx_T]),
+                                                  _xs[idx_T],
                                                   sig[idx_S])
 
-            result = np.column_stack((interp, _ds[idx_T].astype(float)))
+            result = np.column_stack((interp, _ds[idx_T].astype(np.int64)))
             interps.extend([result])
 
 
         # build ivols
         _ivols = pd.DataFrame(np.vstack((interps)))
-        _ivols.columns = ['sig', 't', 'x', 'date']
+        _ivols.columns = ['mid', 't',  self._strike_reference, 'date']
         _ivols.loc[:, 'date'] = pd.to_datetime(_ivols.get('date'))
-        _vols = _ivols.set_index(['date','x','t'], drop=True)
+        _vols = _ivols.set_index(['date', 't', self._strike_reference], drop=True)
         return _vols.copy()
 
     @staticmethod
+    @njit
     def interpolate_single_date(z, z_dense, x, x_dense, y):
 
-        vols = np.full((len(z_dense), len(x_dense)), np.nan)
-        mats = z_dense.reshape((-1, 1)).repeat(len(x_dense), axis=1)
-        stks = x_dense.reshape((1, -11)).repeat(len(z_dense), axis=0)
-        for ctr in range(len(z_dense)):
-            idx = z_dense[ctr] == z
-            if np.sum(idx) > 2:
-               locs = np.argsort(x[idx])
-               v = cubic_y(x[idx][locs], x_dense, y[idx][locs])
-               vols[ctr,:] = v
-        return np.column_stack((vols.flatten(), mats.flatten(), stks.flatten()))
+        sig = np.empty((len(z_dense), 3))
+        _unique_mats = np.unique(z_dense)
+
+        for ctr in range(len(_unique_mats)):
+
+            _mat = _unique_mats[ctr]
+            idx_1 = z == _mat
+            idx_2 = z_dense == _mat
+
+            if np.sum(idx_1) > 2:
+               s_idx = np.argsort(x[idx_1])
+               #res = cubic_y(x[idx_1][s_idx], x_dense[idx_2], y[idx_1][s_idx])
+               #res = cs(x[idx_1][s_idx], x_dense[idx_2], y[idx_1][s_idx])
+               res = 2.0
+
+               if np.any(res < 0) or np.any(res > np.max(y[idx_1][s_idx]) * 1.5):
+                  sig[idx_2, 0] = np.nan
+               else:
+                  sig[idx_2, 0] = res
+
+            sig[idx_2, 1] = z_dense[idx_2]
+            sig[idx_2, 2] = x_dense[idx_2]
+        return sig
 
     def interpolate_term_structure(self, maturities):
 
         if maturities is None:
            return
 
-        _ivols = self._ivols[['mid', 't', self._strike_reference]].pivot(columns=['t', self._strike_reference]).get('mid')
-        unique_mats = np.setdiff1d(np.round(maturities, 10), self.maturities)
-        group = np.setdiff1d(_ivols.columns.names, 't').item()
-
+        _ivols = self._ivols.get('mid').unstack(level=['t', self._strike_reference])
+        unique_mats = np.unique(maturities)
         if len(unique_mats) > 0:
             interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(_ivols,
                                                                             unique_mats,
                                                                             x_lev='t',
-                                                                            group=group)
-            cols = np.setdiff1d(interp.columns, self._ivols.columns)
-            self._ivols = pd.concat((self._ivols, interp.get(cols)),
-                                    axis=1).sort_index(axis=1, level='t')
+                                                                            group=self._strike_reference)
+
+            interp_ = interp.dropna(how='all', axis=1).stack(level=[0, 1]).to_frame('mid')
+            _strikes = self.get_strikes(interp_, self._strike_reference)
+            _vols = pd.concat((interp_, _strikes), axis=1)
+            _ivols = pd.concat((self._ivols, _vols), axis=0)
+            self._ivols = _ivols[~_ivols.index.duplicated(keep='first')].sort_index(level='date')
 
 
 if __name__ == "__main__":
@@ -325,10 +350,9 @@ if __name__ == "__main__":
                            rd)
 
         strike_reference = StrikeReference.DELTA
-        strikes = [0.1, 0.25, 0.5, 0.75, 0.9]
-        maturities = [1 / 12, 3 / 12, 6 / 12, 9/12, 12/12]
+        strikes = [-0.1, -0.25, -0.5, -0.75, -0.9]
+        maturities = [1 / 12, 1/12 + 0.5/12, 3 / 12, 4/12, 6 / 12, 9/12, 12/12]
         fxivols = self.get_ivols(None, strike_reference, strikes, maturities)
 
-        _vols = fxivols.get('sig').unstack(level=['x','t']).sort_index(level=0)
-
+        _vols = fxivols.get('mid').unstack(level=[strike_reference, 't']).sort_index(level=0)
         _ivols = _vols.loc['01/10/1997':'30/06/2023']

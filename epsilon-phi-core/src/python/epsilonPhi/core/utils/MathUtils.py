@@ -1,7 +1,15 @@
 from numba_stats import norm
 from numba import jit
 from numba import njit, float64, vectorize
+from numba.np.arraymath import binary_search_with_guess, determine_dtype, np_interp
 import numpy as np
+import warnings
+from numba.core.errors import NumbaPendingDeprecationWarning
+from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_spline as cs
+from cubic_spline import cubic_y
+
+# Suppress NumbaPendingDeprecationWarning
+warnings.filterwarnings('ignore', category=NumbaPendingDeprecationWarning)
 
 PI = 3.14159265358979323846
 inv_root_two_pi = 0.3989422804014327
@@ -9,6 +17,44 @@ inv_root_two_pi = 0.3989422804014327
 ONE_MILLION = 1000000
 TEN_MILLION = 10000000
 ONE_BILLION = 1000000000
+
+
+##@njit(float64[:, :](float64[:], float64[:, :], float64[:]), fastmath=True, cache=True)
+def flat_forward_interp(x_fix, y_fix_, x_var):
+
+    T = y_fix_.shape[0]
+
+    _nan_locs = ~np.isnan(y_fix_)
+    y_prime = np.full((T, len(x_var)), np.nan)
+    for t in range(T):
+
+        # Throw away any tenors that have nan's
+        y = y_fix_[t, _nan_locs[t]]
+        x = x_fix[_nan_locs[t]]
+
+        if len(y) == 0:
+           continue
+
+        keep_cols = (x_var <= np.max(x)) & (x_var >= np.min(x))
+        _x_var = x_var[keep_cols]
+
+        # If we have sufficient observations, interpolate
+        if len(_x_var) > 0:
+
+            # Interpolate all the target maturities
+            x_repeat = np.repeat(_x_var[:, None], len(x)).reshape((len(_x_var), len(x)))
+            distances = np.abs(x_repeat - x)
+            x_indices = np.searchsorted(x, _x_var)
+
+            weights = np.zeros_like(distances)
+            idx = np.sum(distances == 0, axis=1) == 0.0
+            weights[distances == 0] = 1.0
+
+            weights[idx, x_indices[idx] - 1] = x_fix[x_indices[idx] - 1] / _x_var[idx]
+            weights[idx, x_indices[idx]] = (1.0 - x_fix[x_indices[idx] - 1] / _x_var[idx])
+            weights /= np.sum(weights, axis=1)[:, None]
+            y_prime[t, np.isin(x_var, _x_var)] = np.sqrt((weights @ np.power(y.T, 2.0)).T)
+    return y_prime
 
 def flat_forward_interpolation(x_fix, y_fix, x_var):
 
@@ -25,7 +71,11 @@ def flat_forward_interpolation(x_fix, y_fix, x_var):
     weights[idx, x_indices - 1] = x_fix[x_indices-1] / x_var
     weights[idx, x_indices] = (1-x_fix[x_indices-1] / x_var)
     weights /= np.sum(weights, axis=1)[:, None]
+
+    weights[np.any(distances == 0, axis=1), :] = 0
+    weights[distances == 0] = 1
     return np.sqrt((weights @ np.power(y_fix.T, 2)).T)
+
 
 def linear_interpolate(x_fix, y_fix, x_var):
 
@@ -195,4 +245,111 @@ def norminvcdf(p):
                         * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1.0)
 
     return inverse_cdf
+@njit(cache=True)
+def np_fwd_flat_interp_1d(x, xp, fp, dtype):
+    # NOTE: Do not refactor... see note in np_interp function impl below
+    # this is a facsimile of arr_interp post 1.16:
+    # https://github.com/numpy/numpy/blob/maintenance/1.16.x/numpy/core/src/multiarray/compiled_base.c    # noqa: E501
+    # Permanent reference:
+    # https://github.com/numpy/numpy/blob/971e2e89d08deeae0139d3011d15646fdac13c92/numpy/core/src/multiarray/compiled_base.c#L473     # noqa: E501
+
+    x_ = xp[~np.isnan(fp)]
+    y_ = fp[~np.isnan(fp)]
+
+    dz = np.asarray(x, dtype=np.float64)
+    dx = np.asarray(x_, dtype=np.float64)
+    dy = np.asarray(y_, dtype=np.float64)
+
+    if len(dx) == 0:
+        return np.full(dz.shape, dtype=dtype, fill_value=np.nan)
+
+    if len(dx) != len(dy):
+        raise ValueError('fp and xp are not of the same size.')
+
+    if dx.size == 1:
+        dres = np.full(dz.shape, fill_value=dy[0], dtype=dtype)
+        return dres
+
+    dres = np.empty(dz.shape, dtype=dtype)
+
+    lenx = dz.size
+    lenxp = len(dx)
+    lval = np.nan
+    rval = np.nan
+
+    if lenxp == 1:
+        xp_val = dx[0]
+        fp_val = dy[0]
+
+        for i in range(lenx):
+            x_val = dz.flat[i]
+            if x_val < xp_val:
+                dres.flat[i] = lval
+            elif x_val > xp_val:
+                dres.flat[i] = rval
+            else:
+                dres.flat[i] = fp_val
+
+    else:
+        j = 0
+
+        for i in range(lenx):
+            x_val = dz.flat[i]
+
+            if np.isnan(x_val):
+                dres.flat[i] = x_val
+                continue
+
+            j = binary_search_with_guess(x_val, dx, lenxp, j)
+
+            if j == -1:
+                dres.flat[i] = lval
+            elif j == lenxp:
+                dres.flat[i] = rval
+            elif j == lenxp - 1:
+                dres.flat[i] = dy[j]
+            elif dx[j] == x_val:
+                # Avoid potential non-finite interpolation
+                dres.flat[i] = dy[j]
+            else:
+                #slope = (dy[j + 1] - dy[j]) / (dx[j + 1] - dx[j])
+                w = (dx[j] * (dx[j + 1] - x_val)) / (x_val * (dx[j + 1] - dx[j]))
+
+                #dres.flat[i] = slope * (x_val - dx[j]) + dy[j]
+                dres.flat[i] = w * dy[j] + (1-w) * dy[j+1]
+
+    return dres
+
+@njit(cache=True)
+def forward_flat_interpolation_N(x, xp, fp, dtype):
+
+    x_ = np.asarray(x, dtype=np.float64)
+    _res = np.empty((len(fp), x_.size), dtype=dtype)
+    for n in range(len(fp)):
+        _res[n, :] = np_fwd_flat_interp_1d(x_, xp, fp[n, :], dtype)
+    return _res
+
+@njit
+def cubic_spline(x, xq, y):
+    xs = cs(x, y, xq)
+    return xs
+
+
+if __name__ == "__main__":
+
+    import pandas as pd
+    path = '/Users/francisbarker/Desktop/Numba/Numba.xlsx'
+    df = pd.read_excel(path, sheet_name='Sheet9', index_col=0, header=[0])
+
+    x_fix = np.array(df.columns)
+    x_var = np.array([1/12, 1.5/12, 2/12])
+    y_fix_ = df.values
+
+    res_2 = cubic_spline(x_fix, x_var, y_fix_[-1,:])
+
+    res_1 = cubic_y(x_fix, x_var, y_fix_[-1,:])
+
+
+
+
 

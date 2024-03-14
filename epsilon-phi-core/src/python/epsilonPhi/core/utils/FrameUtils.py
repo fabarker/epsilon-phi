@@ -3,7 +3,7 @@ from operator import add
 from epsilonPhi.core.utils.DateUtils import DateUtils
 import numpy as np
 import collections, re, six
-from epsilonPhi.core.utils.MathUtils import linear_interpolate, flat_forward_interpolation
+from epsilonPhi.core.utils.MathUtils import linear_interpolate, flat_forward_interpolation, flat_forward_interp, forward_flat_interpolation_N
 
 class FrameUtils(object):
     pass
@@ -17,7 +17,7 @@ class FrameUtils(object):
 
     @staticmethod
     def rowise_flat_forward_interpolation_on_groups(df, x_var, x_lev, group):
-        tmp =  (df.groupby(axis=1, level=group).
+        tmp = (df.groupby(axis=1, level=group).
                 apply(lambda x: FrameUtils.flat_forward_interpolate_frame_rows(x, x_var, x_lev)))
         tmp.columns = tmp.columns.rename({None:x_lev}).reorder_levels(df.columns.names)
         return tmp.copy()
@@ -35,10 +35,12 @@ class FrameUtils(object):
             x = x.sort_index(axis=1, level=x_lev)
             x_lev = np.array(x.columns.get_level_values(x_lev))
 
-
-        return flat_forward_interpolation(x_lev,
-                                          x,
-                                          x_var).set_axis(x_var, axis=1)
+        _type = np.result_type(np.float64, np.float64)
+        res = forward_flat_interpolation_N(x_var,
+                                          x_lev,
+                                          x.values,
+                                          _type)
+        return pd.DataFrame(res, index=x.index, columns=x_var)
 
     @staticmethod
     def linear_interpolate_frame_rows(x, x_var, x_lev=False):
