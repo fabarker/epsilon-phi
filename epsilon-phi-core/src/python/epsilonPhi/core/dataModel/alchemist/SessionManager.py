@@ -352,9 +352,9 @@ class SessionMgr(object):
 
         _dates = pd.to_datetime(df.date.values)
         drop_rows = (_dates.dayofweek == 5) | (_dates.dayofweek == 6)
-        _df = df.iloc[~drop_rows, :]
+        _df = df.iloc[~drop_rows, :].copy()
         _df.loc[:, 'date'] = pd.to_datetime(_df.date.values)
-        _df.loc[:, 't'] = DateUtils.Rdate_to_mat(_df['tenor'])
+        _df['t'] = DateUtils.Rdate_to_mat(_df['tenor'].values)
 
         if index is not None:
             return _df.set_index(index, drop=True)

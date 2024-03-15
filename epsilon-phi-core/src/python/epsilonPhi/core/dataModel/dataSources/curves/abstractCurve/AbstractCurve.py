@@ -61,5 +61,5 @@ class AbstractCurve(object):
         mats_ = _mats.reshape(1, -1).repeat(len(dates), 0).flatten()
         vals_ = res.flatten()
 
-        rf = pd.DataFrame(vals_, index=zip(dates_, mats_))
-        return rf.loc[zip(dates, maturity)]
+        rf = pd.Series(vals_, index=FrameUtils.multiindex(dates_, mats_))
+        return rf.loc[FrameUtils.multiindex(dates, maturity.flatten())]

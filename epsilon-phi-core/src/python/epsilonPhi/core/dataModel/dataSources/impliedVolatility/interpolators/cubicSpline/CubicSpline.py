@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
+from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_spline as cubicspline
 from numba import jit
 from tqdm import tqdm
-from cubic_spline import *
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
+from epsilonPhi.core.utils.MathUtils import cubic_spline
 
 
 class CubicSpline(object):
@@ -70,22 +71,16 @@ class CubicSpline(object):
     @property
     def k(self):
         return self.ivols.get('k').values.reshape(-1, 1)
-    @property
     def rf(self):
         return self._rate_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
-    @property
     def rd(self):
         return self._funding_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
-    @property
     def s(self):
         return self._spot.loc[self.dates].values.reshape(-1, 1)
-    @property
     def f(self):
         return self.get_forward_prices(self.dates, self.t)
-    @property
     def ivol_frame(self):
         return self._ivols.get('mid').unstack(level=['t', self._strike_reference])
-    @property
     def ik_frame(self):
         return self._ivols.get('k').unstack(level=['t', self._strike_reference])
 
@@ -134,21 +129,25 @@ class CubicSpline(object):
 
         # Compute the surface values for the strike reference we care about
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
-            self._x = self.delta()
+            _x = self.delta()
         elif strike_reference in [StrikeReference.MONEYNESS, StrikeReference.MONEYNESS.value]:
-            self._x = self.moneyness()
+            _x = self.moneyness()
         elif strike_reference in [StrikeReference.LOG_MONEYNESS, StrikeReference.LOG_MONEYNESS.value]:
-            self._x = self.log_moneyness()
+            _x = self.log_moneyness()
         elif strike_reference in [StrikeReference.Z_SCORE, StrikeReference.Z_SCORE.value]:
-            self._x = self.z_score()
+            _x = self.z_score()
         elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
-            self._x = self.convexity_adj_moneyness()
+            _x = self.convexity_adj_moneyness()
         elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
-            self._x = self.k
+            _x = self.k
         else:
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
-        _ivols = self.interpolate(pricing_dates, maturities, relative_strike)
+        __x = self.ivols.copy()
+        __x['x'] = _x
+        self._x = __x[['mid', 'x']].droplevel(2)
+
+        _ivols = self.interpolate_maturity_slices(pricing_dates, maturities, relative_strike)
         _strikes = self.get_strikes(_ivols, strike_reference)
         _sig = pd.concat((_ivols, _strikes), axis=1)
 
@@ -241,6 +240,78 @@ class CubicSpline(object):
 
     def get_spot_rates(self, pricing_dates):
         return self._spot.loc[pricing_dates].values.reshape(-1, 1)
+
+    @staticmethod
+    def interps(X, Y):
+
+        Z = np.full(X.shape[0], np.nan)
+
+        uqm = np.unique(X[:, 1])
+        for t in range(len(uqm)):
+            m = uqm[t]
+            uqt = np.unique(X[X[:, 1] == m, 0])
+
+            for j in range(len(uqt)):
+                print(j)
+
+                idx_1 = (Y[:, 1] == m) & (Y[:, 0] == uqt[j])
+                idx_2 = (X[:, 1] == m) & (X[:, 0] == uqt[j])
+
+                z = X[idx_2, 2]
+                x = Y[idx_1, 2]
+                y = Y[idx_1, 3]
+
+                if len(x) > 1:
+                    #Z.flat[idx_2] = cubicspline(x, y, z)
+                    pass
+                elif len(x) > 0:
+                    pass
+                    #res = np.full(z.shape, fill_value=np.nan)
+                    #res[np.abs(x - z) < 1e-9] = y
+                    #Z.flat[idx_2] = res
+        return Z
+
+
+    def interpolate_maturity_slices(self, dates=None, maturities=None, strikes=None):
+
+        assert dates.shape == maturities.shape, 'Error - dimension mis-match'
+        assert dates.shape == strikes.shape, 'Error - dimension mis-match'
+
+        tau = FrameUtils.multiindex(dates.flatten(),
+                                    maturities.flatten(),
+                                    strikes.flatten())
+
+        # Target Observations...
+        _tau = tau.difference(self.keys)
+
+        # Get Unique Maturity and Date Pairs
+        _x = _tau.get_level_values(0).to_numpy().astype(np.int64)
+        _y = np.array(_tau.get_level_values(1))
+        _z = np.array(_tau.get_level_values(2))
+        _s = np.full(_z.shape, dtype=np.float64, fill_value=np.nan)
+
+        X = np.column_stack((_x, _y, _z))
+
+
+
+        # Surface Observations...
+        ts_ = self.t.astype(float).flatten()
+        xs_ = self._x.astype(float).flatten()
+        sig = self.sig.astype(float).flatten()
+        ds_ = self.dates.to_numpy().astype(np.int64)
+        Y = np.column_stack((ds_, ts_, xs_, sig))
+
+        res = CubicSpline.interps(X, Y)
+
+
+
+
+
+
+
+
+
+
 
     def interpolate(self, dates=None, maturities=None, strikes=None):
 

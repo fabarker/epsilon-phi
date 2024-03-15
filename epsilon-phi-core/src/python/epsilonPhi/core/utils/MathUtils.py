@@ -436,7 +436,7 @@ def cubic_spline(x, xq, y):
     x_ = np.asarray(xq, dtype=np.float64)
     _res = np.empty((len(y), x_.size), dtype=np.float64)
     for t in range(len(y)):
-        _res[t, :] = cubicspline(x, y[t,:], xq)
+        _res[t, :] = cubicspline(x, y[t, :], xq)
     return _res
 
 
