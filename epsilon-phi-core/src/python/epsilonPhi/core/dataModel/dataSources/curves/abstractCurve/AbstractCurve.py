@@ -1,5 +1,5 @@
 import numpy as np
-
+from epsilonPhi.core.utils.MathUtils import interp_N
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import pandas as pd
@@ -24,10 +24,7 @@ class AbstractCurve(object):
         self._curve_df = self.interpolate_df(_df)
 
     def interpolate_df(self, df):
-        return df.interpolate(method='linear',
-                              fill_value="extrapolate",
-                              limit_direction="both",
-                              axis=1)
+        return df.copy()
 
     def get_curve(self, dates=None, maturities=None):
 
@@ -43,9 +40,26 @@ class AbstractCurve(object):
            _unique_dates = np.unique(dates)
            return _curve.loc[_unique_dates]
 
-    def get_stacked_curve(self, dates=None, maturity=None):
-        unique_dates = np.unique(dates)
-        unique_mats = np.unique(maturity)
 
-        idx = FrameUtils.multiindex(dates, maturity.flatten())
-        return self.get_curve(unique_dates, unique_mats).stack().loc[idx]
+    def get_stacked_curve(self, dates=None, maturity=None):
+
+        # Get the curve on the dates that we need observations
+        _ivols = self._curve_df.loc[np.unique(dates)]
+        # Get the unique maturities
+        _mats = np.unique(maturity)
+
+        # Build arrays for interpolator
+        fp = _ivols.values
+        xp = np.array(_ivols.columns)
+
+        # Interpolate
+        _type = np.result_type(np.float64, np.float64)
+        res = interp_N(_mats, xp, fp, _type)
+
+        # Extract
+        dates_ = _ivols.index.repeat(len(_mats))
+        mats_ = _mats.reshape(1, -1).repeat(len(dates), 0).flatten()
+        vals_ = res.flatten()
+
+        rf = pd.DataFrame(vals_, index=zip(dates_, mats_))
+        return rf.loc[zip(dates, maturity)]

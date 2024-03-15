@@ -1,9 +1,8 @@
 import numpy as np
 import numba
 
-
 @numba.njit(cache=True, fastmath=True)
-def calc_spline_params(x, y, ):
+def calc_spline_params(x, y):
     n = x.size - 1
     a = y.copy()
     h = x[1:] - x[:-1]
@@ -21,27 +20,14 @@ def calc_spline_params(x, y, ):
 
     return a[1:], b, c[1:], d
 
-
 @numba.njit(cache=True, fastmath=True,)
-def func_spline(
-        x,
-        ix,
-        x0,
-        a,
-        b,
-        c,
-        d,
-):
+def func_spline(x, ix, x0, a, b, c, d):
     dx = x - x0[1:][ix]
     return a[ix] + (b[ix] + (c[ix] + d[ix] * dx) * dx) * dx
 
 
-@numba.njit(cache=True, fastmath=True,)
-def searchsorted_merge(
-        a,
-        b,
-        sort_b,
-):
+@numba.njit(cache=True, fastmath=True)
+def searchsorted_merge(a, b, sort_b):
     idx = np.zeros((len(b),), dtype=np.int64)
     if sort_b:
         ib = np.argsort(b)
@@ -56,14 +42,7 @@ def searchsorted_merge(
 
 
 @numba.njit(cache=True, fastmath=True)
-def piece_wise_spline(
-        x,
-        x0,
-        a,
-        b,
-        c,
-        d,
-):
+def piece_wise_spline(x, x0, a, b, c, d):
     x = np.asarray(x)
     xsh = x.shape
     x = x.ravel()

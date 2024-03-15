@@ -6,7 +6,6 @@ from tqdm import tqdm
 from cubic_spline import *
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
-from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_y as cs
 
 
 class CubicSpline(object):
@@ -83,6 +82,13 @@ class CubicSpline(object):
     @property
     def f(self):
         return self.get_forward_prices(self.dates, self.t)
+    @property
+    def ivol_frame(self):
+        return self._ivols.get('mid').unstack(level=['t', self._strike_reference])
+    @property
+    def ik_frame(self):
+        return self._ivols.get('k').unstack(level=['t', self._strike_reference])
+
     def delta(self):
         return fast_delta(self.s,
                           self.t,
@@ -235,6 +241,7 @@ class CubicSpline(object):
 
     def get_spot_rates(self, pricing_dates):
         return self._spot.loc[pricing_dates].values.reshape(-1, 1)
+
     def interpolate(self, dates=None, maturities=None, strikes=None):
 
         assert dates.shape == maturities.shape, 'Error - dimension mis-match'
@@ -279,7 +286,6 @@ class CubicSpline(object):
         return _vols.copy()
 
     @staticmethod
-    @njit
     def interpolate_single_date(z, z_dense, x, x_dense, y):
 
         sig = np.empty((len(z_dense), 3))
@@ -311,19 +317,22 @@ class CubicSpline(object):
         if maturities is None:
            return
 
-        _ivols = self._ivols.get('mid').unstack(level=['t', self._strike_reference])
+        _ivols = self.ivol_frame
         unique_mats = np.unique(maturities)
-        if len(unique_mats) > 0:
-            interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(_ivols,
-                                                                            unique_mats,
-                                                                            x_lev='t',
-                                                                            group=self._strike_reference)
+        interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(self.ivol_frame,
+                                                                        unique_mats,
+                                                                        x_lev='t',
+                                                                        group=self._strike_reference)
 
-            interp_ = interp.dropna(how='all', axis=1).stack(level=[0, 1]).to_frame('mid')
-            _strikes = self.get_strikes(interp_, self._strike_reference)
-            _vols = pd.concat((interp_, _strikes), axis=1)
-            _ivols = pd.concat((self._ivols, _vols), axis=0)
-            self._ivols = _ivols[~_ivols.index.duplicated(keep='first')].sort_index(level='date')
+        interp_ = interp.dropna(how='all', axis=1).stack(level=[0, 1]).to_frame('mid')
+
+        # Get the corresponding strikes for our interpolated tenors
+        _strikes = self.get_strikes(interp_, self._strike_reference)
+        _vols = pd.concat((interp_, _strikes), axis=1)
+
+        # Concatenate the new interpolated vols onto the ivols
+        _ivols = pd.concat((self._ivols, _vols.loc[_vols.index.difference(self.ivols.index)]), axis=0)
+        self._ivols = _ivols[~_ivols.index.duplicated(keep='first')].sort_index(level='date')
 
 
 if __name__ == "__main__":
