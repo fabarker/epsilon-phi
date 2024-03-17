@@ -1,4 +1,5 @@
 from scipy.stats import norm
+from numba import float64, int64, vectorize, njit, guvectorize
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.MathUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
@@ -57,12 +58,12 @@ def solve_for_strike(spot_fx_rate,
     if delta_method_value in [DeltaType.SPOT_DELTA.value,
                               DeltaType.SPOT_DELTA]:
 
-        dom_df = np.exp(-rd*tdel)
-        for_df = np.exp(-rf*tdel)
+        dom_df = np.asarray(np.exp(-rd * tdel), dtype=np.float64)
+        for_df = np.asarray(np.exp(-rf * tdel), dtype=np.float64)
 
         phi = np.sign(option_type_value)
 
-        F0T = spot_fx_rate * for_df / dom_df
+        F0T = np.array(spot_fx_rate) * np.array(for_df / dom_df)
         vsqrtt = volatility * np.sqrt(tdel)
         arg = delta_target*phi/for_df  # CHECK THIS !!!
         norm_inv_delta = norm.ppf(arg, 0.0, 1.0)
@@ -72,12 +73,12 @@ def solve_for_strike(spot_fx_rate,
     elif delta_method_value == [DeltaType.FORWARD_DELTA.value,
                                 DeltaType.FORWARD_DELTA]:
 
-        dom_df = np.exp(-rd*tdel)
-        for_df = np.exp(-rf*tdel)
+        dom_df = np.asarray(np.exp(-rd*tdel), dtype=np.float64)
+        for_df = np.asarray(np.exp(-rf*tdel), dtype=np.float64)
 
         phi = np.sign(option_type_value)
 
-        F0T = spot_fx_rate * for_df / dom_df
+        F0T = np.array(spot_fx_rate) * for_df / dom_df
         vsqrtt = volatility * np.sqrt(tdel)
         arg = delta_target*phi   # CHECK THIS!!!!!!!!
         norm_inv_delta = norm.ppf(arg, 0.0, 1.0)
@@ -333,3 +334,145 @@ def bs_vanna(s, t, k, r, q, v):
     d2 = d1 - v_sqrt_t
     vanna = np.exp(-q*t) * sqrt_t * n_prime_vect(d1) * (d2/v)
     return vanna
+
+
+###############################################################################
+
+
+@vectorize([float64(float64, float64, float64, float64, int64, float64,
+              int64, float64)], fastmath=True, nopython=True)
+def nb_strike(s, t, rd, rf, option_type_value, delta, delta_method_value, v):
+
+
+    phi = np.sign(option_type_value)
+    if delta_method_value == DeltaType.SPOT_DELTA.value:
+
+        dom_df = np.exp(-rd*t)
+        for_df = np.exp(-rf*t)
+
+        F0T = s * for_df / dom_df
+        vsqrtt = v * np.sqrt(t)
+        arg = delta*phi/for_df  # CHECK THIS !!!
+        norm_inv_delta = norminvcdf(arg)
+        K = F0T * np.exp(-vsqrtt * (phi*norm_inv_delta - vsqrtt/2.0))
+        return K
+
+    elif delta_method_value == DeltaType.FORWARD_DELTA.value:
+
+        dom_df = np.exp(-rd*t)
+        for_df = np.exp(-rf*t)
+
+        F0T = s * for_df / dom_df
+        vsqrtt = v * np.sqrt(t)
+        arg = delta*phi   # CHECK THIS!!!!!!!!
+        norm_inv_delta = norminvcdf(arg)
+        K = F0T * np.exp(-vsqrtt * (phi*norm_inv_delta - vsqrtt/2.0))
+        return K
+    else:
+        raise FinError("Unknown FinFXDeltaMethod")
+
+@vectorize([float64(float64, float64, float64, float64, float64, float64,
+                    int64)], fastmath=True, cache=True, nopython=True)
+def blsvalue(s, t, k, r, q, v, option_type_value):
+    """Price a derivative using Black-Scholes model."""
+
+    phi = np.sign(option_type_value)
+
+    k = np.maximum(k, g_small)
+    t = np.maximum(t, g_small)
+    v = np.maximum(v, g_small)
+
+    v_sqrt_t = v * np.sqrt(t)
+    ss = s * np.exp(-q*t)
+    kk = k * np.exp(-r*t)
+    d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
+    d2 = d1 - v_sqrt_t
+
+    value = phi * ss * N(phi * d1) - phi * kk * N(phi * d2)
+    return value
+
+@vectorize([float64(float64, float64, float64, float64,
+                    float64, float64, int64)], fastmath=True, cache=True, nopython=True)
+def blsdelta(s, t, k, r, q, v, option_type_value):
+    """Price a derivative using Black-Scholes model."""
+
+    phi = np.sign(option_type_value)
+    k = np.maximum(k, g_small)
+    t = np.maximum(t, g_small)
+    v = np.maximum(v, g_small)
+
+    v_sqrt_t = v * np.sqrt(t)
+    ss = s * np.exp(-q*t)
+    kk = k * np.exp(-r*t)
+    d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
+
+    delta = phi * np.exp(-q*t) * n_vect(phi * d1)
+    return delta
+
+
+#@njit(float64[:,:](float64[:,:], float64[:,:], float64[:,:], float64[:,:], float64[:,:], float64[:,:],
+#                    int64, int64), fastmath=True, cache=True)
+@vectorize([float64(float64, float64, float64, float64, float64, float64,
+                    int64, int64)], fastmath=True, cache=True, nopython=True)
+def nb_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
+    """ Calculation of the FX Option delta. Used in the determination of
+    the volatility surface. Avoids discount curve interpolation so it
+    should be slightly faster than the full calculation of delta. """
+
+    pips_spot_delta = blsdelta(s, t, k, rd, rf, vol, option_type_value)
+
+    if deltaTypeValue == DeltaType.SPOT_DELTA.value:
+        return pips_spot_delta
+    elif deltaTypeValue == DeltaType.FORWARD_DELTA.value:
+        pips_fwd_delta = pips_spot_delta * np.exp(rf*t)
+        return pips_fwd_delta
+    elif deltaTypeValue == DeltaType.SPOT_DELTA_PREM_ADJ.value:
+        vpctf = blsvalue(s, t, k, rd, rf, vol, option_type_value) / s
+        pct_spot_delta_prem_adj = pips_spot_delta - vpctf
+        return pct_spot_delta_prem_adj
+    elif deltaTypeValue == DeltaType.SPOT_DELTA_PREM_ADJ.value:
+        vpctf = blsvalue(s, t, k, rd, rf, vol, option_type_value) / s
+        pct_fwd_delta_prem_adj = np.exp(rf*t) * (pips_spot_delta - vpctf)
+        return pct_fwd_delta_prem_adj
+    else:
+        raise FinError("Unknown FinFXDeltaMethod")
+
+
+if __name__ == "__main__":
+
+    from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+
+    import pandas as pd
+    import numpy as np
+
+    path = '/Users/francisbarker/Desktop/ivols.csv'
+    df = pd.read_csv(path, index_col=0)
+    _df = df.pivot(columns=['x','t'])
+    N = _df.shape[0]
+
+    r = _df.get('rf').values
+    q = _df.get('rd').values
+    s =  _df.get('s').values
+    k =  _df.get('k').values
+    v = _df.get('sig').values
+
+    t = np.array(_df.get('sig').columns.get_level_values('t')).reshape(1, -1).repeat(N, axis=0)
+
+    _s = s[:,:].astype(np.float64)
+    _r = r[:,:].astype(np.float64)
+    _q = q[:,:].astype(np.float64)
+    _k = k[:,:].astype(np.float64)
+    _v = v[:,:].astype(np.float64)
+    _t = t[:,:].astype(np.float64)
+
+    _d = nb_delta(_s, _t, _k, _r, _q, _v, DeltaType.FORWARD_DELTA.value, -1)
+    __D = blsdelta(_s, _t, _k, _r, _q, _v, -1)
+
+
+
+    ks = nb_strike(_s, _t, _r, _q, -1, _d, 1, _v)
+
+    delta = blsdelta(_s, _t, _k, _r, _q, _v, -1)
+
+
+

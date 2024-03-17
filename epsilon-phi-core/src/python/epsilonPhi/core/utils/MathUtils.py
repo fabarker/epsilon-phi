@@ -141,6 +141,8 @@ def N(x):
     """ Fast Normal CDF function based on Hull OFAODS  4th Edition Page 252.
     This function is accurate to 6 decimal places. """
 
+    #phi = np.asarray(np.nan).astype(np.float64)
+
     a1 = 0.319381530
     a2 = -0.356563782
     a3 = 1.781477937
@@ -159,7 +161,6 @@ def N(x):
         phi = 1.0 - c * np.exp(-x*x/2.0) * inv_root_two_pi
     else:
         phi = 1.0 - N(-x)
-
     return phi
 
 ###############################################################################
@@ -176,7 +177,8 @@ def n_prime_vect(x):
 
 ###############################################################################
 
-@jit(fastmath=True, cache=True, nopython=True)
+#@jit(fastmath=True, cache=True, nopython=True)
+@vectorize([float64(float64)], fastmath=True, cache=True)
 def norminvcdf(p):
 
     """  This algorithm computes the inverse Normal CDF and is based on the
@@ -442,15 +444,38 @@ def cubic_spline(x, xq, y):
 
 if __name__ == "__main__":
 
+    import numpy as np
+    import numba as nb
+
+    x = np.arange(100).reshape(10, 10)
+    y = np.arange(100).reshape(10, 10)
+    z = np.arange(10)
+
     import pandas as pd
     path = '/Users/francisbarker/Desktop/Numba/Numba.xlsx'
     df = pd.read_excel(path, sheet_name='Sheet9', index_col=0, header=[0])
 
-    x_fix = np.array(df.columns)
-    x_var = np.array([1/12, 1.5/12, 2/12])
+    N = df.shape[0]
+
+    x_fix = np.array(df.columns)[None, :].repeat(N, axis=0)
+    x_var = np.array([1/12])[None, :].repeat(N, axis=0)
     y_fix_ = df.values
 
-    res_2 = cubic_spline(x_fix, x_var, y_fix_)
+    @nb.guvectorize([(nb.int64[:,:], nb.int64[:,:], nb.int64[:], nb.int64[:])], '(n,m),(n,m),(n)->(n)', nopython=True)
+    def g(x, y, z, res):
+        for i in range(x.shape[0]):
+
+            y_ = y[~np.isnan(y[i])]
+            x_ = x[~np.isnan(x[i])]
+
+            if len(x_) > 1:
+                res[i] = cubicspline(x_, y_, z[i])
+            else:
+                res[i] = np.float64(np.nan)
+
+    res = g(x_fix, y_fix_, x_var)
+
+
 
 
 

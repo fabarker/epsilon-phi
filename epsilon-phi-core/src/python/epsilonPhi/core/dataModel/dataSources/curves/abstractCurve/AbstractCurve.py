@@ -21,18 +21,25 @@ class AbstractCurve(object):
 
     def set_curve_dataframe(self, df):
         _df = df.sort_index(axis=1)
-        self._curve_df = self.interpolate_df(_df)
+        self._curve_df = self.interpolate_df(_df, np.array(_df.columns))
 
-    def interpolate_df(self, df):
-        return df.copy()
+    def interpolate_df(self, df, xdense):
+        _type = np.result_type(np.float64, np.float64)
+        _cols = np.array(df.columns)
+        return pd.DataFrame(interp_N(xdense, _cols, df.values, _type),
+                            index=df.index, columns=xdense).dropna(how='all', axis=0)
 
-    def get_curve(self, dates=None, maturities=None):
+    def get_curve(self, dates=None, maturities=None, is_stacked=False):
+
+        if is_stacked:
+            return self.get_stacked_curve(dates, maturities)
 
         if maturities is None:
            _curve = self._curve_df.dropna(how='all', axis=0)
         else:
            _unique_mats = np.unique(maturities)
-           _curve = FrameUtils.linear_interpolate_frame_rows(self._curve_df, _unique_mats)
+           _curve = self.interpolate_df(self._curve_df, _unique_mats)
+           _curve = _curve[maturities]
 
         if dates is None:
            return _curve.copy()
@@ -62,4 +69,4 @@ class AbstractCurve(object):
         vals_ = res.flatten()
 
         rf = pd.Series(vals_, index=FrameUtils.multiindex(dates_, mats_))
-        return rf.loc[FrameUtils.multiindex(dates, maturity.flatten())]
+        return rf.reindex(FrameUtils.multiindex(dates, maturity.flatten()))

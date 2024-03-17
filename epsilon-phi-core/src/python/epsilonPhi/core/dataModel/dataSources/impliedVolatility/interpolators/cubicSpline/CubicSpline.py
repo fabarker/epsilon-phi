@@ -85,11 +85,11 @@ class CubicSpline(object):
         return self._ivols.get('k').unstack(level=['t', self._strike_reference])
 
     def delta(self):
-        return fast_delta(self.s,
+        return fast_delta(self.s(),
                           self.t,
                           self.k,
-                          self.rd,
-                          self.rf,
+                          self.rd(),
+                          self.rf(),
                           self.sig,
                           1,
                           -1)
@@ -145,9 +145,9 @@ class CubicSpline(object):
 
         __x = self.ivols.copy()
         __x['x'] = _x
-        self._x = __x[['mid', 'x']].droplevel(2)
+        self._x = __x[['mid','x']].unstack(self._strike_reference)
 
-        _ivols = self.interpolate_maturity_slices(pricing_dates, maturities, relative_strike)
+        _ivols = self.interpolate(pricing_dates, maturities, relative_strike)
         _strikes = self.get_strikes(_ivols, strike_reference)
         _sig = pd.concat((_ivols, _strikes), axis=1)
 
@@ -242,37 +242,30 @@ class CubicSpline(object):
         return self._spot.loc[pricing_dates].values.reshape(-1, 1)
 
     @staticmethod
-    def interps(X, Y):
+    @njit
+    def spline_interp(x, y, xp):
 
-        Z = np.full(X.shape[0], np.nan)
+        xp_ = np.asarray(xp, dtype=np.float64)
+        x = np.asarray(x, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
 
-        uqm = np.unique(X[:, 1])
-        for t in range(len(uqm)):
-            m = uqm[t]
-            uqt = np.unique(X[X[:, 1] == m, 0])
+        z = np.full(len(xp), np.nan)
+        for t in range(len(xp)):
+            x_ = x[t, ~np.isnan(x[t, :])]
+            y_ = y[t, ~np.isnan(y[t, :])]
 
-            for j in range(len(uqt)):
-                print(j)
-
-                idx_1 = (Y[:, 1] == m) & (Y[:, 0] == uqt[j])
-                idx_2 = (X[:, 1] == m) & (X[:, 0] == uqt[j])
-
-                z = X[idx_2, 2]
-                x = Y[idx_1, 2]
-                y = Y[idx_1, 3]
-
-                if len(x) > 1:
-                    #Z.flat[idx_2] = cubicspline(x, y, z)
-                    pass
-                elif len(x) > 0:
-                    pass
-                    #res = np.full(z.shape, fill_value=np.nan)
-                    #res[np.abs(x - z) < 1e-9] = y
-                    #Z.flat[idx_2] = res
-        return Z
+            if len(x_) > 1:
+                if len(x_) == len(y_):
+                    res = cubicspline(x_,
+                                      y_,
+                                      xp_[t]).item()
+                    z.flat[t] = res
+            elif np.any(np.abs(xp_[t] - x_) < 1e-9):
+                z.flat[t] = y_[np.abs(xp_[t] - x_) < 1e-9].item()
+        return z
 
 
-    def interpolate_maturity_slices(self, dates=None, maturities=None, strikes=None):
+    def interpolate(self, dates=None, maturities=None, strikes=None):
 
         assert dates.shape == maturities.shape, 'Error - dimension mis-match'
         assert dates.shape == strikes.shape, 'Error - dimension mis-match'
@@ -283,114 +276,31 @@ class CubicSpline(object):
 
         # Target Observations...
         _tau = tau.difference(self.keys)
+        _tau.names = self.keys.names
+        if _tau.size > 0:
 
-        # Get Unique Maturity and Date Pairs
-        _x = _tau.get_level_values(0).to_numpy().astype(np.int64)
-        _y = np.array(_tau.get_level_values(1))
-        _z = np.array(_tau.get_level_values(2))
-        _s = np.full(_z.shape, dtype=np.float64, fill_value=np.nan)
+            xp = np.array(_tau.get_level_values(2))
 
-        X = np.column_stack((_x, _y, _z))
+            Y_p = self._x.reindex(_tau.droplevel(2))
+            _y = Y_p.get('mid').values
+            _x = Y_p.get('x').values
 
+            res = CubicSpline.spline_interp(_x, _y, xp)
 
+            idx = (res < np.nanmin(_y)) | (res > np.nanmax(_y))
+            res[idx] = np.nan
+            return pd.DataFrame(res, index=_tau, columns=['mid'])
+        else:
+            return pd.DataFrame(index=_tau, columns=['mid'])
 
-        # Surface Observations...
-        ts_ = self.t.astype(float).flatten()
-        xs_ = self._x.astype(float).flatten()
-        sig = self.sig.astype(float).flatten()
-        ds_ = self.dates.to_numpy().astype(np.int64)
-        Y = np.column_stack((ds_, ts_, xs_, sig))
-
-        res = CubicSpline.interps(X, Y)
-
-
-
-
-
-
-
-
-
-
-
-    def interpolate(self, dates=None, maturities=None, strikes=None):
-
-        assert dates.shape == maturities.shape, 'Error - dimension mis-match'
-        assert dates.shape == strikes.shape, 'Error - dimension mis-match'
-
-        tau = FrameUtils.multiindex(dates.flatten(), maturities.flatten(), strikes.flatten())
-        _tau = tau.difference(self.keys)
-
-        _ds = _tau.get_level_values(0)
-        _ts = _tau.get_level_values(1).astype(float).to_numpy()
-        _xs = _tau.get_level_values(2).astype(float).to_numpy()
-
-        _dates = np.unique(_ds)
-        ND = len(_dates)
-
-        ts_ = self.t.astype(float).flatten()
-        xs_ = self._x.astype(float).flatten()
-        sig = self.sig.astype(float).flatten()
-        ds_ = self.dates
-
-        interps = list()
-        for t in tqdm(range(ND), desc="Interpolating Vol Surface"):
-
-            idx_T = _dates[t] == _ds
-            idx_S = _dates[t] == ds_
-
-            interp = self.interpolate_single_date(ts_[idx_S],
-                                                  _ts[idx_T],
-                                                  xs_[idx_S],
-                                                  _xs[idx_T],
-                                                  sig[idx_S])
-
-            result = np.column_stack((interp, _ds[idx_T].astype(np.int64)))
-            interps.extend([result])
-
-
-        # build ivols
-        _ivols = pd.DataFrame(np.vstack((interps)))
-        _ivols.columns = ['mid', 't',  self._strike_reference, 'date']
-        _ivols.loc[:, 'date'] = pd.to_datetime(_ivols.get('date'))
-        _vols = _ivols.set_index(['date', 't', self._strike_reference], drop=True)
-        return _vols.copy()
-
-    @staticmethod
-    def interpolate_single_date(z, z_dense, x, x_dense, y):
-
-        sig = np.empty((len(z_dense), 3))
-        _unique_mats = np.unique(z_dense)
-
-        for ctr in range(len(_unique_mats)):
-
-            _mat = _unique_mats[ctr]
-            idx_1 = z == _mat
-            idx_2 = z_dense == _mat
-
-            if np.sum(idx_1) > 2:
-               s_idx = np.argsort(x[idx_1])
-               #res = cubic_y(x[idx_1][s_idx], x_dense[idx_2], y[idx_1][s_idx])
-               #res = cs(x[idx_1][s_idx], x_dense[idx_2], y[idx_1][s_idx])
-               res = 2.0
-
-               if np.any(res < 0) or np.any(res > np.max(y[idx_1][s_idx]) * 1.5):
-                  sig[idx_2, 0] = np.nan
-               else:
-                  sig[idx_2, 0] = res
-
-            sig[idx_2, 1] = z_dense[idx_2]
-            sig[idx_2, 2] = x_dense[idx_2]
-        return sig
 
     def interpolate_term_structure(self, maturities):
 
         if maturities is None:
            return
 
-        _ivols = self.ivol_frame
         unique_mats = np.unique(maturities)
-        interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(self.ivol_frame,
+        interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(self.ivol_frame(),
                                                                         unique_mats,
                                                                         x_lev='t',
                                                                         group=self._strike_reference)
@@ -434,5 +344,9 @@ if __name__ == "__main__":
         maturities = [1 / 12, 1/12 + 0.5/12, 3 / 12, 4/12, 6 / 12, 9/12, 12/12]
         fxivols = self.get_ivols(None, strike_reference, strikes, maturities)
 
+        fxivols_2 = self.get_ivols(None, strike_reference, strikes, maturities)
+
         _vols = fxivols.get('mid').unstack(level=[strike_reference, 't']).sort_index(level=0)
         _ivols = _vols.loc['01/10/1997':'30/06/2023']
+
+        #
