@@ -240,48 +240,6 @@ if __name__ == "__main__":
         from epsilonPhi.core.dataModel.dataSources.impliedVolatility.Models import *
         from epsilonPhi.core.dataModel.dataSources.impliedVolatility.VolSurfaceMgr import VolSurfaceMgr
 
-
-        @njit([int64[:](int64[:], int64[:])], nopython=True)
-        def index(a, b):
-
-            res = np.empty(a.shape, dtype=np.int64)
-            for t in range(len(a)):
-                tmp = a[t]
-                loc = np.where(b == tmp)[0]
-                if len(loc) > 0:
-                   res.flat[t] = loc.item()
-                else:
-                   res.flat[t] = -1
-            return res
-
-
-        # Binary Search in python
-
-        def binary_search(arr, xs):
-
-
-            for t in range(len(xs)):
-                low = 0
-                high = len(arr) - 1
-
-                while low <= high:
-                    mid = (low + high) // 2
-                    mid_val = arr[mid]
-
-                    if mid_val < x:
-                        low = mid + 1
-                    elif mid_val > x:
-                        high = mid - 1
-                    else:
-                        return mid
-                return -1
-
-        b = np.array(range(100000)).astype(np.int64)
-        a = np.flip(b).astype(np.int64)
-
-        loc = index(a, b)
-
-
         underlier = 'GBPUSD'
         vsm = VolSurfaceMgr(underlier,
                              pricing_location='NYC',

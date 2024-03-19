@@ -2,33 +2,58 @@
 
 #include "Python.h"
 #include "numpy/arrayobject.h"
+#include <iostream>
 #include <vector>
 #include <cstdio>
 
 template<class REAL>
 inline
-std::vector<int> find_1st_templ(REAL* x, REAL* limit, int stride_x, int stride_y, long size_x, long size_y, long row_length) {
+std::vector<int> find_1st_templ(REAL* x, REAL* limit,
+                                                   int stride_x, int stride_y,
+                                                   long x_len, long y_len,
+                                                   long width) {
+    std::vector<int> results(y_len, -1); // Initialize results vector with -1s
 
-    std::vector<int> results(size_y, -1);
+    // Loop through each row in the limit array
+    for (long jj = 0; jj < y_len; ++jj) {
+        long low = 0;
+        long high = x_len - 1;
+        while (low <= high) {
+            long mid = low + (high - low) / 2;
+            bool match = true; // Assume a match until proven otherwise
 
-    for(long jj = 0; jj < size_y ; ++jj) {
-        REAL current_limit = limit[jj];
-        bool found = false;
-        for(long row = 0; row < size_x && !found; ++row) {
-            for(long col = 0; col < row_length; ++col) {
-                REAL curr_x = x[row * row_length + col];
-                if (curr_x == current_limit) {
-                    results[jj] = row;
-                    found = true;
-                    break;
+            // Check each column in the current row for a match
+            for (long col = 0; col < width; ++col) {
+                REAL curr_x = x[(mid * stride_x) + col];
+                REAL curr_y = limit[(jj * stride_y) + col];
+
+                // If any column does not match, this row can't be the one we're looking for
+                if (curr_x != curr_y) {
+                    match = false;
+                    break; // No need to check further columns
+                }
+            }
+
+            // Perform the binary search logic based on the comparison result
+            if (match) {
+                results[jj] = mid; // Found a matching row, store the location
+                break; // Exit the while loop, move to the next row in 'limit'
+            } else {
+                // Since we can't use lexicographical_compare directly due to the array and stride,
+                // decide to move left or right in the binary search based on manual comparison
+                REAL first_x = x[mid * stride_x];
+                REAL first_limit = limit[jj * stride_y];
+                if (first_x < first_limit) {
+                    low = mid + 1; // Search in the right half
+                } else {
+                    high = mid - 1; // Search in the left half
                 }
             }
         }
     }
 
-    return results;
+    return results; // Return the vector of results
 }
-
 
 static PyObject *cc_find_1st(PyObject *self, PyObject *args);
 
@@ -110,32 +135,49 @@ initfind_1st(void)
 }
 
 static PyObject *cc_find_1st(PyObject *dummy, PyObject *args) {
+
   PyArrayObject *limit;
   PyArrayObject *input;
+
   if (!PyArg_ParseTuple(args, "O!O!:find_1st",
                         &PyArray_Type, &input,
                         &PyArray_Type, &limit))
                         return NULL;
-  if (NULL == input)  return NULL;
 
-  if (PyArray_NDIM(limit) != PyArray_NDIM(input)) {
+  int numDimsLimit = PyArray_NDIM((PyArrayObject*)limit);
+  int numDimsInput = PyArray_NDIM((PyArrayObject*)input);
+
+  if (numDimsLimit != numDimsInput) {
      PyErr_SetString(PyExc_ValueError,
          "cc_find_1st::Limit arrays must have the same dimensions.");
     return NULL;
   }
 
+  if (numDimsLimit > 1) {
+        int numColumnsLimit = PyArray_DIM((PyArrayObject*)limit, 1);
+        int numColumnsInput = PyArray_DIM((PyArrayObject*)input, 1);
+
+        if (numColumnsLimit != numColumnsInput) {
+            PyErr_SetString(PyExc_ValueError,
+            "cc_find_1st::Limit arrays must have the same dimensions.");
+           return NULL;
+        }
+  }
+
   int stride_x = PyArray_STRIDE(input, 0);
   int stride_y = PyArray_STRIDE(limit, 0);
-  int type   = PyArray_TYPE(input);
+  int pytype     = PyArray_TYPE(input);
 
   std::vector<int> ret;
-  switch(type) {
+
+
+  switch(pytype) {
   case NPY_DOUBLE:
     ret = find_1st_templ(reinterpret_cast<double*>(PyArray_DATA(input)),
                          reinterpret_cast<double*>(PyArray_DATA(limit)),
                          stride_x/sizeof(double), stride_y/sizeof(double),
                          static_cast<long>(PyArray_DIMS(input)[0]),
-                          static_cast<long>(PyArray_DIMS(limit)[0]),
+                         static_cast<long>(PyArray_DIMS(limit)[0]),
                          static_cast<long>(PyArray_DIMS(input)[1]));
     break;
   case NPY_FLOAT:
@@ -171,7 +213,8 @@ static PyObject *cc_find_1st(PyObject *dummy, PyObject *args) {
                          static_cast<long>(PyArray_DIMS(input)[1]));
     break;
   default:
-PyErr_SetString(PyExc_ValueError,
+
+  PyErr_SetString(PyExc_ValueError,
          "cc_find_1st::Input data type must be one of float64, float32, int64, int32, or bool.");
     return NULL;
   }

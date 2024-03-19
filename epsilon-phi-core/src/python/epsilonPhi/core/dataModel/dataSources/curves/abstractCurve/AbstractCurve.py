@@ -14,14 +14,18 @@ class AbstractCurve(object):
         assert isinstance(df, pd.DataFrame)
         self._curve_df = None
         self.set_curve_dataframe(df)
+        self._ordinals = np.array([x.toordinal() for x in self._curve_df.index])
 
     @property
     def tenors(self):
         return np.array(self._curve_df.columns)
+    @property
+    def ordinals(self):
+        return
 
     def set_curve_dataframe(self, df):
         _df = df.sort_index(axis=1)
-        self._curve_df = self.interpolate_df(_df, np.array(_df.columns))
+        self._curve_df = self.interpolate_df(_df, np.array(_df.columns)).sort_index(axis=0)
 
     def interpolate_df(self, df, xdense):
         _type = np.result_type(np.float64, np.float64)

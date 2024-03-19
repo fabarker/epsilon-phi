@@ -447,13 +447,29 @@ if __name__ == "__main__":
     import numpy as np
     import numba as nb
 
+    from epsilonPhi.core.cpp.fastfind.find_1st import *
+    import numpy as np
+
     x = np.arange(100).reshape(10, 10)
     y = np.arange(100).reshape(10, 10)
     z = np.arange(10)
 
     import pandas as pd
     path = '/Users/francisbarker/Desktop/Numba/Numba.xlsx'
-    df = pd.read_excel(path, sheet_name='Sheet9', index_col=0, header=[0])
+    df = pd.read_excel(path, sheet_name='Sheet9', index_col=0, header=[0, 1])
+    df = df.droplevel(level='date', axis=1)
+    df.index = np.array([x.toordinal() for x in pd.to_datetime(df.index)])
+
+    _stacked = df.stack()
+    hours = np.array(_stacked.index.get_level_values('t') * (365.25 * 24), dtype=np.int32)
+    input = np.asarray((_stacked.index.get_level_values(0).astype(str) + hours.astype(str)).astype(int))
+    limit = input.repeat(10)
+
+    input = input.astype(int).reshape(-1, 1)
+    input = np.sort(input, axis=0)
+    limit = limit.astype(int).reshape(-1, 1)
+
+    idx = find_1st(input, limit)
 
     N = df.shape[0]
 
