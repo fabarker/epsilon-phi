@@ -47,6 +47,10 @@ class VolSurfaceMgr(object):
         self._rate_curve = None
         self._funding_curve = None
         self._spot_prices = None
+        self._forward_prices = None
+        self._s = None
+        self._rd = None
+        self._rf = None
         self._put_deltas = None
         self._call_deltas = None
 
@@ -111,17 +115,25 @@ class VolSurfaceMgr(object):
         return self.ivols.get('k').values.reshape(-1, 1)
     @property
     def s(self):
-        return self.get_spot_prices(self.dates).values.reshape(-1, 1)
+        if self._s is None:
+            self._s = self.get_spot_prices(self.dates).values.reshape(-1, 1)
+        return self._s
     @property
     def f(self):
-        return self.get_forward_prices(self.dates,
-                                       self.t).values.reshape(-1, 1)
+        if self._forward_prices is None:
+            self._forward_prices = self.get_forward_prices(self.dates,
+                                   self.t).values.reshape(-1, 1)
+        return self._forward_prices
     @property
     def rd(self):
-        return self._rate_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+        if self._rd is None:
+            self._rd = self._rate_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+        return self._rd
     @property
     def rf(self):
-        return self._funding_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+        if self._rf is None:
+            self._rf = self._funding_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+        return self._rf
     @property
     def strike_references(self):
         return self.ivols.get(_STRIKE_REFERENCE)
@@ -149,25 +161,27 @@ class VolSurfaceMgr(object):
 
             df = df[df.mid > self._VOL_TOL]
             df = df.reset_index(drop=False).drop_duplicates(subset=['date', 'relative_strike', 'tenor']).set_index('date', drop=True)
-            # Estimate strikes from spot moneyness
-            _spt_idx = df[_STRIKE_REFERENCE].values == 'spot'
-            df.loc[_spt_idx, 'k'] = self.get_strikes_from_moneyness(df[_RELATIVE_STRIKE][_spt_idx])
 
-            # Estimate strikes from forward moneyness
-            _fwd_idx = df[_STRIKE_REFERENCE].values == 'forward'
-            df.loc[_fwd_idx, 'k'] = self.get_strikes_from_forward_moneyness(df[_RELATIVE_STRIKE][_fwd_idx],
-                                                                            df[_MATURITY][_fwd_idx])
-            # Estimates strikes from deltas
-            _del_idx = df[_STRIKE_REFERENCE].values == 'delta'
-            df.loc[_del_idx, 'k'] = self.get_strikes_from_deltas(df['mid'][_del_idx],
-                                                                 df[_MATURITY][_del_idx],
-                                                                 df[_RELATIVE_STRIKE][_del_idx],
-                                                                 self.delta_convention)
-            # Estimate the strikes for delta neutral points
-            _DN_idx = df.relative_strike == -999
-            df.loc[_DN_idx, 'k'] = self.get_strikes_from_atm_delta_neutral(df['mid'][_DN_idx],
-                                                                           df[_MATURITY][_DN_idx],
-                                                                           self.delta_convention)
+            if 'k' not in df.columns:
+                # Estimate strikes from spot moneyness
+                _spt_idx = df[_STRIKE_REFERENCE].values == 'spot'
+                df.loc[_spt_idx, 'k'] = self.get_strikes_from_moneyness(df[_RELATIVE_STRIKE][_spt_idx])
+
+                # Estimate strikes from forward moneyness
+                _fwd_idx = df[_STRIKE_REFERENCE].values == 'forward'
+                df.loc[_fwd_idx, 'k'] = self.get_strikes_from_forward_moneyness(df[_RELATIVE_STRIKE][_fwd_idx],
+                                                                                df[_MATURITY][_fwd_idx])
+                # Estimates strikes from deltas
+                _del_idx = df[_STRIKE_REFERENCE].values == 'delta'
+                df.loc[_del_idx, 'k'] = self.get_strikes_from_deltas(df['mid'][_del_idx],
+                                                                     df[_MATURITY][_del_idx],
+                                                                     df[_RELATIVE_STRIKE][_del_idx],
+                                                                     self.delta_convention)
+                # Estimate the strikes for delta neutral points
+                _DN_idx = df.relative_strike == -999
+                df.loc[_DN_idx, 'k'] = self.get_strikes_from_atm_delta_neutral(df['mid'][_DN_idx],
+                                                                               df[_MATURITY][_DN_idx],
+                                                                               self.delta_convention)
 
 
             self._ivol_cache[self.underlier] = df[['mid','t','k','relative_strike']].copy()

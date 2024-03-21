@@ -60,8 +60,8 @@ class AbstractVolSurface(object):
                                               self.spot_prices,
                                               self.rate_curve,
                                               self.funding_curve)
-        elif interpolator in [ Interpolator.CUBIC_SPLINE,
-                               Interpolator.CUBIC_SPLINE.value ]:
+        elif interpolator in [Interpolator.CUBIC_SPLINE,
+                               Interpolator.CUBIC_SPLINE.value]:
             self.interpolator = CubicSpline(self.raw,
                                             self.spot_prices,
                                             self.rate_curve,
@@ -170,12 +170,41 @@ if __name__ == "__main__":
                               strike_reference=StrikeReference.DELTA,
                               interpolation_method=Interpolator.CUBIC_SPLINE)
 
-    _DELTAS = [0.1, 0.25, 0.5, 0.75, 0.9]
+    _DELTAS = [-0.1, -0.25, -0.5, -0.75, -0.9]
     _MATURITIES = [1/12, 3/12, 6/12, 9/12, 12/12]
 
-    vols = self.get_ivols(strike_reference=StrikeReference.DELTA,
-                          relative_strike=_DELTAS,
-                          maturity=_MATURITIES)
+    pricing_dates = pd.date_range('01-01-1996', '31-12-2022', freq='B')
+
+    vols_t = self.get_ivols(strike_reference=StrikeReference.DELTA,
+                            relative_strike=_DELTAS,
+                            maturity=_MATURITIES,
+                            pricing_dates=pricing_dates)
+
+    from epsilonPhi.core.utils.DateUtils import DateUtils
+    str_ = DateUtils.mat_to_Rdate(vols_t.get('t').values)
+
+    DateUtils.get_expiry_date(vols_t.get('date')[0], 6/6)
+
+    day_to_expiry = (vols_t.get('t') * 365).astype(np.int64)
+    vols_t['expiry'] = vols_t.get('date') + pd.to_timedelta(day_to_expiry, 'D')
+
+    pd_ = vols_t.get('date') + pd.to_timedelta(1, 'D')
+    td_ = (vols_t['expiry'] - pd_).dt.days.values / 365
+
+
+    vols_T = self.get_ivols(pricing_dates=pd_,
+                            strike_reference=StrikeReference.STRIKE_PRICE,
+                            relative_strike=np.asarray(vols_t['k']),
+                            maturity=td_)
+
+    vols_T['expiry'] = vols_t['expiry']
+    vols_T['x'] = vols_t['x']
+
+    sig_t = vols_t.set_index(['date', 'k', 'expiry'], drop=True).dropna().get('mid')
+    sig_T = vols_T.set_index(['date', 'k', 'expiry'], drop=True).dropna().get('mid')
+
+
+    sigs = pd.concat((sig_t, sig_T), axis=0)
 
 
 

@@ -1,9 +1,7 @@
-from numba_stats import norm
-from numba import jit
 from numba import njit, float64, vectorize
-from numba.np.arraymath import binary_search_with_guess, determine_dtype, np_interp
-import numpy as np
+from numba.np.arraymath import binary_search_with_guess
 import warnings
+import numpy as np
 from numba.core.errors import NumbaPendingDeprecationWarning
 from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_spline as cubicspline
 
@@ -251,9 +249,20 @@ def norminvcdf(p):
 def interp_N(x, xp, fp, _type):
 
     x_ = np.asarray(x, dtype=np.float64)
-    _res = np.empty((len(fp), x_.size), dtype=_type)
+    _res = np.empty((len(fp), x_.shape[0]), dtype=_type)
+
     for n in range(len(fp)):
         _res[n, :] = np_interp_1d(x_, xp, fp[n, :], _type)
+    return _res
+
+@njit(cache=True)
+def interp_N_vect(x, xp, fp, _type):
+
+    x_ = np.asarray(x, dtype=np.float64)
+    _res = np.empty((len(fp), x_.shape[1]), dtype=_type)
+
+    for n in range(len(fp)):
+        _res[n, :] = np_interp_1d(x_[n, :], xp, fp[n, :], _type)
     return _res
 
 @njit(cache=True)
@@ -447,7 +456,7 @@ if __name__ == "__main__":
     import numpy as np
     import numba as nb
 
-    from epsilonPhi.core.cpp.fastfind.find_1st import *
+    from epsilonPhi.core.lib.cpp.fastfind.find_1st import *
     import numpy as np
 
     x = np.arange(100).reshape(10, 10)
@@ -459,6 +468,12 @@ if __name__ == "__main__":
     df = pd.read_excel(path, sheet_name='Sheet9', index_col=0, header=[0, 1])
     df = df.droplevel(level='date', axis=1)
     df.index = np.array([x.toordinal() for x in pd.to_datetime(df.index)])
+
+
+    @njit()
+    def to_ordinal(x):
+        o = x - (-719162)
+        return o
 
     _stacked = df.stack()
     hours = np.array(_stacked.index.get_level_values('t') * (365.25 * 24), dtype=np.int32)

@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_spline as cubicspline
+from epsilonPhi.core.dataModel.dataSources.curves.abstractCurve.AbstractCurve import AbstractCurve
+from epsilonPhi.core.utils.NumpyUtils import NumpyUtils as npu
 from numba import jit
 from tqdm import tqdm
 from epsilonPhi.core.utils.OptionUtils import *
@@ -12,7 +14,7 @@ from epsilonPhi.core.utils.MathUtils import cubic_spline
 class CubicSpline(object):
     def __init__(self, ivols, s, rd, rf):
 
-        # Set ivols panel
+        # Set ivols panel..
         self.set_ivols(ivols)
 
         # Sset spot rates
@@ -21,6 +23,7 @@ class CubicSpline(object):
         # Set interest and funding rate curves
         self.set_risk_free_rate_curve(rd)
         self.set_funding_rate_curve(rf)
+        self.set_forward_prices()
         self._x = None
 
 
@@ -31,218 +34,161 @@ class CubicSpline(object):
 
         # Extract the strike reference and observations
         self._strike_reference = _ivols.columns[_loc][0]
-        vols = _ivols.drop_duplicates(['date', 't', self._strike_reference])
-        self._ivols = vols.set_index(['date', 't', self._strike_reference], drop=True)
-        self._ivols = self._ivols[~self._ivols.index.duplicated(keep='first')].sort_index(level='date')
+        _ivols = _ivols.rename(columns={self._strike_reference: 'x'})
+
+        vols = _ivols.set_index(['date', 't', 'x'], drop=True)
+        self._ivols = vols[~vols.index.duplicated(keep='first')].sort_index(level='date')
+        self._ivols = self._ivols.unstack(level=['t', 'x']).sort_index(axis=1)
 
     def set_spot_prices(self, df):
-        self._spot = df.copy()
+        self._spot = df.loc[self.dates].to_frame()
 
     def set_risk_free_rate_curve(self, rd):
         self._rate_curve = rd
+        self.set_risk_free_rate()
 
     def set_funding_rate_curve(self, rf):
         self._funding_curve = rf
+        self.set_funding_rate()
+
+    def set_forward_prices(self):
+        self._f = self._spot.values * np.exp(-1 * self._rf * self.t) / np.exp(-1 * self._rd * self.t)
+        self._forward_curve = AbstractCurve(self._f)
+
+    def set_risk_free_rate(self):
+        self._rd = self._rate_curve.get_curve(self.dates, self.t[0,:])
+
+    def set_funding_rate(self):
+        self._rf = self._funding_curve.get_curve(self.dates, self.t[0,:])
 
     @property
-    def keys(self):
-        return self.ivols.index
+    def k_ref(self):
+        return self._strike_reference
     @property
-    def unique_dates(self):
-        return pd.to_datetime(np.unique(self.dates))
+    def T(self):
+        return len(self.dates)
+    @property
+    def dates(self):
+        return self.ivols.index
     @property
     def ivols(self):
         return self._ivols.copy()
     @property
-    def dates(self):
-        return pd.to_datetime(self.ivols.index.get_level_values('date'))
-    @property
-    def maturities(self):
-        return np.sort(np.unique(self.t))
-    @property
     def sig(self):
-        return self.ivols.get('mid').values.reshape(-1, 1)
+        return self.ivols.get('mid')
     @property
     def x(self):
-        return np.array(self.ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
+        return self.strikes.repeat(self.T, axis=0)
+    @property
+    def strikes(self):
+        return self.ivols.columns.get_level_values(self._strike_reference).values[None, :]
+    @property
+    def mat(self):
+        return self.ivols.columns.get_level_values('t').values[None, :]
     @property
     def t(self):
-        return np.array(self.ivols.index.get_level_values('t')).reshape(-1, 1)
+        return self.mat.repeat(self.T, axis=0)
     @property
     def k(self):
-        return self.ivols.get('k').values.reshape(-1, 1)
+        return self.ivols.get('k')
+    @property
     def rf(self):
-        return self._rate_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+        return self._rf.values
+    @property
     def rd(self):
-        return self._funding_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+        return self._rd.values
+    @property
     def s(self):
-        return self._spot.loc[self.dates].values.reshape(-1, 1)
+        return self._spot.values
+    @property
     def f(self):
-        return self.get_forward_prices(self.dates, self.t)
-    def ivol_frame(self):
-        return self._ivols.get('mid').unstack(level=['t', self._strike_reference])
-    def ik_frame(self):
-        return self._ivols.get('k').unstack(level=['t', self._strike_reference])
+        return self._f.values
 
-    def delta(self):
-        return fast_delta(self.s(),
-                          self.t,
-                          self.k,
-                          self.rd(),
-                          self.rf(),
-                          self.sig,
-                          1,
-                          -1)
-    def convexity_adj_moneyness(self):
-        lnm = self.log_moneyness()
-        zp = lnm + 0.5 * np.power(self.sig, 2) * self.t
-        return zp / (self.sig * np.sqrt(self.t))
+    def get_f(self, pricing_dates, maturities):
+        return self._forward_curve.get_curve(pricing_dates, maturities)
+    def get_rd(self, pricing_dates, maturities, is_stacked=False):
+        return self._rate_curve.get_curve(pricing_dates, maturities, is_stacked)
+    def get_rf(self, pricing_dates, maturities, is_stacked=False):
+        return self._funding_curve.get_curve(pricing_dates, maturities, is_stacked)
+    def get_s(self, pricing_dates):
+        return self._spot.reindex(pricing_dates)
 
-    def log_moneyness(self):
-        return np.log(self.k / self.f)
-    def moneyness(self):
-        return self.k / self.s
-    def z_score(self):
-        lmn = self.log_moneyness()
-        return lmn / (self.sig * np.sqrt(self.t))
+    def get_deltas(self, sig):
+
+        _t = sig.get('t').values.flatten().astype(np.float64)
+        _s = self.get_s(sig.get('date')).values.flatten().astype(np.float64)
+        _v = sig.get('mid').values.astype(np.float64)
+        _k = sig.get('k').values.astype(np.float64)
+
+        rd = self.get_rd(sig.get('date'), _t, True).values.astype(np.float64)
+        rf = self.get_rd(sig.get('date'), _t, True).values.astype(np.float64)
+
+        res = nb_delta(_s, _t, _k, rd, rf, _v, 2, -1)
+        return pd.DataFrame(res, columns=['x']).replace(0, np.nan)
 
     def get_ivols(self, pricing_dates, strike_reference, relative_strike, maturities):
 
         mats = np.round(maturities, 10)
         if pricing_dates is None:
-            _p, _t, _k = np.meshgrid(self.unique_dates, mats, relative_strike)
+            _p, _t, _k = npu.flat_meshgrid(self.dates, mats, relative_strike)
         elif pricing_dates.shape != mats.shape:
-            _p, _t, _k = np.meshgrid(pricing_dates, mats, relative_strike)
+            _p, _t, _k = npu.flat_meshgrid(pricing_dates, mats, relative_strike)
         else:
             assert pricing_dates.shape == mats.shape, 'Error - dimension mis-match'
             assert pricing_dates.shape == relative_strike.shape, 'Error - dimension mis-match'
-            _p, _t, _k = pricing_dates, maturities, strike_reference
+            _p, _t, _k = pricing_dates, maturities, relative_strike
 
-        self.load_ivols(_p, _t, _k, strike_reference)
-        _vols = FrameUtils.multiindex(_p.flatten(), _t.flatten(), _k.flatten())
-        return self.ivols.loc[_vols]
+        return self.load_ivols(_p, _t, _k, strike_reference)
 
     def load_ivols(self, pricing_dates, maturities, relative_strike, strike_reference):
 
         # Interpolate along the time direction - Flat Forward Interpolation.
-        self.interpolate_term_structure(maturities)
+        _sigs = self.interpolate_maturities(maturities, pricing_dates)
+        _sigs['k'] = self.get_strikes(_sigs, self._strike_reference)
 
         # Compute the surface values for the strike reference we care about
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
-            _x = self.delta()
-        elif strike_reference in [StrikeReference.MONEYNESS, StrikeReference.MONEYNESS.value]:
-            _x = self.moneyness()
-        elif strike_reference in [StrikeReference.LOG_MONEYNESS, StrikeReference.LOG_MONEYNESS.value]:
-            _x = self.log_moneyness()
-        elif strike_reference in [StrikeReference.Z_SCORE, StrikeReference.Z_SCORE.value]:
-            _x = self.z_score()
-        elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
-            _x = self.convexity_adj_moneyness()
+            _sigs['xk'] = self.get_deltas(_sigs)
         elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
-            _x = self.k
+            _sigs['xk'] = _sigs.get('k')
         else:
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
-        __x = self.ivols.copy()
-        __x['x'] = _x
-        self._x = __x[['mid','x']].unstack(self._strike_reference)
+        # Stack vols
+        vk = _sigs.set_index(['date','t']).pivot(columns='x').reindex(zip(pricing_dates, maturities))
+        v = vk.get('mid').sort_index(axis=1)
+        k = vk.get('xk').sort_index(axis=1)
 
-        _ivols = self.interpolate(pricing_dates, maturities, relative_strike)
-        _strikes = self.get_strikes(_ivols, strike_reference)
-        _sig = pd.concat((_ivols, _strikes), axis=1)
-
-        self._ivols = pd.concat((self._ivols, _sig), axis=0).sort_index(level='date')
+        _ivols = self.interpolate(v, k, relative_strike)
+        _ivols['k'] = self.get_strikes(_ivols, strike_reference)
+        return _ivols
 
     def get_strikes(self, ivols, strike_reference):
 
         # Compute the surface values for the strike reference we care about
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
             return self.get_strikes_from_delta(ivols)
-        elif strike_reference in [StrikeReference.MONEYNESS, StrikeReference.MONEYNESS.value]:
-            return self.get_strikes_from_moneyness(ivols)
-        elif strike_reference in [StrikeReference.LOG_MONEYNESS, StrikeReference.LOG_MONEYNESS.value]:
-            return self.get_strikes_from_log_moneyness(ivols)
-        elif strike_reference in [StrikeReference.Z_SCORE, StrikeReference.Z_SCORE.value]:
-            return self.get_strikes_from_z_score(ivols)
-        elif strike_reference in [StrikeReference.CONVEXITY_MN, StrikeReference.CONVEXITY_MN.value]:
-            return self.get_strikes_from_convexity_moneyness(ivols)
+        elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
+            return ivols.get('x')
         else:
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
-    def get_strikes_from_delta(self, ivols):
+    def get_strikes_from_delta(self, df_):
 
-        _t = np.array(ivols.index.get_level_values('t'))
-        _x = np.array(ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
-        _T = _t.reshape(-1, 1)
+        _v = df_.get('mid').values.astype(np.float64)
+        _x = df_.get('x').values.astype(np.float64)
+        _s = self.get_s(df_.get('date')).values.ravel().astype(np.float64)
+        _t = df_.get('t').values.astype(np.float64)
 
-        _rd = self.get_risk_free_rates(ivols.index.get_level_values(0), _t)
-        _rf = self.get_funding_rates(ivols.index.get_level_values(0), _t)
-        _s = self.get_spot_rates(ivols.index.get_level_values(0))
-        k = pd.DataFrame(solve_for_strike(_s,
-                                          _T,
-                                          _rd,
-                                          _rf,
-                                          np.sign(_x),
-                                          _x,
-                                         1,
-                                          ivols), index=ivols.index)
-        k.columns = ['k']
-        return k
+        rd = self.get_rd(df_.get('date'), _t, True).values.astype(np.float64)
+        rf = self.get_rf(df_.get('date'), _t, True).values.astype(np.float64)
+        ot = np.sign(_x).astype(np.int64)
+        k = nb_strike(_s, _t, rd, rf, ot, _x, 1, _v)
+        return pd.DataFrame(k, index=df_.index, columns=['k'])
 
-    def get_strikes_from_moneyness(self, ivols):
-        _x = np.array(ivols.columns.get_level_values(self._strike_reference)).reshape(1, -1).repeat(ivols.shape[0], axis=0)
-        _t = np.array(ivols.index.get_level_values(1))
-        _f = self.get_forward_prices(ivols.index.get_level_values(0),
-                                     _t)
-        k =  pd.DataFrame(_x * self.f, index=ivols.index)
-        k.columns = [('k', x) for x in ivols.columns.get_level_values(1)]
-        return k
-
-    def get_strikes_from_log_moneyness(self, ivols):
-        _x = np.array(ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
-        _t = np.array(ivols.index.get_level_values('t'))
-        _f = self.get_forward_prices(ivols.index.get_level_values(0),
-                                     _t)
-        k = pd.DataFrame(_f * np.exp(_x), index=ivols.index, columns=['k'])
-        return k
-
-    def get_strikes_from_z_score(self, ivols):
-        _x = np.array(ivols.columns.get_level_values(self._strike_reference)).reshape(1, -1).repeat(ivols.shape[0], axis=0)
-        _t = np.array(ivols.index.get_level_values(1))
-        _f = self.get_forward_prices(ivols.index.get_level_values(0),
-                                     _t)
-
-        k = _f * np.exp(_x * (ivols * np.sqrt(_t)))
-        k.columns = [('k', x) for x in k.columns.get_level_values(1)]
-        return k
-
-    def get_strikes_from_convexity_moneyness(self, ivols):
-        sigsq = np.power(ivols, 2)
-
-        _t = np.array(ivols.index.get_level_values('t'))
-        _f = self.get_forward_prices(ivols.index.get_level_values('date'), _t)
-        _x = np.array(ivols.index.get_level_values(self._strike_reference)).reshape(-1, 1)
-        _T = _t.reshape(-1, 1)
-        k = _f * np.exp(_x * (ivols * np.sqrt(_T)) - 0.5 * sigsq * _T)
-        k.columns = ['k']
-        return k
-
-    def get_forward_prices(self, pricing_dates, maturities):
-        return (self.get_spot_rates(pricing_dates) *
-               np.exp(-self.get_funding_rates(pricing_dates, maturities) * maturities.reshape(-1, 1)) /
-               np.exp(-self.get_risk_free_rates(pricing_dates, maturities) * maturities.reshape(-1, 1)))
-
-    def get_risk_free_rates(self, pricing_dates, maturities):
-        return self._rate_curve.get_stacked_curve(pricing_dates, maturities).values.reshape(-1, 1)
-
-    def get_funding_rates(self, pricing_dates, maturities):
-        return self._funding_curve.get_stacked_curve(pricing_dates, maturities).values.reshape(-1, 1)
-
-    def get_spot_rates(self, pricing_dates):
-        return self._spot.loc[pricing_dates].values.reshape(-1, 1)
 
     @staticmethod
-    @njit
+    @njit([float64[:](float64[:,:], float64[:,:], float64[:])], cache=True)
     def spline_interp(x, y, xp):
 
         xp_ = np.asarray(xp, dtype=np.float64)
@@ -265,55 +211,34 @@ class CubicSpline(object):
         return z
 
 
-    def interpolate(self, dates=None, maturities=None, strikes=None):
-
-        assert dates.shape == maturities.shape, 'Error - dimension mis-match'
-        assert dates.shape == strikes.shape, 'Error - dimension mis-match'
-
-        tau = FrameUtils.multiindex(dates.flatten(),
-                                    maturities.flatten(),
-                                    strikes.flatten())
+    def interpolate(self, v, k, x):
 
         # Target Observations...
-        _tau = tau.difference(self.keys)
-        _tau.names = self.keys.names
-        if _tau.size > 0:
+        fy = np.asarray(v, dtype=np.float64)
+        fx = np.asarray(k, dtype=np.float64)
+        xp = np.asarray(x, dtype=np.float64)
 
-            xp = np.array(_tau.get_level_values(2))
-
-            Y_p = self._x.reindex(_tau.droplevel(2))
-            _y = Y_p.get('mid').values
-            _x = Y_p.get('x').values
-
-            res = CubicSpline.spline_interp(_x, _y, xp)
-
-            idx = (res < np.nanmin(_y)) | (res > np.nanmax(_y))
-            res[idx] = np.nan
-            return pd.DataFrame(res, index=_tau, columns=['mid'])
-        else:
-            return pd.DataFrame(index=_tau, columns=['mid'])
+        res = np.column_stack((CubicSpline.spline_interp(fx, fy, xp), x))
+        res[(res[:, 0] <= 0) | (res[:, 0] > np.nanmax(fy))] = np.nan
+        return pd.DataFrame(res, index=v.index, columns=['mid', 'x']).reset_index()
 
 
-    def interpolate_term_structure(self, maturities):
+    def interpolate_maturities(self, maturities, pricing_dates=None):
 
         if maturities is None:
            return
 
-        unique_mats = np.unique(maturities)
-        interp = FrameUtils.rowise_flat_forward_interpolation_on_groups(self.ivol_frame(),
-                                                                        unique_mats,
-                                                                        x_lev='t',
-                                                                        group=self._strike_reference)
+        if pricing_dates is None:
+           _df = self.sig
+        else:
+           _df = self.sig.reindex(np.unique(pricing_dates)).dropna(how='all', axis=0)
 
-        interp_ = interp.dropna(how='all', axis=1).stack(level=[0, 1]).to_frame('mid')
+        res = FrameUtils.rowise_flat_forward_interpolation_on_groups(_df,
+                                                                      np.unique(maturities),
+                                                                      x_lev='t',
+                                                                      group='x').dropna(how='all', axis=1)
+        return res.stack(level=[0, 1]).to_frame('mid').reset_index(drop=False)
 
-        # Get the corresponding strikes for our interpolated tenors
-        _strikes = self.get_strikes(interp_, self._strike_reference)
-        _vols = pd.concat((interp_, _strikes), axis=1)
-
-        # Concatenate the new interpolated vols onto the ivols
-        _ivols = pd.concat((self._ivols, _vols.loc[_vols.index.difference(self.ivols.index)]), axis=0)
-        self._ivols = _ivols[~_ivols.index.duplicated(keep='first')].sort_index(level='date')
 
 
 if __name__ == "__main__":
@@ -343,10 +268,3 @@ if __name__ == "__main__":
         strikes = [-0.1, -0.25, -0.5, -0.75, -0.9]
         maturities = [1 / 12, 1/12 + 0.5/12, 3 / 12, 4/12, 6 / 12, 9/12, 12/12]
         fxivols = self.get_ivols(None, strike_reference, strikes, maturities)
-
-        fxivols_2 = self.get_ivols(None, strike_reference, strikes, maturities)
-
-        _vols = fxivols.get('mid').unstack(level=[strike_reference, 't']).sort_index(level=0)
-        _ivols = _vols.loc['01/10/1997':'30/06/2023']
-
-        #

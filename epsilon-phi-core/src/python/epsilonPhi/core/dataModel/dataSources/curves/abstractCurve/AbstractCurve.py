@@ -1,7 +1,8 @@
 import numpy as np
-from epsilonPhi.core.utils.MathUtils import interp_N
+from epsilonPhi.core.utils.MathUtils import interp_N, interp_N_vect
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
+from epsilonPhi.core.lib.cpp.fastfind.find_1st import *
 import pandas as pd
 import warnings
 
@@ -13,19 +14,20 @@ class AbstractCurve(object):
     def __init__(self, df):
         assert isinstance(df, pd.DataFrame)
         self._curve_df = None
+        self._ordinals = None
         self.set_curve_dataframe(df)
-        self._ordinals = np.array([x.toordinal() for x in self._curve_df.index])
 
     @property
     def tenors(self):
         return np.array(self._curve_df.columns)
     @property
     def ordinals(self):
-        return
+        return self._ordinals
 
     def set_curve_dataframe(self, df):
         _df = df.sort_index(axis=1)
         self._curve_df = self.interpolate_df(_df, np.array(_df.columns)).sort_index(axis=0)
+        self._ordinals = DateUtils.to_ordinal(self._curve_df.index)
 
     def interpolate_df(self, df, xdense):
         _type = np.result_type(np.float64, np.float64)
@@ -54,23 +56,20 @@ class AbstractCurve(object):
 
     def get_stacked_curve(self, dates=None, maturity=None):
 
+        D_M = DateUtils.to_ordinal(dates)
+        _idx = find_1st(self.ordinals.reshape(-1, 1),
+                        D_M.reshape(-1, 1))
+
+
         # Get the curve on the dates that we need observations
-        _ivols = self._curve_df.loc[np.unique(dates)]
-        # Get the unique maturities
-        _mats = np.unique(maturity)
+        _ivols = self._curve_df.iloc[_idx, :]
 
         # Build arrays for interpolator
         fp = _ivols.values
         xp = np.array(_ivols.columns)
 
+        mat = maturity.reshape(-1, 1)
         # Interpolate
         _type = np.result_type(np.float64, np.float64)
-        res = interp_N(_mats, xp, fp, _type)
-
-        # Extract
-        dates_ = _ivols.index.repeat(len(_mats))
-        mats_ = _mats.reshape(1, -1).repeat(len(dates), 0).flatten()
-        vals_ = res.flatten()
-
-        rf = pd.Series(vals_, index=FrameUtils.multiindex(dates_, mats_))
-        return rf.reindex(FrameUtils.multiindex(dates, maturity.flatten()))
+        res = interp_N_vect(mat, xp, fp, _type)
+        return pd.Series(res.flatten(), index=[dates, maturity.flatten()])
