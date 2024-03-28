@@ -213,7 +213,7 @@ class CubicSpline(object):
 
 
     @staticmethod
-    #@njit([float64[:](float64[:,:], float64[:,:], float64[:])], cache=True)
+    @njit([float64[:](float64[:,:], float64[:,:], float64[:])], cache=True)
     def spline_interp(x, y, xp):
 
         xp_ = np.asarray(xp, dtype=np.float64)

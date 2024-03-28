@@ -9,8 +9,10 @@ import pandas as pd
 from scipy.stats import t as tstudent
 
 class SmileStatArb(object):
+
     _DELTAS = [-0.1, -0.25, -0.5, -0.75, -0.9]
     _MATURITIES = np.array([1, 3, 6, 9, 12]) / 12
+
 
     def __init__(self, underlier, start_date=None, end_date=None):
 
@@ -26,6 +28,9 @@ class SmileStatArb(object):
         self.set_dates(start_date, end_date)
         self._ivols = None
         self._load_ivols()
+
+        # Strategy Cache
+        self._cache = {}
 
     def set_dates(self, start_date, end_date):
         self._start_date = start_date
@@ -141,10 +146,6 @@ class SmileStatArb(object):
                     res[t, k] =  smooth_2d(x[t, :], y[t, :], x[t, k], y[t, k], z[t, :])
             return res
         return smooth(x, y, z)
-
-    def get_sig(self, _HOLDING_DAYS):
-        ED = np.max(self.get_open_dates(_HOLDING_DAYS))
-        return self.get_I().loc[:ED].stack([0, 1])
 
     def get_k(self):
         if not hasattr(self, '_k'):
@@ -367,10 +368,10 @@ class SmileStatArb(object):
 
     def black_volga(self):
         return black_volga(self.get_F_prime().values,
-                          self.t,
-                          self.get_k().values,
-                          self.get_rd().values,
-                          self.get_I())
+                           self.t,
+                           self.get_k().values,
+                           self.get_rd().values,
+                           self.get_I())
 
     def volga_bump(self):
         return volga_bump(self.get_F_prime().values,
@@ -465,6 +466,12 @@ class SmileStatArb(object):
         rp = b_df - beta_0.reindex(b_df.index).values
         return rp, e, b_df, c_df, p_df, q_df
 
+    def get_sig(self, _HOLDING_DAYS):
+        ED = np.max(self.get_open_dates(_HOLDING_DAYS))
+        I_stacked = self.get_I().loc[:ED].stack([0, 1])
+        I_stacked.index.names = ['date', 'x', 't']
+        return I_stacked
+
     def get_strikes(self, _HOLDING_DAYS=21):
         res = nb_strike(self.get_S().values.repeat(self.N, 1),
                         self.t,
@@ -474,16 +481,27 @@ class SmileStatArb(object):
                         self.get_I().values)
 
         ED = self.get_last_open_date(_HOLDING_DAYS)
-        return pd.DataFrame(res, index=self.dates, columns=self.cols).loc[:ED].stack([0, 1])
+        K_stacked = pd.DataFrame(res, index=self.dates, columns=self.cols).loc[:ED].stack([0, 1])
+        K_stacked.index.names = ['date', 'x', 't']
+        return K_stacked
 
-    def get_open_dates(self, HOLDING_DAYS=21):
-        return self.dates[:-HOLDING_DAYS]
+    def get_open_dates(self, _HOLDING_DAYS=21):
+        return self.dates[:-_HOLDING_DAYS]
 
-    def get_open_vols(self, HOLDING_DAYS=21):
-        return self.get_sig(HOLDING_DAYS)
+    def get_open_date_paths(self, _HOLDING_DAYS=21):
+        return np.array(self.get_open_vols(_HOLDING_DAYS).index.get_level_values('date'))[:, None]
 
-    def get_open_strikes(self, HOLDING_DAYS=21):
-        return self.get_strikes(HOLDING_DAYS)
+    def get_open_maturities(self, _HOLDING_DAYS=21):
+        return np.array(self.get_open_vols(_HOLDING_DAYS).index.get_level_values('t'))[:, None]
+
+    def get_open_vols(self, _HOLDING_DAYS=21):
+        return self.get_sig(_HOLDING_DAYS)
+
+    def get_open_strikes(self, _HOLDING_DAYS=21):
+        ED = np.max(self.get_open_dates(_HOLDING_DAYS))
+        k = self.get_k().loc[:ED].stack([0, 1])
+        k.index.names = ['date', 'x', 't']
+        return k
 
     def get_last_open_date(self, _HOLDING_DAYS):
         return np.max(self.get_open_dates(_HOLDING_DAYS))
@@ -500,81 +518,115 @@ class SmileStatArb(object):
     def get_pricing_date_paths(self,  _HOLDING_DAYS):
         idx = self.get_path_idxs(_HOLDING_DAYS)
         return pd.DataFrame(self.dates.values[idx],
-                            index=ks.index,
-                            columns=ks.columns)
+                            index=self.get_sig(_HOLDING_DAYS).index)
 
 
     def get_s_paths(self, _HOLDING_DAYS):
         idx = self.get_path_idxs(_HOLDING_DAYS)
         return pd.DataFrame(self.get_S().values.flatten()[idx],
-                            index=self.get_open_vols(_HOLDING_DAYS).index)
+                            index=self.get_sig(_HOLDING_DAYS).index)
 
-    def get_rf_paths(self):
-        pass
+    def get_ttm_paths(self, _HOLDING_DAYS):
 
-    def get_rd_paths(self):
-        pass
+        if ('t', _HOLDING_DAYS) not in self._cache.keys():
+            E = (self.get_pricing_date_paths(_HOLDING_DAYS) -
+                 self.get_open_date_paths(_HOLDING_DAYS)) / np.timedelta64(1, 'D') / 365
 
-    def get_f_paths(self):
-        pass
+            M = self.get_open_maturities(_HOLDING_DAYS)
+            self._cache[('t', _HOLDING_DAYS)] = pd.DataFrame(np.maximum(M-E, 0),
+                                                             index=self.get_sig(_HOLDING_DAYS).index)
+        return self._cache[('t', _HOLDING_DAYS)]
+
+    def get_rf_paths(self, _HOLDING_DAYS):
+
+        if ('rf', _HOLDING_DAYS) not in self._cache.keys():
+
+            p = self.get_pricing_date_paths(_HOLDING_DAYS)
+            m = self.get_ttm_paths(_HOLDING_DAYS).values
+            rf = self._vs.interpolator.get_rf(p.values.flatten(), m.flatten(), True)
+            self._cache[('rf', _HOLDING_DAYS)] = pd.DataFrame(rf.values.reshape(p.shape), index=p.index)
+        return self._cache[('rf', _HOLDING_DAYS)]
+
+    def get_rd_paths(self, _HOLDING_DAYS):
+
+        if ('rd', _HOLDING_DAYS) not in self._cache.keys():
+
+            p = self.get_pricing_date_paths(_HOLDING_DAYS)
+            m = self.get_ttm_paths(_HOLDING_DAYS).values
+            rd = self._vs.interpolator.get_rd(p.values.flatten(), m.flatten(), True)
+            self._cache[('rd', _HOLDING_DAYS)] = pd.DataFrame(rd.values.reshape(p.shape), index=p.index)
+        return self._cache[('rd', _HOLDING_DAYS)]
+
+    def get_f_paths(self, _HOLDING_DAYS):
+
+        if ('f', _HOLDING_DAYS) not in self._cache.keys():
+            _rf = self.get_rf_paths(_HOLDING_DAYS)
+            _rd = self.get_rd_paths(_HOLDING_DAYS)
+            _t = self.get_ttm_paths(_HOLDING_DAYS)
+            self._cache[('f', _HOLDING_DAYS)] = np.exp(-_rf * _t) / np.exp(-_rd * _t)
+        return self._cache[('f', _HOLDING_DAYS)]
 
     def get_k_paths(self, _HOLDING_DAYS):
+        k = self.get_open_strikes(_HOLDING_DAYS)
+        return pd.concat([k] * (_HOLDING_DAYS + 1), axis=1)
+
+    def get_sig_paths(self, _HOLDING_DAYS):
+
+        if ('v', _HOLDING_DAYS) not in self._cache.keys():
+
+            p = self.get_pricing_date_paths(_HOLDING_DAYS).values.flatten()
+            k = pd.concat([self.get_strikes(_HOLDING_DAYS)] * (_HOLDING_DAYS + 1), axis=1)
+            t = self.get_ttm_paths(_HOLDING_DAYS).values.flatten()
+
+            sig_fit = self.get_fixed_strike_and_maturity_ivols(p,
+                                                               k.values.flatten(),
+                                                               t)
+
+            self._cache[('v', _HOLDING_DAYS)] = pd.DataFrame(sig_fit['mid'].values.reshape(k.shape), index=k.index)
+        return self._cache[('v', _HOLDING_DAYS)]
+
+    def get_option_price_paths(self, _HOLDING_DAYS, option_type=-1):
+
+        if ('o', _HOLDING_DAYS) not in self._cache.keys():
+
+            f = self.get_f_paths(_HOLDING_DAYS).values
+            k = self.get_k_paths(_HOLDING_DAYS).values
+            t = self.get_ttm_paths(_HOLDING_DAYS).values
+            r = self.get_rd_paths(_HOLDING_DAYS).values
+            v = self.get_sig_paths(_HOLDING_DAYS)
+
+            bsprice = blsprice(f,
+                               t,
+                               k,
+                               r,
+                               v.values,
+                               option_type)
+            self._cache[('o', _HOLDING_DAYS)] = pd.DataFrame(bsprice, index=v.index)
+        return self._cache[('o', _HOLDING_DAYS)]
+
+    def get_delta_paths(self, _HOLDING_DAYS, option_type=-1):
+
+        if ('d', _HOLDING_DAYS) not in self._cache.keys():
+
+            f = self.get_f_paths(_HOLDING_DAYS).values
+            k = self.get_k_paths(_HOLDING_DAYS).values
+            t = self.get_ttm_paths(_HOLDING_DAYS).values
+            r = self.get_rf_paths(_HOLDING_DAYS).values
+            v = self.get_sig_paths(_HOLDING_DAYS)
+
+            bsdelta = black_delta(f,
+                                  t,
+                                  k,
+                                  r,
+                                  v.values,
+                                  2,
+                                  option_type)
+
+            self._cache[('d', _HOLDING_DAYS)] = pd.DataFrame(bsdelta, index=v.index)
+        return self._cache[('d', _HOLDING_DAYS)]
+
+    def get_sa_weights(self):
         pass
-
-    def get_sig_paths(self):
-        pass
-
-    def get_ttm_paths(self):
-        pass
-
-    def get_delta_paths(self):
-        pass
-
-
-
-    def get_option_vols(self, _HOLDING_DAYS=21):
-
-        # Implied Vols
-        sig = self.get_sig(_HOLDING_DAYS)
-
-        # Maturities
-        t = np.array(sig.index.get_level_values(2)).reshape(-1, 1)
-
-        # Strike Prices
-        k  = self.get_strikes(_HOLDING_DAYS)
-        ks = pd.concat([k] * (_HOLDING_DAYS + 1), axis=1)
-
-        # All Pricing Dates
-        idx = self.get_path_idxs(_HOLDING_DAYS)
-        _PD = pd.DataFrame(self.dates.values[idx], index=ks.index, columns=ks.columns)
-
-        # Time to maturity
-        elapsed = np.asarray((_PD - _PD.values[:,0].reshape(-1, 1))/np.timedelta64(1, 'D'), dtype=int)/365
-        ttm = pd.DataFrame(np.maximum(t - elapsed, 0), index=ks.index, columns=ks.columns)
-
-
-        ivols = self.get_fixed_strike_and_maturity_ivols(_PD.values.flatten(),
-                                                         ks.values.flatten(),
-                                                         ttm.values.flatten())
-
-        _vols = pd.DataFrame(ivols['mid'].values.reshape(_PD.shape), index=ks.index, columns=ks.columns)
-
-        f = self._vs.interpolator.get_f(np.unique(ivols.get('date')),
-                                        np.unique(ivols.get('t'))).stack(level=0)
-        _f = f.loc[ivols.set_index(['date', 't']).index].values.reshape(_PD.shape)
-
-
-        rf = self._vs.get_risk_free(np.unique(ivols.get('date')),
-                                    np.unique(ivols.get('t'))).stack(level=0)
-        rf_ = rf.loc[ivols.set_index(['date', 't']).index].values.reshape(_PD.shape)
-
-        bsprice = blsprice(_f,
-                           ttm.values,
-                           ks.values,
-                           rf_,
-                           _vols.values,
-                           -1)
-
 
 
 if __name__ == "__main__":
@@ -583,7 +635,7 @@ if __name__ == "__main__":
     SD = pd.to_datetime('31-Dec-1996')
     ED = pd.to_datetime('31-Dec-2022')
     self = SmileStatArb('GBPUSD', SD, ED)
-    self.get_option_vols(21)
+    self.get_delta_paths(21)
 
     import matplotlib.pyplot as plt
     # Assuming self.get_I() returns a DataFrame

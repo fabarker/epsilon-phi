@@ -247,9 +247,9 @@ def black_delta(f, t, k, q, v, delta_type_value, option_type):
     d1_ = (np.log(f/k) + v * v * t / 2.0) / (v * np.sqrt(t))
 
     if delta_type_value == 1:
-        return phi * np.exp(-q * t) * n_vect(phi * d1_)
+        return phi * np.exp(-q * t) * norm.cdf(phi * d1_)
     else:
-        return phi * np.exp(-q * t) * n_vect(phi * d1_) * np.exp(q*t)
+        return phi * np.exp(-q * t) * norm.cdf(phi * d1_) * np.exp(q*t)
 
 ###############################################################################
 
@@ -515,12 +515,6 @@ def nb_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
         return pct_fwd_delta_prem_adj
     else:
         raise FinError("Unknown FinFXDeltaMethod")
-
-
-def black_volga(f, t, k, r, vol):
-    d1 = (np.log(f / k) + vol * vol * t / 2.0) / (vol * np.sqrt(t))
-    d2 = d1 - vol * np.sqrt(t)
-    return f * np.exp(-r*t) * np.sqrt(t) * n_prime_vect(d1) * d1 * d2 * (1/vol)
 
 
 def delta_bump(f, t, k, rd, v, option_type_value):
