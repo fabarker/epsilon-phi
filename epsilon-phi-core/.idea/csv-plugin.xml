@@ -3,6 +3,13 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="/src/Scripts/test_cpp_dates.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/curves/abstractCurve/AbstractCurve.py">
           <value>
             <Attribute>

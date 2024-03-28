@@ -100,7 +100,7 @@ class VolSurfaceMgr(object):
         return self._spec.get('category')
     @property
     def delta_convention(self):
-        return deltaConvention.get(self.underlier, DeltaType.SPOT_DELTA)
+        return deltaConvention.get(self.underlier, DeltaType.FORWARD_DELTA)
     @property
     def mids(self):
         return self.ivols.get('mid').values.reshape(-1, 1)
@@ -159,8 +159,10 @@ class VolSurfaceMgr(object):
                                       self.pricing_location,
                                       index='date')
 
-            df = df[df.mid > self._VOL_TOL]
-            df = df.reset_index(drop=False).drop_duplicates(subset=['date', 'relative_strike', 'tenor']).set_index('date', drop=True)
+            df = df.iloc[~df.index.dayofweek.isin([5, 6]), :]
+            df = df[df.mid > self._VOL_TOL].reset_index(drop=False)
+            df = df.drop_duplicates(subset=['date', 'relative_strike', 'tenor']).set_index('date', drop=True)
+            df['exp'] = DateUtils.expiry_from_settlement(df.index, df.get('tenor').to_list())
 
             if 'k' not in df.columns:
                 # Estimate strikes from spot moneyness
@@ -172,7 +174,7 @@ class VolSurfaceMgr(object):
                 df.loc[_fwd_idx, 'k'] = self.get_strikes_from_forward_moneyness(df[_RELATIVE_STRIKE][_fwd_idx],
                                                                                 df[_MATURITY][_fwd_idx])
                 # Estimates strikes from deltas
-                _del_idx = df[_STRIKE_REFERENCE].values == 'delta'
+                _del_idx = (df[_STRIKE_REFERENCE].values == 'delta') & (df[_RELATIVE_STRIKE] > -999)
                 df.loc[_del_idx, 'k'] = self.get_strikes_from_deltas(df['mid'][_del_idx],
                                                                      df[_MATURITY][_del_idx],
                                                                      df[_RELATIVE_STRIKE][_del_idx],
@@ -208,7 +210,7 @@ class VolSurfaceMgr(object):
     def _load_interest_rate_curve(self):
         self._rate_curve = IRCurve(region=self.region,
                                    type=['Interbank', 'Deposit'])
-        self._rate_curve._curve_df = self._rate_curve._curve_df * 0
+        self._rate_curve._curve_df = self._rate_curve._curve_df
 
     def _load_funding_rate_curve(self):
 
@@ -226,7 +228,7 @@ class VolSurfaceMgr(object):
             rf = self.ds.get_front_futures_continuous_series_settlement_price(self.ticker[0:3])
         else:
             raise ValueError('Error - category {} not recognized'.format(self.category))
-        self._funding_curve = AbstractCurve(rf * 0)
+        self._funding_curve = AbstractCurve(rf)
 
 
 
@@ -369,7 +371,7 @@ class VolSurfaceMgr(object):
     def get_strike_reference(self, strike_reference):
 
         if strike_reference in [StrikeReference.DELTA]:
-            return self.get_deltas(1)
+            return self.get_deltas(-1)
         if strike_reference in [StrikeReference.MONEYNESS]:
             return self.get_moneyness()
         if strike_reference in [StrikeReference.LOG_MONEYNESS]:

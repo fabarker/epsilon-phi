@@ -350,16 +350,12 @@ class SessionMgr(object):
             df['relative_strike'] = df['relative_strike'].astype(float).astype(int) / 100
             df.to_csv(_path, index=False)
 
-        _dates = pd.to_datetime(df.date.values)
-        drop_rows = (_dates.dayofweek == 5) | (_dates.dayofweek == 6)
-        _df = df.iloc[~drop_rows, :].copy()
-        _df.loc[:, 'date'] = pd.to_datetime(_df.date.values)
-        _df['t'] = DateUtils.Rdate_to_mat(_df['tenor'].values)
-
+        df['date'] = pd.to_datetime(df.get('date').values)
+        df['t'] = DateUtils.Rdate_to_mat(df['tenor'].values)
         if index is not None:
-            return _df.set_index(index, drop=True)
+            return df.set_index(index, drop=True)
         else:
-            return _df.copy()
+            return df.copy()
 
     def get_ivol_spec(self, underlier):
         session = self.getSessionFactory()

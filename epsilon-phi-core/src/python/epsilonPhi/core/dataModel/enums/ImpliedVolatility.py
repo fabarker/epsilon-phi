@@ -20,6 +20,13 @@ class StrikeReference(Enum):
     LOG_MONEYNESS = 'log_moneyness'
     STRIKE_PRICE = 'strike_price'
 
+class MaturityType(Enum):
+
+    EXPIRY_DATE = 0
+    YEARFRAC = 1
+    MATURITY_STRING = 2
+
+
 class AtTheMoneyType(Enum):
     SPOT = 1  # Spot
     FWD = 2  # Forward
@@ -47,14 +54,14 @@ prem_currency = {'EURUSD': 'USD',
                  'USDBRL': 'USD',
                  'USDMXN': 'USD'}
 
-deltaConvention = {'EURUSD': DeltaType.SPOT_DELTA,
+deltaConvention = {'EURUSD': DeltaType.FORWARD_DELTA,
                    'USDJPY': DeltaType.SPOT_DELTA_PREM_ADJ,
                    'EURJPY': DeltaType.SPOT_DELTA_PREM_ADJ,
                    'USDCHF': DeltaType.SPOT_DELTA_PREM_ADJ,
                    'EURCHF': DeltaType.SPOT_DELTA_PREM_ADJ,
-                   'GBPUSD': DeltaType.SPOT_DELTA,
+                   'GBPUSD': DeltaType.FORWARD_DELTA,
                    'EURGBP': DeltaType.SPOT_DELTA_PREM_ADJ,
-                   'AUDUSD': DeltaType.SPOT_DELTA,
+                   'AUDUSD': DeltaType.FORWARD_DELTA,
                    'AUDJPY': DeltaType.SPOT_DELTA_PREM_ADJ,
                    'USDCAD': DeltaType.SPOT_DELTA_PREM_ADJ,
                    'USDBRL': DeltaType.SPOT_DELTA_PREM_ADJ,

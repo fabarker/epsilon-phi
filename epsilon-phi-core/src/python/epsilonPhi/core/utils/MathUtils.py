@@ -387,7 +387,7 @@ def np_fwd_flat_interp_1d(x, xp, fp, dtype):
 
     lenx = dz.size
     lenxp = len(dx)
-    lval = np.nan
+    lval = dy[0]
     rval = np.nan
 
     if lenxp == 1:
@@ -396,6 +396,11 @@ def np_fwd_flat_interp_1d(x, xp, fp, dtype):
 
         for i in range(lenx):
             x_val = dz.flat[i]
+
+            if x_val < 1/365.25:
+                dres.flat[i] = np.nan
+                continue
+
             if x_val < xp_val:
                 dres.flat[i] = lval
             elif x_val > xp_val:
@@ -411,6 +416,10 @@ def np_fwd_flat_interp_1d(x, xp, fp, dtype):
 
             if np.isnan(x_val):
                 dres.flat[i] = x_val
+                continue
+
+            if x_val < 1/365.25:
+                dres.flat[i] = np.nan
                 continue
 
             j = binary_search_with_guess(x_val, dx, lenxp, j)
@@ -449,6 +458,13 @@ def cubic_spline(x, xq, y):
     for t in range(len(y)):
         _res[t, :] = cubicspline(x, y[t, :], xq)
     return _res
+
+@njit(float64(float64[:], float64[:], float64), fastmath=True, cache=True)
+def quad_poly_regression(x0, y0, x):
+    X = np.column_stack((np.ones(x0.shape[0]), x0, x0 ** 2))
+    b = (np.linalg.inv(X.T @ X) @ X.T @ y0)
+    res = np.array([1, x, x ** 2], dtype=np.float64) @ b
+    return res
 
 
 if __name__ == "__main__":

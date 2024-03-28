@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import Union, Optional
-from numba import jit
+from epsilonPhi.core.cpp.dates import cDates
+from epsilonPhi.core.cpp.fastfind.find_1st import *
+from numba import njit
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 
 class Offsets(object):
@@ -46,9 +48,27 @@ class DateUtils(object):
                 and not isinstance(arg, six.string_types))
 
     @staticmethod
+    def to_ordinals(datetimes):
+        dt = pd.to_datetime(np.array(datetimes))
+        return cDates.to_ordinals(dt.to_pydatetime())
+
+    @staticmethod
+    def from_ordinals(ords):
+        if not DateUtils.is_iterable(ords):
+          ords = [ords]
+        return pd.to_datetime(cDates.from_ordinals(np.array(ords, dtype=np.int32)))
+
+    @staticmethod
+    def find_first_date_loc(a, b):
+        ord_A = DateUtils.to_ordinals(np.array(a)).reshape(-1, 1)
+        ord_B = DateUtils.to_ordinals(np.array(b)).reshape(-1, 1)
+        return find_1st(ord_A, ord_B)
+
+    @staticmethod
     def find_date_locs(arr: np.array) -> np.array:
         mask = np.array([[isinstance(x, datetime) for x in row] for row in arr])
         return np.transpose(np.where(mask))
+
     @staticmethod
     def is_date(arr: np.array) -> np.array:
         return np.array([isinstance(x, datetime) for x in arr])
@@ -168,6 +188,21 @@ class DateUtils(object):
             return days
 
     @staticmethod
+    def expiry_from_settlement(settlement_dates, term):
+
+        SD = pd.to_datetime(np.array(settlement_dates))
+        if isinstance(SD, pd.Timestamp):
+           return pd.to_datetime(cDates.get_expiry_date(SD,
+                                 np.asarray(term, str).item()))
+
+        if not DateUtils.is_iterable(term):
+            term = [term] * len(settlement_dates)
+        return pd.to_datetime(cDates.shiftdates(SD.to_pydatetime(),
+                                                list(term)))
+
+
+
+    @staticmethod
     def get_daterange_frequency(date_range):
 
         N = len(date_range)
@@ -194,6 +229,34 @@ class DateUtils(object):
         else:
             return ''
 
+    @staticmethod
+    def shift_dates_in_range(dates, reference, periods):
+
+        @njit(cache=True)
+        def shift_forward(ordinals, reference, periods):
+
+            unique_ref = np.sort(np.unique(reference))
+
+            T = len(unique_ref)
+            N = len(ordinals)
+
+            res = np.full(ordinals.shape, np.nan)
+            for i in range(N):
+                for t in range(T):
+                    if (unique_ref[t] == ordinals[i]) and (t == T-1):
+                        res[i] = np.max(unique_ref) + periods
+                        break
+                    elif (unique_ref[t] == ordinals[i]):
+                        res[i] = unique_ref[t+periods]
+                        break
+            return res
+
+        _shifted = shift_forward(DateUtils.to_ordinals(dates),
+                                 DateUtils.to_ordinals(reference),
+                                 periods)
+
+        return DateUtils.from_ordinals(_shifted)
+
 if __name__ == "__main__":
 
     dr1 = pd.date_range('31-Dec-2001', '31-Dec-2003', freq='A')
@@ -201,7 +264,17 @@ if __name__ == "__main__":
     dr3 = '31-Dec-2013'
     dr4 = datetime(year=2015, month=12, day=31)
 
-    range = DateUtils.merge([dr1, dr2, dr3, dr4])
+    rng = DateUtils.merge([dr1, dr2, dr3, dr4])
+
+    ords = DateUtils.to_ordinals(rng)
+    dt = DateUtils.from_ordinals(ords)
+
+    dr2 = pd.date_range('31-Dec-2019', '31-Dec-2021', freq='D')
+
+
+    res = DateUtils.shift_dates_in_range(dr2[:-1], dr2, 1)
+
+
 
 
 

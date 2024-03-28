@@ -1,5 +1,6 @@
 import numpy as np
 import numba
+from numba import float64
 
 @numba.njit(cache=True, fastmath=True)
 def calc_spline_params(x, y):
@@ -52,8 +53,9 @@ def piece_wise_spline(x, x0, a, b, c, d):
     return y
 
 
-@numba.njit(cache=True, fastmath=True)
+@numba.njit(fastmath=True, cache=True)
 def cubic_spline(x0, y0, x):
     a, b, c, d = calc_spline_params(x0, y0)
     r = piece_wise_spline(x, x0, a, b, c, d)
     return r
+

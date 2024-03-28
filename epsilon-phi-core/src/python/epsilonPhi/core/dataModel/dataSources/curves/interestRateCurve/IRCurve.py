@@ -70,3 +70,5 @@ if __name__ == "__main__":
 
     self = IRCurve(region='United States', type=['Interbank'])
     curve = self.get_curve()
+
+    np.timedelta64

@@ -2,7 +2,7 @@ import numpy as np
 from epsilonPhi.core.utils.MathUtils import interp_N, interp_N_vect
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
-from epsilonPhi.core.lib.cpp.fastfind.find_1st import *
+from epsilonPhi.core.cpp.fastfind.find_1st import *
 import pandas as pd
 import warnings
 
@@ -27,7 +27,7 @@ class AbstractCurve(object):
     def set_curve_dataframe(self, df):
         _df = df.sort_index(axis=1)
         self._curve_df = self.interpolate_df(_df, np.array(_df.columns)).sort_index(axis=0)
-        self._ordinals = DateUtils.to_ordinal(self._curve_df.index)
+        self._ordinals = DateUtils.to_ordinals(self._curve_df.index)
 
     def interpolate_df(self, df, xdense):
         _type = np.result_type(np.float64, np.float64)
@@ -56,7 +56,10 @@ class AbstractCurve(object):
 
     def get_stacked_curve(self, dates=None, maturity=None):
 
-        D_M = DateUtils.to_ordinal(dates)
+        dates = np.array(dates)
+        maturity = np.array(maturity)
+
+        D_M = DateUtils.to_ordinals(dates)
         _idx = find_1st(self.ordinals.reshape(-1, 1),
                         D_M.reshape(-1, 1))
 

@@ -9,6 +9,7 @@ from tqdm import tqdm
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 from epsilonPhi.core.utils.MathUtils import cubic_spline
+from epsilonPhi.core.dataModel.enums.ImpliedVolatility import MaturityType
 
 
 class CubicSpline(object):
@@ -29,16 +30,20 @@ class CubicSpline(object):
 
     def set_ivols(self, ivols):
 
-        _ivols = ivols.reset_index(drop=False).drop(labels=['relative_strike'], axis=1)
-        _loc = [x not in ['date', 'mid', 't', 'k', 'relative_strike'] for x in _ivols.columns]
+        # Process the ivols dataframe
+        _ivols = ivols.reset_index()
 
-        # Extract the strike reference and observations
-        self._strike_reference = _ivols.columns[_loc][0]
+        cols = _ivols.columns
+        if 'relative_strike' in cols:
+            _ivols = _ivols[_ivols.columns.difference(['relative_strike'])]
+
+        self._strike_reference = _ivols.columns.difference(['date', 'mid', 't', 'k', 'exp']).values.item()
         _ivols = _ivols.rename(columns={self._strike_reference: 'x'})
+        _dduped = _ivols.drop_duplicates(subset=['x', 't', 'date'])
 
-        vols = _ivols.set_index(['date', 't', 'x'], drop=True)
-        self._ivols = vols[~vols.index.duplicated(keep='first')].sort_index(level='date')
-        self._ivols = self._ivols.unstack(level=['t', 'x']).sort_index(axis=1)
+        # Set the dataframe in the object
+        self._ivols = _dduped.set_index('date').pivot(columns=['t', 'x']).sort_index()
+
 
     def set_spot_prices(self, df):
         self._spot = df.loc[self.dates].to_frame()
@@ -52,7 +57,9 @@ class CubicSpline(object):
         self.set_funding_rate()
 
     def set_forward_prices(self):
-        self._f = self._spot.values * np.exp(-1 * self._rf * self.t) / np.exp(-1 * self._rd * self.t)
+        self._f = (self._spot.values *
+                   np.exp(-1 * self.get_rd(self.dates, np.unique(self.mat)) * np.unique(self.mat).reshape(1, -1)) /
+                   np.exp(-1 * self.get_rf(self.dates, np.unique(self.mat)) * np.unique(self.mat).reshape(1, -1)))
         self._forward_curve = AbstractCurve(self._f)
 
     def set_risk_free_rate(self):
@@ -104,14 +111,18 @@ class CubicSpline(object):
     def f(self):
         return self._f.values
 
-    def get_f(self, pricing_dates, maturities):
-        return self._forward_curve.get_curve(pricing_dates, maturities)
+    def get_f(self, pricing_dates, maturities, is_stacked=False):
+        return self._forward_curve.get_curve(pricing_dates, maturities, is_stacked)
     def get_rd(self, pricing_dates, maturities, is_stacked=False):
         return self._rate_curve.get_curve(pricing_dates, maturities, is_stacked)
     def get_rf(self, pricing_dates, maturities, is_stacked=False):
         return self._funding_curve.get_curve(pricing_dates, maturities, is_stacked)
     def get_s(self, pricing_dates):
         return self._spot.reindex(pricing_dates)
+
+    def get_log_moneyness(self, sig):
+        _s = self.get_s(sig.get('date')).values.flatten().astype(np.float64)
+        return np.log(sig.get('k')/_s).to_frame('x')
 
     def get_deltas(self, sig):
 
@@ -121,24 +132,37 @@ class CubicSpline(object):
         _k = sig.get('k').values.astype(np.float64)
 
         rd = self.get_rd(sig.get('date'), _t, True).values.astype(np.float64)
-        rf = self.get_rd(sig.get('date'), _t, True).values.astype(np.float64)
+        rf = self.get_rf(sig.get('date'), _t, True).values.astype(np.float64)
 
         res = nb_delta(_s, _t, _k, rd, rf, _v, 2, -1)
-        return pd.DataFrame(res, columns=['x']).replace(0, np.nan)
+        return pd.DataFrame(np.round(res, 5), columns=['x']).replace(0, np.nan)
 
-    def get_ivols(self, pricing_dates, strike_reference, relative_strike, maturities):
+    def get_ivols(self, pricing_dates, strike_reference, relative_strike, maturity_type, maturities):
 
-        mats = np.round(maturities, 10)
-        if pricing_dates is None:
-            _p, _t, _k = npu.flat_meshgrid(self.dates, mats, relative_strike)
-        elif pricing_dates.shape != mats.shape:
-            _p, _t, _k = npu.flat_meshgrid(pricing_dates, mats, relative_strike)
-        else:
-            assert pricing_dates.shape == mats.shape, 'Error - dimension mis-match'
-            assert pricing_dates.shape == relative_strike.shape, 'Error - dimension mis-match'
-            _p, _t, _k = pricing_dates, maturities, relative_strike
+        maturities = np.asarray(maturities)
+        relative_strike = np.asarray(relative_strike)
 
-        return self.load_ivols(_p, _t, _k, strike_reference)
+        if (pricing_dates.shape != maturities.shape) or (pricing_dates.shape != relative_strike.shape):
+            pricing_dates, maturities, relative_strike = (
+                npu.flat_meshgrid(pricing_dates, maturities, relative_strike))
+
+        assert pricing_dates.shape == maturities.shape, 'Error - dimension mis-match'
+        assert pricing_dates.shape == relative_strike.shape, 'Error - dimension mis-match'
+
+        if maturity_type in [MaturityType.MATURITY_STRING, MaturityType.MATURITY_STRING.value]:
+           matdates = DateUtils.expiry_from_settlement(pricing_dates, maturities)
+           mat = DateUtils.get_date_delta(pricing_dates, matdates, True)
+           ivols = self.load_ivols(pricing_dates, mat, relative_strike, strike_reference)
+           ivols['expiry'] = matdates
+           ivols['mats'] = maturities
+           return ivols
+        elif maturity_type in [MaturityType.EXPIRY_DATE, MaturityType.EXPIRY_DATE.value]:
+           mat = DateUtils.get_date_delta(pricing_dates, maturities, True)
+           ivols = self.load_ivols(pricing_dates, mat, relative_strike, strike_reference)
+           ivols['expiry'] = maturities
+           return ivols
+        elif maturity_type in [MaturityType.YEARFRAC, MaturityType.YEARFRAC.value]:
+           return self.load_ivols(pricing_dates, maturities, relative_strike, strike_reference)
 
     def load_ivols(self, pricing_dates, maturities, relative_strike, strike_reference):
 
@@ -150,18 +174,19 @@ class CubicSpline(object):
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
             _sigs['xk'] = self.get_deltas(_sigs)
         elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
-            _sigs['xk'] = _sigs.get('k')
+            _sigs['xk'] = self.get_log_moneyness(_sigs)
+            relative_strike = np.log(relative_strike/self.get_s(pricing_dates).values.flatten())
         else:
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
-        # Stack vols
-        vk = _sigs.set_index(['date','t']).pivot(columns='x').reindex(zip(pricing_dates, maturities))
+        vk = _sigs.set_index(['date', 't']).pivot(columns='x').reindex(zip(pricing_dates, maturities))
         v = vk.get('mid').sort_index(axis=1)
         k = vk.get('xk').sort_index(axis=1)
 
         _ivols = self.interpolate(v, k, relative_strike)
         _ivols['k'] = self.get_strikes(_ivols, strike_reference)
-        return _ivols
+        return _ivols.copy()
+
 
     def get_strikes(self, ivols, strike_reference):
 
@@ -169,7 +194,7 @@ class CubicSpline(object):
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
             return self.get_strikes_from_delta(ivols)
         elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
-            return ivols.get('x')
+            return np.exp(ivols.get('x')) * self.get_s(ivols.get('date')).values.flatten()
         else:
             raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
@@ -183,31 +208,40 @@ class CubicSpline(object):
         rd = self.get_rd(df_.get('date'), _t, True).values.astype(np.float64)
         rf = self.get_rf(df_.get('date'), _t, True).values.astype(np.float64)
         ot = np.sign(_x).astype(np.int64)
-        k = nb_strike(_s, _t, rd, rf, ot, _x, 1, _v)
+        k = nb_strike(_s, _t, rd, rf, ot, _x, 2, _v)
         return pd.DataFrame(k, index=df_.index, columns=['k'])
 
 
     @staticmethod
-    @njit([float64[:](float64[:,:], float64[:,:], float64[:])], cache=True)
+    #@njit([float64[:](float64[:,:], float64[:,:], float64[:])], cache=True)
     def spline_interp(x, y, xp):
 
         xp_ = np.asarray(xp, dtype=np.float64)
         x = np.asarray(x, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
 
-        z = np.full(len(xp), np.nan)
+        z = np.full(xp.shape, np.nan)
         for t in range(len(xp)):
             x_ = x[t, ~np.isnan(x[t, :])]
             y_ = y[t, ~np.isnan(y[t, :])]
 
-            if len(x_) > 1:
-                if len(x_) == len(y_):
-                    res = cubicspline(x_,
-                                      y_,
-                                      xp_[t]).item()
-                    z.flat[t] = res
-            elif np.any(np.abs(xp_[t] - x_) < 1e-9):
-                z.flat[t] = y_[np.abs(xp_[t] - x_) < 1e-9].item()
+            if len(x_) == len(y_):
+
+                _loc = np.argsort(x_)
+
+                x_sorted = x_[_loc]
+                y_sorted = y_[_loc]
+                x_hat = xp_[t]
+
+                l_X = len(x_)
+                if l_X > 3:
+                    z.flat[t] = cubicspline(x_sorted, y_sorted, x_hat).item()
+                elif l_X > 2:
+                    z.flat[t] = quad_poly_regression(x_sorted, y_sorted, x_hat)
+                elif np.any(np.abs(x_hat - x_sorted) < 1e-9):
+                    z.flat[t] = y_sorted[np.abs(x_hat - x_sorted) < 1e-9].item()
+                else:
+                    z.flat[t] = np.nan
         return z
 
 
@@ -219,7 +253,7 @@ class CubicSpline(object):
         xp = np.asarray(x, dtype=np.float64)
 
         res = np.column_stack((CubicSpline.spline_interp(fx, fy, xp), x))
-        res[(res[:, 0] <= 0) | (res[:, 0] > np.nanmax(fy))] = np.nan
+        res[(res[:, 0] <= 0) | (res[:, 0] > np.nanmax(fy) * 5), 0] = np.nan
         return pd.DataFrame(res, index=v.index, columns=['mid', 'x']).reset_index()
 
 
@@ -237,7 +271,13 @@ class CubicSpline(object):
                                                                       np.unique(maturities),
                                                                       x_lev='t',
                                                                       group='x').dropna(how='all', axis=1)
-        return res.stack(level=[0, 1]).to_frame('mid').reset_index(drop=False)
+
+        # Drop Columns
+        _abs_x = np.abs(res.columns.get_level_values('x'))
+        _x_drop = np.setdiff1d(_abs_x, [0.75, 0.5, 0.25])
+        drop_cols = (np.array(res.columns.get_level_values('t')) < 1/12) & _abs_x.isin(_x_drop)
+        res_ = res.iloc[:, ~drop_cols]
+        return res_.stack(level=[0, 1]).to_frame('mid').reset_index(drop=False)
 
 
 
@@ -261,10 +301,45 @@ if __name__ == "__main__":
 
         self = CubicSpline(ivols,
                            s,
-                           rf,
-                           rd)
+                           rd,
+                           rf)
 
-        strike_reference = StrikeReference.DELTA
-        strikes = [-0.1, -0.25, -0.5, -0.75, -0.9]
-        maturities = [1 / 12, 1/12 + 0.5/12, 3 / 12, 4/12, 6 / 12, 9/12, 12/12]
-        fxivols = self.get_ivols(None, strike_reference, strikes, maturities)
+        strikes = [1.19200405116997]
+        OD =  pd.to_datetime('25/05/2023')
+        PDs = pd.to_datetime(['25/05/2023',
+              '26/05/2023',
+              '30/05/2023',
+              '31/05/2023',
+              '01/06/2023',
+              '02/06/2023',
+              '05/06/2023',
+              '06/06/2023',
+              '07/06/2023',
+              '08/06/2023',
+              '09/06/2023',
+              '12/06/2023',
+              '13/06/2023',
+              '14/06/2023',
+              '15/06/2023',
+              '16/06/2023',
+              '20/06/2023',
+              '21/06/2023',
+              '22/06/2023',
+              '23/06/2023',
+              '26/06/2023',
+              '27/06/2023'])
+
+        mat = 1/12
+        elapsed = ((PDs - OD)/np.timedelta64(1, 'D')).values.astype(np.int64)/365
+        ttm = np.maximum(0, mat - elapsed)
+        fxivols = self.get_ivols(pd.to_datetime(PDs),
+                                 strike_reference=StrikeReference.STRIKE_PRICE,
+                                 relative_strike=np.array(strikes),
+                                 maturity_type=MaturityType.YEARFRAC,
+                                 maturities=np.array(ttm))
+
+        _vols = fxivols.set_index(['date', 't'], drop=True).loc[list(zip(PDs, ttm))]
+
+        import utils_find_1st.find_1st
+
+

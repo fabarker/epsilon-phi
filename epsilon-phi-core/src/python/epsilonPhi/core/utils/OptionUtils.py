@@ -70,7 +70,7 @@ def solve_for_strike(spot_fx_rate,
         K = F0T * np.exp(-vsqrtt * (phi*norm_inv_delta - vsqrtt/2.0))
         return K
 
-    elif delta_method_value == [DeltaType.FORWARD_DELTA.value,
+    elif delta_method_value in [DeltaType.FORWARD_DELTA.value,
                                 DeltaType.FORWARD_DELTA]:
 
         dom_df = np.asarray(np.exp(-rd*tdel), dtype=np.float64)
@@ -166,7 +166,7 @@ def atm_delta_neutral_strike(s, t, rd, rf, vol, deltaTypeValue):
 
     if deltaTypeValue in [DeltaType.SPOT_DELTA, DeltaType.SPOT_DELTA.value]:
         return f * np.exp(0.5 * vol * vol * t)
-    elif deltaTypeValue == [DeltaType.FORWARD_DELTA, DeltaType.FORWARD_DELTA.value]:
+    elif deltaTypeValue in [DeltaType.FORWARD_DELTA, DeltaType.FORWARD_DELTA.value]:
         return f * np.exp(0.5 * vol * vol * t)
     elif deltaTypeValue == [DeltaType.SPOT_DELTA_PREM_ADJ, DeltaType.SPOT_DELTA_PREM_ADJ.value]:
         return f * np.exp(-0.5 * vol * vol * t)
@@ -237,6 +237,20 @@ def bs_delta(s, t, k, r, q, v, option_type_value):
     delta = phi * np.exp(-q*t) * norm.cdf(phi * d1, 0.0, 1.0)
     return delta
 
+def black_delta(f, t, k, q, v, delta_type_value, option_type):
+
+    phi = np.sign(option_type)
+    k = np.maximum(k, g_small)
+    t = np.maximum(t, g_small)
+    v = np.maximum(v, g_small)
+
+    d1_ = (np.log(f/k) + v * v * t / 2.0) / (v * np.sqrt(t))
+
+    if delta_type_value == 1:
+        return phi * np.exp(-q * t) * n_vect(phi * d1_)
+    else:
+        return phi * np.exp(-q * t) * n_vect(phi * d1_) * np.exp(q*t)
+
 ###############################################################################
 
 def bs_gamma(s, t, k, r, q, v):
@@ -253,7 +267,17 @@ def bs_gamma(s, t, k, r, q, v):
     gamma = np.exp(-q*t) * n_prime_vect(d1) / s / v_sqrt_t
     return gamma
 
+def black_gamma(f, t, k, r, v):
+    """Return gamma of a derivative using Black model. """
+    d1 = (np.log(f/k) + v * v * t / 2.0) / (v * np.sqrt(t))
+    return np.exp(-r*t) * n_prime_vect(d1) / (f * v * np.sqrt(t))
+
 ###############################################################################
+
+def black_vega(f, t, k, r, v):
+    """Return vega of a derivative using Black model. """
+    d1 = (np.log(f/k) + v * v * t / 2.0) / (v * np.sqrt(t))
+    return np.exp(-r*t) * f * np.sqrt(t) * n_prime_vect(d1)
 
 def bs_vega(s, t, k, r, q, v):
     """Price a derivative using Black-Scholes model."""
@@ -266,7 +290,7 @@ def bs_vega(s, t, k, r, q, v):
     ss = s * np.exp(-q*t)
     kk = k * np.exp(-r*t)
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
-    vega = ss * sqrt_t * norm.pdf(d1, 0, 1)
+    vega = ss * sqrt_t * n_prime_vect(d1)
     return vega
 
 ###############################################################################
@@ -289,10 +313,27 @@ def bs_theta(s, t, k, r, q, v, option_type_value):
     kk = k * np.exp(-r*t)
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
     d2 = d1 - v_sqrt_t
-    theta = - ss * n_prime_vect(d1) * v / 2.0 / sqrt_t
-    theta = theta - phi * r * k * np.exp(-r*t) * norm.cdf(phi * d2, 0.0, 1.0)
-    theta = theta + phi * q * ss * norm.cdf(phi * d1, 0.0, 1.0)
-    return theta
+    theta_1 = - ss * n_prime_vect(d1) * v / 2.0 / sqrt_t
+    theta_2 = - phi * r * k * np.exp(-r*t) * n_prime_vect(phi * d2)
+    theta_3 = phi * q * ss * n_prime_vect(phi * d1)
+    return theta_1 + theta_2 + theta_3
+
+def black_theta(f, t, k, r, q, v, option_type):
+    """Return theta of a derivative using Black model. """
+
+    if option_type == OptionTypes.EUROPEAN_CALL.value:
+        phi = 1.0
+    elif option_type == OptionTypes.EUROPEAN_PUT.value:
+        phi = -1.0
+
+    d1 = (np.log(f/k) + v * v * t / 2.0) / (v * np.sqrt(t))
+    d2 = d1 - v * np.sqrt(t)
+    sqrt_t =  np.sqrt(t)
+
+    theta_1 = - f * np.exp(-r*t) * n_prime_vect(d1) * v / 2.0 / sqrt_t
+    theta_2 = - phi * r * k * np.exp(-r * t) * n_prime_vect(phi * d2)
+    theta_3 = phi * q * f * np.exp(-r*t) * n_prime_vect(phi * d1)
+    return theta_1 + theta_2 + theta_3
 
 ###############################################################################
 
@@ -332,8 +373,44 @@ def bs_vanna(s, t, k, r, q, v):
     kk = k * np.exp(-r*t)
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
     d2 = d1 - v_sqrt_t
-    vanna = np.exp(-q*t) * sqrt_t * n_prime_vect(d1) * (d2/v)
+    vanna = - np.exp(-q*t) * n_prime_vect(d1) * (d2/v)
     return vanna
+
+def black_vanna(f, t, k, q, vol):
+    d1 = (np.log(f/k) + vol * vol * t / 2.0) / (vol * np.sqrt(t))
+    d2 = d1 - vol * np.sqrt(t)
+    vanna_ = -1 * np.exp(-q*t) * n_prime_vect(d1) * d2 / vol
+    return vanna_
+
+def vanna_wu(f, t, k, q, vol):
+    gamma = black_gamma(f, t, k, q, vol)
+    z_p = np.log(k/f) + 0.5 * np.power(vol, 2) * t
+    vanna = z_p * gamma * f / vol
+    return vanna
+
+
+###############################################################################
+
+def bs_volga(s, t, k, r, q, v):
+    """Price a derivative using Black-Scholes model."""
+
+    k = np.maximum(k, g_small)
+    t = np.maximum(t, g_small)
+    v = np.maximum(v, g_small)
+
+    sqrt_t = np.sqrt(t)
+    v_sqrt_t = v * sqrt_t
+    ss = s * np.exp(-q*t)
+    kk = k * np.exp(-r*t)
+    d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
+    d2 = d1 - v_sqrt_t
+    volga = np.exp(-q*t) * sqrt_t * n_prime_vect(d1) * ((d1*d2)/v)
+    return volga
+
+def black_volga(f, t, k, r, vol):
+    d1 = (np.log(f / k) + vol * vol * t / 2.0) / (vol * np.sqrt(t))
+    d2 = d1 - vol * np.sqrt(t)
+    return f * np.exp(-r*t) * np.sqrt(t) * n_prime_vect(d1) * d1 * d2 * (1/vol)
 
 
 ###############################################################################
@@ -404,10 +481,12 @@ def blsdelta(s, t, k, r, q, v, option_type_value):
     v_sqrt_t = v * np.sqrt(t)
     ss = s * np.exp(-q*t)
     kk = k * np.exp(-r*t)
+
     d1 = np.log(ss/kk) / v_sqrt_t + v_sqrt_t / 2.0
 
     delta = phi * np.exp(-q*t) * n_vect(phi * d1)
     return delta
+
 
 
 #@njit(float64[:,:](float64[:,:], float64[:,:], float64[:,:], float64[:,:], float64[:,:], float64[:,:],
@@ -436,6 +515,78 @@ def nb_delta(s, t, k, rd, rf, vol, deltaTypeValue, option_type_value):
         return pct_fwd_delta_prem_adj
     else:
         raise FinError("Unknown FinFXDeltaMethod")
+
+
+def black_volga(f, t, k, r, vol):
+    d1 = (np.log(f / k) + vol * vol * t / 2.0) / (vol * np.sqrt(t))
+    d2 = d1 - vol * np.sqrt(t)
+    return f * np.exp(-r*t) * np.sqrt(t) * n_prime_vect(d1) * d1 * d2 * (1/vol)
+
+
+def delta_bump(f, t, k, rd, v, option_type_value):
+
+    bump = 0.0001 * f
+
+    v_ = blsprice(f, t, k, rd, v, option_type_value)
+    v_bumped = blsprice(f + bump, t, k, rd, v, option_type_value)
+    delta = (v_bumped - v_) / bump
+    return delta
+
+
+def gamma_bump(f, t, k, rd, v, delta_type_value, option_type_value):
+
+    bump = 0.0001 * f
+
+    v_ = black_delta(f, t, k, rd, v, delta_type_value, option_type_value)
+    v_bumped_dn = black_delta(f-bump, t, k, rd, v, delta_type_value, option_type_value)
+    v_bumped_up = black_delta(f+bump, t, k, rd, v, delta_type_value, option_type_value)
+
+    gd = (v_bumped_dn - v_) / bump
+    gu = (v_bumped_up - v_) / bump
+
+    gamma = (gu - gd) / 2.0
+    return gamma
+
+def vega_bump(f, t, k, rd, v, option_type_value):
+
+    bump = 0.01
+
+    v_ = blsprice(f, t, k, rd, v, option_type_value)
+    v_bumped = blsprice(f, t, k, rd, v+bump, option_type_value)
+    vega = (v_bumped - v_) / bump
+    return vega
+
+def theta_bump(f, t, k, rd, v, option_type_value):
+
+    bump = 1/DateUtils.days_per_year
+
+    v_ = blsprice(f, t, k, rd, v, option_type_value)
+    v_bumped = blsprice(f, t-bump, k, rd, v, option_type_value)
+    theta = (v_bumped - v_) / bump
+    return theta
+
+def vanna_bump(f, t, k, rd, v):
+
+    bump = 0.0001 * f
+
+    v_ = black_vega(f, t, k, rd, v)
+    v_bumped = black_vega(f+bump, t, k, rd, v)
+    vanna  = (v_bumped - v_) / bump
+    return vanna
+
+
+def volga_bump(f, t, k, rd, v):
+
+    bump = 0.01
+
+    v_ = black_vega(f, t, k, rd, v)
+    v_bumped = black_vega(f, t, k, rd, v+bump)
+    volga = (v_bumped - v_) / bump
+    return volga
+
+
+
+
 
 
 if __name__ == "__main__":
