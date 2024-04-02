@@ -620,6 +620,35 @@ def strike_fit(x0, *args):
 def solve_strike_fit(args):
 
     fmin = 9999999.0
+    vmin = np.nan
+    for i in np.arange(g_small/100, 1.05, 0.05):
+        try:
+            i_fit, i_val = newton_secant(strike_fit,
+                                         x0=i,
+                                         args=args,
+                                         tol=1e-8,
+                                         maxiter=1000)
+            if i_val < 1e-9 and np.abs(i_val) < fmin:
+               fmin = np.abs(i_val)
+               vmin = i_fit
+        except:
+            pass
+
+    if np.abs(fmin) < 1e-9:
+       sig = piece_wise_spline(args[5] * vmin,
+                               args[6][4],
+                               args[6][0],
+                               args[6][1],
+                               args[6][2],
+                               args[6][3])
+    else:
+       sig = np.array(np.nan)
+    return sig
+
+@njit(fastmath=True)
+def solve_strike_fit_org(args):
+
+    fmin = 9999999.0
     sig = np.array(np.nan)
     if np.log(args[4]/args[0]) > 0:
        B = (0.5, 1 + 0.05)

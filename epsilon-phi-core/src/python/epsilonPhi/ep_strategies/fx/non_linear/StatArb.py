@@ -698,11 +698,11 @@ class SmileStatArb(object):
 
     def get_sa_weights(self, period=21):
 
-        risks = ['vega','mu','gamma','volga','vanna','e']
+        risks = ['vega', 'mu', 'gamma', 'volga', 'vanna', 'e']
         H = self.get_sensitivity_matrix(period)
 
         d = np.zeros((6, 1))
-        d[-3] = 1
+        d[-1] = 1
 
         T = H.shape[0]
         wts = np.empty((25, T))
@@ -711,7 +711,7 @@ class SmileStatArb(object):
             h_bar = H.iloc[t, :].unstack(level=0)[risks]
             wts[:, t] = (np.dot(h_bar, np.linalg.inv(np.dot(h_bar.T, h_bar))) @ d).flat
 
-        unit_error =  pd.DataFrame(wts, index=H.get('e').columns, columns=H.index).T
+        unit_error = pd.DataFrame(wts/100, index=H.get('e').columns, columns=H.index).T
         unit_dollar = unit_error / unit_error.abs().sum(axis=1).values.reshape(-1, 1)
         return unit_error, unit_dollar
 
@@ -726,12 +726,11 @@ if __name__ == "__main__":
     SD = pd.to_datetime('30-Nov-1996')
     ED = pd.to_datetime('31-Dec-2023')
     self = SmileStatArb('GBPUSD', SD, ED)
-    self.get_I()
 
-    ue, ud = self.get_sa_weights(period=21)
-    pnls = self.get_delta_hedged_option_pnls(1, option_type=-1, position=-1)
-    _pnls = pnls.unstack(level=[2, 1]).get(1)
+    v = self.get_sig_paths(1)
 
-    rtns = ud.get(_pnls.columns).loc[_pnls.index] @ _pnls.values
+    v_ = v.swaplevel(2, 0).loc[1 / 12].loc[0.9].resample('B').asfreq()
+
+
 
 

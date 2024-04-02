@@ -111,7 +111,7 @@ def newton_secant(func, x0, args=(), tol=1.48e-8, maxiter=50, disp=True):
 
         if np.abs(p - p1) < tol:
             status = _ECONVERGED
-            return p
+            return p, q1
 
         p0, q0 = p1, q1
         p1 = p
@@ -122,4 +122,4 @@ def newton_secant(func, x0, args=(), tol=1.48e-8, maxiter=50, disp=True):
         msg = "Failed to converge"
         raise FinError(msg)
 
-    return p
+    return p, q1
