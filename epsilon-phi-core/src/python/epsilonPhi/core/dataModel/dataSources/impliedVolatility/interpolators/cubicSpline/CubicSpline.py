@@ -2,13 +2,14 @@ import numpy as np
 import pandas as pd
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_spline as cubicspline
+from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import calc_spline_params, piece_wise_spline, fit_cubic_spline, eval_cubic_spline
 from epsilonPhi.core.dataModel.dataSources.curves.abstractCurve.AbstractCurve import AbstractCurve
 from epsilonPhi.core.utils.NumpyUtils import NumpyUtils as npu
 from numba import jit
 from tqdm import tqdm
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
-from epsilonPhi.core.utils.MathUtils import cubic_spline
+from epsilonPhi.core.utils.MathUtils import cubic_spline, vanna_volga_1d
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import MaturityType
 
 
@@ -32,6 +33,7 @@ class CubicSpline(object):
 
         # Process the ivols dataframe
         _ivols = ivols.reset_index()
+        _ivols = _ivols[_ivols.get('t') >= np.round(1 / 12, 10)]
 
         cols = _ivols.columns
         if 'relative_strike' in cols:
@@ -169,34 +171,22 @@ class CubicSpline(object):
         # Interpolate along the time direction - Flat Forward Interpolation.
         _sigs = self.interpolate_maturities(maturities, pricing_dates)
         _sigs['k'] = self.get_strikes(_sigs, self._strike_reference)
+        _sigs['xk'] = self.get_deltas(_sigs)
 
-        # Compute the surface values for the strike reference we care about
+        cols = list(zip(pricing_dates, maturities))
+        xy = _sigs.set_index(['date', 't']).pivot(columns='x').reindex(cols)
+        fy = xy.get('mid').sort_index(axis=1)
+        fx = xy.get('xk').sort_index(axis=1)
+
         if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
-            _sigs['xk'] = self.get_deltas(_sigs)
+            _ivols = self.interpolate(fy, fx, relative_strike)
         elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
-            _sigs['xk'] = self.get_log_moneyness(_sigs)
-            relative_strike = np.log(relative_strike/self.get_s(pricing_dates).values.flatten())
+            _ivols = self.solve_for_sig_stike(fy, fx, relative_strike)
         else:
-            raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
+            raise ValueError('Error - strike_reference {} not supported'.format(strike_reference))
 
-        vk = _sigs.set_index(['date', 't']).pivot(columns='x').reindex(zip(pricing_dates, maturities))
-        v = vk.get('mid').sort_index(axis=1)
-        k = vk.get('xk').sort_index(axis=1)
-
-        _ivols = self.interpolate(v, k, relative_strike)
         _ivols['k'] = self.get_strikes(_ivols, strike_reference)
         return _ivols.copy()
-
-
-    def get_strikes(self, ivols, strike_reference):
-
-        # Compute the surface values for the strike reference we care about
-        if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
-            return self.get_strikes_from_delta(ivols)
-        elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
-            return np.exp(ivols.get('x')) * self.get_s(ivols.get('date')).values.flatten()
-        else:
-            raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
 
     def get_strikes_from_delta(self, df_):
 
@@ -211,37 +201,62 @@ class CubicSpline(object):
         k = nb_strike(_s, _t, rd, rf, ot, _x, 2, _v)
         return pd.DataFrame(k, index=df_.index, columns=['k'])
 
+    def get_strikes(self, ivols, strike_reference):
+
+        # Compute the surface values for the strike reference we care about
+        if strike_reference in [StrikeReference.DELTA, StrikeReference.DELTA.value]:
+            return self.get_strikes_from_delta(ivols)
+        elif strike_reference in [StrikeReference.STRIKE_PRICE, StrikeReference.STRIKE_PRICE.value]:
+            return ivols.get('x')
+        else:
+            raise ValueError('Error - strike reference {} not supported'.format(strike_reference))
+
+    def solve_for_sig_stike(self, y, x, z):
+
+        _s = self.get_s(y.index.get_level_values('date')).values.flatten().astype(np.float64)
+        _t = np.array(y.index.get_level_values(1))
+        _rd = self.get_rd(y.index.get_level_values('date'), y.index.get_level_values(1), True).values
+        _rf = self.get_rf(y.index.get_level_values('date'), y.index.get_level_values(1), True).values
+
+        fy = np.asarray(y, dtype=np.float64)
+        fx = np.asarray(x, dtype=np.float64)
+        xp = np.asarray(z, dtype=np.float64)
+
+        @njit(float64[:](float64[:], float64[:], float64[:], float64[:],
+                     float64[:,:], float64[:,:], float64[:]), fastmath=False, cache=False)
+        def numba_solver(s, t, rd, rf, fy, fx, xp):
+
+            z = np.full(xp.shape, np.nan)
+            for i in range(xp.shape[0]):
+                if np.sum(~np.isnan(fx[i])) > 3 and ~np.isnan(xp[i]):
+
+                    p = fit_cubic_spline(fx[i, :], fy[i, :])
+                    argtuple = (s[i], t[i], rd[i], rf[i], xp[i], -1, p)
+                    z.flat[i] = solve_strike_fit(argtuple).item()
+            return z
+
+        res = numba_solver(_s, _t, _rd, _rf, fy, fx, xp)
+        res[res <= 0] = np.nan
+        return pd.DataFrame(np.column_stack((res, xp)), index=y.index, columns=['mid', 'x']).reset_index()
 
     @staticmethod
     @njit([float64[:](float64[:,:], float64[:,:], float64[:])], cache=True)
     def spline_interp(x, y, xp):
 
         xp_ = np.asarray(xp, dtype=np.float64)
-        x = np.asarray(x, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
+        fx = np.asarray(x, dtype=np.float64)
+        fy = np.asarray(y, dtype=np.float64)
 
         z = np.full(xp.shape, np.nan)
-        for t in range(len(xp)):
-            x_ = x[t, ~np.isnan(x[t, :])]
-            y_ = y[t, ~np.isnan(y[t, :])]
-
-            if len(x_) == len(y_):
-
-                _loc = np.argsort(x_)
-
-                x_sorted = x_[_loc]
-                y_sorted = y_[_loc]
-                x_hat = xp_[t]
-
-                l_X = len(x_)
-                if l_X > 3:
-                    z.flat[t] = cubicspline(x_sorted, y_sorted, x_hat).item()
-                elif l_X > 2:
-                    z.flat[t] = quad_poly_regression(x_sorted, y_sorted, x_hat)
-                elif np.any(np.abs(x_hat - x_sorted) < 1e-9):
-                    z.flat[t] = y_sorted[np.abs(x_hat - x_sorted) < 1e-9].item()
-                else:
-                    z.flat[t] = np.nan
+        for t in range(len(xp_)):
+            if ~np.isnan(xp[t]):
+                if np.sum(~np.isnan(fx[t])) > 3:
+                    p = fit_cubic_spline(fx[t, :], fy[t, :])
+                    z.flat[t] = eval_cubic_spline(xp_[t], p).item()
+                elif np.sum(~np.isnan(fx[t])) > 2:
+                    z.flat[t] = quad_poly_regression(fx[t, :], fy[t, :], xp_[t])
+                elif np.any(np.abs(fx[t] - xp_[t]) < 1e-9):
+                    z.flat[t] = fy[t, np.abs(fx[t] - xp_[t]) < 1e-9].item()
         return z
 
 
@@ -273,11 +288,11 @@ class CubicSpline(object):
                                                                       group='x').dropna(how='all', axis=1)
 
         # Drop Columns
-        _abs_x = np.abs(res.columns.get_level_values('x'))
-        _x_drop = np.setdiff1d(_abs_x, [0.75, 0.5, 0.25])
-        drop_cols = (np.array(res.columns.get_level_values('t')) < 1/12) & _abs_x.isin(_x_drop)
-        res_ = res.iloc[:, ~drop_cols]
-        return res_.stack(level=[0, 1]).to_frame('mid').reset_index(drop=False)
+        #_abs_x = np.abs(res.columns.get_level_values('x'))
+        #_x_drop = np.setdiff1d(_abs_x, [0.75, 0.5, 0.25])
+        #drop_cols = (np.array(res.columns.get_level_values('t')) < 1/12) & _abs_x.isin(_x_drop)
+        #res_ = res.iloc[:, ~drop_cols]
+        return res.stack(level=[0, 1]).to_frame('mid').reset_index(drop=False)
 
 
 

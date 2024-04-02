@@ -45,6 +45,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/src/python/epsilonPhi/core/utils/MathUtils.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/src/python/epsilonPhi/ep_strategies/futures/main.py">
           <value>
             <Attribute>

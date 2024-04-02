@@ -46,14 +46,7 @@ def vanna_volga_2d(f, ks, t, kput, katm, kcall, sigput, sigatm, sigcal):
     radi[radi < 0] = np.nan
     return sigatm + (-sigatm + np.sqrt(radi)) / d1d2
 
-def vanna_volga_1d(F, k_prime, t_prime, t, kput, katm, kcall, sigput, sigatm, sigcal):
-
-    kput = np.array(kput)
-    katm = np.array(katm)
-    kcall = np.array(kcall)
-    sigput = np.array(sigput)
-    sigatm = np.array(sigatm)
-    sigcal = np.array(sigcal)
+def vanna_volga_1d(F, k, t, kput, katm, kcall, sigput, sigatm, sigcal):
 
     # First Interpolate the Cross-Section
     w_put = (np.log(katm / k_prime) * np.log(kcall / k_prime)) / (np.log(katm / kput) * np.log(kcall / kput))

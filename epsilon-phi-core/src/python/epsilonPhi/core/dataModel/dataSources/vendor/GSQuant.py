@@ -171,10 +171,8 @@ if __name__ == "__main__":
     gsq = GSQuantManager()
     _DATASET = Dataset('FXIVOL_V2_PREMIUM')
 
-    _SD = date(year=1997, month=10, day=1)
-    _ED = date(year=2023, month=6, day=30)
-
-
+    _SD = date(year=1997, month=10, day=27)
+    _ED = date(year=1997, month=10, day=27)
 
     ####
 
@@ -187,7 +185,7 @@ if __name__ == "__main__":
     coverage['foreign'] = coverage['currency'].apply(lambda x: x[0:3])
     coverage['domestic'] = coverage['currency'].apply(lambda x: x[3:])
 
-    _D = coverage[coverage.delta.isin(['10D', '25D', '50D', 'DN'])]
+    _D = coverage[coverage.delta.isin(['10D','25D','DN','ATMF','Spot','25C','10C'])]
     _DFX = _D[_D.currency == 'GBPUSD']
     _DFXM = _DFX[_DFX.tenor.isin(['1m'])]
 
@@ -208,7 +206,9 @@ if __name__ == "__main__":
         df.extend([tmp])
 
     vols = pd.concat(df, axis=0)
-    subset = vols[['impliedVolatility','relative_strike','tenor']]
+    subset = vols[['impliedVolatility','relative_strike']]
+    subset.reset_index(drop=False).drop_duplicates(subset=['date', 'relative_strike']).set_index('date').pivot(
+        columns='relative_strike').to_clipboard()
 
 
 

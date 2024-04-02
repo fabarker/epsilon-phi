@@ -3,6 +3,7 @@ from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 from epsilonPhi.core.lib.smoothing.GaussianKernel import smooth_2d
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.OptionUtils import *
+from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import numpy as np
 from numba import njit
 import pandas as pd
@@ -11,6 +12,7 @@ from scipy.stats import t as tstudent
 class SmileStatArb(object):
 
     _DELTAS = [-0.1, -0.25, -0.5, -0.75, -0.9]
+    #_DELTAS = [-0.1]
     _MATURITIES = np.array([1, 3, 6, 9, 12]) / 12
 
 
@@ -31,6 +33,7 @@ class SmileStatArb(object):
 
         # Strategy Cache
         self._cache = {}
+        self._parameters = {}
 
     def set_dates(self, start_date, end_date):
         self._start_date = start_date
@@ -97,7 +100,7 @@ class SmileStatArb(object):
 
         _dI_S = self.smooth_dataframe(_dI)
         self._dI = pd.DataFrame(_dI_S, columns=_dI.get('z').columns, index=_dI.index).replace(0, np.nan)
-        self._dI = self._dI.dropna(axis=0).stack(level=[0, 1]).to_frame('dI').reset_index(drop=False)
+        self._dI = self._dI.shift(1).dropna(axis=0).stack(level=[0, 1]).to_frame('dI').reset_index(drop=False)
         self._I = self._I[self._I.date.isin(self._dI.date)]
 
         self._dI['x'] = np.abs(self._dI['x'])
@@ -107,17 +110,17 @@ class SmileStatArb(object):
         self._I = self._I.set_index('date').pivot(columns=['x', 't']).get('mid')
 
         # Set dates in object
-        self._dates = pd.to_datetime(np.unique(self._dI.index.values))
+        locs = (self._dI.index >= self._start_date) & (self._dI.index <= self._end_date)
+        self._dates = pd.to_datetime(self._dI.index[locs])
 
     def load_ks(self):
-        _k = nb_strike(self.get_S_prime().values,
-                       self.t,
-                       self.get_rd().values,
-                       self.get_rf().values,
-                       -1,
-                       -1 * self.x,
-                       2,
-                       self.get_I().values)
+        _k = black_strike(self.get_F_prime().values,
+                          self.t,
+                          self.get_rf().values,
+                          -1,
+                          -1 * self.x,
+                          2,
+                          self.get_I().values)
         self._k = pd.DataFrame(_k, columns=self.cols, index=self.dates)
 
     def shift_dates(self, dates, periods=1):
@@ -159,7 +162,7 @@ class SmileStatArb(object):
         return pd.concat([self.get_S()] * self.N, axis=1) / self.get_S().values
 
     def get_dS(self):
-        return np.log(self._vs.spot_prices).diff().shift(-1).loc[self.dates].to_frame(self._underlier)
+        return np.log(self._vs.spot_prices).diff().loc[self.dates].to_frame(self._underlier)
 
     def get_dSdS(self):
         return np.power(self.get_dS(), 2)
@@ -175,15 +178,20 @@ class SmileStatArb(object):
                                            np.unique(self.t)).loc[self.dates][self.t_cols]
 
     def get_F_prime(self):
-        return (np.exp(-self.t*self.get_rf()) / np.exp(-self.t*self.get_rd()))
+        df = self.get_S().values * (np.exp(-1 * self.get_rf() * self.t) /
+                                    np.exp(-1 * self.get_rd() * self.t))
+        return df / df.values
 
     def get_dF(self):
         if not hasattr(self, '_dF'):
-            f0 = self.get_F().iloc[:, ~self.get_F().columns.duplicated()].unstack()
-            t = self.shift_dates(f0.index.get_level_values(1))
-            ttm = np.array(f0.index.get_level_values(0)) - DateUtils.get_date_delta(f0.index.get_level_values(1), t, True)
+            f0 = self._vs.interpolator.get_f(self._vs.dates, np.unique(self.t), False).stack()
+            t = self.shift_dates(f0.index.get_level_values(0))
+            ttm = np.array(np.array(f0.index.get_level_values(1))) - DateUtils.get_date_delta(np.array(f0.index.get_level_values(0)), t, True)
             fT = self._vs.interpolator.get_f(t, ttm, True)
-            self._dF = (np.log(fT).values - np.log(f0)).unstack(level=0)
+            _dF = (np.log(fT.values) - np.log(f0)).reset_index()
+            _dF['date'] = fT.index.get_level_values(0)
+            _dF.columns = ['date', 't', 'rate']
+            self._dF = _dF.set_index('date').pivot(columns='t').get('rate')
         return self._dF.loc[self.dates].get(self.t_cols)
 
     def get_dFdF(self):
@@ -398,6 +406,17 @@ class SmileStatArb(object):
     def get_Y(self):
         return -1 * self.black_theta(-1)
 
+    def get_independent_variables(self, period):
+
+        X1 = FrameUtils.set_levels(self.get_X1(period), 'vega', 'var')
+        X2 = FrameUtils.set_levels(self.get_X2(period), 'mu', 'var')
+        X3 = FrameUtils.set_levels(self.get_X3(period), 'gamma', 'var')
+        X4 = FrameUtils.set_levels(self.get_X4(period), 'volga', 'var')
+        X5 = FrameUtils.set_levels(self.get_X5(period), 'vanna', 'var')
+
+        return pd.concat([X1, X2, X3, X4, X5], axis=1).swaplevel(2, 0, axis=1)
+
+
     def estimate_market_price_of_risk(self, period=21):
 
         Y_ = self.get_Y()
@@ -456,6 +475,7 @@ class SmileStatArb(object):
         c_df = pd.DataFrame(c, index=e.index, columns=['vega', 'trend', 'gamma', 'volga', 'vanna'])
         p_df = pd.DataFrame(p, index=e.index, columns=['vega', 'trend', 'gamma', 'volga', 'vanna'])
         q_df = pd.DataFrame(q, index=e.index, columns=['rsq'])
+        r_df = pd.DataFrame(r, index=e.index, columns=e.columns)
 
         beta_0 = pd.concat([self.get_rho_hat() * 0,
                   self.get_rho_hat() * 0,
@@ -464,7 +484,7 @@ class SmileStatArb(object):
                   self.get_rho_hat()], axis=1)
 
         rp = b_df - beta_0.reindex(b_df.index).values
-        return rp, e, b_df, c_df, p_df, q_df
+        return rp, r_df, e, b_df, c_df, p_df, q_df
 
     def get_sig(self, _HOLDING_DAYS):
         ED = np.max(self.get_open_dates(_HOLDING_DAYS))
@@ -563,7 +583,12 @@ class SmileStatArb(object):
             _rf = self.get_rf_paths(_HOLDING_DAYS)
             _rd = self.get_rd_paths(_HOLDING_DAYS)
             _t = self.get_ttm_paths(_HOLDING_DAYS)
-            self._cache[('f', _HOLDING_DAYS)] = np.exp(-_rf * _t) / np.exp(-_rd * _t)
+            _s = self.get_s_paths(_HOLDING_DAYS)
+            _s_re = _s / _s.values[:,0].reshape(-1, 1)
+
+            t1 = _s_re * np.exp(-_rf * _t) / np.exp(-_rd * _t)
+            self._cache[('f', _HOLDING_DAYS)] = t1 / t1.values[:,0].reshape(-1, 1)
+            #self._cache[('f', _HOLDING_DAYS)] = t1
         return self._cache[('f', _HOLDING_DAYS)]
 
     def get_k_paths(self, _HOLDING_DAYS):
@@ -601,8 +626,44 @@ class SmileStatArb(object):
                                r,
                                v.values,
                                option_type)
+
+            locs = t == 0
+            intr_val = (option_type * (f - k)).clip(0)
+            bsprice[locs] = intr_val[locs]
+
             self._cache[('o', _HOLDING_DAYS)] = pd.DataFrame(bsprice, index=v.index)
         return self._cache[('o', _HOLDING_DAYS)]
+
+    def get_option_pnls(self, _HOLDING_DAYS, option_type=-1, position=-1):
+        prices = self.get_option_price_paths(_HOLDING_DAYS, option_type)
+        return position * prices.diff(axis=1).dropna(axis=1, how='all')
+
+    def get_account_pnl(self, _HOLDING_DAYS, option_type=-1, position=-1):
+        prices = self.get_option_price_paths(_HOLDING_DAYS, option_type)
+        premium = -1 * position * prices.get(0).to_frame()
+
+        pricing_dates = self.get_pricing_date_paths(_HOLDING_DAYS)
+        term = ((pricing_dates.iloc[:, -1] - pricing_dates.iloc[:, 0]) /
+                np.timedelta64(1, 'D') / 365)
+
+        rd = self._vs.interpolator.get_rd(pricing_dates.iloc[:, 0].values, term.values, True)
+        daily_return = (-1 + np.exp(rd.values[:, None] * term.values[:, None]))
+        return pd.DataFrame((1/_HOLDING_DAYS) * premium.values.repeat(_HOLDING_DAYS, 1)
+                            * daily_return, index=premium.index)
+
+    def get_delta_hedged_pnl(self, _HOLDING_DAYS, option_type=-1, position=-1):
+
+        option_deltas = self.get_delta_paths(_HOLDING_DAYS, option_type)
+        position_deltas = position * option_deltas
+
+        ds = self.get_f_paths(_HOLDING_DAYS).diff(axis=1).dropna(axis=1)
+        return -1 * position_deltas.iloc[:, 0:-1].values * ds
+
+    def get_delta_hedged_option_pnls(self, _HOLDING_DAYS, option_type=-1, position=-1):
+        contract_pnls = self.get_option_pnls(_HOLDING_DAYS, option_type, position)
+        hedge_pnls = self.get_delta_hedged_pnl(_HOLDING_DAYS, position)
+        balance_pnls = self.get_account_pnl(_HOLDING_DAYS, option_type, position)
+        return contract_pnls + hedge_pnls + balance_pnls.values
 
     def get_delta_paths(self, _HOLDING_DAYS, option_type=-1):
 
@@ -625,31 +686,52 @@ class SmileStatArb(object):
             self._cache[('d', _HOLDING_DAYS)] = pd.DataFrame(bsdelta, index=v.index)
         return self._cache[('d', _HOLDING_DAYS)]
 
-    def get_sa_weights(self):
-        pass
+    def get_sensitivity_matrix(self, period=21):
+        X = self.get_independent_variables(period)
+        _, res, _, _, _, _, _= self.estimate_market_price_of_risk(21)
+        _r = FrameUtils.set_levels(res, 'e', 'var')
+        return pd.concat((X, _r.swaplevel(2, 0, axis=1)), axis=1)
+
+    def get_factor_model_pricing_residuals(self):
+        _, res, _, _, _, _, _ = self.estimate_market_price_of_risk(21)
+        return res
+
+    def get_sa_weights(self, period=21):
+
+        risks = ['vega','mu','gamma','volga','vanna','e']
+        H = self.get_sensitivity_matrix(period)
+
+        d = np.zeros((6, 1))
+        d[-3] = 1
+
+        T = H.shape[0]
+        wts = np.empty((25, T))
+        for t in range(T):
+            print(t)
+            h_bar = H.iloc[t, :].unstack(level=0)[risks]
+            wts[:, t] = (np.dot(h_bar, np.linalg.inv(np.dot(h_bar.T, h_bar))) @ d).flat
+
+        unit_error =  pd.DataFrame(wts, index=H.get('e').columns, columns=H.index).T
+        unit_dollar = unit_error / unit_error.abs().sum(axis=1).values.reshape(-1, 1)
+        return unit_error, unit_dollar
+
 
 
 if __name__ == "__main__":
 
+    import pandas as pd
+    import numpy as np
+    from epsilonPhi.core.utils.DateUtils import DateUtils
 
-    SD = pd.to_datetime('31-Dec-1996')
-    ED = pd.to_datetime('31-Dec-2022')
+    SD = pd.to_datetime('30-Nov-1996')
+    ED = pd.to_datetime('31-Dec-2023')
     self = SmileStatArb('GBPUSD', SD, ED)
-    self.get_delta_paths(21)
+    self.get_I()
 
-    import matplotlib.pyplot as plt
-    # Assuming self.get_I() returns a DataFrame
-    ax = rp.get('volga').dropna().plot()
-    # Adjust the x-axis to span from 0 to 0.6
-    ax.set_ylim(-10, 20)
-    # Add grid
-    ax.grid(True)
-    # Add a dashed yellow line across the zero point of the y-axis
-    ax.axhline(y=0, color='yellow', linestyle='--')
-    # Display the plot
-    plt.show()
+    ue, ud = self.get_sa_weights(period=21)
+    pnls = self.get_delta_hedged_option_pnls(1, option_type=-1, position=-1)
+    _pnls = pnls.unstack(level=[2, 1]).get(1)
 
-
-
+    rtns = ud.get(_pnls.columns).loc[_pnls.index] @ _pnls.values
 
 

@@ -536,6 +536,10 @@ class SmileStatArb(object):
         prices = self.get_option_prices(put_call)
         premium = position * prices.get(0).to_frame()
 
+        pricing_dates = self.get_pricing_date_paths(_HOLDING_DAYS)
+        term = ((pricing_dates.iloc[:,-1] - pricing_dates.iloc[:,0])/
+                np.timedelta64(1, 'D') / 365)
+
         rates = self.get_risk_free_rate_paths()
         t = self.get_ttm_paths()
         return (np.exp(rates * t.diff(axis=1).abs()) - 1).dropna(axis=1) * premium.values

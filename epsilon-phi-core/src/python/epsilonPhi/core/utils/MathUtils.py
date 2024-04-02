@@ -388,7 +388,7 @@ def np_fwd_flat_interp_1d(x, xp, fp, dtype):
     lenx = dz.size
     lenxp = len(dx)
     lval = dy[0]
-    rval = np.nan
+    rval = dy[-1]
 
     if lenxp == 1:
         xp_val = dx[0]
@@ -465,6 +465,36 @@ def quad_poly_regression(x0, y0, x):
     b = (np.linalg.inv(X.T @ X) @ X.T @ y0)
     res = np.array([1, x, x ** 2], dtype=np.float64) @ b
     return res
+
+def vanna_volga_1d(f, k, t, kput, katm, kcall, sigput, sigatm, sigcal):
+
+    def d1(f, k, v, t):
+        v_sqrt_t = v * np.sqrt(t)
+        d1 = np.log(f / k) / v_sqrt_t + v_sqrt_t / 2.0
+        return d1
+
+    def d2(f, k, v, t):
+        v_sqrt_t = v * np.sqrt(t)
+        d2 = d1(f, k, v, t) - v_sqrt_t
+        return d2
+
+    # First Interpolate the Cross-Section
+    w_put = (np.log(katm / k) * np.log(kcall / k)) / (np.log(katm / kput) * np.log(kcall / kput))
+    w_atm = (np.log(k / kput) * np.log(kcall / k)) / (np.log(katm / kput) * np.log(kcall / katm))
+    w_cal = (np.log(k / kput) * np.log(k / katm)) /  (np.log(kcall / kput) * np.log(kcall / katm))
+
+    # First Interpolate the Cross-Section
+    d1d2 = d1(f, k, sigatm, t) * d2(f, k, sigatm, t)
+
+    # First Interpolate the Cross-Section
+    vv_fo = (w_put * sigput + w_atm * sigatm + w_cal * sigcal) - sigatm
+    vv_so = (w_put * d1(f, kput, sigput, t) * d2(f, kput, sigput, t) * np.power(sigput - sigatm, 2) +
+             w_atm *  d1(f, katm, sigatm, t) * d2(f, katm, sigatm, t)  * np.power(sigatm - sigatm, 2) +
+             w_cal * d1(f, kcall, sigcal, t) * d2(f, kcall, sigcal, t) * np.power(sigcal - sigatm, 2))
+
+    # First Interpolate the Cross-Section
+    vol = sigatm + (-sigatm + np.sqrt(sigatm ** 2 + d1d2 * (2 * sigatm * vv_fo + vv_so))) / d1d2
+    return vol
 
 
 if __name__ == "__main__":

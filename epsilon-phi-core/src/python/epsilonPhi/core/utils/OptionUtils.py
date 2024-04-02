@@ -1,8 +1,11 @@
+import sys
+
 from scipy.stats import norm
 from numba import float64, int64, vectorize, njit, guvectorize
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.MathUtils import *
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
+from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_spline as cubicspline, calc_spline_params, piece_wise_spline
 from epsilonPhi.core.utils.SolverUtils import *
 import pandas as pd
 from enum import Enum
@@ -415,6 +418,26 @@ def black_volga(f, t, k, r, vol):
 
 ###############################################################################
 
+@vectorize([float64(float64, float64, float64, int64, float64,
+              int64, float64)], fastmath=True, nopython=True)
+def black_strike(f, t, rf, option_type_value, delta, delta_method_value, v):
+
+    phi = np.sign(option_type_value)
+    if delta_method_value == DeltaType.SPOT_DELTA.value:
+        vsqrtt = v * np.sqrt(t)
+        for_df = np.exp(-rf * t)
+        arg = delta*phi/for_df  # CHECK THIS !!!
+        norm_inv_delta = norminvcdf(arg)
+        K = f * np.exp(-vsqrtt * (phi*norm_inv_delta - vsqrtt/2.0))
+        return K
+    elif delta_method_value == DeltaType.FORWARD_DELTA.value:
+        vsqrtt = v * np.sqrt(t)
+        arg = delta*phi   # CHECK THIS!!!!!!!!
+        norm_inv_delta = norminvcdf(arg)
+        K = f * np.exp(-vsqrtt * (phi*norm_inv_delta - vsqrtt/2.0))
+        return K
+    else:
+        raise FinError("Unknown FinFXDeltaMethod")
 
 @vectorize([float64(float64, float64, float64, float64, int64, float64,
               int64, float64)], fastmath=True, nopython=True)
@@ -579,9 +602,51 @@ def volga_bump(f, t, k, rd, v):
     return volga
 
 
+@njit(cache=True, fastmath=True)
+def strike_fit(x0, *args):
 
+    r = piece_wise_spline(args[5] * x0,  args[6][4], args[6][0], args[6][1], args[6][2], args[6][3])
+    res = nb_strike(args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[5],
+                    args[5] * x0,
+                    2,
+                    r) - args[4]
+    return res
 
+@njit(fastmath=True)
+def solve_strike_fit(args):
 
+    fmin = 9999999.0
+    sig = np.array(np.nan)
+    if np.log(args[4]/args[0]) > 0:
+       B = (0.5, 1 + 0.05)
+    else:
+       B = (g_small/100, 0.5 + 0.05)
+
+    for i in np.arange(B[0], B[1], 0.05):
+        try:
+            iter_fit = newton_secant(strike_fit,
+                                     x0=i,
+                                     args=args,
+                                     tol=1e-8,
+                                     maxiter=1000)
+
+            feval = strike_fit(iter_fit, *args)
+            if np.abs(feval) < 1e-9:
+               sig = piece_wise_spline(args[5] * iter_fit,  args[6][4], args[6][0], args[6][1], args[6][2], args[6][3])
+               return sig
+            elif feval < fmin:
+                res_min = iter_fit
+                fmin = feval
+        except:
+            pass
+
+    if np.abs(fmin) < 1e-6:
+        sig = piece_wise_spline(args[5] * res_min,  args[6][4], args[6][0], args[6][1], args[6][2], args[6][3])
+    return sig
 
 if __name__ == "__main__":
 

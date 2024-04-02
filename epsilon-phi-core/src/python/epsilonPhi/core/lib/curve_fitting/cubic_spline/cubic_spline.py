@@ -4,6 +4,7 @@ from numba import float64
 
 @numba.njit(cache=True, fastmath=True)
 def calc_spline_params(x, y):
+
     n = x.size - 1
     a = y.copy()
     h = x[1:] - x[:-1]
@@ -19,7 +20,7 @@ def calc_spline_params(x, y):
     b = (a[1:] - a[:-1]) / h + (c[:-1] + 2 * c[1:]) * h / 3
     d = np.diff(c) / (3 * h)
 
-    return a[1:], b, c[1:], d
+    return a[1:], b, c[1:], d, x
 
 @numba.njit(cache=True, fastmath=True,)
 def func_spline(x, ix, x0, a, b, c, d):
@@ -55,7 +56,41 @@ def piece_wise_spline(x, x0, a, b, c, d):
 
 @numba.njit(fastmath=True, cache=True)
 def cubic_spline(x0, y0, x):
-    a, b, c, d = calc_spline_params(x0, y0)
+    a, b, c, d, e = calc_spline_params(x0, y0)
     r = piece_wise_spline(x, x0, a, b, c, d)
     return r
+
+@numba.njit(cache=True)
+def fit_cubic_spline(x, y):
+
+    # 1. Remove Nans...
+    x_ = x[~np.isnan(y)]
+    y_ = y[~np.isnan(y)]
+
+    # 2. Keep it Semi-Arbitrage Free
+    if ((np.any(np.abs(x_) == 0.5)) and
+                (np.all(y_[np.abs(x_) == 0.5] > y_[np.abs(x_) != 0.5]))):
+        y_ = y_[np.abs(x_) != 0.5]
+        x_ = x_[np.abs(x_) != 0.5]
+
+    if len(x_) < 4:
+        p = (np.array([np.nan]), np.array([np.nan]),
+             np.array([np.nan]), np.array([np.nan]), np.array([np.nan]))
+        return p
+
+    _loc = np.argsort(x_)
+    x_sorted = x_[_loc]
+    y_sorted = y_[_loc]
+    p = calc_spline_params(x_sorted, y_sorted)
+    return p
+
+@numba.njit(fastmath=True, cache=True)
+def eval_cubic_spline(x, params):
+    val = piece_wise_spline(x,
+                            params[4],
+                            params[0],
+                            params[1],
+                            params[2],
+                            params[3])
+    return val
 
