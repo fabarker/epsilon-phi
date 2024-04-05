@@ -222,8 +222,8 @@ class CubicSpline(object):
         fx = np.asarray(x, dtype=np.float64)
         xp = np.asarray(z, dtype=np.float64)
 
-        @njit(float64[:](float64[:], float64[:], float64[:], float64[:],
-                     float64[:,:], float64[:,:], float64[:]), fastmath=False, cache=False)
+        #@njit(float64[:](float64[:], float64[:], float64[:], float64[:],
+        #             float64[:,:], float64[:,:], float64[:]), fastmath=False, cache=False)
         def numba_solver(s, t, rd, rf, fy, fx, xp):
 
             z = np.full(xp.shape, np.nan)
@@ -319,41 +319,19 @@ if __name__ == "__main__":
                            rd,
                            rf)
 
-        strikes = [1.19200405116997]
-        OD =  pd.to_datetime('25/05/2023')
-        PDs = pd.to_datetime(['25/05/2023',
-              '26/05/2023',
-              '30/05/2023',
-              '31/05/2023',
-              '01/06/2023',
-              '02/06/2023',
-              '05/06/2023',
-              '06/06/2023',
-              '07/06/2023',
-              '08/06/2023',
-              '09/06/2023',
-              '12/06/2023',
-              '13/06/2023',
-              '14/06/2023',
-              '15/06/2023',
-              '16/06/2023',
-              '20/06/2023',
-              '21/06/2023',
-              '22/06/2023',
-              '23/06/2023',
-              '26/06/2023',
-              '27/06/2023'])
+        _paths = '/Users/francisbarker/Library/Mobile Documents/com~apple~CloudDocs/Data/Bloomberg/FX/Vols/GBPUSD.xlsx'
+        info = pd.read_excel(_paths, 'Sheet2')
 
-        mat = 1/12
-        elapsed = ((PDs - OD)/np.timedelta64(1, 'D')).values.astype(np.int64)/365
-        ttm = np.maximum(0, mat - elapsed)
-        fxivols = self.get_ivols(pd.to_datetime(PDs),
+        K = info.get('K').to_numpy()
+        D = pd.to_datetime(info.get('dates').values)
+        T = info.get('T').to_numpy()
+
+        fxivols = self.get_ivols(pd.to_datetime(D),
                                  strike_reference=StrikeReference.STRIKE_PRICE,
-                                 relative_strike=np.array(strikes),
+                                 relative_strike=K,
                                  maturity_type=MaturityType.YEARFRAC,
-                                 maturities=np.array(ttm))
+                                 maturities=T)
 
-        _vols = fxivols.set_index(['date', 't'], drop=True).loc[list(zip(PDs, ttm))]
 
         import utils_find_1st.find_1st
 

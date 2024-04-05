@@ -696,24 +696,33 @@ class SmileStatArb(object):
         _, res, _, _, _, _, _ = self.estimate_market_price_of_risk(21)
         return res
 
-    def get_sa_weights(self, period=21):
+    def get_static_strategy_pnls(self, estimation_period=21, holding_period=1, strategy_type=5):
+
+        _pnls = self.get_delta_hedged_option_pnls(_HOLDING_DAYS=holding_period)
+        _wts = self.get_strategy_weights(estimation_period, strategy_type)
+
+        _common = _pnls.index.intersection(_wts.index)
+        pnls = _pnls.loc[_common].values * _wts.loc[_common]
+        return pnls.groupby('date', axis=0).mean()
+
+    def get_strategy_weights(self, period=21, type=5):
 
         risks = ['vega', 'mu', 'gamma', 'volga', 'vanna', 'e']
         H = self.get_sensitivity_matrix(period)
 
         d = np.zeros((6, 1))
-        d[-1] = 1
+        d[type] = 1
 
         T = H.shape[0]
-        wts = np.empty((25, T))
+        wts = np.empty((self.N, T))
         for t in range(T):
-            print(t)
             h_bar = H.iloc[t, :].unstack(level=0)[risks]
             wts[:, t] = (np.dot(h_bar, np.linalg.inv(np.dot(h_bar.T, h_bar))) @ d).flat
 
-        unit_error = pd.DataFrame(wts/100, index=H.get('e').columns, columns=H.index).T
-        unit_dollar = unit_error / unit_error.abs().sum(axis=1).values.reshape(-1, 1)
-        return unit_error, unit_dollar
+        wts_1 = pd.DataFrame(wts, index=H.get('e').columns, columns=H.index).T
+        wts_2 = wts_1 / wts_1.abs().sum(axis=1).values.reshape(-1, 1)
+        return pd.concat((wts_1.stack(level=[1, 0]).to_frame('fixed'),
+                          wts_2.stack(level=[1, 0]).to_frame('dollar')), axis=1)
 
 
 
@@ -727,9 +736,13 @@ if __name__ == "__main__":
     ED = pd.to_datetime('31-Dec-2023')
     self = SmileStatArb('GBPUSD', SD, ED)
 
-    v = self.get_sig_paths(1)
+    vega = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=0)
+    gamma = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=2)
+    volga = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=3)
+    vanna = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=4)
+    resid = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=5)
 
-    v_ = v.swaplevel(2, 0).loc[1 / 12].loc[0.9].resample('B').asfreq()
+    trend = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=1)
 
 
 

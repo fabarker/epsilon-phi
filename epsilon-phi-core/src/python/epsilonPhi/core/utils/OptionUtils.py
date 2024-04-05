@@ -623,18 +623,19 @@ def solve_strike_fit(args):
     vmin = np.nan
     for i in np.arange(g_small/100, 1.05, 0.05):
         try:
-            i_fit, i_val = newton_secant(strike_fit,
-                                         x0=i,
-                                         args=args,
-                                         tol=1e-8,
-                                         maxiter=1000)
-            if i_val < 1e-9 and np.abs(i_val) < fmin:
+            i_fit = newton_secant(strike_fit,
+                                  x0=i,
+                                  args=args,
+                                  tol=1e-8,
+                                  maxiter=1000)
+            i_val = strike_fit(i_fit, *args)
+            if np.abs(i_val) < 1e-6 and np.abs(i_val) < fmin and i_fit > 0 and i_fit <= 1:
                fmin = np.abs(i_val)
-               vmin = i_fit
+               vmin = np.maximum(np.minimum(i_fit, 1-g_small), g_small)
         except:
             pass
 
-    if np.abs(fmin) < 1e-9:
+    if np.abs(fmin) < 1e-6:
        sig = piece_wise_spline(args[5] * vmin,
                                args[6][4],
                                args[6][0],
