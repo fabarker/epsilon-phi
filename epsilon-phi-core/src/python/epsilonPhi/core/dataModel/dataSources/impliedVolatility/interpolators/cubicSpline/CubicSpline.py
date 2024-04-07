@@ -222,7 +222,7 @@ class CubicSpline(object):
         fx = np.asarray(x, dtype=np.float64)
         xp = np.asarray(z, dtype=np.float64)
 
-        #@njit(float64[:](float64[:], float64[:], float64[:], float64[:],
+        #@jit(float64[:](float64[:], float64[:], float64[:], float64[:],
         #             float64[:,:], float64[:,:], float64[:]), fastmath=False, cache=False)
         def numba_solver(s, t, rd, rf, fy, fx, xp):
 

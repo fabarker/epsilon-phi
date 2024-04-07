@@ -1,6 +1,7 @@
 from epsilonPhi.core.dataModel.dataSources.impliedVolatility.VolSurface import AbstractVolSurface
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 from epsilonPhi.core.lib.smoothing.GaussianKernel import smooth_2d
+from scipy.optimize import lsq_linear
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
@@ -724,6 +725,70 @@ class SmileStatArb(object):
         return pd.concat((wts_1.stack(level=[1, 0]).to_frame('fixed'),
                           wts_2.stack(level=[1, 0]).to_frame('dollar')), axis=1)
 
+    def get_pca_loadings(self, type='level'):
+        if type == 'level':
+            I = np.log(self.get_I())
+        else:
+            I = self.get_dI()
+
+        cov_mat = I.cov()
+        L, V = np.linalg.eig(cov_mat)
+        return pd.DataFrame(V, columns=L, index=I.columns).sort_index(axis=1, ascending=False)
+
+    def get_principle_components(self, type='level'):
+
+        if type == 'level':
+            I = np.log(self.get_I())
+        else:
+            I = self.get_dI()
+
+        L = self.get_pca_loadings(type)
+        eigvecs = pd.concat([pd.DataFrame(I.values @ L.values[:, x]) for x in np.array(range(L.shape[1]))], axis=1)
+        eigvecs.columns = np.array(range(L.shape[1]))
+        return eigvecs
+
+    def extract_common_risk_neutral_moments(self):
+
+        I = self.get_I()
+        F = self.get_F()
+        K = self.get_k()
+
+        zp = np.log(K / F.values) + np.sqrt(self.t) * I
+        zm = np.log(K / F.values) - np.sqrt(self.t) * I
+
+        X1 = 2 * np.power(I, 2) * self.t
+        X2 = I/I.values
+        X3 = 2 * zp
+        X4 = zp * zm
+        y = np.power(I, 2)
+
+        N = y.shape[0]
+        B = np.full((N, 4), np.nan)
+
+        for t in range(N):
+            y_ = y.values[t].reshape(-1, 1)
+
+            x1 = X1.values[t]
+            x2 = X2.values[t]
+            x3 = X3.values[t]
+            x4 = X4.values[t]
+
+            Xmat = np.column_stack((x1, x2, x3, x4))
+
+            XtX = np.dot(Xmat.T, Xmat)
+            #XtY = np.dot(Xmat.T, y_)
+            YtY = np.dot(y_.T, y_)
+
+            result = lsq_linear(Xmat,
+                                y_.flatten(),
+                                bounds=( [-np.inf, 0, -np.inf, 0],  [np.inf, np.inf, np.inf, np.inf]), lsmr_maxiter=None,
+                                method='trf', lsq_solver=None, lsmr_tol=None, max_iter=200, tol=1e-8)
+
+            #betas = np.linalg.solve(XtX, XtY)
+            B[t, :] = result.x
+        return pd.DataFrame(B, columns=['vega', 'gamma', 'vanna', 'volga'], index=y.index)
+
+
 
 
 if __name__ == "__main__":
@@ -735,6 +800,9 @@ if __name__ == "__main__":
     SD = pd.to_datetime('30-Nov-1996')
     ED = pd.to_datetime('31-Dec-2023')
     self = SmileStatArb('GBPUSD', SD, ED)
+
+    _date = '2023-06-30'
+
 
     vega = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=0)
     gamma = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=2)

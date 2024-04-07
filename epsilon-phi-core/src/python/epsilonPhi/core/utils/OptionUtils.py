@@ -616,7 +616,7 @@ def strike_fit(x0, *args):
                     r) - args[4]
     return res
 
-@njit(fastmath=True)
+#@jit(fastmath=True)
 def solve_strike_fit(args):
 
     fmin = 9999999.0
