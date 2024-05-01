@@ -648,7 +648,7 @@ def solve_sigma(func, args):
 
     x0s = np.array([0.02, 0.2, 0.05, 0.15, 0.08, 0.1, 0.12], dtype=np.float64)
     for x0 in x0s:
-        try:
+        #try:
             i_fit = newton_secant(func,
                                   x0=x0,
                                   args=args,
@@ -659,8 +659,8 @@ def solve_sigma(func, args):
             if np.abs(i_val) < fmin:
                 fmin = np.abs(i_val)
                 vmin = np.abs(i_fit)
-        except:
-            pass
+        #except:
+            #pass
     return vmin
 
 @njit(cache=True, fastmath=True)

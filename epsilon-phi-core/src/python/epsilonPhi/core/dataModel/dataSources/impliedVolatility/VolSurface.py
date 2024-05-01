@@ -175,8 +175,8 @@ class AbstractVolSurface(object):
         d = self.get_bsdelta(s, t, k, r, q, i, self.delta_type.value, option_type)
         g = self.get_bsgamma(s, t, k, r, q, i)
         v = self.get_bsvega(s, t, k, r, q, i)
-        va = self.get_bsvanna(s, t, k, r, q, v)
-        vo = self.get_bsvolga(s, t, k, r, q, v)
+        va = self.get_bsvanna(s, t, k, r, q, i)
+        vo = self.get_bsvolga(s, t, k, r, q, i)
         theta = self.get_bstheta(s, t, k, r, q, i, option_type)
 
         # Put the intrinsic value in at the maturity date

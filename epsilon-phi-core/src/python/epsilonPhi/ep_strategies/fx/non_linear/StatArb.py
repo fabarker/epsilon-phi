@@ -805,7 +805,7 @@ if __name__ == "__main__":
     import numpy as np
     from epsilonPhi.core.utils.DateUtils import DateUtils
 
-    SD = pd.to_datetime('30-Nov-1996')
+    SD = pd.to_datetime('31-Dec-2021')
     ED = pd.to_datetime('31-Dec-2023')
     self = SmileStatArb('GBPUSD', SD, ED)
     pnls = self.get_static_strategy_pnls()
