@@ -60,6 +60,18 @@ def cubic_spline(x0, y0, x):
     r = piece_wise_spline(x, x0, a, b, c, d)
     return r
 
+def fit_spline(x, y):
+
+    x_ = x[~np.isnan(y)]
+    y_ = y[~np.isnan(y)]
+
+    _loc = np.argsort(x_)
+    x_sorted = x_[_loc]
+    y_sorted = y_[_loc]
+    p = calc_spline_params(x_sorted, y_sorted)
+    return p
+
+
 @numba.njit(cache=True)
 def fit_cubic_spline(x, y):
 

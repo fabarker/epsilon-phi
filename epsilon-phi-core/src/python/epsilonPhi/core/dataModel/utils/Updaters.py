@@ -348,6 +348,26 @@ class GSQUANT_UPDATER(Updater):
         if not os.path.isdir(self._error_dir):
             os.mkdir(self._error_dir)
 
+    def get_tickers_from_dataset(self, dataset):
+        pass
+
+    def get_dataset_tickers(self):
+        pass
+
+    def update_fx_ivols(self):
+        pass
+
+    def update_fx_spots(self):
+        pass
+
+    def update_fx_forwards(self):
+        pass
+
+
+
+
+
+
 
 class DATASTREAM_UPDATER(Updater):
     _DATASTREAM_DATATYPES = ['529E', 'APC', 'CX', 'DIEP', 'DIPE', 'DM', 'DY', 'EB', 'EO', 'EPS', 'EPS1FD12', 'ER', 'IB',
@@ -534,7 +554,9 @@ class DATASTREAM_UPDATER(Updater):
 
 if __name__ == "__main__":
 
-    table_names = ['interest_rate']
+    table_names = ['yield_curve','interest_rate','fx_rates','equity_index',
+                   'bond_index','commodity_index','future','hedge_fund_index']
+
     for table in table_names:
         Updater.update_table_data(table)
 

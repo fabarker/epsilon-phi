@@ -262,6 +262,12 @@ if __name__ == "__main__":
 ###################
 
     gds = GlobalDataSource()
+
+    uk = gds.get_interest_rates_for_region('United Kingdom', '1m')
+    us = gds.get_interest_rates_for_region('United States', '1m')
+    eu = gds.get_interest_rates_for_region('Germany', '1m')
+    jp = gds.get_interest_rates_for_region('Japan', '1m')
+
     df = gds.get_time_series_data_from_ticker('MSUSAM$', 'RI')
 
     df = CTimeSeries(df, ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.SIMPLE)

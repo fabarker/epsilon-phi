@@ -6,6 +6,7 @@ import os, sys
 class ExcelUtils(object):
     pass
 
+
     # Method to load all sheets in a workbook
     @staticmethod
     def xlsread_sheets(fullfile_path, sheet_names=None, dtype=None):

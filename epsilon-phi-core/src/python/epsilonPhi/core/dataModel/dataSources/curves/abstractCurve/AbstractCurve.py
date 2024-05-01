@@ -56,8 +56,8 @@ class AbstractCurve(object):
 
     def get_stacked_curve(self, dates=None, maturity=None):
 
-        dates = np.array(dates)
-        maturity = np.array(maturity)
+        dates = np.asarray(dates).flatten()
+        maturity = np.asarray(maturity, dtype=np.float64).flatten()
 
         D_M = DateUtils.to_ordinals(dates)
         _idx = find_1st(self.ordinals.reshape(-1, 1),
@@ -75,4 +75,5 @@ class AbstractCurve(object):
         # Interpolate
         _type = np.result_type(np.float64, np.float64)
         res = interp_N_vect(mat, xp, fp, _type)
+        res[_idx == -1] = np.nan
         return pd.Series(res.flatten(), index=[dates, maturity.flatten()])

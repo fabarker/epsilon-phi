@@ -2,15 +2,172 @@ import numpy as np
 import pandas as pd
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import cubic_spline as cubicspline
-from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import calc_spline_params, piece_wise_spline, fit_cubic_spline, eval_cubic_spline
+from epsilonPhi.core.lib.curve_fitting.cubic_spline.cubic_spline import calc_spline_params, piece_wise_spline, fit_cubic_spline, eval_cubic_spline, fit_spline
 from epsilonPhi.core.dataModel.dataSources.curves.abstractCurve.AbstractCurve import AbstractCurve
 from epsilonPhi.core.utils.NumpyUtils import NumpyUtils as npu
 from numba import jit
 from tqdm import tqdm
 from epsilonPhi.core.utils.OptionUtils import *
+from abc import abstractmethod
+from numba.typed import Dict
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 from epsilonPhi.core.utils.MathUtils import cubic_spline, vanna_volga_1d
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import MaturityType
+from typing import Optional, Union
+
+class AbstractInterpolator(object):
+
+    def __init__(self,
+                 market_df: pd.DataFrame,
+                 **kwargs
+                 ) -> None:
+
+        self._fit = None
+        self._rollos_fit = None
+        self._spot_rates = None
+        self._funding_curve = None
+        self._rate_curve = None
+        self._forward_curve = None
+
+        # set the market data frame
+        self.set_market_df(market_df)
+
+    @abstractmethod
+    def fit_surface(self):
+        pass
+
+    ######## Set Methods ########
+
+    def set_market_df(self, market_df: pd.DataFrame)  -> None:
+        self._market_df = market_df.copy().reset_index()
+        self.set_spot_rates(self._market_df.get('s'))
+
+    def set_deposit_rate_curve(self, deposit_rate_curve: AbstractCurve)  -> None:
+        assert isinstance(deposit_rate_curve, AbstractCurve), 'Error - deposit_rate_curve must be type "AbstractCurve"'
+        self._rd_curve = deposit_rate_curve
+
+    def set_funding_rate_curve(self, funding_rate_curve: AbstractCurve)  -> None:
+        assert isinstance(funding_rate_curve, AbstractCurve), 'Error - deposit_rate_curve must be type "AbstractCurve"'
+        self._rf_curve = funding_rate_curve
+
+    def set_spot_rates(self, spot_rates: Optional[Union[pd.DataFrame, pd.Series]])  -> None:
+        self._spot_rates = spot_rates
+
+    def set_forward_rate_curve(self, forward_rate_curve: AbstractCurve)  -> None:
+        assert isinstance(forward_rate_curve, AbstractCurve), 'Error - deposit_rate_curve must be type "AbstractCurve"'
+        self._fwd_rate_curve = forward_rate_curve
+
+    ######### Getter Methods ########
+
+    def get_f(self, pricing_dates, maturities, is_stacked=False):
+        return self._forward_curve.get_curve(pricing_dates, maturities, is_stacked)
+
+    def get_rd(self, pricing_dates, maturities, is_stacked=False):
+        return self._rate_curve.get_curve(pricing_dates, maturities, is_stacked)
+
+    def get_rf(self, pricing_dates, maturities, is_stacked=False):
+        return self._funding_curve.get_curve(pricing_dates, maturities, is_stacked)
+
+    def get_s(self, pricing_dates):
+        return self._spot_rates.reindex(pricing_dates)
+
+    def get_ivols(self, pricing_dates, strike_reference, relative_strike, maturity_type, maturities):
+
+        maturities = np.asarray(maturities)
+        relative_strike = np.asarray(relative_strike)
+        if (pricing_dates.shape != maturities.shape) or (pricing_dates.shape != relative_strike.shape):
+            pricing_dates, maturities, relative_strike = (
+                npu.flat_meshgrid(pricing_dates, maturities, relative_strike))
+
+        if maturity_type in [MaturityType.MATURITY_STRING, MaturityType.MATURITY_STRING.value]:
+           return self.solve_for_maturities(pricing_dates, maturities, relative_strike)
+        elif maturity_type in [MaturityType.EXPIRY_DATE, MaturityType.EXPIRY_DATE.value]:
+           return self.solve_for_expiry_date(pricing_dates, maturities, relative_strike)
+        elif maturity_type in [MaturityType.YEARFRAC, MaturityType.YEARFRAC.value]:
+           return self.solve_for_expiries(pricing_dates, maturities, relative_strike)
+
+    def solve_for_horizon(self):
+        pass
+
+    def get_X1(self):
+        mkt_data = self._market_df.set_index(['date', 't', StrikeReference.DELTA])
+        X1 = (mkt_data.get('ve') - mkt_data.get('mid') * mkt_data.get('vo')).dropna()
+        return X1.unstack(level=StrikeReference.DELTA).sort_index()
+    def get_X2(self):
+        mkt_data = self._market_df.set_index(['date', 't', StrikeReference.DELTA])
+        X2 = 0.5 * mkt_data.get('vo').dropna()
+        return X2.unstack(level=StrikeReference.DELTA).sort_index()
+
+    def get_X3(self):
+        mkt_data = self._market_df.set_index(['date', 't', StrikeReference.DELTA])
+        X3 = (mkt_data.get('s') * mkt_data.get('va')).dropna()
+        return X3.unstack(level=StrikeReference.DELTA).sort_index()
+
+    def get_Y(self):
+        mkt_data = self._market_df.set_index(['date', 't', StrikeReference.DELTA])
+        Y = (mkt_data.get('ve') * mkt_data.get('mid') -
+                0.5 * mkt_data.get('vo') * np.power(mkt_data.get('mid'), 2)).dropna()
+        return Y.unstack(level=StrikeReference.DELTA).sort_index()
+
+    def fit_Rollos(self):
+
+        X1 = self.get_X1().values
+        X2 = self.get_X2().values
+        X3 = self.get_X3().values
+        y = self.get_Y()
+
+        @njit
+        def estimate_params(y, x1, x2, x3):
+
+            T, K = y.shape
+            b = np.full((T, 3), np.nan)
+            for t in range(T):
+
+                cols = ~np.isnan(y[t, :])
+                if np.sum(cols) > 2:
+
+                    theta = y[t, cols]
+                    X = np.column_stack((x1[t, cols],
+                                         x2[t, cols],
+                                         x3[t, cols],
+                                         ))
+
+                    XtX = np.dot(X.T, X)
+                    XtY = np.dot(X.T, theta)
+                    betas = np.linalg.solve(XtX, XtY)
+                    b[t,:] = betas
+            return b
+
+        betas = estimate_params(y.values, X1, X2, X3)
+        self._rollos_fit = pd.DataFrame(betas, index=y.index)
+
+
+class Spline(AbstractInterpolator):
+    def __init__(self,
+                 market_df: pd.DataFrame,
+                 **kwargs):
+
+        super(Spline, self).__init__(market_df=market_df,
+                                     **kwargs)
+        self.fit_surface()
+
+    def fit_surface(self):
+
+        mkt_data = self._market_df.set_index(['date', 't', StrikeReference.DELTA]).get('mid')
+        idx = ~np.isnan(mkt_data.index.get_level_values(2))
+
+        Y = mkt_data.iloc[idx].unstack(level=2).sort_index(level=1)
+        Y = Y[(~Y.isna()).sum(axis=1) > 3]
+
+        fy = np.asarray(Y.values, dtype=np.float64)
+        fx = np.asarray(Y.columns, dtype=np.float64)
+
+        tmp = list()
+        for t in range(fy.shape[0]):
+            tmp.extend([fit_cubic_spline(fx, fy[t])])
+
+        self._fit = pd.DataFrame(tmp, index=Y.index)
+        self.fit_Rollos()
 
 
 class CubicSpline(object):
@@ -28,27 +185,25 @@ class CubicSpline(object):
         self.set_forward_prices()
         self._x = None
 
-
     def set_ivols(self, ivols):
 
         # Process the ivols dataframe
         _ivols = ivols.reset_index()
-        _ivols = _ivols[_ivols.get('t') >= np.round(1 / 12, 10)]
 
         cols = _ivols.columns
         if 'relative_strike' in cols:
             _ivols = _ivols[_ivols.columns.difference(['relative_strike'])]
 
-        self._strike_reference = _ivols.columns.difference(['date', 'mid', 't', 'k', 'exp']).values.item()
+        self._strike_reference = _ivols.columns.difference(['date', 'mid', 't', 'k', 'exp', 's', 'va', 've', 'vo']).values.item()
         _ivols = _ivols.rename(columns={self._strike_reference: 'x'})
         _dduped = _ivols.drop_duplicates(subset=['x', 't', 'date'])
 
         # Set the dataframe in the object
-        self._ivols = _dduped.set_index('date').pivot(columns=['t', 'x']).sort_index()
+        self._ivols = _dduped.set_index('date').get(['k','mid', 't', 'x']).pivot(columns=['t', 'x']).sort_index()
 
 
     def set_spot_prices(self, df):
-        self._spot = df.loc[self.dates].to_frame()
+        self._spot = df.reindex(self.dates).to_frame()
 
     def set_risk_free_rate_curve(self, rd):
         self._rate_curve = rd
@@ -113,6 +268,11 @@ class CubicSpline(object):
     def f(self):
         return self._f.values
 
+    def get_invalid_maturity_dates(self):
+        all_dates = self._spot.resample('D').asfreq()
+        return all_dates[all_dates.isna().values.flatten()].index
+
+
     def get_f(self, pricing_dates, maturities, is_stacked=False):
         return self._forward_curve.get_curve(pricing_dates, maturities, is_stacked)
     def get_rd(self, pricing_dates, maturities, is_stacked=False):
@@ -152,7 +312,7 @@ class CubicSpline(object):
         assert pricing_dates.shape == relative_strike.shape, 'Error - dimension mis-match'
 
         if maturity_type in [MaturityType.MATURITY_STRING, MaturityType.MATURITY_STRING.value]:
-           matdates = DateUtils.expiry_from_settlement(pricing_dates, maturities)
+           matdates = DateUtils.expiry_from_settlement(pricing_dates, maturities, self.get_invalid_maturity_dates())
            mat = DateUtils.get_date_delta(pricing_dates, matdates, True)
            ivols = self.load_ivols(pricing_dates, mat, relative_strike, strike_reference)
            ivols['expiry'] = matdates
@@ -164,7 +324,7 @@ class CubicSpline(object):
            ivols['expiry'] = maturities
            return ivols
         elif maturity_type in [MaturityType.YEARFRAC, MaturityType.YEARFRAC.value]:
-           return self.load_ivols(pricing_dates, maturities, relative_strike, strike_reference)
+           return self.load_ivols(pricing_dates, np.asarray(maturities, dtype=np.float64), relative_strike, strike_reference)
 
     def load_ivols(self, pricing_dates, maturities, relative_strike, strike_reference):
 
@@ -222,13 +382,13 @@ class CubicSpline(object):
         fx = np.asarray(x, dtype=np.float64)
         xp = np.asarray(z, dtype=np.float64)
 
-        #@jit(float64[:](float64[:], float64[:], float64[:], float64[:],
-        #             float64[:,:], float64[:,:], float64[:]), fastmath=False, cache=False)
+        #@njit(float64[:](float64[:], float64[:], float64[:], float64[:],
+                     #float64[:,:], float64[:,:], float64[:]), fastmath=False, cache=False)
         def numba_solver(s, t, rd, rf, fy, fx, xp):
 
             z = np.full(xp.shape, np.nan)
             for i in range(xp.shape[0]):
-                if np.sum(~np.isnan(fx[i])) > 3 and ~np.isnan(xp[i]):
+                if np.sum(~np.isnan(fx[i])) > 3 and ~np.isnan(xp[i]) and t[i] > 0:
 
                     p = fit_cubic_spline(fx[i, :], fy[i, :])
                     argtuple = (s[i], t[i], rd[i], rf[i], xp[i], -1, p)
@@ -314,23 +474,20 @@ if __name__ == "__main__":
         rd = vsm._rate_curve
         rf = vsm._funding_curve
 
-        self = CubicSpline(ivols,
-                           s,
-                           rd,
-                           rf)
+        self = CubicSpline(ivols, s, rd, rf)
 
-        _paths = '/Users/francisbarker/Library/Mobile Documents/com~apple~CloudDocs/Data/Bloomberg/FX/Vols/GBPUSD.xlsx'
-        info = pd.read_excel(_paths, 'Sheet2')
+        sigs = ivols[ivols.t == ivols.t.unique()[1]]
+        D = np.unique(sigs.index)[-400:]
 
-        K = info.get('K').to_numpy()
-        D = pd.to_datetime(info.get('dates').values)
-        T = info.get('T').to_numpy()
+        k = sigs.loc[D].get('k') * 0.9999
+        d = pd.to_datetime(k.index)
+        t = ivols.t.unique()[1]
 
-        fxivols = self.get_ivols(pd.to_datetime(D),
+        fxivols = self.get_ivols(d,
                                  strike_reference=StrikeReference.STRIKE_PRICE,
-                                 relative_strike=K,
+                                 relative_strike=k,
                                  maturity_type=MaturityType.YEARFRAC,
-                                 maturities=T)
+                                 maturities=[t]*len(d))
 
 
         import utils_find_1st.find_1st

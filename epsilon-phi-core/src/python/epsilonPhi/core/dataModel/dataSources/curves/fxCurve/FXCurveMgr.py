@@ -391,6 +391,14 @@ class FXCurveManager(object):
         rebased_fx.columns.names=['bbid','maturity','pricing_location','quote']
         return rebased_fx.copy()
 
+    def delete_fx_pickle(self, currency_pair):
+
+        bbid = currency_pair.replace('/','')
+        rvs_bbid = self.parse_reverse_currency_pair(bbid)
+        self._sessionMgr.pickle_and_save_to_database(curve_df, uid)
+
+
+
 
 if __name__ == "__main__":
 

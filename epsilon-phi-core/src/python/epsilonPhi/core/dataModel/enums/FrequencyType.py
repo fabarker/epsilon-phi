@@ -1,5 +1,6 @@
 from enum import Enum
 import numpy as np
+import pandas as pd
 from pandas import offsets
 
 class Frequency(Enum):
@@ -21,6 +22,10 @@ class Frequency(Enum):
         from epsilonPhi.core.utils.DateUtils import DateUtils
         return DateUtils.Rdate_to_mat('1' + self.value)
 
+    def rdate(self):
+        from epsilonPhi.core.utils.DateUtils import DateUtils
+        return DateUtils.mat_to_Rdate(DateUtils.Rdate_to_mat('1' + self.value))
+
     def obs_per_year(self):
         from epsilonPhi.core.utils.DateUtils import DateUtils
 
@@ -38,6 +43,37 @@ class Frequency(Enum):
             return 1
         else:
             return np.nan
+
+    def get_period_ends(self, dates):
+
+        if self in [Frequency.DAILY, Frequency.BUSINESS_DAILY]:
+           return dates
+        if self in [Frequency.WEEKLY, Frequency.WEEKLY.value]:
+           return dates[dates.weekday == dates.weekday[0]]
+        else:
+            if self in [Frequency.BUSINESS_YEARLY,
+                        Frequency.BUSINESS_MONTHLY,
+                        Frequency.BUSINESS_QUARTERLY]:
+
+                sat_sun = (dates.weekday == 5) | (dates.weekday == 6)
+                dates = dates[~sat_sun]
+
+            yearMonths = dates.year * 100 + dates.month
+            EOM_locs = np.append(np.diff(yearMonths) != 0, True)
+            monthEnds = dates[EOM_locs]
+            if (monthEnds[-1] + pd.tseries.offsets.MonthEnd(0)) - monthEnds[-1] > pd.to_timedelta(1, 'D'):
+                if monthEnds[-1].weekday() in [5, 6]:
+                    monthEnds = monthEnds[:-1]
+
+            if self in [Frequency.MONTHLY, Frequency.BUSINESS_MONTHLY]:
+               return monthEnds
+            elif self in [Frequency.BUSINESS_QUARTERLY, Frequency.QUARTERLY]:
+               return monthEnds[np.mod(monthEnds.month, 3) == 0]
+            elif self in [Frequency.YEARLY, Frequency.BUSINESS_YEARLY]:
+               return monthEnds[np.mod(monthEnds.month, 12) == 0]
+
+
+
 
 
     @staticmethod
@@ -68,4 +104,10 @@ class Frequency(Enum):
             return Frequency.NOT_DEFINED
 
 if __name__ == "__main__":
-    freq = Frequency.MONTHLY
+
+    import pandas as pd
+
+    freq = Frequency.WEEKLY
+    freq.rdate()
+
+

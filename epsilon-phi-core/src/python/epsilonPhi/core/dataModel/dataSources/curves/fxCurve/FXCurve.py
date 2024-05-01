@@ -14,6 +14,7 @@ import warnings
 
 warnings.filterwarnings(action='ignore', message='All-NaN slice encountered')
 
+
 @SingletonDecorator
 class FXCurve(object):
 
@@ -376,8 +377,8 @@ class FXCurve(object):
 if __name__ == "__main__":
 
 
-    curve = FXCurve()
-    fx = curve.get_fx_curve_single_currency('BRL/USD')
+    curve = FXCurve(provider=Provider.GS, pricing_location=PricingLocation.NEW_YORK)
+    fx = curve.get_fx_curve_single_currency('EUR/USD')
 
 
 

@@ -12,7 +12,7 @@ from scipy.stats import t as tstudent
 
 class SmileStatArb(object):
 
-    _DELTAS = [-0.1, -0.25, -0.5, -0.75, -0.9]
+    _DELTAS = [-0.10, -0.25, -0.5, -0.75, -0.90]
     #_DELTAS = [-0.1]
     _MATURITIES = np.array([1, 3, 6, 9, 12]) / 12
 
@@ -22,10 +22,8 @@ class SmileStatArb(object):
         # Set the underlier in the object
         self._underlier = underlier
 
-        # Properties of the strategy class
-        self._vs = AbstractVolSurface(self._underlier,
-                   strike_reference=StrikeReference.DELTA,
-                   interpolation_method=Interpolator.CUBIC_SPLINE)
+        self._vs = AbstractVolSurface.get_volatility_surface(self._underlier,
+                                                             interpolation_method=Interpolator.CUBIC_SPLINE)
 
         # Set dates
         self.set_dates(start_date, end_date)
@@ -79,7 +77,7 @@ class SmileStatArb(object):
         return self._z.copy()
 
     def __load_z(self):
-        f = self._vs.interpolator.get_f(self._I.date, self._I.t, True)
+        f = self._vs.get_forward_prices(self._I.date, self._I.t.values, True)
         zp_ = np.log(self._I.k / f.values) + 0.5 * np.power(self._I.mid, 2)
         self._z = zp_ / (self._I.mid * np.array(np.sqrt(self._I.t)))
 
@@ -94,7 +92,7 @@ class SmileStatArb(object):
 
         # Get fixed strike, expiry dI.
         dI = self._I[['date','t', 'x']].set_index('date')
-        dI['fy'] = np.array(np.log(iv_t.mid) - np.log(self._I.mid))
+        dI['fy'] = np.array(np.log(iv_t.mid.values) - np.log(self._I.mid.values))
         dI['z'] = self.z.values
         dI['y'] = np.log(np.array(self._I.t))
         _dI = dI.pivot(columns=['x', 't'])
@@ -130,10 +128,14 @@ class SmileStatArb(object):
                                               periods)
 
     def get_fixed_strike_and_maturity_ivols(self, dates, strikes, maturities):
-        return self._vs.get_ivols(strikes, maturities, MaturityType.YEARFRAC, dates, StrikeReference.STRIKE_PRICE)
+        return self._vs.get_ivols(dates, StrikeReference.STRIKE_PRICE, strikes, maturities, MaturityType.YEARFRAC)
 
     def get_floating_strike_ivols(self, dates=None):
-        return self._vs.get_ivols(self._DELTAS, self._MATURITIES, MaturityType.YEARFRAC, dates)
+
+        if dates is None:
+           dates = self._vs.common_dates
+
+        return self._vs.get_ivols(dates, StrikeReference.DELTA, self._DELTAS, self._MATURITIES, MaturityType.YEARFRAC).dropna()
 
     def smooth_dataframe(self, df):
 
@@ -564,7 +566,7 @@ class SmileStatArb(object):
 
             p = self.get_pricing_date_paths(_HOLDING_DAYS)
             m = self.get_ttm_paths(_HOLDING_DAYS).values
-            rf = self._vs.interpolator.get_rf(p.values.flatten(), m.flatten(), True)
+            rf = self._vs.get_risk_free(p.values.flatten(), m.flatten(), True)
             self._cache[('rf', _HOLDING_DAYS)] = pd.DataFrame(rf.values.reshape(p.shape), index=p.index)
         return self._cache[('rf', _HOLDING_DAYS)]
 
@@ -574,7 +576,7 @@ class SmileStatArb(object):
 
             p = self.get_pricing_date_paths(_HOLDING_DAYS)
             m = self.get_ttm_paths(_HOLDING_DAYS).values
-            rd = self._vs.interpolator.get_rd(p.values.flatten(), m.flatten(), True)
+            rd = self._vs.get_funding_rate(p.values.flatten(), m.flatten(), True)
             self._cache[('rd', _HOLDING_DAYS)] = pd.DataFrame(rd.values.reshape(p.shape), index=p.index)
         return self._cache[('rd', _HOLDING_DAYS)]
 
@@ -718,9 +720,12 @@ class SmileStatArb(object):
         wts = np.empty((self.N, T))
         for t in range(T):
             h_bar = H.iloc[t, :].unstack(level=0)[risks]
-            wts[:, t] = (np.dot(h_bar, np.linalg.inv(np.dot(h_bar.T, h_bar))) @ d).flat
+            try:
+                wts[:, t] = (np.dot(h_bar, np.linalg.inv(np.dot(h_bar.T, h_bar))) @ d).flat
+            except:
+                pass
 
-        wts_1 = pd.DataFrame(wts, index=H.get('e').columns, columns=H.index).T
+        wts_1 = pd.DataFrame(wts, index=h_bar.index, columns=H.index).T
         wts_2 = wts_1 / wts_1.abs().sum(axis=1).values.reshape(-1, 1)
         return pd.concat((wts_1.stack(level=[1, 0]).to_frame('fixed'),
                           wts_2.stack(level=[1, 0]).to_frame('dollar')), axis=1)
@@ -747,14 +752,16 @@ class SmileStatArb(object):
         eigvecs.columns = np.array(range(L.shape[1]))
         return eigvecs
 
+
     def extract_common_risk_neutral_moments(self):
 
         I = self.get_I()
         F = self.get_F()
-        K = self.get_k()
+        K = pd.DataFrame(black_strike(F.values, self.t, self.get_rf().values, -1, -1 * self.x,
+                          2, I.values), index = I.index, columns=I.columns)
 
-        zp = np.log(K / F.values) + np.sqrt(self.t) * I
-        zm = np.log(K / F.values) - np.sqrt(self.t) * I
+        zp = np.log(K / F.values) + self.t * np.power(I, 2)
+        zm = np.log(K / F.values) - self.t * np.power(I, 2)
 
         X1 = 2 * np.power(I, 2) * self.t
         X2 = I/I.values
@@ -786,6 +793,7 @@ class SmileStatArb(object):
 
             #betas = np.linalg.solve(XtX, XtY)
             B[t, :] = result.x
+
         return pd.DataFrame(B, columns=['vega', 'gamma', 'vanna', 'volga'], index=y.index)
 
 
@@ -800,18 +808,6 @@ if __name__ == "__main__":
     SD = pd.to_datetime('30-Nov-1996')
     ED = pd.to_datetime('31-Dec-2023')
     self = SmileStatArb('GBPUSD', SD, ED)
-
-    _date = '2023-06-30'
-
-
-    vega = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=0)
-    gamma = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=2)
-    volga = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=3)
-    vanna = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=4)
-    resid = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=5)
-
-    trend = self.get_static_strategy_pnls(estimation_period=21, holding_period=1, strategy_type=1)
-
-
+    pnls = self.get_static_strategy_pnls()
 
 

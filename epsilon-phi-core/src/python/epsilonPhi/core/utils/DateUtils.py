@@ -6,6 +6,7 @@ from typing import Union, Optional
 from epsilonPhi.core.cpp.dates import cDates
 from epsilonPhi.core.cpp.fastfind.find_1st import *
 from numba import njit
+from numba import types, int64
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 
 class Offsets(object):
@@ -39,7 +40,8 @@ class Offsets(object):
 
 class DateUtils(object):
 
-    days_per_year = (365*3+366) * (1/4)
+    #days_per_year = (365*3+366) * (1/4)
+    days_per_year = 365
     ERROR_TOLERANCE = 1e-4
 
     @staticmethod
@@ -125,6 +127,9 @@ class DateUtils(object):
             if re.search("d", rdate.lower()):
                 nPeriods = DateUtils.days_per_year
                 strg = "d"
+            elif re.search("bm", rdate.lower()):
+                nPeriods = 12
+                strg = "BM"
             elif re.search("w", rdate.lower()):
                 nPeriods = DateUtils.days_per_year / 7
                 strg = "w"
@@ -141,7 +146,11 @@ class DateUtils(object):
                 raise Exception("Error - relative date {} not recongnized".format(rdate))
 
             loc = rdate.find(strg)
-            nYears[idx] = round(float(rdate[0:loc]) / nPeriods, 10)
+
+            if T == 1:
+                return float((rdate[0:loc]) )/ nPeriods
+            else:
+                nYears[idx] = float(rdate[0:loc]) / nPeriods
 
         if len(nYears) > 1:
             return nYears
@@ -181,25 +190,76 @@ class DateUtils(object):
 
     @staticmethod
     def get_date_delta(from_date, to_date, year_frac=False):
-        days = np.array((pd.to_datetime(to_date) - pd.to_datetime(from_date))/np.timedelta64(1, 'D'), dtype=int)
+        days = np.array((pd.to_datetime(to_date) -
+                         pd.to_datetime(from_date))/np.timedelta64(1, 'D'), dtype=int)
         if year_frac:
             return days / DateUtils.days_per_year
         else:
             return days
 
     @staticmethod
-    def expiry_from_settlement(settlement_dates, term):
+    @njit(fastmath=True, cache=True)
+    def shift_off_holidays(dates, holidays, term):
+
+        res = np.empty(dates.shape, dtype=np.int32)
+        for i in range(len(dates)):
+
+            t = term[i]
+            date = dates[i]
+
+            if 'd' in t or 'w' in t:
+
+                while date in holidays:
+                   date += 1
+                res.flat[i] = date
+            else:
+
+                while date in holidays:
+                   date -= 1
+                res.flat[i] = date
+        return res
+
+    @staticmethod
+    def expiry_from_settlement_single_date(settlement_date, term, holidays=None):
+
+        def to_ord(dates):
+            return DateUtils.to_ordinals(dates)
+        def f_ords(ordinals):
+            return DateUtils.from_ordinals(ordinals)
+
+        expiry = cDates.get_expiry_date(settlement_date.to_pydatetime(),
+                                        np.asarray(term, str).item())
+
+        if holidays is not None:
+           expiry = f_ords(DateUtils.shift_off_holidays(to_ord(expiry),
+                                                        term,
+                                                        to_ord(holidays)))
+
+        return pd.to_datetime(expiry)
+
+
+
+    @staticmethod
+    def expiry_from_settlement(settlement_dates, term, holidays=None):
 
         SD = pd.to_datetime(np.array(settlement_dates))
         if isinstance(SD, pd.Timestamp):
-           return pd.to_datetime(cDates.get_expiry_date(SD,
-                                 np.asarray(term, str).item()))
+           return DateUtils.expiry_from_settlement_single_date(SD, term, holidays)
 
         if not DateUtils.is_iterable(term):
             term = [term] * len(settlement_dates)
-        return pd.to_datetime(cDates.shiftdates(SD.to_pydatetime(),
-                                                list(term)))
 
+        expiry = pd.to_datetime(cDates.shiftdates(SD.to_pydatetime(), list(term)))
+        if holidays is not None:
+           ex_ord = DateUtils.to_ordinals(expiry)
+           hd_ord = DateUtils.to_ordinals(holidays)
+           is_holiday = np.isin(ex_ord, hd_ord)
+           ex_ord[is_holiday] = DateUtils.shift_off_holidays(ex_ord[is_holiday],
+                                                             hd_ord,
+                                                             np.array(term)[is_holiday])
+           return DateUtils.from_ordinals(ex_ord)
+        else:
+           return expiry
 
 
     @staticmethod
@@ -256,6 +316,8 @@ class DateUtils(object):
                                  periods)
 
         return DateUtils.from_ordinals(_shifted)
+
+
 
 if __name__ == "__main__":
 

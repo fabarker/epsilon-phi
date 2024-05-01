@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.Configs import *
 from contextlib import contextmanager
+from sqlalchemy import distinct, func
 import pickle
 import pandas as pd
 
@@ -83,6 +84,19 @@ class SessionMgr(object):
             return [x[0] for x in session.execute(text("SHOW COLUMNS IN " + table_name)).fetchall()]
         else:
             return []
+
+    def get_latest_observation_date_from_tickers(self, ticker):
+        session = self.getSessionFactory()
+
+        table_name = self.get_table_name_from_ticker(ticker)
+        table = self.fetch_model_class_from_table_name(table_name)
+
+        res = session.query(TimeSeriesSpec.symbol,
+                            func.max(table.date)).join(table,
+                                                       TimeSeriesSpec.uid == table.uid).\
+                                                       filter(TimeSeriesSpec.symbol.in_([ticker])).\
+                                                       group_by(TimeSeriesSpec.symbol).all()
+        return res[0][1]
 
     def get_bbid_from_region(self, region):
         return self.getSessionFactory().query(CurrencyMapper.code).filter(CurrencyMapper.region == region).scalar()
@@ -300,6 +314,14 @@ class SessionMgr(object):
         session.commit()
         session.close()
 
+    def delete_pickle_from_database(self, pickle_id):
+
+        print('Delete {} from pickles'.format(pickle_id))
+        session = self.getSessionFactory()
+        session.query(DatabasePickle).filter(DatabasePickle.id == pickle_id).delete()
+        session.commit()
+        session.close()
+
 
     def pickle_and_save_to_database(self, obj, id):
 
@@ -329,29 +351,56 @@ class SessionMgr(object):
         import pandasgui
         pandasgui.show(self.query_format_df(self.getSessionFactory().query(table)))
 
-    def get_ivols(self, underlier, pricing_location=None, index=None):
+    def get_underlier_asset_class(self, underlier):
+        return (self.getSessionFactory().query(ImpliedVolatilitySpec.category).
+                filter(ImpliedVolatilitySpec.security == underlier).scalar())
 
-        session = self.getSessionFactory()
+    def load_FX_vol_surface_from_underlier(self, underlier, pricing_location=None):
 
+
+        print('Loading Vol Surface Data for Security {}'.format(underlier))
         _path = '/Users/francisbarker/Desktop/ivol cache/' + underlier + '.csv'
         if os.path.exists(_path):
-           df = pd.read_csv(_path)
+           df_ = pd.read_csv(_path)
+           df_.date = pd.to_datetime(df_.date)
         else:
-            print('Loading Vol Surface Data for Security {}'.format(underlier))
-            q = session.query(ImpliedVolatilityNew).filter(ImpliedVolatilityNew.security ==
-                                                        underlier)
+           session = self.getSessionFactory()
+           q = session.query(ImpliedVolatilityNew).filter(ImpliedVolatilityNew.security ==
+                                                           underlier)
 
-            if pricing_location:
-                q = q.filter(ImpliedVolatilityNew.pricing_location == pricing_location)
-            df = self.query_format_df(q).dropna(how='all', axis=1)
+           if pricing_location is None:
+              pricing_location = 'NYC'
+           q = q.filter(ImpliedVolatilityNew.pricing_location == pricing_location)
 
-            # Swap Delta Neutral to Large Negative Number
-            df = df.replace('DN', '-99900')
-            df['relative_strike'] = df['relative_strike'].astype(float).astype(int) / 100
-            df.to_csv(_path, index=False)
+           # load dataframe
+           frame = self.query_format_df(q).dropna(how='all', axis=1)
+           df = frame[frame.strike_reference == 'delta']
+           df = df.replace('DN', '-99900')
+           df['relative_strike'] = df['relative_strike'].astype(float).astype(int) / 100
 
-        df['date'] = pd.to_datetime(df.get('date').values)
-        df['t'] = DateUtils.Rdate_to_mat(df['tenor'].values)
+           # Drop duplicates
+           dduped = df.drop_duplicates(subset=['date', 'tenor', 'relative_strike'])
+
+           # Make sure no weekends by accident
+           wkends = pd.to_datetime(dduped.date.values).dayofweek.isin([5, 6])
+           df_ = dduped[~wkends].copy()
+
+           # Set the date formats in the frame
+           df_['date'] = pd.to_datetime(df_.get('date').values)
+           df_['t'] = DateUtils.Rdate_to_mat(df_['tenor'].values)
+           df_.to_csv(_path, index=False)
+        return df_
+
+
+    def get_ivols(self, underlier, pricing_location=None, index=None):
+
+        asset_class = self.get_underlier_asset_class(underlier)
+
+        if asset_class == 'FX':
+           df = self.load_FX_vol_surface_from_underlier(underlier, pricing_location)
+        else:
+            raise ValueError('Error - underlier {} not recognised'.format(underlier))
+
         if index is not None:
             return df.set_index(index, drop=True)
         else:
@@ -381,6 +430,13 @@ if __name__ == "__main__":
 
     sessionMgr = SessionMgr()
     session = sessionMgr.getSessionFactory()
+
+    pickle_ids = session.query(DatabasePickle.id).all()
+
+    for id in pickle_ids:
+        if 'GS' in id[0]:
+            sessionMgr.delete_pickle_from_database(id[0])
+
 
     sessionMgr.get_interest_rate_maturities_for_region('United States')
 

@@ -9,6 +9,12 @@ class Interpolator(Enum):
     POLYNOMIAL_REGRESSION_2D = 5
     CLAMPED_CUBIC_SPLINE = 6
     CUBIC_SPLINE = 7
+    ROLLOOS = 8
+
+class Instruments(Enum):
+
+    EUROPEAN_VANILLA_PUT = -1
+    EUROPEAN_VANILLA_CALL = 1
 
 
 class StrikeReference(Enum):
@@ -52,7 +58,8 @@ prem_currency = {'EURUSD': 'USD',
                  'AUDJPY': 'AUD',
                  'USDCAD': 'USD',
                  'USDBRL': 'USD',
-                 'USDMXN': 'USD'}
+                 'USDMXN': 'USD',
+                 'NZDUSD': 'USD'}
 
 deltaConvention = {'EURUSD': DeltaType.FORWARD_DELTA,
                    'USDJPY': DeltaType.SPOT_DELTA_PREM_ADJ,
@@ -65,4 +72,5 @@ deltaConvention = {'EURUSD': DeltaType.FORWARD_DELTA,
                    'AUDJPY': DeltaType.SPOT_DELTA_PREM_ADJ,
                    'USDCAD': DeltaType.SPOT_DELTA_PREM_ADJ,
                    'USDBRL': DeltaType.SPOT_DELTA_PREM_ADJ,
-                   'USDMXN': DeltaType.SPOT_DELTA_PREM_ADJ}
+                   'USDMXN': DeltaType.SPOT_DELTA_PREM_ADJ,
+                   'NZDUSD': DeltaType.FORWARD_DELTA}

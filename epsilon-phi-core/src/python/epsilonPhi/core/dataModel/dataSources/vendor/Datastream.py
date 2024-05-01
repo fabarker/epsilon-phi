@@ -346,8 +346,9 @@ class pyDatastreamFO(object):
 if __name__ == "__main__":
 
 
-    ticker = ['CLGCS00', 'CTYCS20', 'CZNCS00']
-    fields = ['PS']
+
+    ticker = ['FVGBPSW', 'FVGBP1M', 'FVGBP2M', 'FVGBP3M', 'FVGBP6M','FVGBP9M','FVGBP1Y']
+    fields = ['EB','ER','EO']
 
     from_date = datetime.date(year=1984, month=3, day=23)
     frame = pyDatastream.fetch(ticker, fields, from_date=from_date, frequency='D')

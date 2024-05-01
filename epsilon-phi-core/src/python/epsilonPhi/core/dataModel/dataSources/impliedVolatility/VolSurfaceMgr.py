@@ -3,25 +3,18 @@ from epsilonPhi.core.dataModel.dataSources.curves.interestRateCurve.IRCurve impo
 from epsilonPhi.core.dataModel.dataSources.curves.abstractCurve.AbstractCurve import AbstractCurve
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.dataModel.enums.Database import PriceQuote
+from epsilonPhi.core.dataModel.enums.Database import Provider, PricingLocation, PriceQuote
 
 sessionMgr = SessionMgr()
 session = sessionMgr.getSessionFactory()
-
-_DROP_COLS = ['uid', 'pricing_location', 'relative_strike', 'strike_reference', 'tenor', 'security']
 
 _RELATIVE_STRIKE = 'relative_strike'
 _STRIKE_REFERENCE = 'strike_reference'
 _TENOR = 'tenor'
 _MATURITY = 't'
 
-# Default interpolation points for converting between strike reference space
-_DELTA_POINTS = np.arange(0.05, 1, 0.05)
-_MONEYNESS_POINTS = np.arange(50, 155, 5)/100
-_ZSCORE_POINTS = np.arange(-3, 3.5, 0.5)
-_CONVEXITY_MNY_POINTS = np.arange(-3, 3.5, 0.1)
-
-
 class VolSurfaceMgr(object):
+
     _raw_cache = {}
     _ivol_cache = {}
     _VOL_TOL = 0.02
@@ -47,10 +40,11 @@ class VolSurfaceMgr(object):
         self._rate_curve = None
         self._funding_curve = None
         self._spot_prices = None
-        self._forward_prices = None
+
         self._s = None
         self._rd = None
         self._rf = None
+        self._f = None
         self._put_deltas = None
         self._call_deltas = None
 
@@ -62,6 +56,7 @@ class VolSurfaceMgr(object):
         self._load_vol_surface_spec()
         self._load_ivols()
 
+
     @property
     def dates(self):
         return pd.to_datetime(self.ivols.index)
@@ -71,6 +66,9 @@ class VolSurfaceMgr(object):
     @property
     def strike_reference(self):
         return self._strike_reference
+    @property
+    def exchange(self):
+        return self._pricing_location
     @property
     def ivols(self):
         return self.get_ivols()
@@ -83,9 +81,6 @@ class VolSurfaceMgr(object):
     @property
     def ticker(self):
         return self._spec.get('ticker')
-    @property
-    def exchange(self):
-        return self._pricing_location
     @property
     def currency(self):
         return self._spec.get('currency')
@@ -120,19 +115,18 @@ class VolSurfaceMgr(object):
         return self._s
     @property
     def f(self):
-        if self._forward_prices is None:
-            self._forward_prices = self.get_forward_prices(self.dates,
-                                   self.t).values.reshape(-1, 1)
-        return self._forward_prices
+        if self._f is None:
+            self._f = self.get_forward_prices(self.dates, self.t).values.reshape(-1, 1)
+        return self._f
     @property
     def rd(self):
         if self._rd is None:
-            self._rd = self._rate_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+            self._rd = self.get_interest_rates(self.dates, self.t).values.reshape(-1, 1)
         return self._rd
     @property
     def rf(self):
         if self._rf is None:
-            self._rf = self._funding_curve.get_stacked_curve(self.dates, self.t).values.reshape(-1, 1)
+            self._rf = self.get_funding_rates(self.dates, self.t).values.reshape(-1, 1)
         return self._rf
     @property
     def strike_references(self):
@@ -159,10 +153,8 @@ class VolSurfaceMgr(object):
                                       self.pricing_location,
                                       index='date')
 
-            df = df.iloc[~df.index.dayofweek.isin([5, 6]), :]
-            df = df[df.mid > self._VOL_TOL].reset_index(drop=False)
-            df = df.drop_duplicates(subset=['date', 'relative_strike', 'tenor']).set_index('date', drop=True)
-            df['exp'] = DateUtils.expiry_from_settlement(df.index, df.get('tenor').to_list())
+            # throw away any vols that fail the tolerence
+            df = df[df.mid > self._VOL_TOL]
 
             if 'k' not in df.columns:
                 # Estimate strikes from spot moneyness
@@ -186,8 +178,16 @@ class VolSurfaceMgr(object):
                                                                                self.delta_convention)
 
 
-            self._ivol_cache[self.underlier] = df[['mid','t','k','relative_strike']].copy()
+
+            self._ivol_cache[self.underlier] = df[['mid','t','k','relative_strike','tenor']].copy()
+            self._ivol_cache[self.underlier]['s'] = self.s
+            self._ivol_cache[self.underlier]['ve'] = self.get_bsm_vega()
+            self._ivol_cache[self.underlier]['vo'] = self.get_bsm_volga()
+            self._ivol_cache[self.underlier]['va'] = self.get_bsm_vanna()
+            self._ivol_cache[self.underlier]['put_delta'] = self.get_deltas(-1)
+            self._ivol_cache[self.underlier]['call_delta'] = self.get_deltas(1)
             self._ivol_cache[self.underlier][self.strike_reference] = self.get_strike_reference(self.strike_reference)
+
 
     def _load_vol_surface_spec(self):
         self._spec = sessionMgr.get_ivol_spec(self._underlier)
@@ -195,7 +195,9 @@ class VolSurfaceMgr(object):
     def _load_spot_prices(self):
 
         if self.category == 'FX':
-           spt = self.ds.get_fx_spot_rates(self.ticker, PriceQuote.BID.value)
+           self.ds._fx_curve.set_provider(Provider.GS)
+           self.ds._fx_curve.set_pricing_location(PricingLocation.NEW_YORK)
+           spt = self.ds.get_fx_spot_rates(self.ticker, PriceQuote.MID.value)
         elif self.category in ['Equity Index', 'ETF']:
            spt = self.ds.get_time_series_data_from_ticker(self.ticker, cols='PI')
         elif self.category == 'Future':
@@ -203,16 +205,28 @@ class VolSurfaceMgr(object):
         else:
             raise ValueError('Error - category {} not recognized'.format(self.category))
 
-        self._spot_prices = pd.Series(spt.values.flatten(),
-                                      index=spt.index,
-                                      name=self.security)
+        self._spot_prices = pd.Series(spt.iloc[:,0], name=self.security)
 
-    def _load_interest_rate_curve(self):
-        self._rate_curve = IRCurve(region=self.region,
-                                   type=['Interbank', 'Deposit'])
-        self._rate_curve._curve_df = self._rate_curve._curve_df
+    def _load_rate_curve(self):
+        rf = IRCurve(region=self.region, type=['Interbank', 'Deposit']).get_curve()
+        self._rate_curve = AbstractCurve(rf)
 
-    def _load_funding_rate_curve(self):
+    def get_risk_free_rate_curve(self, currency):
+        rate_curve = IRCurve(currency=currency,
+                     type=['Interbank', 'Deposit']).get_curve()
+        return AbstractCurve(rate_curve)
+
+    def get_rate_curve(self):
+        if self._rate_curve is None:
+            self._load_rate_curve()
+        return self._rate_curve
+
+    def get_funding_curve(self):
+        if self._funding_curve is None:
+            self._load_funding_curve()
+        return self._funding_curve
+
+    def _load_funding_curve(self):
 
         if self.category == 'FX':
             if self.ticker[0:3] == 'EUR':
@@ -234,89 +248,89 @@ class VolSurfaceMgr(object):
 
     ############### Public Getter Methods ###############
 
+    def get_invalid_maturity_dates(self):
+
+        if self._spot_prices is None:
+            self._load_spot_prices()
+        all_dates = self._spot_prices.resample('D').asfreq()
+        return all_dates[all_dates.isna()].index
+
     def get_ivols(self):
         if self.underlier not in self._ivol_cache.keys():
             self._load_ivols()
         return self._ivol_cache.get(self.underlier)
 
-    def get_put_deltas(self):
-        if self._put_deltas is None:
-           self._put_deltas = fast_delta(self.s,
-                                          self.t,
-                                          self.k,
-                                          self.rd,
-                                          self.rf,
-                                          self.sig,
-                                          self.delta_convention, -1)
-        return self._put_deltas.copy()
 
-    def get_call_deltas(self):
-        if self._call_deltas is None:
-           self._call_deltas = fast_delta(self.s,
-                                          self.t,
-                                          self.k,
-                                          self.rd,
-                                          self.rf,
-                                          self.sig,
-                                          self.delta_convention, 1)
-        return self._call_deltas.copy()
-
-    def get_spot_prices(self, dates):
+    def get_spot_prices(self, dates=None):
 
         if self._spot_prices is None:
            self._load_spot_prices()
-        return self._spot_prices.loc[dates]
 
-    def get_interest_rates(self, pricing_dates, maturities):
+        if dates is None:
+            return self._spot_prices.copy()
+        else:
+            return self._spot_prices.reindex(dates)
 
+    def get_interest_rates(self, pricing_dates, maturities, is_stacked=True):
         if self._rate_curve is None:
-            self._load_interest_rate_curve()
+            self._load_rate_curve()
+        return self._rate_curve.get_curve(pricing_dates, np.array(maturities), is_stacked)
 
-        return self._rate_curve.get_stacked_curve(pricing_dates,
-                                                  np.array(maturities))
-
-    def get_funding_rates(self, pricing_dates, maturities):
-
+    def get_funding_rates(self, pricing_dates, maturities, is_stacked=True):
         if self._funding_curve is None:
-            self._load_funding_rate_curve()
-        return self._funding_curve.get_stacked_curve(pricing_dates,
-                                                     np.array(maturities))
-
+            self._load_funding_curve()
+        return self._funding_curve.get_curve(pricing_dates, maturities, is_stacked)
 
     def get_forward_prices(self, pricing_dates, maturities):
-
-        _s = self.get_spot_prices(pricing_dates)
+        mat = np.array(maturities).flatten()
+        _s = self.get_spot_prices(pricing_dates).values
         _rf = self.get_funding_rates(pricing_dates, maturities)
         _rd = self.get_interest_rates(pricing_dates, maturities)
-        return (_s.values * np.exp(-_rf * np.array(maturities).flatten()) /
-                np.exp(-_rd * np.array(maturities).flatten()))
+        return _s * np.exp(-_rf * mat) / np.exp(-_rd * mat)
 
+    def get_bsm_vega(self):
+        return black_vega(self.f,
+                          self.t,
+                          self.k,
+                          self.rd,
+                          self.sig)
+
+    def get_bsm_volga(self):
+        return black_volga(self.f,
+                           self.t,
+                           self.k,
+                           self.rd,
+                           self.sig)
+
+    def get_bsm_vanna(self):
+        return black_vanna(self.f,
+                           self.t,
+                           self.k,
+                           self.rf,
+                           self.sig)
 
     def get_strikes_from_deltas(self, ivols, t, delta, delta_type):
-        if ivols.size > 0:
-            _s = self.get_spot_prices(ivols.index).values
-            _rf = self.get_funding_rates(ivols.index, t).values
-            _rd = self.get_interest_rates(ivols.index, t).values
-            return solve_for_strike(_s,
-                                    t,
-                                    _rd,
-                                    _rf,
-                                    np.sign(delta),
-                                    delta,
-                                    delta_type,
-                                    ivols)
 
-    def get_strikes_from_atm_delta_neutral(self, ivols, t, deltaTypeValue):
         if ivols.size > 0:
-            _s = self.get_spot_prices(ivols.index)
-            _rf = self.get_funding_rates(ivols.index, t)
-            _rd = self.get_interest_rates(ivols.index, t)
-            return atm_delta_neutral_strike(_s.values,
+            s = self.get_spot_prices(ivols.index).values.astype(np.float64)
+            rf = self.get_funding_rates(ivols.index, t).values.astype(np.float64)
+            rd = self.get_interest_rates(ivols.index, t).values.astype(np.float64)
+            t = t.values.astype(np.float64)
+            deltas = delta.values.astype(np.float64)
+            return solve_for_strike(s, t, rd, rf, np.sign(deltas).astype(np.int64), deltas, delta_type.value, ivols.values.astype(np.float64))
+
+    def get_strikes_from_atm_delta_neutral(self, ivols, t, deltaType):
+        if ivols.size > 0:
+            s = self.get_spot_prices(ivols.index).values.astype(np.float64)
+            rf = self.get_funding_rates(ivols.index, t).values.astype(np.float64)
+            rd = self.get_interest_rates(ivols.index, t).values.astype(np.float64)
+            t = t.values.astype(np.float64)
+            return atm_delta_neutral_strike(s,
                                             t,
-                                            _rd.values,
-                                            _rf.values,
-                                            ivols,
-                                            deltaTypeValue)
+                                            rd,
+                                            rf,
+                                            ivols.values.astype(np.float64),
+                                            deltaType.value)
 
     def get_strikes_from_forward_moneyness(self, x, t):
         if x.size > 0:
@@ -344,14 +358,14 @@ class VolSurfaceMgr(object):
         return np.log(self.k / self.f)
 
     def get_deltas(self, option_type):
-        return np.round(fast_delta(self.s,
-                                   self.t,
-                                   self.k,
-                                   self.rd,
-                                   self.rf,
-                                   self.sig,
-                                   self.delta_convention,
-                                   option_type), 3)
+        return nb_delta(self.s,
+                        self.t,
+                        self.k,
+                        self.rd,
+                        self.rf,
+                        self.sig,
+                        self.delta_convention.value,
+                        int(option_type))
 
     def get_convexity_moneyness(self):
 
@@ -381,34 +395,84 @@ class VolSurfaceMgr(object):
         if strike_reference in [StrikeReference.CONVEXITY_MN]:
             return self.get_convexity_moneyness()
         else:
-            return df.copy()
+            raise ValueError('Error - strike_reference not supported')
 
     def _validate_underlier(self):
         if not session.query(exists().where(ImpliedVolatility.security == self.underlier)).scalar():
             raise ValueError('Error: {} ticker not supported'.format(self._underlier))
+
+    def get_atm_vols(self,  maturity):
+
+        t = np.maximum(DateUtils.Rdate_to_mat(maturity),
+                       DateUtils.Rdate_to_mat('1m'))
+        tau = DateUtils.mat_to_Rdate(t)
+
+        _ivols = self.get_ivols()
+        atms = _ivols[self.get_ivols().relative_strike.isin([-999])]
+        atm_vols =  atms[atms.tenor.isin(tau)].get('mid')
+
+        name = self.security + 'V' + maturity.upper()
+        return atm_vols[~atm_vols.index.duplicated()].sort_index().to_frame(name)
+
+    def get_delta_vols(self, delta, maturity):
+
+        t = np.maximum(DateUtils.Rdate_to_mat(maturity),
+                       DateUtils.Rdate_to_mat('1m'))
+        tau = DateUtils.mat_to_Rdate(t)
+
+        _ivols = self.get_ivols()
+        vols = _ivols[self.get_ivols().relative_strike.isin([delta])]
+        sigs = vols[vols.tenor.isin(tau)].get('mid')
+        return sigs[~sigs.index.duplicated()].sort_index()
+
+    def get_risk_reversal(self, delta, maturity):
+
+        P = self.get_delta_vols(-delta, maturity)
+        C = self.get_delta_vols(delta, maturity)
+
+        common = np.intersect1d(P.index, C.index)
+        rr = C.loc[common] - P.loc[common].values
+
+        name = self.security + str(int(delta * 100)) + 'R' + maturity.upper()
+        return rr.to_frame(name)
+
+    def get_butterfly(self, delta, maturity):
+
+        P = self.get_delta_vols(-delta, maturity)
+        C = self.get_delta_vols(delta, maturity)
+        A = self.get_atm_vols(maturity)
+
+        common = np.intersect1d(np.intersect1d(P.index, C.index), A.index)
+
+        vwb = (0.5 * (C.loc[common] + P.loc[common].values)) - A.loc[common].values.flatten()
+        name = self.security + str(int(delta * 100)) + 'B' + maturity.upper()
+        return vwb.to_frame(name)
+
 
 
 if __name__ == "__main__":
 
         from epsilonPhi.core.dataModel.dataSources.impliedVolatility.Models import *
 
-        underlier = 'GBPUSD'
+        underlier = 'USDJPY'
         self = VolSurfaceMgr(underlier,
                              pricing_location='NYC',
                              strike_reference=StrikeReference.DELTA)
 
-        _DELTAS = [0.1, 0.25, 0.5, 0.75, 0.9]
-        _MATS = np.round([1/12, 3/12, 6/12, 12/12], 10)
+        _DELTAS = [0.1, 0.25]
+        _MATS = ['ON', '1W', '2W', '3W', '1M', '2M', '3M', '6M', '9M', '1Y']
 
-        _ivols = self.get_ivols().reset_index(drop=False).set_index(['date','t',StrikeReference.DELTA]).get('mid')
-        vols = _ivols[~_ivols.index.duplicated()]
+        vols = pd.DataFrame()
+        for mat in _MATS:
+            for delta in _DELTAS:
+                bf = self.get_butterfly(delta, mat)
+                rr = self.get_risk_reversal(delta, mat)
+                vols = pd.concat((vols, rr, bf), axis=1)
+            vols = pd.concat((vols, self.get_atm_vols(mat)), axis=1)
 
-        idx_d = vols.index.get_level_values(2).isin([0.1, 0.25, 0.5, 0.75, 0.9])
-        idx_m = vols.index.get_level_values(1).isin(_MATS)
-        idx = np.logical_and(idx_d, idx_m)
+        vols.mul(100).dropna().to_csv('/Users/francisbarker/Desktop/ivol cache/FX VOLS/' + underlier + '.csv')
 
-        _vol = vols.iloc[idx].unstack(level=[1, 2]).sort_index(axis=1).sort_index().loc['24-Jan-1996':'13-Oct-2022']
-        _vol = _vol[~_vol.index.dayofweek.isin([5, 6])]
+
 
 
 
