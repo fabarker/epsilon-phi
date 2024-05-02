@@ -2,6 +2,7 @@ import numpy as np
 from epsilonPhi.core.dataModel.dataSources.impliedVolatility.VolSurface import AbstractVolSurface
 from epsilonPhi.core.dataModel.enums.ImpliedVolatility import *
 from epsilonPhi.core.lib.smoothing.GaussianKernel import smooth_2d
+from epsilonPhi.core.lib.Decorators import auto_repr
 from scipy.optimize import lsq_linear
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.utils.OptionUtils import *
@@ -11,16 +12,122 @@ from numba import njit
 import pandas as pd
 from scipy.stats import t as tstudent
 
+@auto_repr
+class Estimates:
+    def __init__(self, index, risk_cols, option_cols):
+
+        self._index = index
+        self._risk_cols = risk_cols
+        self._cols = option_cols
+
+        self._errors = None
+        self._residuals = None
+        self._variance_contributions = None
+        self._betas = None
+        self._rho = None
+        self._rsq = None
+        self._horizon = None
+
+
+    @property
+    def errors(self):
+        return self._errors
+
+    @errors.setter
+    def errors(self, val):
+        self._errors = (
+            pd.DataFrame(val, index=self._index, columns=self._cols))
+
+    @property
+    def residuals(self):
+        return self._residuals
+
+    @residuals.setter
+    def residuals(self, val):
+        self._residuals = (
+            pd.DataFrame(val, index=self._index, columns=self._cols))
+
+    @property
+    def variance_contributions(self):
+        return self._variance_contributions
+
+    @variance_contributions.setter
+    def variance_contributions(self, val):
+        self._variance_contributions = (
+            pd.DataFrame(val, index=self._index, columns=self._risk_cols))
+
+    @property
+    def betas(self):
+        return self._betas
+
+    @betas.setter
+    def betas(self, val):
+        self._betas = (
+            pd.DataFrame(val, index=self._index, columns=self._risk_cols))
+
+    @property
+    def rsq(self):
+        return self._rsq
+
+    @rsq.setter
+    def rsq(self, val):
+        self._rsq = val
+
+    @property
+    def horizon(self):
+        return self._horizon
+
+    @horizon.setter
+    def horizon(self, val):
+        self._horizon = val
+
+    @property
+    def rho(self):
+        return self._rho
+
+    @rho.setter
+    def rho(self, val):
+        self._rho = val
+
+    def get_errors(self, risk=None):
+        return self.errors.get(risk, self.errors)
+
+    def get_residuals(self, cols=None):
+        return self.residuals.get(cols, self.residuals)
+
+    def get_variance_contribution(self, risk=None):
+        return self.variance_contributions.get(risk, self.variance_contributions)
+
+    def get_betas(self, risk=None):
+        return self.betas.get(risk, self.betas)
+
+    def get_nulls(self):
+        _nulls = [self.rho * 0, self.rho * 0, self.rho / self.rho, self.rho / self.rho, self.rho]
+        df_ = pd.concat(_nulls, axis=1)
+        df_.columns = self._risk_cols
+        return df_
+
+    def get_premiums(self, risk=None):
+        b = self.get_betas().sub(self.get_nulls())
+        return b.get(risk, b)
+
+    def get_rsq(self):
+        return pd.Series(self.rsq.flat, index=self._index)
+
+
 class SurfaceStatArb(object):
 
     _DELTAS = [-0.10, -0.25, -0.5, -0.75, -0.90]
     _MATURITIES = np.array([1, 3, 6, 9, 12]) / 12
+    _estimates = dict()
 
     def __init__(self,
                  underlier,
                  start_date,
                  end_date,
                  interpolator=Interpolator.CUBIC_SPLINE):
+
+        self._dates = None
 
         self._underlier = underlier
         self._vs = AbstractVolSurface.get_volatility_surface(self._underlier,
@@ -29,6 +136,14 @@ class SurfaceStatArb(object):
         self._start_date = pd.to_datetime(start_date)
         self._end_date = pd.to_datetime(end_date)
         self.load_data()
+
+    @property
+    def dates(self):
+        return self._dates
+
+    @property
+    def number_of_options(self):
+        return len(self._DELTAS) * len(self._MATURITIES)
 
     def get_ivols(self, dates, strike_reference, relative_strike, maturities, maturity_type):
         return self._vs.get_ivols(dates, strike_reference, relative_strike, maturities, maturity_type).dropna()
@@ -91,6 +206,7 @@ class SurfaceStatArb(object):
         self._volga = ivols[idxs].set_index(['date', 'x', 't']).get('volga')
         self._theta = ivols[idxs].set_index(['date', 'x', 't']).get('theta')
 
+
         ########## Get dI ##########
         dI = ivols.groupby(['expiry', 'k']).agg(
             fy=('mid', lambda x: x.pct_change().iloc[1] if len(x) > 1 else None),
@@ -117,6 +233,7 @@ class SurfaceStatArb(object):
         df_array = dI.set_index('date').get(['t', 'x', 'fy', 'z', 'y']).pivot(columns=['x', 't'])
         _dI = pd.DataFrame(self.smooth_dataframe(df_array), index=df_array.index, columns=df_array.get('fy').columns)
         self._dI = _dI.stack(level=[0, 1]).reindex(self._I.index)
+        self._dates = pd.to_datetime(self._I.index.get_level_values('date').unique())
 
     def smooth_dataframe(self, df):
 
@@ -182,16 +299,16 @@ class SurfaceStatArb(object):
         return self.get_I().get(-0.9).get(3/12) - self.get_I().get(-0.1).get(3/12)
 
     def get_nu(self, period=21):
-        return self.get_dFdF().rolling(window=period).mean() * 252
+        return self.get_dFdF().rolling(window=int(period)).mean() * 252
 
     def get_mu(self, period=21):
-        return self.get_dI().rolling(window=period).mean() * 252
+        return self.get_dI().rolling(window=int(period)).mean() * 252
 
     def get_gamma(self, period=21):
-        return self.get_dIdF().rolling(window=period).mean() * 252
+        return self.get_dIdF().rolling(window=int(period)).mean() * 252
 
     def get_omega(self, period=21):
-        return self.get_dIdI().rolling(window=period).mean() * 252
+        return self.get_dIdI().rolling(window=int(period)).mean() * 252
 
     def get_rho(self, period=252):
         return self.get_gamma(period) / self.get_sqrt_nu_omega(period)
@@ -231,7 +348,7 @@ class SurfaceStatArb(object):
         return self.get_bsvega() * self.get_I() * self.get_mu(period)
 
     def get_gamma_factor(self, period=21):
-        return 0.5 * self.get_bsgamma() * self.get_dFdF() * self.get_nu(period)
+        return 0.5 * self.get_bsgamma() * np.power(self.get_F(),2) * self.get_nu(period)
 
     def get_volga_factor(self, period=21):
         return 0.5 * self.get_bsvolga() * np.power(self.get_I(), 2) * self.get_omega(period)
@@ -241,6 +358,11 @@ class SurfaceStatArb(object):
 
     def get_cash_gamma(self):
         return np.power(self.get_F(), 2) * self.get_I() * self.get_bsgamma()
+
+    def run_market_price_of_risk_estimates(self):
+        periods = np.array(np.array([1/12, 3/12, 6/12, 1]) * 252, dtype=np.int32)
+        for period in periods:
+            self.estimate_market_price_of_risk(period)
 
     def estimate_market_price_of_risk(self, period=21):
 
@@ -295,21 +417,64 @@ class SurfaceStatArb(object):
 
         b, r, p, c, q = estimate_betas(Y_.values, X1, X2, X3, X4, X5)
 
-        e = r / g
-        b_df = pd.DataFrame(b, index=e.index, columns=['vega', 'trend', 'gamma', 'volga', 'vanna'])
-        c_df = pd.DataFrame(c, index=e.index, columns=['vega', 'trend', 'gamma', 'volga', 'vanna'])
-        p_df = pd.DataFrame(p, index=e.index, columns=['vega', 'trend', 'gamma', 'volga', 'vanna'])
-        q_df = pd.DataFrame(q, index=e.index, columns=['rsq'])
-        r_df = pd.DataFrame(r, index=e.index, columns=e.columns)
+        risks = ['vega', 'trend', 'gamma', 'volga', 'vanna']
+        estimates = Estimates(index=g.index, risk_cols=risks, option_cols=g.columns)
+        estimates.rsq = q
+        estimates.variance_contributions = c
+        estimates.horizon = period
+        estimates.residuals = r
+        estimates.betas = b
+        estimates.errors = r / g
+        estimates.rho = self.get_rho_hat()
 
-        beta_0 = pd.concat([self.get_rho_hat() * 0,
-                  self.get_rho_hat() * 0,
-                  self.get_rho_hat() / self.get_rho_hat(),
-                  self.get_rho_hat() / self.get_rho_hat(),
-                  self.get_rho_hat()], axis=1)
+        SurfaceStatArb._estimates[(self._underlier, period)] = estimates
 
-        rp = b_df - beta_0.reindex(b_df.index).values
-        return rp, r_df, e, b_df, c_df, p_df, q_df
+    def get_sensitivity_matrix(self, date):
+
+        if len(self._estimates.keys()) == 0:
+           self.run_market_price_of_risk_estimates()
+
+        fits = pd.concat([ self._estimates.get(x).get_rsq().to_frame(x[1])
+                           for x in self._estimates.keys() ], axis=1)
+
+        opt_fits = fits.idxmax(axis=1)
+        tau = opt_fits.loc[date]
+
+        if np.isnan(tau):
+           return None
+        else:
+           tau = int(tau)
+
+        # Get the model residuals
+        R = self._estimates.get((self._underlier, tau)).residuals.loc[date]
+
+        H = pd.concat((self.get_vega_factor(tau).loc[date],
+                            self.get_drift_factor(tau).loc[date],
+                            self.get_gamma_factor(tau).loc[date],
+                            self.get_volga_factor(tau).loc[date],
+                            self.get_vanna_factor(tau).loc[date], R), axis=1)
+
+        H.columns = self._estimates.get((self._underlier, tau))._risk_cols + ['r']
+        return H.copy()
+
+    def get_stat_arb_signals(self):
+
+        d = np.zeros((6, 1))
+        d[0] = 1
+
+        T = self.dates.shape[0]
+        wts = np.empty((self.number_of_options, T))
+
+        for t in self.dates:
+            h_bar = self.get_sensitivity_matrix(t)
+
+            if h_bar is not None:
+                wts[:, t] = (np.dot(h_bar, np.linalg.inv(np.dot(h_bar.T, h_bar))) @ d).flat
+
+        wts_1 = pd.DataFrame(wts, index=h_bar.index, columns=H.index).T
+        wts_2 = wts_1 / wts_1.abs().sum(axis=1).values.reshape(-1, 1)
+        return pd.concat((wts_1.stack(level=[1, 0]).to_frame('fixed'),
+                              wts_2.stack(level=[1, 0]).to_frame('dollar')), axis=1)
 
 
 
@@ -324,6 +489,6 @@ if __name__ == "__main__":
     SD = pd.to_datetime('31-Dec-2021')
     ED = pd.to_datetime('31-Dec-2023')
     self = SurfaceStatArb('GBPUSD', SD, ED)
-    self.get_skew()
+    self.get_stat_arb_signals()
 
 
