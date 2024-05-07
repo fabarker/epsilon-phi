@@ -32,7 +32,17 @@ class StrategyDriver(object):
 
         self._delta_hedge = True
         self._mkt_data = None
+        self._weights = None
         self._surface_interpolator = Interpolator.CUBIC_SPLINE
+
+    def set_weights(self, weights_df):
+        self._weights = weights_df.copy()
+
+    def get_contract_weights(self):
+        if self._weights is None:
+           contract_open = self.get_contract_price_pnl() / self.get_contract_price_pnl()
+           return contract_open / contract_open.sum(axis=1, skipna=True).values.reshape(-1, 1)
+        return self._weights
 
     def get_pricing_dates(self):
         if hasattr(self, '_pricing_dates'):
@@ -84,13 +94,14 @@ class StrategyDriver(object):
         # Set the bid ask vol spreads in the vol surface
         self._vs.set_bid_ask_vol_spreads(self._bid_ask_vol_spread/100)
 
-        # Get the market data
+        # Get the market data -
         market_data = self._vs.get_option_prices(self.get_open_dates(),
                                                  self._strike_reference,
                                                  self._instrument.value * np.abs(self._relative_strike),
                                                  MaturityType.EXPIRY_DATE,
                                                  self.get_expiry_dates(),
-                                                 self._instrument.value)
+                                                 self._instrument.value,
+                                                 self.get_close_dates(self.get_open_dates()))
 
         # Drop any prices beyond the target close date
         close_dates = self.get_close_dates(market_data.index.get_level_values('open'))
@@ -166,11 +177,12 @@ class StrategyDriver(object):
     def get_accrued_interest(self):
 
         # Get Option Premiums..
-        premiums =  -1 * self._position * self.get_market_data().get('cp')
+        premiums =  -1 * self._position * self.get_market_data().get('p')
         p = premiums[self.open_bool].droplevel(level=0)
 
         r = self.get_deposit_rates()[self.open_bool]
-        t = self.get_market_data().iloc[self.open_bool, :].get('t').droplevel(level=0)
+        t = np.array((p.index.get_level_values('close') - p.index.get_level_values('open'))
+                     / np.timedelta64(365, 'D'), np.float64)
 
         periods = np.maximum(0, premiums.groupby('open').count() - 1)
         ai_pnl = (p * (-1 + np.exp(r.values * t))) / periods
@@ -280,6 +292,7 @@ class StrategyDriver(object):
             return hdg_prices / self.get_spot_prices().shift(1)
         else:
             return hdg_prices / self.get_contract_strikes().shift(1)
+
     def get_forward_return(self):
         return self.get_forward_pnl() / self.get_forward_prices().shift(1)
 
@@ -291,11 +304,15 @@ class StrategyDriver(object):
                 self.get_contract_delta().shift(1).mul(-1).mul(self._position))
 
     def get_strategy_returns(self):
+        rtns = self.get_hedged_contract_returns()
+        wts = self.get_contract_weights()
+        return (rtns * wts).sum(axis=1)
+
+    def get_hedged_contract_returns(self):
         opts = self.get_option_position_return()
-        hdg  = self.get_hedge_position_return()
+        hdg = self.get_hedge_position_return()
         aci = self.get_accrued_interest()
-        pnl = (opts + hdg + aci)
-        return pnl.mean(axis=1)
+        return opts + hdg + aci
 
     def get_strategy_cumulative_return(self):
         return self.get_strategy_returns().add(1).cumprod() - 1
@@ -367,23 +384,33 @@ if __name__ == "__main__":
     import numpy as np
     from epsilonPhi.core.utils.DateUtils import DateUtils
 
-    SD = '30-Nov-1996'
-    ED = '31-Dec-2023'
-    self = StrategyDriver('GBPUSD', SD, ED)
+    SD = '31-Dec-2003'
+    ED = '31-Dec-2020'
+    self = StrategyDriver('EURUSD', SD, ED)
 
     self.set_instrument(Instruments.EUROPEAN_VANILLA_PUT)
-    self.set_strike_reference(StrikeReference.DELTA, 0.25)
-    self.set_surface_interpolator(Interpolator.ROLLOOS)
+    self.set_strike_reference(StrikeReference.DELTA, 0.75)
+    self.set_surface_interpolator(Interpolator.CUBIC_SPLINE)
 
     self.set_open_frequency(Frequency.BUSINESS_DAILY)
     self.set_close_frequency('1d')
     self.set_maturity('1m')
 
-    self.set_position(-1)
+    self.set_position(1)
     self.set_bid_ask_vol_spread(0.3) # Typically in the range of 0.2-0.7 vol points depending on delta and maturity (0.3 for 1M 25 Delta)
 
-    pnl_N = self.get_strategy_cumulative_return_net_transaction_costs()
-    pnl_G = self.get_strategy_cumulative_return()
+    self.set_position(1)
+    self.set_strike_reference(StrikeReference.DELTA, 0.5)
+    straddle = 2 * self.get_strategy_cumulative_return()
+
+    self.set_position(-1)
+    self.set_strike_reference(StrikeReference.DELTA, 0.25)
+    P_s = self.get_strategy_cumulative_return()
+    self.set_strike_reference(StrikeReference.DELTA, 0.75)
+    C_s = self.get_strategy_cumulative_return()
+    rtns = (straddle + P_s + C_s).add(1).pct_change()
+    print((rtns.mean() * 252) / (rtns.std() * np.sqrt(252)))
+
 
 
 

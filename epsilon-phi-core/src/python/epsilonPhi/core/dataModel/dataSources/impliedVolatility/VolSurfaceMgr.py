@@ -454,7 +454,7 @@ if __name__ == "__main__":
 
         from epsilonPhi.core.dataModel.dataSources.impliedVolatility.Models import *
 
-        underlier = 'USDJPY'
+        underlier = 'GBPUSD'
         self = VolSurfaceMgr(underlier,
                              pricing_location='NYC',
                              strike_reference=StrikeReference.DELTA)

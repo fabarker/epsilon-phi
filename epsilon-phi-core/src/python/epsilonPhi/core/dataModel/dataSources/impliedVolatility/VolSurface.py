@@ -150,14 +150,18 @@ class AbstractVolSurface(object):
         sig = self.get_ivols(dates, strike_reference, relative_strike, maturity, maturity_type)
         return sig.dropna()
 
-    def get_option_prices(self, open_dates, strike_reference, relative_strike, maturity_type, maturities, option_type):
+    def get_option_prices(self, open_dates, strike_reference, relative_strike, maturity_type, maturities, option_type, capped_forward_pricing_dates=None):
 
         if isinstance(option_type, OptionTypes):
            option_type = option_type.value
 
         # 1. Get the Implied Vols at Open
-        open_vols = self.get_ivols(open_dates, strike_reference, relative_strike, maturities, maturity_type).dropna()
-        dates, k, open_date, expiry_date, t = self.get_contract_pricing_dates(open_vols.date, open_vols.expiry, open_vols.k)
+        open_vols = self.get_ivols(open_dates, strike_reference, relative_strike, maturities, maturity_type)
+        if capped_forward_pricing_dates is not None:
+           capped_forward_pricing_dates = capped_forward_pricing_dates[~open_vols.isna().any(axis=1)]
+
+        open_vols = open_vols.dropna()
+        dates, k, open_date, expiry_date, t = self.get_contract_pricing_dates(open_vols.date, open_vols.expiry, open_vols.k, capped_forward_pricing_dates)
 
         i = self.get_fixed_strike_implied_vols(dates, k, expiry_date)
         q = self.get_funding_rate(dates, t, True).values

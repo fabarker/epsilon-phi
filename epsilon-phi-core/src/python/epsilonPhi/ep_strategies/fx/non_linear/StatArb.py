@@ -88,10 +88,17 @@ class SmileStatArb(object):
         # Get the fixed strike-expiry contract ivol t+1
         t = self.shift_dates(self._I.date)
         ttm = self._I.t - DateUtils.get_date_delta(self._I.date, t, True)
-        iv_t = self.get_fixed_strike_and_maturity_ivols(t, self._I.k, ttm)
+        #iv_t = self.get_fixed_strike_and_maturity_ivols(t, self._I.k, ttm)
+        iv_t = self._vs.get_ivols(t, StrikeReference.STRIKE_PRICE, self._I.k, self._I.expiry, MaturityType.EXPIRY_DATE)
+        self._market_data = self._I.copy()
+        self._market_data['x'] = np.abs(self._market_data['x'])
 
         # Get fixed strike, expiry dI.
         dI = self._I[['date','t', 'x']].set_index('date')
+
+        sig_0 = self._I.set_index(['expiry', 'k']).get('mid')
+        sig_T = iv_t.set_index(['expiry', 'k']).loc[sig_0.index]
+        sig_T['dI'] = -1 + (sig_T.get('mid') / sig_0)
         dI['fy'] = np.array(np.log(iv_t.mid.values) - np.log(self._I.mid.values))
         dI['z'] = self.z.values
         dI['y'] = np.log(np.array(self._I.t))
@@ -113,14 +120,20 @@ class SmileStatArb(object):
         self._dates = pd.to_datetime(self._dI.index[locs])
 
     def load_ks(self):
-        _k = black_strike(self.get_F_prime().values,
-                          self.t,
-                          self.get_rf().values,
+        _ttm = np.array((self._market_data.expiry - self._market_data.date) / pd.to_timedelta(365, 'd'))
+        r = self._vs.get_risk_free(self._market_data.date, _ttm, True)
+        _k = black_strike(1,
+                          _ttm,
+                          r.values,
                           -1,
-                          -1 * self.x,
+                          -1 * self._market_data.x.values,
                           2,
-                          self.get_I().values)
-        self._k = pd.DataFrame(_k, columns=self.cols, index=self.dates)
+                          self._market_data.get('mid').values)
+        self._k = pd.DataFrame(_k)
+        self._k.index = self._market_data.get(['x','t','date'])
+        self._k.index = pd.MultiIndex.from_tuples(self._k.index)
+        self._k.index.names = ['x', 't', 'date']
+        self._k = self._k.unstack([0, 1]).get(0)
 
     def shift_dates(self, dates, periods=1):
         return DateUtils.shift_dates_in_range(np.array(dates),
@@ -135,7 +148,28 @@ class SmileStatArb(object):
         if dates is None:
            dates = self._vs.common_dates
 
-        return self._vs.get_ivols(dates, StrikeReference.DELTA, self._DELTAS, self._MATURITIES, MaturityType.YEARFRAC).dropna()
+        deltas = -0.1
+        maturities = 1/12
+
+        _holidays = pd.to_datetime(np.setdiff1d(pd.date_range(self._vs.common_dates[0], self._vs.common_dates[-1]), self._vs.common_dates))
+        mats = list()
+        for mat in self._MATURITIES:
+            _expirations = DateUtils.expiry_from_settlement(dates, DateUtils.mat_to_Rdate(mat)[0], _holidays)
+            mats.extend([mat] * len(_expirations))
+            if 'exp' not in locals():
+                exp = _expirations
+            else:
+                exp = exp.append(_expirations)
+
+        _dates = pd.to_datetime(pd.concat([pd.DataFrame(dates)] * 5, axis=0).values.flatten())
+        #return self._vs.get_ivols(dates, StrikeReference.DELTA, self._DELTAS, self._MATURITIES, MaturityType.YEARFRAC).dropna()
+
+        sigs = pd.DataFrame()
+        for delta in self._DELTAS:
+            sig = self._vs.get_ivols(_dates, StrikeReference.DELTA,  delta, exp, MaturityType.EXPIRY_DATE)
+            sig['t'] = mats
+            sigs = pd.concat((sigs, sig), axis=0)
+        return sigs.dropna()
 
     def smooth_dataframe(self, df):
 
@@ -549,14 +583,19 @@ class SmileStatArb(object):
         return pd.DataFrame(self.get_S().values.flatten()[idx],
                             index=self.get_sig(_HOLDING_DAYS).index)
 
+    def get_maturity_paths(self, _HOLDING_DAYS):
+        paths = self.get_pricing_date_paths(_HOLDING_DAYS)
+        ED = self._market_data.set_index(['date', 'x', 't']).loc[paths.index].get('expiry')
+        mat_paths = pd.concat(([ED] * (_HOLDING_DAYS + 1)), axis=1)
+        mat_paths.columns = range(_HOLDING_DAYS+1)
+        return mat_paths
+
     def get_ttm_paths(self, _HOLDING_DAYS):
 
         if ('t', _HOLDING_DAYS) not in self._cache.keys():
-            E = (self.get_pricing_date_paths(_HOLDING_DAYS) -
-                 self.get_open_date_paths(_HOLDING_DAYS)) / np.timedelta64(1, 'D') / 365
-
-            M = self.get_open_maturities(_HOLDING_DAYS)
-            self._cache[('t', _HOLDING_DAYS)] = pd.DataFrame(np.maximum(M-E, 0),
+            paths = self.get_pricing_date_paths(_HOLDING_DAYS)
+            ED = self._market_data.set_index(['date', 'x', 't']).loc[paths.index].get('expiry')
+            self._cache[('t', _HOLDING_DAYS)] = pd.DataFrame(np.asarray((ED.values.reshape(-1, 1) - paths) / pd.to_timedelta(1, 'd')).astype(np.int32) / 365,
                                                              index=self.get_sig(_HOLDING_DAYS).index)
         return self._cache[('t', _HOLDING_DAYS)]
 
@@ -596,7 +635,8 @@ class SmileStatArb(object):
 
     def get_k_paths(self, _HOLDING_DAYS):
         k = self.get_open_strikes(_HOLDING_DAYS)
-        return pd.concat([k] * (_HOLDING_DAYS + 1), axis=1)
+        k_ = k.loc[self.get_pricing_date_paths(_HOLDING_DAYS).index]
+        return pd.concat([k_] * (_HOLDING_DAYS + 1), axis=1)
 
     def get_sig_paths(self, _HOLDING_DAYS):
 
@@ -604,11 +644,9 @@ class SmileStatArb(object):
 
             p = self.get_pricing_date_paths(_HOLDING_DAYS).values.flatten()
             k = pd.concat([self.get_strikes(_HOLDING_DAYS)] * (_HOLDING_DAYS + 1), axis=1)
-            t = self.get_ttm_paths(_HOLDING_DAYS).values.flatten()
+            t = self.get_maturity_paths(_HOLDING_DAYS)
 
-            sig_fit = self.get_fixed_strike_and_maturity_ivols(p,
-                                                               k.values.flatten(),
-                                                               t)
+            sig_fit = self._vs.get_ivols(p, StrikeReference.STRIKE_PRICE, np.ravel(k.values), np.ravel(t), MaturityType.EXPIRY_DATE)
 
             self._cache[('v', _HOLDING_DAYS)] = pd.DataFrame(sig_fit['mid'].values.reshape(k.shape), index=k.index)
         return self._cache[('v', _HOLDING_DAYS)]
@@ -805,8 +843,8 @@ if __name__ == "__main__":
     import numpy as np
     from epsilonPhi.core.utils.DateUtils import DateUtils
 
-    SD = pd.to_datetime('31-Dec-2021')
-    ED = pd.to_datetime('31-Dec-2023')
+    SD = '24-Jan-1996'
+    ED = '13-Oct-2022'
     self = SmileStatArb('GBPUSD', SD, ED)
     pnls = self.get_static_strategy_pnls()
 

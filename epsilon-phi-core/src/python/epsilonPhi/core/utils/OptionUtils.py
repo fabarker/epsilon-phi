@@ -640,7 +640,7 @@ def volga_bump(f, t, k, rd, v):
     volga = (v_bumped - v_) / bump
     return volga
 
-@njit
+#@njit
 def solve_sigma(func, args):
 
     fmin = 9999999.0
@@ -779,7 +779,7 @@ def solve_for_sig_delta_spline(f, t, m, x, _nans):
 
     idx = np.searchsorted(_t, m)
     if idx == 0 or idx == len(_t):
-        res = eval_cubic_spline(x, tuple(_f[idx]))
+        res = eval_cubic_spline(x, tuple(_f[np.minimum(idx, len(_t)-1)]))
         return res
     else:
 
@@ -826,7 +826,8 @@ def solve_for_sig_strike_spline(s, r, q, f, t, m, x, _nans):
 
     idx = np.searchsorted(_t, m)
     if idx == 0 or idx == len(_t):
-        argtup = (s, _t[idx], r[idx-1], q[idx-1], x, opt_type, tuple(_f[idx]))
+        idx_ = np.minimum(idx, len(_t) - 1)
+        argtup = (s, _t[idx_], r[idx_], q[idx_], x, opt_type, tuple(_f[idx_]))
         res = _fsolve(argtup)
         return res
     else:
@@ -839,7 +840,7 @@ def solve_for_sig_strike_spline(s, r, q, f, t, m, x, _nans):
         sig_L = _fsolve(arg_L)
 
         # Fit the upper smile
-        arg_U = (s, t0, r[idx], q[idx], x, opt_type, tuple(_f[idx]))
+        arg_U = (s, t1, r[idx], q[idx], x, opt_type, tuple(_f[idx]))
         sig_U = _fsolve(arg_U)
 
         # Interpolate Across t
@@ -901,7 +902,7 @@ def solve_for_sigma_delta_Rolloos(s, r, q, f, t, m, x):
         idx = np.searchsorted(_t, m)
         if idx == 0 or idx == len(_t):
             argtup = (s, _t[idx], r[idx], q[idx], x, 2, _f[idx])
-            res = solve_sigma(solve_for_delta_rollos, argtup)
+            res = brentsmethod(solve_for_delta_rollos, 0.01, 1, argtup)
             return res
         else:
             t0 = _t[idx - 1]
@@ -909,11 +910,11 @@ def solve_for_sigma_delta_Rolloos(s, r, q, f, t, m, x):
 
             # Fit the lower smile
             arg_L = (s, t0, r[idx-1], q[idx-1], x, delta_type, _f[idx - 1])
-            sig_L = solve_sigma(solve_for_delta_rollos, arg_L)
+            sig_L = brentsmethod(solve_for_delta_rollos, 0.01, 1, arg_L)
 
             # Fit the upper smile
             arg_U = (s, t1, r[idx], q[idx], x, delta_type, _f[idx])
-            sig_U = solve_sigma(solve_for_delta_rollos, arg_U)
+            sig_U = brentsmethod(solve_for_delta_rollos, 0.01, 1, arg_U)
 
             # Interpolate Across t
             vart0 = t0 * sig_L ** 2
