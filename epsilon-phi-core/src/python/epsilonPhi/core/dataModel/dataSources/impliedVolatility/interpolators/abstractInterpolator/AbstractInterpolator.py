@@ -112,7 +112,7 @@ class AbstractInterpolator(object):
         return self._spot_rates.reindex(pricing_dates)
 
     def get_holidays(self):
-        all_dates = self._spot_rates
+        all_dates = self._spot_rates.dropna().resample('D').asfreq()
         return all_dates[all_dates.isna().values.flatten()].index
 
     def get_expiry_dates_from_settlement_dates_tenor(self, pricing_dates, tenors):
@@ -123,8 +123,8 @@ class AbstractInterpolator(object):
         expiry_dates = self.get_expiry_dates_from_settlement_dates_tenor(pricing_dates, maturities)
         return self.get_expiries_from_settlement_maturity_dates(pricing_dates, expiry_dates)
     def get_expiry_dates_from_settlement_dates_expiries(self, pricing_dates, expiries):
-        candidate = DateUtils.from_ordinals(DateUtils.to_ordinals(pricing_dates) + expiries * 365)
-        return DateUtils.from_ordinals(DateUtils.shift_off_holidays(DateUtils.to_ordinals(candidate),
+        candidate = np.round(DateUtils.to_ordinals(pricing_dates) + expiries * 365, 0).astype(np.int32)
+        return DateUtils.from_ordinals(DateUtils.shift_off_holidays(candidate,
                                                                     DateUtils.to_ordinals(self.get_holidays()),
                                                                     DateUtils.mat_to_Rdate(expiries)))
     def solve_for_tenor(self, pricing_dates, tenor, strike_reference, relative_strike):

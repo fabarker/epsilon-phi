@@ -5,6 +5,8 @@ from epsilonPhi.core.lib.smoothing.GaussianKernel import smooth_2d
 from epsilonPhi.core.lib.Decorators import auto_repr
 from scipy.optimize import lsq_linear
 from epsilonPhi.core.utils.DateUtils import DateUtils
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from epsilonPhi.core.utils.OptionUtils import *
 from epsilonPhi.core.utils.FrameUtils import FrameUtils
 import numpy as np
@@ -159,7 +161,7 @@ class SurfaceStatArb(object):
         self._roll_frequency = val
 
     def get_ivols(self, dates, strike_reference, relative_strike, maturities, maturity_type):
-        return self._vs.get_ivols(dates, strike_reference, relative_strike, maturities, maturity_type).dropna()
+        return self._vs.get_ivols(dates, strike_reference, relative_strike, maturities, maturity_type)
 
     def get_fixed_strike_implied_vols(self, dates, k, expiry_date):
         return self.get_ivols(dates, StrikeReference.STRIKE_PRICE, k, expiry_date, MaturityType.EXPIRY_DATE)
@@ -168,6 +170,7 @@ class SurfaceStatArb(object):
 
         # Get open ivols
         vols = self.get_ivols(dates, strike_reference, relative_strike, maturities, maturity_type).dropna()
+        vols['open'] = vols.date
         capped_pricing_dates = self._vs.interpolator.get_expiry_dates_from_settlement_dates_tenor(vols.date,
                                                                                                   self.roll_frequency)
         dates, k, open_date, expiry_date, t = self._vs.get_contract_pricing_dates(vols.date, vols.expiry, vols.k,
@@ -178,17 +181,44 @@ class SurfaceStatArb(object):
         i_df = self.get_fixed_strike_implied_vols(dates[idx],
                                                   k[idx],
                                                   expiry_date[idx])
+        i_df['open'] = open_date[idx]
+        return pd.concat((vols, i_df), axis=0).reset_index(drop=True)
 
-        ivols = pd.concat((vols, i_df), axis=0).reset_index(drop=True)
-        sorted_ivols = ivols.sort_values(['expiry', 'k', 'date']).reset_index(drop=True)
-
-        #sorted_ivols['mid'] = sorted_ivols.groupby(['expiry', 'k'], group_keys=False, dropna=False).apply(lambda x: x.mid.ffill())
-        sorted_ivols['open'] = sorted_ivols.groupby(['expiry', 'k'])['date'].transform('first')
-        return sorted_ivols
 
     def load_option_data(self, dates, strike_reference, relative_strike, maturity_type, maturities, option_type):
 
         ivols = self.get_option_implied_vols(dates, strike_reference, relative_strike, maturity_type, maturities)
+        idxs = ivols.open == ivols.date
+        self._I = ivols[idxs].set_index(['date', 'x', 't']).get('mid')
+
+        # Get dI
+        It = ivols[ivols.open != ivols.date].sort_values('open').set_index(['k', 'expiry'])
+        Ft = self._vs.get_forward_prices(It.date, np.array(It.t), True).values
+
+        I0 = ivols[ivols.open == ivols.date].set_index(['k', 'expiry']).loc[It.index]
+        F0 = self._vs.get_forward_prices(I0.date, np.array(I0.t), True).values
+
+        assert np.all(It.date > I0.date), 'Error - dates not aligned correctly'
+        assert np.all(It.index == I0.index), 'Error - index not matched'
+
+        dI = pd.DataFrame(-1 + ( It.get('mid').values / I0.get('mid').values ),
+                          index=[It.date, I0.x.values, I0.t.values], columns=['dI']).reset_index()
+        dI.columns = ['date', 'x', 't', 'fy']
+        dI['z'] = np.array((np.log(np.array(I0.index.get_level_values('k')) / F0) + 0.5 * np.power(I0.mid, 2) * I0.t) / (I0.mid * np.sqrt(I0.t)))
+        dI['y'] = np.array(np.log(np.array(I0.t)))
+        df_array = dI.set_index('date').get(['t', 'x', 'fy', 'z', 'y']).pivot(columns=['x', 't'])
+        _dI = pd.DataFrame(self.smooth_dataframe(df_array),
+                           index=df_array.index,
+                           columns=df_array.get('fy').columns).stack(level=[0, 1])
+
+        _dF = pd.Series(-1 + ( Ft / F0 ), index=[It.date, I0.x, I0.t])
+
+        common_dates = self._I.index.intersection(_dI.index)
+
+        self._I = self._I.reindex(common_dates)
+        self._dI = _dI.reindex(common_dates)
+        self._dF = _dF.reindex(common_dates)
+
         ivols['q'] = self._vs.get_funding_rate(ivols.date, ivols.t, True).values
         ivols['r'] = self._vs.get_risk_free(ivols.date, ivols.t, True).values
         ivols['s'] = self._vs.get_spot_prices(ivols.date).values
@@ -196,59 +226,83 @@ class SurfaceStatArb(object):
         ivols['h'] = self._vs.get_hedge_instrument_prices(ivols.date, ivols.t.values).values
 
         # Add greeks to the dataset
-        ivols['delta'] = ivols['x']
+        ivols['delta'] = black_delta(ivols['f'], ivols['t'], ivols['k'], ivols['q'], ivols['mid'], 2, option_type)
         ivols['gamma'] = black_gamma(ivols['f'], ivols['t'], ivols['k'], ivols['r'], ivols['mid'])
         ivols['vega'] = black_vega(ivols['f'], ivols['t'], ivols['k'], ivols['r'], ivols['mid'])
         ivols['vanna'] = black_vanna(ivols['f'], ivols['t'], ivols['k'], ivols['q'], ivols['mid'])
         ivols['volga'] = black_volga(ivols['f'], ivols['t'], ivols['k'], ivols['r'], ivols['mid'])
-        ivols['theta'] = black_theta(ivols['f'], ivols['t'], ivols['k'], ivols['r'], ivols['q'], ivols['mid'],
-                                     option_type)
+        ivols['theta'] = black_theta(ivols['f'], ivols['t'], ivols['k'], ivols['r'], ivols['q'], ivols['mid'], option_type)
+        ivols['premium'] = self._vs.get_mid_premium(ivols['s'], ivols['t'], ivols['k'], ivols['r'], ivols['q'], ivols['mid'], option_type)
 
         # Cache the data as a property
-        self._data = ivols.copy()
+        _data = ivols.set_index(['date', 'x', 't']).sort_index(level=0)
 
         ##### Sample Option Dates #####
 
-        idxs = ivols.open == ivols.date
-        self._I = ivols[idxs].set_index(['date', 'x', 't']).get('mid')
-        self._F = ivols[idxs].set_index(['date', 'x', 't']).get('f')
-        self._r = ivols[idxs].set_index(['date', 'x', 't']).get('r')
-        self._q = ivols[idxs].set_index(['date', 'x', 't']).get('q')
+        self._F = _data.loc[common_dates].get('f')
+        self._r = _data.loc[common_dates].get('r')
+        self._q = _data.loc[common_dates].get('q')
 
-        self._delta = ivols[idxs].set_index(['date', 'x', 't']).get('delta')
-        self._gamma = ivols[idxs].set_index(['date', 'x', 't']).get('gamma')
-        self._vega = ivols[idxs].set_index(['date', 'x', 't']).get('vega')
-        self._vanna = ivols[idxs].set_index(['date', 'x', 't']).get('vanna')
-        self._volga = ivols[idxs].set_index(['date', 'x', 't']).get('volga')
-        self._theta = ivols[idxs].set_index(['date', 'x', 't']).get('theta')
+        self._delta = _data.loc[common_dates].get('delta')
+        self._gamma = _data.loc[common_dates].get('gamma')
+        self._vega = _data.loc[common_dates].get('vega')
+        self._vanna = _data.loc[common_dates].get('vanna')
+        self._volga = _data.loc[common_dates].get('volga')
+        self._theta = _data.loc[common_dates].get('theta')
 
-        ########## Get dI ##########
-        dI = ivols.groupby(['expiry', 'k']).agg(
-            fy=('mid', lambda x: x.pct_change().iloc[1] if len(x) > 1 else None),
-            x=('x', 'first'),
-            t=('t', 'first'),
-            f=('f', 'first'),
-            i=('mid', 'first'),
-            date=('date', lambda x: x.iloc[1] if len(x) > 1 else None),
-        ).reset_index().dropna()
-
-        ######### GET dF ############
-        dF = ivols.groupby(['expiry', 'k']).agg(
-            df=('f', lambda x: x.pct_change().iloc[1] if len(x) > 1 else None),
-            x=('x', 'first'),
-            t=('t', 'first'),
-            date=('date', lambda x: x.iloc[1] if len(x) > 1 else None),
-        ).reset_index().dropna()
-
-        self._dF = dF.set_index(['date', 'x', 't']).get('df').reindex(self._I.index)
-
-        dI['z'] = (np.log(dI.k / dI.f) + 0.5 * np.power(dI.i, 2) * dI.t) / (dI.i * np.sqrt(dI.t))
-        dI['y'] = np.log(np.array(dI.t))
-
-        df_array = dI.set_index('date').get(['t', 'x', 'fy', 'z', 'y']).pivot(columns=['x', 't'])
-        _dI = pd.DataFrame(self.smooth_dataframe(df_array), index=df_array.index, columns=df_array.get('fy').columns)
-        self._dI = _dI.stack(level=[0, 1]).reindex(self._I.index)
         self._dates = pd.to_datetime(self._I.index.get_level_values('date').unique())
+
+        # Update the t and x
+        I0 = ivols[ivols.date == ivols.open].copy()
+        IT = ivols[ivols.date != ivols.open].copy()
+        IT['t'] = I0.set_index(['k','expiry']).loc[zip(IT.k.values, IT.expiry.values)].t.values
+        IT['x'] = I0.set_index(['k', 'expiry']).loc[zip(IT.k.values, IT.expiry.values)].x.values
+        self._data = pd.concat((I0, IT), axis=0).reset_index(drop=True)
+
+    def get_option_pnl(self):
+
+        df_ = self._data.reset_index(drop=True).set_index(['open', 'expiry', 'k'])
+
+        idx = df_.index.get_level_values('open') == df_.date
+        p0 = df_[idx]
+        pT = df_[~idx]
+
+        _common = p0.index.intersection(pT.index)
+        pT_ = pT.loc[_common]
+        p0_ = p0.loc[_common]
+
+        pnl = (pT_['premium'] - p0_['premium'].values).to_frame()
+        pnl['date'] = pT_.date.values
+        pnl['t'] = np.array(p0_.t)
+        pnl['x'] = np.array(p0_.x)
+
+        return pnl.reset_index().set_index('date').get(['premium', 't', 'x']).pivot(columns=['x', 't']).get('premium')
+
+    def get_delta_hedge_pnl(self):
+
+        df_ = self._data.reset_index(drop=True).set_index(['open', 'expiry', 'k'])
+        idx = df_.index.get_level_values('open') == df_.date
+        p0 = df_[idx]
+        pT = df_[~idx]
+
+        _common = p0.index.intersection(pT.index)
+        pT_ = pT.loc[_common]
+        p0_ = p0.loc[_common]
+
+        f_pnl = ((pT_['f'] - p0_.get('f').values) / np.array(pT_.index.get_level_values('k'))).to_frame()
+        f_pnl['f'] = f_pnl['f'] * p0_.x.mul(-1).values
+        f_pnl['date'] = df_[~idx].date
+        f_pnl['t'] = df_[idx].t
+        f_pnl['x'] = df_[idx].x
+
+        return f_pnl.reset_index().set_index('date').get(['f', 't', 'x']).pivot(columns=['x', 't']).get('f')
+
+    def get_hedged_contract_pnl(self):
+        return -1 * (self.get_option_pnl() + self.get_delta_hedge_pnl())
+
+    def get_strike_prices(self):
+        return (self._data[self._data.index.get_level_values('date') == self._data.open].
+                get('k').unstack(level=[1,2]).sort_index())
 
     def smooth_dataframe(self, df):
 
@@ -281,22 +335,22 @@ class SurfaceStatArb(object):
                               -1)
 
     def get_I(self):
-        return self._I.unstack(level=[1, 2])
+        return self._I.unstack(level=[1, 2]).sort_index()
 
     def get_F(self):
-        return self._F.unstack(level=[1, 2])
+        return self._F.unstack(level=[1, 2]).sort_index()
 
     def get_r(self):
-        return self._r.unstack(level=[1, 2])
+        return self._r.unstack(level=[1, 2]).sort_index()
 
     def get_q(self):
-        return self._q.unstack(level=[1, 2])
+        return self._q.unstack(level=[1, 2]).sort_index()
 
     def get_dF(self):
-        return self._dF.unstack(level=[1, 2])
+        return self._dF.unstack(level=[1, 2]).sort_index()
 
     def get_dI(self):
-        return self._dI.unstack(level=[1, 2])
+        return self._dI.unstack(level=[1, 2]).sort_index()
 
     def get_dFdF(self):
         return np.power(self.get_dF(), 2)
@@ -308,7 +362,7 @@ class SurfaceStatArb(object):
         return self.get_dI().mul(self.get_dF())
 
     def get_slope(self):
-        return self.get_I().get(0.5).get(1) - self.get_I().get(0.5).get(1 / 12)
+        return self.get_I().get(-0.5).get(1) - self.get_I().get(-0.5).get(1 / 12)
 
     def get_skew(self):
         return self.get_I().get(-0.9).get(3 / 12) - self.get_I().get(-0.1).get(3 / 12)
@@ -329,7 +383,7 @@ class SurfaceStatArb(object):
         return self.get_gamma(period) / self.get_sqrt_nu_omega(period)
 
     def get_rho_hat(self, period=252):
-        return self.get_rho(period).mean(axis=1).to_frame()
+        return self.get_rho(period).mean(axis=1)
 
     def get_sqrt_nu_omega(self, period=21):
         return np.sqrt(self.get_nu(period).values * self.get_omega(period))
@@ -337,22 +391,22 @@ class SurfaceStatArb(object):
     ################  Greeks ################
 
     def get_bsdelta(self):
-        return self._delta.unstack(level=[1, 2])
+        return self._delta.unstack(level=[1, 2]).sort_index()
 
     def get_bsgamma(self):
-        return self._gamma.unstack(level=[1, 2])
+        return self._gamma.unstack(level=[1, 2]).sort_index()
 
     def get_bsvega(self):
-        return self._vega.unstack(level=[1, 2])
+        return self._vega.unstack(level=[1, 2]).sort_index()
 
     def get_bsvanna(self):
-        return self._vanna.unstack(level=[1, 2])
+        return self._vanna.unstack(level=[1, 2]).sort_index()
 
     def get_bsvolga(self):
-        return self._volga.unstack(level=[1, 2])
+        return self._volga.unstack(level=[1, 2]).sort_index()
 
     def get_bstheta(self):
-        return self._theta.unstack(level=[1, 2])
+        return self._theta.unstack(level=[1, 2]).sort_index()
 
     ###################### FACTORS FOR FACTOR MODEL #####################
     def load_vega_factor(self, period=21):
@@ -399,71 +453,97 @@ class SurfaceStatArb(object):
     def get_cash_gamma(self):
         return np.power(self.get_F(), 2) * self.get_I() * self.get_bsgamma()
 
+    def plot_pricing_errors(self, horizon):
+
+        self.estimate_market_price_of_risk(int(horizon))
+        errors = SurfaceStatArb._estimates.get((self._underlier, int(horizon))).get_errors()
+        mae = errors.abs().mean().unstack().T
+
+        X, Y = np.meshgrid(mae.columns, mae.index)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        Z = mae.values * 100
+        surface = ax.plot_surface(X, Y, Z, cmap='viridis')
+        fig.colorbar(surface, shrink=0.5, aspect=5)
+
+        # Labels and title
+        ax.set_xlabel('Put Delta')
+        ax.set_ylabel('Maturity')
+        ax.set_zlabel('Pricing Error')
+        ax.set_title('Mean absolute pricing errors')
+
+
     def run_market_price_of_risk_estimates(self):
-        periods = np.array(np.array([1 / 12, 3 / 12, 6 / 12, 1]) * 252, dtype=np.int32)
+        periods = np.array(np.array([1 / 12, 3 / 12, 6 / 12, 9 / 12, 1]) * 252, dtype=np.int32)
         for period in periods:
             self.estimate_market_price_of_risk(period)
 
     def estimate_market_price_of_risk(self, period=21):
 
-        Y_ = -1 * self.get_bstheta()
-        X1 = self.get_vega_factor(period).get(Y_.columns).reindex(Y_.index).values
-        X2 = self.get_drift_factor(period).get(Y_.columns).reindex(Y_.index).values
-        X3 = self.get_gamma_factor(period).get(Y_.columns).reindex(Y_.index).values
-        X4 = self.get_volga_factor(period).get(Y_.columns).reindex(Y_.index).values
-        X5 = self.get_vanna_factor(period).get(Y_.columns).reindex(Y_.index).values
+        if (self._underlier, int(period)) not in SurfaceStatArb._estimates.keys():
 
-        g = self.get_cash_gamma().get(Y_.columns).reindex(Y_.index)
+            Y_ = -1 * self.get_bstheta()
+            X1 = self.get_vega_factor(period).get(Y_.columns).reindex(Y_.index).values
+            X2 = self.get_drift_factor(period).get(Y_.columns).reindex(Y_.index).values
+            X3 = self.get_gamma_factor(period).get(Y_.columns).reindex(Y_.index).values
+            X4 = self.get_volga_factor(period).get(Y_.columns).reindex(Y_.index).values
+            X5 = self.get_vanna_factor(period).get(Y_.columns).reindex(Y_.index).values
 
-        # Thursday 9th Feb 2017
-        def estimate_betas(y, x1, x2, x3, x4, x5):
-            T, K = y.shape
-            b = np.full((T, 5), np.nan)
-            r = np.full((T, K), np.nan)
-            p = np.full((T, 5), np.nan)
-            c = np.full((T, 5), np.nan)
-            q = np.full((T, 1), np.nan)
+            g = self.get_cash_gamma().get(Y_.columns).reindex(Y_.index)
 
-            for t in range(T):
-                theta = y[t, :]
-                X = np.column_stack((x1[t, :],
-                                     x2[t, :],
-                                     x3[t, :],
-                                     x4[t, :],
-                                     x5[t, :]
-                                     ))
+            # Thursday 9th Feb 2017
+            def estimate_betas(y, x1, x2, x3, x4, x5):
+                T, K = y.shape
+                b = np.full((T, 5), np.nan)
+                r = np.full((T, K), np.nan)
+                p = np.full((T, 5), np.nan)
+                c = np.full((T, 5), np.nan)
+                q = np.full((T, 1), np.nan)
 
-                XtX = np.dot(X.T, X)
-                XtY = np.dot(X.T, theta)
-                YtY = np.dot(theta.T, theta)
+                for t in range(T):
+                    theta = y[t, :]
+                    X = np.column_stack((x1[t, :],
+                                         x2[t, :],
+                                         x3[t, :],
+                                         x4[t, :],
+                                         x5[t, :]
+                                         ))
 
-                betas = np.linalg.solve(XtX, XtY)
-                residuals = theta - np.dot(X, betas)
+                    XtX = np.dot(X.T, X)
+                    XtY = np.dot(X.T, theta)
+                    YtY = np.dot(theta.T, theta)
 
-                b[t, :] = betas
-                r[t, :] = residuals
-                q[t] = 1 - (np.dot(residuals.T, residuals) / YtY)
+                    betas = np.linalg.solve(XtX, XtY)
+                    residuals = theta - np.dot(X, betas)
 
-                dof = X.shape[0] - X.shape[1]
-                cov_matrix = np.linalg.inv(XtX) * np.dot(residuals.T, residuals) / dof
-                tstat = (betas - 0.5) / np.sqrt(np.diag(cov_matrix))
+                    b[t, :] = betas
+                    r[t, :] = residuals
+                    q[t] = 1 - (np.dot(residuals.T, residuals) / YtY)
 
-                p[t, :] = 2 * tstudent.sf(np.abs(tstat), dof)
-                c[t, :] = (betas * np.dot(XtX, betas)) / YtY
-            return b, r, p, c, q
+                    dof = X.shape[0] - X.shape[1]
+                    cov_matrix = np.linalg.inv(XtX) * np.dot(residuals.T, residuals) / dof
+                    tstat = (betas - 0.5) / np.sqrt(np.diag(cov_matrix))
 
-        b, r, p, c, q = estimate_betas(Y_.values, X1, X2, X3, X4, X5)
+                    p[t, :] = 2 * tstudent.sf(np.abs(tstat), dof)
+                    c[t, :] = (betas * np.dot(XtX, betas)) / YtY
+                return b, r, p, c, q
 
-        estimates = Estimates(index=g.index, risk_cols=self._risk_dimensions, option_cols=g.columns)
-        estimates.rsq = q
-        estimates.variance_contributions = c
-        estimates.horizon = period
-        estimates.residuals = r
-        estimates.betas = b
-        estimates.errors = r / g
-        estimates.rho = self.get_rho_hat()
+            b, r, p, c, q = estimate_betas(Y_.values, X1, X2, X3, X4, X5)
 
-        SurfaceStatArb._estimates[(self._underlier, period)] = estimates
+            estimates = Estimates(index=g.index, risk_cols=self._risk_dimensions, option_cols=g.columns)
+            estimates.rsq = q
+            estimates.variance_contributions = c
+            estimates.horizon = period
+            estimates.residuals = r
+            estimates.betas = b
+            estimates.errors = r / g
+            estimates.rho = self.get_rho_hat()
+
+            SurfaceStatArb._estimates[(self._underlier, period)] = estimates
+
+    def get_market_price_of_risk_estimates(self, period=21):
+        self.estimate_market_price_of_risk(int(period))
+        return SurfaceStatArb._estimates.get((self._underlier, int(period)))
 
     def get_risk_factor_premium(self, risk_factor=None):
 
@@ -512,7 +592,7 @@ class SurfaceStatArb(object):
     def get_stat_arb_signals(self):
 
         d = np.zeros((6, 1))
-        d[0] = 1
+        d[-1] = 1
 
         T = self.dates.shape[0]
         wts = np.full((T, self.number_of_options), np.nan)
@@ -567,10 +647,11 @@ if __name__ == "__main__":
     import numpy as np
     from epsilonPhi.core.utils.DateUtils import DateUtils
 
-    SD = pd.to_datetime('31-Dec-1998')
-    ED = pd.to_datetime('31-Dec-2023')
+    SD = '24-Jan-1996'
+    ED = '13-Oct-2022'
     self = SurfaceStatArb('GBPUSD', SD, ED)
     self.roll_frequency = '1d'
     self.load_data()
 
-    wts = self.get_risk_factor_premium()
+    res = self.get_hedged_contract_pnl()
+    wts = self.get_stat_arb_signals()

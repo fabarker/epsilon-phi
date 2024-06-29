@@ -19,8 +19,10 @@ fwd_specs = _spec[~_spec.maturity.isin(['0m'])]
 #ds = Dataset('FXSPOT_V2_PREMIUM')
 ds = Dataset('FX_FORWARD_POINTS_STORE')
 
+ctr = 0
 for id, row in fwd_specs.iterrows():
-    print(id)
+    print(fwd_specs.shape[0] - ctr)
+    ctr += 1
 
     symbol = row.ticker
 

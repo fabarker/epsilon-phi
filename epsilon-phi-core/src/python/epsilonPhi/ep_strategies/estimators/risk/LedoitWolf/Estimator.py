@@ -273,7 +273,6 @@ class Covariance(object):
             This is a nonlinear shrinkage estimator based on the Symmetrized
             Kullback-Leibler loss; it can be viewed as geometrically averaging
             linear-inverse shrinkage (LIS) with quadratic-inverse shrinkage (QIS)
-
         """
 
         # Set df dimensions

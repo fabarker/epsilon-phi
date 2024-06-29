@@ -143,17 +143,9 @@ class AbstractVolSurface(object):
     def get_fixed_strike_implied_vols(self, dates, strikes, time_to_maturity):
         sig = self.get_ivols(dates, StrikeReference.STRIKE_PRICE, strikes, time_to_maturity, MaturityType.EXPIRY_DATE)
         _sig = sig.set_index('date').groupby(['k', 'expiry'], group_keys=False, dropna=False).apply(lambda x: x.sort_index().ffill())
-        reindexed = _sig.reset_index(drop=False).set_index(['date', 'k', 'expiry']).loc[zip(dates, strikes, time_to_maturity)]
-        return reindexed.get('mid').values
+        return _sig.reset_index(drop=False).set_index(['date', 'k', 'expiry']).loc[zip(dates, strikes, time_to_maturity)].reset_index()
 
-    def get_option_strike_prices(self, dates, strike_reference, relative_strike, maturity, maturity_type):
-        sig = self.get_ivols(dates, strike_reference, relative_strike, maturity, maturity_type)
-        return sig.dropna()
-
-    def get_option_prices(self, open_dates, strike_reference, relative_strike, maturity_type, maturities, option_type, capped_forward_pricing_dates=None):
-
-        if isinstance(option_type, OptionTypes):
-           option_type = option_type.value
+    def get_option_implied_vols(self, open_dates, strike_reference, relative_strike, maturity_type, maturities, option_type, capped_forward_pricing_dates=None):
 
         # 1. Get the Implied Vols at Open
         open_vols = self.get_ivols(open_dates, strike_reference, relative_strike, maturities, maturity_type)
@@ -161,36 +153,48 @@ class AbstractVolSurface(object):
            capped_forward_pricing_dates = capped_forward_pricing_dates[~open_vols.isna().any(axis=1)]
 
         open_vols = open_vols.dropna()
-        dates, k, open_date, expiry_date, t = self.get_contract_pricing_dates(open_vols.date, open_vols.expiry, open_vols.k, capped_forward_pricing_dates)
+        open_vols['open'] = open_vols.date
+        dates, k, open_date, expiry_date, _ = self.get_contract_pricing_dates(open_vols.date, open_vols.expiry, open_vols.k, capped_forward_pricing_dates)
 
-        i = self.get_fixed_strike_implied_vols(dates, k, expiry_date)
-        q = self.get_funding_rate(dates, t, True).values
-        r = self.get_risk_free(dates, t, True).values
-        s = self.get_spot_prices(dates).values
-        f = self.get_forward_prices(dates, t, True).values
-        h = self.get_hedge_instrument_prices(dates, t)
+        fs_ivols = self.get_fixed_strike_implied_vols(dates[dates != open_date], k[dates != open_date], expiry_date[dates != open_date])
+        fs_ivols['open'] = open_date[dates != open_date]
+        return pd.concat((open_vols, fs_ivols), axis=0).reset_index(drop=True).dropna()
 
-        p = self.get_mid_premium(s, t, k, r, q, i, option_type)
-        b = self.get_bid_premium(s, t, k, r, q, i, option_type)
-        a = self.get_ask_premium(s, t, k, r, q, i, option_type)
+    def get_option_prices(self, open_dates, strike_reference, relative_strike, maturity_type, maturities, option_type, capped_forward_pricing_dates=None):
 
-        cp = self.get_cash_premium(s, t, k, r, q, i, option_type)
+        if isinstance(option_type, OptionTypes):
+           option_type = option_type.value
 
-        d = self.get_bsdelta(s, t, k, r, q, i, self.delta_type.value, option_type)
-        g = self.get_bsgamma(s, t, k, r, q, i)
-        v = self.get_bsvega(s, t, k, r, q, i)
-        va = self.get_bsvanna(s, t, k, r, q, i)
-        vo = self.get_bsvolga(s, t, k, r, q, i)
-        theta = self.get_bstheta(s, t, k, r, q, i, option_type)
+        ivols = self.get_option_implied_vols(open_dates, strike_reference, relative_strike, maturity_type, maturities, option_type, capped_forward_pricing_dates)
+
+        q = self.get_funding_rate(ivols.date, ivols.t, True).values
+        r = self.get_risk_free(ivols.date, ivols.t, True).values
+        s = self.get_spot_prices(ivols.date).values
+        f = self.get_forward_prices(ivols.date, np.array(ivols.t), True).values
+        h = self.get_hedge_instrument_prices(ivols.date, np.array(ivols.t))
+
+        p = np.array(self.get_mid_premium(s, ivols.t, ivols.k, r, q, ivols.mid, option_type))
+        b = np.array(self.get_bid_premium(s, ivols.t, ivols.k, r, q, ivols.mid, option_type))
+        a = np.array(self.get_ask_premium(s, ivols.t, ivols.k, r, q, ivols.mid, option_type))
+
+        cp = np.array(self.get_cash_premium(s, ivols.t, ivols.k, r, q, ivols.mid, option_type))
+
+        d = np.array(self.get_bsdelta(s, ivols.t, ivols.k, r, q, ivols.mid, self.delta_type.value, option_type))
+        g = np.array(self.get_bsgamma(s, ivols.t, ivols.k, r, q, ivols.mid))
+        v = np.array(self.get_bsvega(s, ivols.t, ivols.k, r, q, ivols.mid))
+        va = np.array(self.get_bsvanna(s, ivols.t, ivols.k, r, q, ivols.mid))
+        vo = np.array(self.get_bsvolga(s, ivols.t, ivols.k, r, q, ivols.mid))
+        theta = np.array(self.get_bstheta(s, ivols.t, ivols.k, r, q, ivols.mid, option_type))
 
         # Put the intrinsic value in at the maturity date
-        intrinsic = self.get_intrinsic_value(s, k, option_type)
-        p[dates == expiry_date] = intrinsic[dates == expiry_date]
+        intrinsic = self.get_intrinsic_value(s, ivols.k, option_type)
+        p[np.array(ivols.expiry == ivols.date)] = intrinsic[np.array(ivols.expiry == ivols.date)]
 
-        df_ = pd.DataFrame(np.column_stack((i, q, r, s, f, p, d, g, v, t, k, b, a, h, cp, va, vo, theta)), index=[dates, k, open_date, expiry_date])
+        df_ = pd.DataFrame(np.column_stack((np.array(ivols.mid), q, r, s, f, p, d, g, v, np.array(ivols.t), np.array(ivols.k), b, a, h, cp, va, vo, theta)), index=ivols[['date', 'k', 'open', 'expiry']])
+        df_.index = pd.MultiIndex.from_tuples(df_.index)
         df_.columns = ['i','q','r','s', 'f', 'p','d','g','v','t', 'k', 'b', 'a', 'h', 'cp', 'va', 'vo', 'theta']
         df_.index.names = ['date','k','open','expiry']
-        df_ = df_[open_date < max(dates)]
+        df_ = df_[np.array(ivols.open < max(ivols.date))]
         return df_[~df_.index.get_level_values('date').weekday.isin([5, 6])]
 
     def get_single_contract_pricing_dates(self, start_date, end_date):

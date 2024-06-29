@@ -83,57 +83,59 @@ class SmileStatArb(object):
 
     def _load_ivols(self):
 
-        self._I = self.get_floating_strike_ivols()
+        ivols = self.get_floating_strike_ivols()
+        ivols['x'] = np.abs(ivols['x'])
+        idxs = ivols.open == ivols.date
+        self._I = ivols[idxs].set_index(['date', 'x', 't']).get('mid')
 
-        # Get the fixed strike-expiry contract ivol t+1
-        t = self.shift_dates(self._I.date)
-        ttm = self._I.t - DateUtils.get_date_delta(self._I.date, t, True)
-        #iv_t = self.get_fixed_strike_and_maturity_ivols(t, self._I.k, ttm)
-        iv_t = self._vs.get_ivols(t, StrikeReference.STRIKE_PRICE, self._I.k, self._I.expiry, MaturityType.EXPIRY_DATE)
-        self._market_data = self._I.copy()
+        # Store the market data
+        self._market_data = ivols.copy()
         self._market_data['x'] = np.abs(self._market_data['x'])
+        self._market_data['f'] = self._vs.get_forward_prices(self._market_data.date, np.array(self._market_data.t), True).values
 
-        # Get fixed strike, expiry dI.
-        dI = self._I[['date','t', 'x']].set_index('date')
+        # Get dI
+        It = ivols[ivols.open != ivols.date].sort_values('open').set_index(['k', 'expiry'])
+        Ft = self._vs.get_forward_prices(It.date, np.array(It.t), True).values
 
-        sig_0 = self._I.set_index(['expiry', 'k']).get('mid')
-        sig_T = iv_t.set_index(['expiry', 'k']).loc[sig_0.index]
-        sig_T['dI'] = -1 + (sig_T.get('mid') / sig_0)
-        dI['fy'] = np.array(np.log(iv_t.mid.values) - np.log(self._I.mid.values))
-        dI['z'] = self.z.values
-        dI['y'] = np.log(np.array(self._I.t))
-        _dI = dI.pivot(columns=['x', 't'])
+        I0 = ivols[ivols.open == ivols.date].set_index(['k', 'expiry']).loc[It.index]
+        F0 = self._vs.get_forward_prices(I0.date, np.array(I0.t), True).values
 
-        _dI_S = self.smooth_dataframe(_dI)
-        self._dI = pd.DataFrame(_dI_S, columns=_dI.get('z').columns, index=_dI.index).replace(0, np.nan)
-        self._dI = self._dI.shift(1).dropna(axis=0).stack(level=[0, 1]).to_frame('dI').reset_index(drop=False)
-        self._I = self._I[self._I.date.isin(self._dI.date)]
+        assert np.all(It.date > I0.date), 'Error - dates not aligned correctly'
+        assert np.all(It.index == I0.index), 'Error - index not matched'
 
-        self._dI['x'] = np.abs(self._dI['x'])
-        self._I['x'] = np.abs(self._I['x'])
+        dI = pd.DataFrame(-1 + (It.get('mid').values / I0.get('mid').values),
+                          index=[It.date, I0.x.values, I0.t.values], columns=['dI']).reset_index()
+        dI.columns = ['date', 'x', 't', 'fy']
+        dI['z'] = np.array(
+            (np.log(np.array(I0.index.get_level_values('k')) / F0) + 0.5 * np.power(I0.mid, 2) * I0.t) / (
+                        I0.mid * np.sqrt(I0.t)))
+        dI['y'] = np.array(np.log(np.array(I0.t)))
+        df_array = dI.set_index('date').get(['t', 'x', 'fy', 'z', 'y']).pivot(columns=['x', 't'])
+        _dI = pd.DataFrame(self.smooth_dataframe(df_array),
+                           index=df_array.index,
+                           columns=df_array.get('fy').columns).stack(level=[0, 1])
 
-        self._dI = self._dI.set_index('date').pivot(columns=['x', 't']).get('dI')
-        self._I = self._I.set_index('date').pivot(columns=['x', 't']).get('mid')
+        _dF = pd.Series(-1 + (Ft / F0), index=[It.date, I0.x, I0.t])
+
+        common_dates = self._I.index.intersection(_dI.index)
+
+        self._I = self._I.loc[common_dates].unstack(level=[1, 2]).sort_index()
+        self._F = self._market_data[['f', 'date', 't', 'x']].set_index(['date', 'x', 't']).loc[common_dates].unstack(level=[1, 2]).sort_index().get('f')
+        self._dI = _dI.loc[common_dates].unstack(level=[1,2]).sort_index()
+        self._dF = _dF.loc[common_dates].unstack(level=[1,2]).sort_index()
 
         # Set dates in object
-        locs = (self._dI.index >= self._start_date) & (self._dI.index <= self._end_date)
-        self._dates = pd.to_datetime(self._dI.index[locs])
+        self._dates = pd.to_datetime(self._I.index)
 
     def load_ks(self):
-        _ttm = np.array((self._market_data.expiry - self._market_data.date) / pd.to_timedelta(365, 'd'))
-        r = self._vs.get_risk_free(self._market_data.date, _ttm, True)
-        _k = black_strike(1,
-                          _ttm,
-                          r.values,
-                          -1,
-                          -1 * self._market_data.x.values,
-                          2,
-                          self._market_data.get('mid').values)
-        self._k = pd.DataFrame(_k)
-        self._k.index = self._market_data.get(['x','t','date'])
-        self._k.index = pd.MultiIndex.from_tuples(self._k.index)
-        self._k.index.names = ['x', 't', 'date']
-        self._k = self._k.unstack([0, 1]).get(0)
+        self._k = pd.DataFrame(black_strike(1,
+                              self.t_cols[None, :].repeat(len(self.dates), 0),
+                              self.get_rd().values,
+                              -1,
+                              -1 * self.x_cols[None, :].repeat(len(self.dates), 0),
+                              2,
+                              self.get_I().values), index=self.dates, columns=self.cols)
+
 
     def shift_dates(self, dates, periods=1):
         return DateUtils.shift_dates_in_range(np.array(dates),
@@ -148,28 +150,26 @@ class SmileStatArb(object):
         if dates is None:
            dates = self._vs.common_dates
 
-        deltas = -0.1
-        maturities = 1/12
+        locs = ((dates >= pd.to_datetime(self._start_date)) & (dates <= pd.to_datetime(self._end_date)))
+        vols = self._vs.get_ivols(dates[locs],
+                                  StrikeReference.DELTA,
+                                  self._DELTAS,
+                                  self._MATURITIES,
+                                  MaturityType.YEARFRAC).dropna()
 
-        _holidays = pd.to_datetime(np.setdiff1d(pd.date_range(self._vs.common_dates[0], self._vs.common_dates[-1]), self._vs.common_dates))
-        mats = list()
-        for mat in self._MATURITIES:
-            _expirations = DateUtils.expiry_from_settlement(dates, DateUtils.mat_to_Rdate(mat)[0], _holidays)
-            mats.extend([mat] * len(_expirations))
-            if 'exp' not in locals():
-                exp = _expirations
-            else:
-                exp = exp.append(_expirations)
+        capped_pricing_dates = self._vs.interpolator.get_expiry_dates_from_settlement_dates_tenor(vols.date, '1d')
+        _dates, k, open_date, expiry_date, t = self._vs.get_contract_pricing_dates(vols.date, vols.expiry, vols.k,
+                                                                                  capped_pricing_dates)
 
-        _dates = pd.to_datetime(pd.concat([pd.DataFrame(dates)] * 5, axis=0).values.flatten())
-        #return self._vs.get_ivols(dates, StrikeReference.DELTA, self._DELTAS, self._MATURITIES, MaturityType.YEARFRAC).dropna()
+        idx = (_dates >= self._start_date) & (_dates <= self._end_date) & (_dates != open_date)
+        i_df = self._vs.get_ivols(_dates[idx], StrikeReference.STRIKE_PRICE, k[idx], expiry_date[idx], MaturityType.EXPIRY_DATE)
 
-        sigs = pd.DataFrame()
-        for delta in self._DELTAS:
-            sig = self._vs.get_ivols(_dates, StrikeReference.DELTA,  delta, exp, MaturityType.EXPIRY_DATE)
-            sig['t'] = mats
-            sigs = pd.concat((sigs, sig), axis=0)
-        return sigs.dropna()
+        ivols = pd.concat((vols, i_df), axis=0).reset_index(drop=True)
+        sorted_ivols = ivols.sort_values(['expiry', 'k', 'date']).reset_index(drop=True)
+
+        # sorted_ivols['mid'] = sorted_ivols.groupby(['expiry', 'k'], group_keys=False, dropna=False).apply(lambda x: x.mid.ffill())
+        sorted_ivols['open'] = sorted_ivols.groupby(['expiry', 'k'])['date'].transform('first')
+        return sorted_ivols
 
     def smooth_dataframe(self, df):
 
@@ -190,7 +190,7 @@ class SmileStatArb(object):
     def get_k(self):
         if not hasattr(self, '_k'):
            self.load_ks()
-        return self._k.get(self.cols)
+        return self._k.loc[self.dates].get(self.cols)
 
     def get_S(self):
         return self._vs.get_spot_prices(self.dates).to_frame(self._underlier)
@@ -211,8 +211,7 @@ class SmileStatArb(object):
         return self._vs.get_risk_free(self.dates, np.unique(self.t_cols)).get(self.t_cols)
 
     def get_F(self):
-        return self._vs.interpolator.get_f(np.unique(self._vs.dates),
-                                           np.unique(self.t)).loc[self.dates][self.t_cols]
+        return self._F.loc[self.dates][self.cols]
 
     def get_F_prime(self):
         df = self.get_S().values * (np.exp(-1 * self.get_rf() * self.t) /
@@ -220,16 +219,7 @@ class SmileStatArb(object):
         return df / df.values
 
     def get_dF(self):
-        if not hasattr(self, '_dF'):
-            f0 = self._vs.interpolator.get_f(self._vs.dates, np.unique(self.t), False).stack()
-            t = self.shift_dates(f0.index.get_level_values(0))
-            ttm = np.array(np.array(f0.index.get_level_values(1))) - DateUtils.get_date_delta(np.array(f0.index.get_level_values(0)), t, True)
-            fT = self._vs.interpolator.get_f(t, ttm, True)
-            _dF = (np.log(fT.values) - np.log(f0)).reset_index()
-            _dF['date'] = fT.index.get_level_values(0)
-            _dF.columns = ['date', 't', 'rate']
-            self._dF = _dF.set_index('date').pivot(columns='t').get('rate')
-        return self._dF.loc[self.dates].get(self.t_cols)
+        return self._dF.loc[self.dates].get(self.cols)
 
     def get_dFdF(self):
         return np.power(self.get_dF(), 2)
@@ -278,71 +268,26 @@ class SmileStatArb(object):
     def get_sqrt_nu_omega(self, period=21):
         return np.sqrt(self.get_nu(period).values * self.get_omega(period))
 
-    def bsm_delta(self, option_type=-1):
-        return nb_delta(self.get_S_prime().values,
-                        self.t,
-                        self.get_k().values,
-                        self.get_rd().values,
-                        self.get_rf().values,
-                        self._I,
-                        2,
-                        option_type)
-
     def black_delta(self, option_type=-1):
-        return black_delta(self.get_F_prime().values,
+        return black_delta(1,
                            self.t,
                            self.get_k().values,
                            self.get_rf().values,
-                           self._I,
+                           self.get_I(),
                            2,
                            option_type)
-
-    def delta_bump(self, option_type=-1):
-        return delta_bump(self.get_F_prime().values,
-                          self.t,
-                          self.get_k().values,
-                          self.get_rf().values,
-                          self._I,
-                          option_type)
-
-    def bsm_gamma(self):
-        return bs_gamma(self.get_S_prime().values,
-                        self.t,
-                        self.get_k().values,
-                        self.get_rd().values,
-                        self.get_rf().values,
-                        self.get_I())
-
     def black_gamma(self):
-        return black_gamma(self.get_F_prime().values,
+        return black_gamma(1,
                            self.t,
                            self.get_k().values,
                            self.get_rd().values,
-                           self._I)
+                           self.get_I())
 
     def cash_gamma(self):
-        return np.power(self.get_F_prime().values, 2) * self.get_I() * self.black_gamma().get(self.cols)
-
-    def gamma_bump(self, option_type=-1):
-        return gamma_bump(self.get_F_prime().values,
-                          self.t,
-                          self.get_k().values,
-                          self.get_rf().values,
-                          self._I,
-                          -2,
-                          option_type)
-
-    def bsm_theta(self, option_type=-1):
-        return bs_theta(self.get_S_prime().values,
-                        self.t,
-                        self.get_k().values,
-                        self.get_rd().values,
-                        self.get_rf().values,
-                        self.get_I(),
-                        option_type)
+        return self.get_I() * self.black_gamma().get(self.cols)
 
     def black_theta(self, option_type=-1):
-        return black_theta(self.get_F_prime().values,
+        return black_theta(1,
                            self.t,
                            self.get_k().values,
                            self.get_rd().values,
@@ -350,80 +295,26 @@ class SmileStatArb(object):
                            self.get_I(),
                            option_type)
 
-    def theta_bump(self, option_type=-1):
-        return theta_bump(self.get_F_prime().values,
-                          self.t,
-                          self.get_k().values,
-                          self.get_rf().values,
-                          self.get_I(),
-                          option_type)
-
-    def bsm_vega(self):
-        return bs_vega(self.get_S_prime().values,
-                       self.t,
-                       self.get_k().values,
-                       self.get_rd().values,
-                       self.get_rf().values,
-                       self.get_I())
-
     def black_vega(self):
-        return black_vega(self.get_F_prime().values,
+        return black_vega(1,
                           self.t,
                           self.get_k().values,
                           self.get_rd().values,
                           self.get_I())
 
-    def vega_bump(self, option_type=-1):
-        return vega_bump(self.get_F_prime().values,
-                          self.t,
-                          self.get_k().values,
-                          self.get_rf().values,
-                          self.get_I(),
-                          option_type)
-
-    def bsm_vanna(self):
-        return bs_vanna(self.get_S_prime().values,
-                        self.t,
-                        self.get_k().values,
-                        self.get_rd().values,
-                        self.get_rf().values,
-                        self.get_I())
-
     def black_vanna(self):
-        return black_vanna(self.get_F_prime().values,
+        return black_vanna(1,
                           self.t,
                           self.get_k().values,
                           self.get_rf().values,
                           self.get_I())
-
-    def vanna_bump(self):
-        return vanna_bump(self.get_F_prime().values,
-                          self.t,
-                          self.get_k().values,
-                          self.get_rf().values,
-                          self.get_I())
-
-    def bsm_volga(self):
-        return bs_volga(self.get_S_prime().values,
-                        self.t,
-                        self.get_k().values,
-                        self.get_rd().values,
-                        self.get_rf().values,
-                        self.get_I())
 
     def black_volga(self):
-        return black_volga(self.get_F_prime().values,
+        return black_volga(1,
                            self.t,
                            self.get_k().values,
                            self.get_rd().values,
                            self.get_I())
-
-    def volga_bump(self):
-        return volga_bump(self.get_F_prime().values,
-                          self.t,
-                          self.get_k().values,
-                          self.get_rd().values,
-                          self.get_I())
 
     def get_X1(self, period=21):
         return self.black_vega() * self.get_I() * self.get_omega(period)
@@ -445,6 +336,7 @@ class SmileStatArb(object):
 
     def get_independent_variables(self, period):
 
+        g = self.cash_gamma()
         X1 = FrameUtils.set_levels(self.get_X1(period), 'vega', 'var')
         X2 = FrameUtils.set_levels(self.get_X2(period), 'mu', 'var')
         X3 = FrameUtils.set_levels(self.get_X3(period), 'gamma', 'var')
@@ -704,7 +596,8 @@ class SmileStatArb(object):
         contract_pnls = self.get_option_pnls(_HOLDING_DAYS, option_type, position)
         hedge_pnls = self.get_delta_hedged_pnl(_HOLDING_DAYS, position)
         balance_pnls = self.get_account_pnl(_HOLDING_DAYS, option_type, position)
-        return contract_pnls + hedge_pnls + balance_pnls.values
+        #return contract_pnls + hedge_pnls + balance_pnls.values
+        return contract_pnls + hedge_pnls
 
     def get_delta_paths(self, _HOLDING_DAYS, option_type=-1):
 
@@ -729,8 +622,8 @@ class SmileStatArb(object):
 
     def get_sensitivity_matrix(self, period=21):
         X = self.get_independent_variables(period)
-        _, res, _, _, _, _, _= self.estimate_market_price_of_risk(21)
-        _r = FrameUtils.set_levels(res, 'e', 'var')
+        _, res, e, _, _, _, _= self.estimate_market_price_of_risk(21)
+        _r = FrameUtils.set_levels(e, 'e', 'var')
         return pd.concat((X, _r.swaplevel(2, 0, axis=1)), axis=1)
 
     def get_factor_model_pricing_residuals(self):
@@ -744,7 +637,7 @@ class SmileStatArb(object):
 
         _common = _pnls.index.intersection(_wts.index)
         pnls = _pnls.loc[_common].values * _wts.loc[_common]
-        return pnls.groupby('date', axis=0).mean()
+        return pnls.groupby('date', axis=0).sum()
 
     def get_strategy_weights(self, period=21, type=5):
 
@@ -760,6 +653,8 @@ class SmileStatArb(object):
             h_bar = H.iloc[t, :].unstack(level=0)[risks]
             try:
                 wts[:, t] = (np.dot(h_bar, np.linalg.inv(np.dot(h_bar.T, h_bar))) @ d).flat
+
+
             except:
                 pass
 
@@ -845,7 +740,9 @@ if __name__ == "__main__":
 
     SD = '24-Jan-1996'
     ED = '13-Oct-2022'
+
     self = SmileStatArb('GBPUSD', SD, ED)
-    pnls = self.get_static_strategy_pnls()
+    rp, r_df, e, b_df, c_df, p_df, q_df = self.estimate_market_price_of_risk(period=21)
+    wts = self.get_strategy_weights(21, 5)
 
 

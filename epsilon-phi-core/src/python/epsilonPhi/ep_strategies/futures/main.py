@@ -975,7 +975,7 @@ class CStrategy(object):
 
                 if covmat.size > 0:
                     # Get the number of assets we have data for
-                    target_risk = risk.loc[date].values.item()
+                    target_risk = risk
                     opt = LongShortRiskParity(cov_.values, risk=target_risk, score=score_.values)
                     opt.solve()
                     optWts.append(pd.DataFrame(opt.x, index=cov_.index, columns=[date]).T)
@@ -1024,7 +1024,7 @@ class CStrategy(object):
 
                 if covmat.size > 0:
                     # Get the number of assets we have data for
-                    risk = target_risk.loc[date].values.item()
+                    risk = target_risk
                     opt = RiskBudgetWithERandVolTarget(cov_.values,
                                                        risk=risk,
                                                        pi=score_.values)
@@ -1326,8 +1326,8 @@ if __name__ == "__main__":
     bo_perf_att = bo.get_strategy_performance_attribution().to_frame('Breakout')
 
     # 2. Get Relative PnLs
-    risk_decomp_ma_str = ma.get_strategy_volatility_decomposition(period=252*1)
-    risk_decomp_ma_bmk = ma.get_benchmark_volatility_decomposition(period=252 * 1)
+    risk_decomp_ma_str = ma.get_strategy_volatility_decomposition(period=252*5)
+    risk_decomp_ma_bmk = ma.get_benchmark_volatility_decomposition(period=252*5)
 
     # 3. Asset Class Attribution
     rel_pnl_inst = ma.get_strategy_instrument_attribution()

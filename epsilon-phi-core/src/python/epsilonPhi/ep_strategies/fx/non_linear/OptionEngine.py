@@ -98,8 +98,8 @@ class StrategyDriver(object):
         market_data = self._vs.get_option_prices(self.get_open_dates(),
                                                  self._strike_reference,
                                                  self._instrument.value * np.abs(self._relative_strike),
-                                                 MaturityType.EXPIRY_DATE,
-                                                 self.get_expiry_dates(),
+                                                 MaturityType.YEARFRAC,
+                                                 DateUtils.Rdate_to_mat(self._maturity),
                                                  self._instrument.value,
                                                  self.get_close_dates(self.get_open_dates()))
 
@@ -108,7 +108,7 @@ class StrategyDriver(object):
         self._mkt_data = market_data.set_index(pd.Series(close_dates, name='close'), append=True)
         _keep_locs = ((self._mkt_data.index.get_level_values('date') <= self._mkt_data.index.get_level_values('close')) &
                       (self._mkt_data.index.get_level_values('date') <= self._pricing_dates.max()))
-        self._mkt_data = self._mkt_data[_keep_locs]
+        self._mkt_data = self._mkt_data[_keep_locs].sort_index('date')
 
     def set_market_data(self, market_data):
         self._mkt_data = market_data.reset_index().set_index(['date','k','open','expiry'])
@@ -384,32 +384,22 @@ if __name__ == "__main__":
     import numpy as np
     from epsilonPhi.core.utils.DateUtils import DateUtils
 
-    SD = '31-Dec-2003'
-    ED = '31-Dec-2020'
-    self = StrategyDriver('EURUSD', SD, ED)
+    SD = '24-Jan-1996'
+    ED = '13-Oct-2022'
+    self = StrategyDriver('GBPUSD', SD, ED)
 
     self.set_instrument(Instruments.EUROPEAN_VANILLA_PUT)
-    self.set_strike_reference(StrikeReference.DELTA, 0.75)
+    self.set_strike_reference(StrikeReference.DELTA, 0.10)
     self.set_surface_interpolator(Interpolator.CUBIC_SPLINE)
 
     self.set_open_frequency(Frequency.BUSINESS_DAILY)
-    self.set_close_frequency('1d')
+    self.set_close_frequency('1m')
     self.set_maturity('1m')
 
-    self.set_position(1)
-    self.set_bid_ask_vol_spread(0.3) # Typically in the range of 0.2-0.7 vol points depending on delta and maturity (0.3 for 1M 25 Delta)
-
-    self.set_position(1)
-    self.set_strike_reference(StrikeReference.DELTA, 0.5)
-    straddle = 2 * self.get_strategy_cumulative_return()
-
     self.set_position(-1)
-    self.set_strike_reference(StrikeReference.DELTA, 0.25)
-    P_s = self.get_strategy_cumulative_return()
-    self.set_strike_reference(StrikeReference.DELTA, 0.75)
-    C_s = self.get_strategy_cumulative_return()
-    rtns = (straddle + P_s + C_s).add(1).pct_change()
-    print((rtns.mean() * 252) / (rtns.std() * np.sqrt(252)))
+    self.set_bid_ask_vol_spread(0.3) # Typically in the range of 0.2-0.7 vol points depending on delta and maturity (0.3 for 1M 25 Delta)
+    straddle = self.get_strategy_cumulative_return()
+
 
 
 

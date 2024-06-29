@@ -35,8 +35,8 @@ for id, row in spec.iterrows():
     symbol = row.ticker
 
     last_date = sessionMgr.get_latest_observation_date_from_tickers(symbol)
-    if last_date < datetime.datetime(year=2024, day=26, month=4):
-        from_date = sessionMgr.get_latest_observation_date_from_tickers(symbol) - pd.to_timedelta(61, 'D')
+    if last_date < datetime.datetime.today():
+        from_date = sessionMgr.get_latest_observation_date_from_tickers(symbol)
         to_date = datetime.datetime.today()
 
         res = ds.get_data(start=from_date.date(), end=to_date.date(),
