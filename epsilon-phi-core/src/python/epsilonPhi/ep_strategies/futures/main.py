@@ -672,7 +672,7 @@ class CStrategy(object):
             x_prior = signals.values[rng_X]
             keepcols = ~np.any(np.isnan(x_prior), axis=0)
 
-            x_prime = _scalar.fit_transform(x_prior[:,keepcols])
+            x_prime = _scalar.fit_transform(x_prior[:, keepcols])
             x__p = x_prime[rng_X_reg - rng_X_reg[0]]
             x_star = x_prime[-1,:]
 
@@ -820,7 +820,7 @@ class CStrategy(object):
 
     def _get_rebalancing_dates(self, dates, rebalance_frequency):
 
-        unique_dates = np.unique(dates)
+        unique_dates = pd.to_datetime(np.unique(dates))
         if rebalance_frequency == 'D':
             return pd.to_datetime(unique_dates)
         elif rebalance_frequency == 'W':
@@ -859,7 +859,7 @@ class CStrategy(object):
 
         alpha = [0.1]
         beta = [0]
-        rho = [0.18, 0.2, 0.22]
+        rho = [0.19, 0.2, 0.21]
 
         bmk = self.get_benchmark_pnl_contributions()
 
@@ -874,12 +874,13 @@ class CStrategy(object):
                     spread_ = ma.get_strategy_performance_attribution().values[-1]
                     hyperams[(a, b, r)] = ma.get_strategy_performance_attribution().values[-1]
                     print(spread_)
+        return hyperams
 
 
 
 
     def optimize_strategy_risk_budget(self, rebalance_frequency='D',
-                                      covar_lookback=1,
+                                      covar_lookback=1.0,
                                       cov_shrink=0,
                                       signal_shrink=0.1):
 
@@ -897,7 +898,7 @@ class CStrategy(object):
         # Get Instrument Signals
         sigs = self.get_signals_for_optimization()
         sigs = sigs.clip(-20, 20).dropna(how='all')
-        mu_ = sigs.mean(axis=1).values.reshape(-1,1)
+        mu_ = sigs.mean(axis=1).values.reshape(-1, 1)
         shrunk_signals_ = mu_ + (sigs - mu_) * signal_shrink
 
         # Intersect of Unique Dates
@@ -942,7 +943,7 @@ class CStrategy(object):
         _pnls.columns.names = ['instrument', 'strategy']
         return _pnls.copy()
 
-    def optimize_strategy_risk_parity(self, rebalance_frequency='D', covar_lookback=1):
+    def optimize_strategy_risk_parity(self, rebalance_frequency='D', covar_lookback=1.0):
 
         # Get the target risk for the optimization
         risk = self._get_target_risk_for_optimiztion()
@@ -951,7 +952,7 @@ class CStrategy(object):
         returns = self.get_instrument_returns_for_optimization()
 
         # Construct rolling covariance estimates
-        T = _DAYS_PER_YEAR * covar_lookback
+        T = int(_DAYS_PER_YEAR * covar_lookback)
         covs = returns.ewm(min_periods=10, span=round(T), ignore_na=True).cov() * _DAYS_PER_YEAR
 
         # Get the rebalancing/re-optimization dates
@@ -991,7 +992,7 @@ class CStrategy(object):
         return _pnls.copy()
 
 
-    def optimize_strategy_risk_parity_with_return(self, rebalance_frequency='D', covar_lookback=1, horizon=1, window=252):
+    def optimize_strategy_risk_parity_with_return(self, rebalance_frequency='D', covar_lookback=1.0, horizon=1, window=252):
 
 
         # Get the target risk for the optimization
@@ -1049,7 +1050,7 @@ class CStrategy(object):
     def get_strategy_pnl_contributions(self,
                                        method='rp',
                                        rebalance_freq='D',
-                                       covar_lookback=256,
+                                       covar_lookback=1.0,
                                        horizon=None,
                                        window=None):
 
@@ -1289,28 +1290,20 @@ if __name__ == "__main__":
     ##
 
     ma_str = CStrategy.get_moving_average_strategy()
-    ma_str.optimize_strategy_hyperparameters()
-
-    ma_str_pnls_rb_1 = ma_str.get_strategy_pnl_contributions(method='rb', rebalance_freq='D', covar_lookback=0.2)
-
-    ma_bmk_pnls = ma_str.get_benchmark_pnl_contributions()
-    ma = Evaluator(ma_str_pnls_rb_1, ma_bmk_pnls)
-
-    ma_str_pnls_er = ma_str.get_strategy_pnl_contributions(method='rpr', rebalance_freq='D', covar_lookback=1, horizon=21, window=252)
-    ma_str_pnls_rp = ma_str.get_strategy_pnl_contributions(method='rp', rebalance_freq='D', covar_lookback=1)
+    ma_str_pnls_rp = ma_str.get_strategy_pnl_contributions(method='rb', rebalance_freq='D', covar_lookback=0.2)
     ma_bmk_pnls = ma_str.get_benchmark_pnl_contributions()
 
 
     bo_str = CStrategy.get_breakout_strategy()
-    bo_str_pnls = bo_str.get_strategy_pnl_contributions(method='rb', rebalance_freq='D', covar_lookback=1)
+    bo_str_pnls_rp = bo_str.get_strategy_pnl_contributions(method='rb', rebalance_freq='D', covar_lookback=0.2)
     bo_bmk_pnls = bo_str.get_benchmark_pnl_contributions()
 
 
 
     #################
 
-    ma = Evaluator(ma_str_pnls_rb_1, ma_bmk_pnls)
-    bo = Evaluator(bo_str_pnls, bo_bmk_pnls)
+    ma = Evaluator(ma_str_pnls_rp, ma_bmk_pnls)
+    bo = Evaluator(bo_str_pnls_rp, bo_bmk_pnls)
 
     # 0. Exposure Analysis
     E_MA = ma.get_average_instrument_exposure_in_signal_buckets(ma_str, 'EDOLLAR')
