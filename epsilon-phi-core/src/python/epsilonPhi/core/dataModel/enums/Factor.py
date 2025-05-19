@@ -1,5 +1,8 @@
 from enum import Enum
 
+class FactorType(Enum):
+    Return = 'return'
+
 class FACTOR(Enum):
 
     # ISG Type Factors

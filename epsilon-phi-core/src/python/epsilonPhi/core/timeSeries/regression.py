@@ -258,6 +258,22 @@ class Regression(object):
         regstats = reg.regress(X, y)
         return np.hstack((reg._reg.intercept_, reg._reg.coef_))
 
+    @staticmethod
+    def simple_regression_OLS_with_array(
+            X: np.ndarray,
+            y: np.array
+    ):
+
+        if not len(X) == len(y):
+            raise Exception('X and y must have same length')
+
+        X = np.append(X, np.ones((X.shape[0], 1), dtype=int), axis=1)
+        beta = np.linalg.lstsq(X, y, rcond=None)[0]
+
+        alpha = beta[-1]
+        betas = beta[:X.shape[1]-1]
+        return alpha, betas
+
 
 
 

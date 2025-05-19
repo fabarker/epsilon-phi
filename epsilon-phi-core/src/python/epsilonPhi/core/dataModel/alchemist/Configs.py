@@ -74,7 +74,7 @@ class CrisisConfig(Base, TemporalMixIn):
     __tablename__ = 'crises_config'
 
     crisis_id = Column(BigInteger, index=True, primary_key=True)
-    crisis_name = Column(String(128))
+    crisis_name = Column(String(128), primary_key=True)
     crisis_start_date = Column(DateTime)
     crisis_end_date = Column(DateTime)
     __mapper_args__ = {'polymorphic_identity': 'crises'}
@@ -85,17 +85,28 @@ class SimulationConfig(Base, TemporalMixIn):
 
     uid = Column(Integer, nullable=True, primary_key=True)
 
-    currency = Column(String(64))
-    dataversion = Column(Float, nullable=False, primary_key=True)
+    currency = Column(String(64), nullable=False, primary_key=True)
+    dataversion = Column(Integer, nullable=False, primary_key=True)
 
-    shortHorizon = Column(Float, nullable=True)
-    midHorizon = Column(Float, nullable=True)
-    longHorizon = Column(Float, nullable=True)
-    number_of_bstraps = Column(Float, nullable=True)
-    q = Column(Float, nullable=True)
+    simShortHorizon = Column(Integer, nullable=True)
+    simMidHorizon = Column(Integer, nullable=True)
+    simLongHorizon = Column(Integer, nullable=True)
+    simNumBoostraps = Column(Integer, nullable=True)
+    simStartInflation = Column(Float, nullable=True)
+    simHoldStartStates = Column(Float, nullable=True)
+    simHorizonMult = Column(Integer, nullable=True)
+    simAR1Process = Column(Integer, nullable=True)
+    betaAR1Override = Column(Float, nullable=True)
+    simUse5YRP = Column(Integer, nullable=True)
+    simStartDate = Column(DateTime)
+    simEndDate = Column(DateTime)
+    simHoldingRates = Column(String(120), nullable=True)
+    simBlockLen = Column(Float, nullable=True)
 
     __mapper_args__ = {'polymorphic_identity': 'simulation_config'}
 
+    def __init__(self, simConfig=None, **kwargs):
+        super(SimulationConfig, self).__init__(simConfig, **kwargs)
 
 #'@auto_repr
 #class FactorConfig(Base):

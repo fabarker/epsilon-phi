@@ -347,10 +347,10 @@ if __name__ == "__main__":
 
 
 
-    ticker = ['FVGBPSW', 'FVGBP1M', 'FVGBP2M', 'FVGBP3M', 'FVGBP6M','FVGBP9M','FVGBP1Y']
-    fields = ['EB','ER','EO']
+    ticker = ['S&PCOMP']
+    fields = ['PH', 'PL', 'PO', 'PI', 'VM']
 
-    from_date = datetime.date(year=1984, month=3, day=23)
+    from_date = datetime.date(year=1962, month=12, day=31)
     frame = pyDatastream.fetch(ticker, fields, from_date=from_date, frequency='D')
 
 

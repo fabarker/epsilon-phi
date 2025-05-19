@@ -37,14 +37,17 @@ class TimeSeriesUtils(object):
 
             if 'TR' in col:
                 ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_TR(df_col))
+                break
+            elif 'IN' in col:
+                ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_IN(df_col))
+                break
+            elif 'RI' in col:
+                ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_RI(df_col))
+                break
             elif 'RY' in col:
                 ts_rtns = ts_rtns.concat(BondUtils.convertYield(df_col, 10))
             elif 'YTW' in col:
                 pass
-            elif 'RI' in col:
-                ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_RI(df_col))
-            elif 'IN' in col:
-                ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_IN(df_col))
             elif 'IB' in col:
                 ts_rtns = ts_rtns.concat(TimeSeriesUtils.RI_from_rate(df_col))
             elif 'IR' in col:

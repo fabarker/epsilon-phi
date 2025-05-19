@@ -6,7 +6,6 @@ from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 from epsilonPhi.core.dataModel.enums.Model import REGRESSION_TYPE, SAMPLING_TYPE, WEIGHTING_SCHEME
 from epsilonPhi.core.timeSeries.regression import Regression
 from epsilonPhi.core.config.appConfig import CAppConfig
-import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import datetime as dt
@@ -206,6 +205,9 @@ class BaseModel(object):
     def get_risk_factor_correlation(self, dates):
         panel = self.get_risk_factor_df().loc[dates]
         return panel.corr()
+
+    def get_factor_panels(self):
+        return self.__factorPanels
 
     def get_principle_component_factors(self):
         df_ = self.get_risk_factor_df()

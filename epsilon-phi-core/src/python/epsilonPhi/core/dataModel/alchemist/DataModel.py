@@ -78,6 +78,7 @@ class BondIndexSpec(TimeSeriesSpec):
     rating = Column(String(10), nullable=False)
     maturity_band = Column(String(20), nullable=False)
     maturity = Column(Integer, nullable=True)
+
     @property
     def denominated_currency(self):
         return self.pricing_currency
@@ -85,6 +86,10 @@ class BondIndexSpec(TimeSeriesSpec):
     @property
     def exposure_currency(self):
         return self.pricing_currency
+
+    @property
+    def hedge_ratio(self):
+        return 0
 
     __mapper_args__ = {'polymorphic_identity': 'bond_index_spec'}
 

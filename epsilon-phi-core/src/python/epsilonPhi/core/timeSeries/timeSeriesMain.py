@@ -424,11 +424,12 @@ class CTimeSeries(pd.DataFrame):
     def _create_new_object_same_type(self, data=None, returns_type=None):
         return self.create_new_object(data=data, ts_type=self.type, returns_type=returns_type)
 
-    def _create_new_levels_object(self, data=None, returns_type=None):
-        return self.create_new_object(data=data, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type)
+    def _create_new_levels_object(self, data=None, returns_type=None, attributes=None):
+        return self.create_new_object(data=data, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type, attributes=attributes)
 
     def _create_new_returns_object(self, returns_type=None, data=None):
         return self.create_new_object(data=data, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
+
 
     ######################
 

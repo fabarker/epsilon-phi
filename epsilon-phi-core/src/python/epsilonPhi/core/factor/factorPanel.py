@@ -43,12 +43,17 @@ class CFactorPanels(CFactorPanelInf):
         else:
            self._end_date = end_date
 
+    @property
+    def index(self):
+        return self.__dates if hasattr(self, '__dates') else None
+
     def _reset_cache(self):
         self._cache = {}
 
     def load_factors(self):
         for factor_name in self._factor_list:
             self.__load_single_factor(factor_name)
+            self.__dates = self.get_factors_df(self._factor_list).index
 
     def __load_factor_from_pickles(self, factor):
         if PickleUtils.is_factor_pickled(factor, self._end_date, self._frequency):
@@ -95,4 +100,11 @@ class CFactorPanels(CFactorPanelInf):
         panel = CTimeSeries(ts_type=TimeSeriesType.RETURNS)
         for factor in self._factor_list:
             panel = panel.concat(self.get_factor(factor))
+            panel.index = pd.to_datetime(panel.index)
         return panel.dropna(how='any', axis=0).sort_index().get(factor_list)
+
+    def get_factor_historical_std(self, factor_name):
+        return self.get_factor(factor_name).get_historical_volatility()
+
+    def get_factors_historical_stds(self, factor_list: list):
+        return [ self.get_factor(x).get_historical_volatility() for x in factor_list ]

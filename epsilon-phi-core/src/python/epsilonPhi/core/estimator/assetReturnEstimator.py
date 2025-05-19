@@ -111,8 +111,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         rx = asset.get_excess_return_df()
         y, X = rx.intersect_over_dates(factor_df)
 
-        regstats = model.regression.regress(X,
-                                            y,
+        regstats = model.regression.regress(X, y,
                                             orthogonalize_columns=model.orthogonal_list,
                                             normalize=True)
 

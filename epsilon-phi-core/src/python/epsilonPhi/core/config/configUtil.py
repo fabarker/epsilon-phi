@@ -103,7 +103,7 @@ class CConfigUtil(CBaseConfig):
         return self._config_info
 
     def get_config_key(self, config_name):
-        return [x.name for x in config_name.__mapper__.primary_key if x.name not in ['uid']]
+        return [x.name for x in config_name.__mapper__.primary_key if x.name not in ['uid', 'crisis_id']]
 
     def load_config(self, config_name, vars=None, values=None):
 
@@ -116,16 +116,16 @@ class CConfigUtil(CBaseConfig):
 
         SessionMgr.instance.getSessionFactory().expunge_all()
 
-    def get_config(self, config_name, config_key):
+    def get_config(self, config_name, config_key=()):
         if config_name not in self._catalog.keys():
             self.load_config(config_name)
-        return self._catalog.get(config_name).get(config_key)
+        return self._catalog.get(config_name).get(config_key, self._catalog.get(config_name).values())
 
     def get_estimation_config(self):
-        return self.get_config(EstimationConfig, None)
+        return self.get_config(EstimationConfig)
 
-    def get_simulation_config(self):
-        return self.get_config(SimulationConfig, None)
+    def get_simulation_config(self, currency, data_version):
+        return self.get_config(SimulationConfig, (currency, int(data_version)))
 
     def get_currency_config(self, currency, frequency, dataversion):
         return self.get_config(CurrencyConfig, (currency, frequency, dataversion))
@@ -160,6 +160,31 @@ class CConfigUtil(CBaseConfig):
     def get_stressed_scenario_config(self):
         pass
 
+    def get_current_environment_indicator_name(self):
+        return 'CURR_ENV_INDICATOR'
+
+    def get_crises_config(self):
+        return self.get_config(CrisisConfig)
+
+    def get_factor_crises(
+            self,
+            start_date,
+            end_date,
+            extended_schema=False
+    ):
+
+        return sorted([
+            x for x in list(self.get_crises_config())
+            if x.crisis_start_date >= start_date and x.crisis_end_date <= end_date
+        ], key=lambda x: x.crisis_start_date)
+
+
+
+if __name__ == "__main__":
+
+    import pandas as pd
+    util = CConfigUtil()
+    util.get_factor_crises(pd.to_datetime('31-Dec-1984'), pd.to_datetime('31-Dec-2024'))
 
 
 

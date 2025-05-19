@@ -6,7 +6,12 @@ from epsilonPhi.core.modelFactory.modelFactory import BaseModel
 from epsilonPhi.core.utils.DateUtils import DateUtils
 from epsilonPhi.core.config.appConfig import CAppConfig
 from epsilonPhi.core.env.Env import DATAVERSION, Env
+from collections import OrderedDict
+from dateutil import parser
+from datetime import datetime as dt
+from scipy.stats import zscore
 import datetime
+import pandas as pd
 
 __author__ = 'Francis Barker'
 __date__ = '01/07/2023'
@@ -20,15 +25,18 @@ class CContext(object):
     def __init__(self, currency: str,
                        frequency: Frequency.BUSINESS_MONTHLY,
                        data_version: int,
-                       start_date: datetime.date,
-                       end_date: datetime.date):
+                       start_date: dt.date,
+                       end_date: dt.date):
 
         self.__currency = currency
         self.__frequency = frequency
         self.__data_version = data_version
-        self.__start_date = start_date
-        self.__end_date = end_date
         self.__dates = None
+        self.__asset_manager = None
+        self.__crisis_map = None
+
+        self.start_date = start_date
+        self.end_date = end_date
 
     @property
     def dataversion(self):
@@ -38,9 +46,17 @@ class CContext(object):
     def start_date(self):
         return self.__start_date
 
+    @start_date.setter
+    def start_date(self, value):
+        self.__start_date = parser.parse(value)
+
     @property
     def end_date(self):
         return self.__end_date
+
+    @end_date.setter
+    def end_date(self, value):
+        self.__end_date = parser.parse(value)
 
     @property
     def frequency(self):
@@ -84,11 +100,17 @@ class CContext(object):
         return CContext.get_inflation_rate_ticker(self.currency,
                                                   self.frequency,
                                                   self.dataversion)
-    @property
-    def inflation_rate(self):
-        return CAppConfig._configUtil.get_currency_config(self.currency,
-                                                          self.frequency,
-                                                          self.dataversion).inflation_rate
+    def get_inflation_rate_asset(self):
+        from epsilonPhi.core.asset.AssetMgr import CAssetMgr
+        return CAssetMgr(self).get_inflation_asset(self.currency)
+
+    def get_price_deflator(self):
+        infl = self.get_inflation_rate_asset()
+        return infl.add(1).cumprod().div(infl.values[0] + 1)
+
+    def get_risk_free_rate_asset(self):
+        from epsilonPhi.core.asset.AssetMgr import CAssetMgr
+        return CAssetMgr(self).get_risk_free_asset(self.currency)
 
     @staticmethod
     def get_inflation_rate_ticker(currency, frequency, dataversion):
@@ -100,8 +122,15 @@ class CContext(object):
     def BaseModel(self):
         return CAppConfig.get_BaseModel()
 
+
     def get_risk_factor_covariance(self):
         return self.BaseModel.get_risk_factor_covariance(self.dates) * self.obs_per_year
+
+    def get_factor_panels(self):
+        return self.BaseModel.factor_panels
+
+    def get_return_factors_sharpe_ratios(self):
+        return self.BaseModel.get_return_factor_Sharpe_ratios()
 
     def get_risk_factors_panel(self):
         return self.BaseModel.get_risk_factor_df()\
@@ -110,6 +139,9 @@ class CContext(object):
     def get_return_factors_panel(self):
         return self.BaseModel.get_return_factor_df() \
             .select_subset_dates(self.dates)
+
+    def get_normalized_return_factors_panel(self):
+        return zscore(self.get_return_factors_panel(), ddof=1)
 
     def _setup(self):
         self.__load_configs()
@@ -128,15 +160,50 @@ class CContext(object):
                                                           self.frequency,
                                                           self.dataversion)
     def get_simulation_config(self):
-        return CAppConfig._configUtil.get(self.currency,
-                                          self.frequency,
-                                          self.dataversion)
+        return CAppConfig._configUtil.get_simulation_config(self.currency,
+                                                            self.dataversion)
 
     def get_estimation_config(self):
         return CAppConfig._configUtil.get_estimation_config()
 
     def get_factor_config(self):
         return CAppConfig._configUtil.get_factor_config()
+
+    def get_factor_crisis_map(self):
+
+        if self.__crisis_map is None:
+
+            from epsilonPhi.core.simulation.SimStructs import Crisis
+
+            # Map is an ordered dictionary
+            map = OrderedDict()
+
+            crises = self.get_factor_crises()
+            for crisis in crises:
+                map[crisis.crisis_name] = Crisis(
+                            crisis.crisis_name,
+                            crisis.crisis_start_date,
+                            crisis.crisis_end_date
+                )
+
+            self.__crisis_map = map
+        return self.__crisis_map
+
+    def get_factor_crises(self):
+        return CAppConfig._configUtil.get_factor_crises(
+            self.start_date,
+            self.end_date,
+            False)
+
+    def __load_asset_manager(self):
+        if self.__asset_manager is None:
+            from epsilonPhi.core.asset.AssetMgr import CAssetMgr
+            self.__asset_manager = CAssetMgr(self)
+
+    def get_asset_manager(self):
+        if self.__asset_manager is None:
+            self.__load_asset_manager()
+        return self.__asset_manager
 
 
 
@@ -176,7 +243,7 @@ if __name__ == "__main__":
     schema = ContextCreator(currency='GBP',
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
-    cov = schema.get_risk_factor_covariance()
+    cov = schema.get_factor_crisis_map()
 
 
 

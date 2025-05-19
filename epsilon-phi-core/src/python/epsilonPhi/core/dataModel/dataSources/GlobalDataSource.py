@@ -96,6 +96,9 @@ class GlobalDataSource(object):
         ts_spec.index = df.columns
         return CTimeSeries(df, attributes=ts_spec.T, ts_type=ts_type)
 
+    def get_total_return_series_from_tickers(self, tickers, ts_type=TimeSeriesType.LEVELS):
+        pass
+
     def get_total_return_series_from_ticker(self, ticker, ts_type=TimeSeriesType.LEVELS):
         ts = self.get_time_series_data_from_ticker(ticker)
 
@@ -148,10 +151,13 @@ class GlobalDataSource(object):
 
         df_ = self._session_mgr.get_consumer_price_index_tickers_from_region(region)
         if df_.size > 0:
-           return self.get_dataframe_from_ticker(df_.ticker.values[0])
+           return self.get_time_series_data_from_ticker(df_.ticker.values[0])
         else:
-            return pd.DataFrame()
+            return CTimeSeries()
 
+    def get_consumer_price_index_for_currency(self, currency):
+        region = self._session_mgr.get_region_from_currency(currency)
+        return self.get_consumer_price_index_for_region(region)
 
     # Methods associated with currencies / FX
     def get_fx_forward_prices(self, currency_pairs, pricing_dates, maturity_dates, price_quotes):

@@ -37,6 +37,7 @@ class vintage(object):
         distributions = GlobalDataSource().get_private_asset_distribution_assumptions(self._strategy_type)
         idxs = np.arange(1/self._cash_flow_frequency, distributions.index.max() + 1/self._cash_flow_frequency, 1/self._cash_flow_frequency)
         self.distribution_assumptions = distributions.reindex(idxs).interpolate().fillna(0)
+
     def _load_capital_call_assumptions(self):
         capital_calls = GlobalDataSource().get_private_asset_capital_call_assumptions(self._strategy_type)
         idxs = np.arange(1/self._cash_flow_frequency, capital_calls.index.max() + 1/self._cash_flow_frequency, 1/self._cash_flow_frequency)
@@ -50,9 +51,11 @@ class vintage(object):
         self._load_distribution_assumptions()
         self._load_capital_call_assumptions()
         self._load_strategy_returns()
+
     @property
     def capital_calls(self):
         return self._df.get('CALLS')
+
     @property
     def distributions(self):
         return self._df.get('DISTR')
@@ -60,15 +63,19 @@ class vintage(object):
     @property
     def net_flows(self):
         return self.distributions - self.capital_calls
+
     @property
     def cumulative_distributions(self):
         return self._df.get('DISTR').cumsum()
+
     @property
     def cumulative_capital_calls(self):
         return self._df.get('CALLS').cumsum()
+
     @property
     def cumulative_net_flows(self):
         return np.cumsum(self.net_flows)
+
     def estimate_cash_flows_PME(self):
         pass
 
@@ -84,12 +91,51 @@ class vintage(object):
             VALS[t, 3] = EOY_NAV_t * (1-self.distribution_assumptions.values[t]) + self.capital_call_assumptions.values[t] * self._commitments_size
         self._df = pd.DataFrame(VALS, columns=['BOY_NAV', 'CALLS', 'DISTR', 'EOY_NAV'], index=range(0, self.T+1))
 
+    def _calc_irr(self, start_year=2000):
+        """
+        Calculate the IRR for a private equity fund vintage from a dataframe.
+
+        Parameters:
+        - df: A pandas DataFrame with columns ['BOY_NAV', 'CALLS', 'DISTR', 'EOY_NAV']
+        - start_year: The base year corresponding to index 0
+
+        Returns:
+        - Annualized IRR as a float
+        """
+        from datetime import datetime, timedelta
+
+        df = self._df.copy()
+
+        start_date = datetime(start_year, 1, 1)
+        dates = [start_date + timedelta(days=365 * i) for i in range(len(df))]
+
+        df = df.copy()
+        df["cash_flow"] = df["DISTR"] - df["CALLS"]
+        df.loc[len(df) - 1, "cash_flow"] += df.loc[len(df) - 1, "EOY_NAV"]
+
+        year_fractions = [(d - dates[0]).days / 365.25 for d in dates]
+        cash_flows = df["cash_flow"].tolist()
+
+        def xirr(cash_flows, times, guess=0.1, tol=1e-6, max_iter=100):
+            r = guess
+            for _ in range(max_iter):
+                f = sum([cf / (1 + r) ** t for cf, t in zip(cash_flows, times)])
+                df = sum([-t * cf / (1 + r) ** (t + 1) for cf, t in zip(cash_flows, times)])
+                r_new = r - f / df
+                if abs(r - r_new) < tol:
+                    return r_new
+                r = r_new
+            raise RuntimeError("XIRR calculation did not converge")
+
+        return xirr(cash_flows, year_fractions)
+
 if __name__ == "__main__":
 
     vy = vintage(strategy_type=PrivateAsset.BUYOUT,
                  commitment_size=100,
                  fund_age=0,
                  cash_flow_frequency=1)
+    vy._calc_irr()
 
 
 

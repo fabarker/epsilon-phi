@@ -1,6 +1,24 @@
 import numpy as np
 import pandas as pd
 
+class HullWhiteDynamicMean(object):
+
+    def __init__(self):
+        pass
+
+    def simulate(self):
+        pass
+
+    def get_forward_curve(self):
+        pass
+
+    def extract_shocks(self):
+        pass
+
+    def fit_params(self):
+        pass
+
+
 
 class YieldCurve(object):
 

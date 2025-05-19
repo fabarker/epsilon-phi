@@ -41,7 +41,10 @@ class CAssetMgr(CAssetMgrInf):
                 self._schema.frequency)
 
     @staticmethod
-    def _prepare_dataframe_for_asset(schema, df_):
+    def _prepare_dataframe_for_asset(
+            schema,
+            df_
+    ):
 
         if df_ is None:
            return None
@@ -62,7 +65,9 @@ class CAssetMgr(CAssetMgrInf):
         if df_.type == TimeSeriesType.LEVELS:
            return ts_.get_periodic_levels(schema.frequency)
         elif df_.type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
-            return ts_.get_periodic_returns(schema.frequency)
+           return ts_.get_periodic_returns(schema.frequency)
+        else:
+            raise ValueError('Error - unknown time series type')
 
     def load_asset_by_name(self, asset_name):
 
@@ -100,18 +105,55 @@ class CAssetMgr(CAssetMgrInf):
         return GlobalDataSource().get_total_return_series_from_ticker(asset_name,
                                                                       TimeSeriesType.RETURNS)
 
-    def get_risk_free_asset(self, currency):
-        from epsilonPhi.core.asset.Asset import CAsset
-        risk_free = GlobalDataSource().get_risk_free_rate_for_currency_region(currency)
-        risk_free.columns = [currency + '_RFR']
+    def get_inflation_asset(self, currency):
 
-        return CAsset(schema=self._schema,
-                      data=risk_free,
-                      denominated_currency=currency,
-                      exposure_currency=currency,
-                      ts_hedge_ratio=0,
-                      returns_type=ReturnsType.SIMPLE,
-                      ts_type=TimeSeriesType.RETURNS)
+        key = self.get_asset_key(currency + '_CPI')
+        if key not in self._cache.keys():
+
+            from epsilonPhi.core.asset.Asset import CAsset
+            cpi = GlobalDataSource().get_consumer_price_index_for_currency(currency)
+            cpi.columns = [currency + '_CPI']
+            cpi.index = cpi.index + pd.offsets.BMonthEnd(0)
+
+            cpi = cpi.get_returns().reindex(self.schema.dates)
+            asset = CAsset(
+                schema=self._schema,
+                data=cpi,
+                denominated_currency=currency,
+                exposure_currency=currency,
+                ts_hedge_ratio=0,
+                returns_type=ReturnsType.SIMPLE,
+                ts_type=TimeSeriesType.RETURNS
+            )
+
+            key = self.get_asset_key(currency + '_CPI')
+            CAssetMgr._cache[key] = asset
+        return self._cache.get(key).deepcopy()
+
+    def get_risk_free_asset(self, currency):
+
+        key = self.get_asset_key(currency + '_RFR')
+        if key not in self._cache.keys():
+
+            from epsilonPhi.core.asset.Asset import CAsset
+            risk_free = GlobalDataSource().get_risk_free_rate_for_currency_region(currency)
+            risk_free.columns = [currency + '_RFR']
+
+            asset = CAsset(
+                schema=self._schema,
+                data=risk_free,
+                denominated_currency=currency,
+                exposure_currency=currency,
+                ts_hedge_ratio=0,
+                returns_type=ReturnsType.SIMPLE,
+                ts_type=TimeSeriesType.RETURNS
+            )
+
+            key = self.get_asset_key(currency + '_RFR')
+            CAssetMgr._cache[key] = asset
+        return self._cache.get(key).deepcopy()
+
+
 
     @staticmethod
     def convert_asset_to_currency(asset, target_currency, hedging_ratio):

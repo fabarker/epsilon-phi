@@ -43,7 +43,9 @@ class CAsset(CAssetInf, CSlice):
         self._schema = schema
         self._assetMgr = CAssetMgr(schema)
         self._hedge_ratio = None
-        self._alpha = None
+        self._alpha = 0
+        self._weight = None
+        self._risk_premias = None
         self._risk_betas = {}
         self._return_betas = {}
 
@@ -82,6 +84,12 @@ class CAsset(CAssetInf, CSlice):
     @property
     def is_time_series_in_local_terms(self):
         return self.denominated_currency == self.exposure_currency
+    @property
+    def weight(self):
+        return self._weight if isinstance(self._weight, float) else None
+    @property
+    def alpha(self):
+        return self._alpha
 
 
     ###############
@@ -95,12 +103,17 @@ class CAsset(CAssetInf, CSlice):
     def set_alpha(self, alpha):
         self._alpha = alpha
 
+    def set_weight(self, weight):
+        self._weight = float(weight)
+
 
     ##################### Asset risk free rate ###########################
 
     def get_risk_free_asset(self):
         return self.assetMgr.get_risk_free_asset(self.denominated_currency)
 
+    def get_risk_free_rate(self):
+        return self._schema.risk_free_rate
 
     ########### Historical Asset Class Performance Metrics ###############
 
@@ -149,6 +162,50 @@ class CAsset(CAssetInf, CSlice):
 
     ################### Factor Model Asset Metrics ###################
 
+    def get_risk_premias(self):
+        if self._risk_premias is None:
+            self._risk_premias = CAppConfig.get_estimation_mgr().get_risk_premium(self)
+        return self._risk_premias
+
+    def get_risk_premia(self):
+        return self.get_risk_premias().sum()
+
+    def get_total_return(self):
+        return self.get_risk_premia() + self.get_risk_free_rate()
+
+    
+
+    def get_alpha(self):
+        return self._alpha
+
+    def get_medium_term_return(self):
+        pass
+
+
+    def get_return_in_current_environment(self):
+        pass
+
+    def get_risk_premia(self):
+        return CAppConfig.get_estimation_mgr().get_risk_premium(self)
+
+    def get_risk_premia_in_current_environment(self):
+        from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+
+        # Construct portfolio on the fly
+        ptf = SAAPortfolio(
+            self.name,
+            self.schema,
+        )
+
+        # Add the asset we want the current environ risk premia for
+        ptf.add_asset(self, 1, self._hedge_ratio)
+
+        # Get the current environm risk premia from simulation module
+        return ptf.get_current_environment_risk_premia()
+
+    def get_Sharpe_ratio(self):
+        return (self.get_risk_premia().sum() + self.get_alpha()) / self.get_volatility()
+
     def get_return_betas(self, normalized=True):
         betas = CAppConfig.get_estimation_mgr().get_return_betas(self, normalized=True)
         return betas
@@ -156,17 +213,8 @@ class CAsset(CAssetInf, CSlice):
     def get_return_betas_not_normalized(self):
         return self.get_return_betas(False)
 
-    def get_risk_premia(self):
-        return CAppConfig.get_estimation_mgr().get_risk_premium(self)
-
-    def get_total_return(self):
-        return self.get_risk_premia() + self._schema.get_risk_free_rate() + self.get_alpha()
-
-    def get_Sharpe_ratio(self):
-        return (np.sum(self.get_risk_premia()) + self.get_alpha()) / self.get_volatility()
-
-    def get_alpha(self):
-        return self._alpha
+    def get_data_length(self):
+        return EstimationMgr.get_estimation_length(self)
 
     def get_risk_betas(self):
         return CAppConfig.get_estimation_mgr().get_risk_betas(self, self.hedging_ratio)
@@ -180,6 +228,9 @@ class CAsset(CAssetInf, CSlice):
     def get_fx_risk_decomposition(self):
         pass
 
+    def get_systematic_variance(self):
+        return CAppConfig.get_estimation_mgr().get_systematic_variance(self, self.hedging_ratio)
+
     def get_idiosyncratic_variance(self):
         return CAppConfig.get_estimation_mgr().get_idiosyncratic_variance(self, self.hedging_ratio)
 
@@ -188,9 +239,6 @@ class CAsset(CAssetInf, CSlice):
         if hedging_ratio is None:
            hedging_ratio = self.hedging_ratio
         return EstimationMgr.get_risk_factor_stdev(self, hedging_ratio)
-
-    def get_data_length(self):
-        return EstimationMgr.get_estimation_length(self)
 
     def get_beta_and_idio_risk(self, hedging_ratio=None):
 
@@ -208,6 +256,12 @@ class CAsset(CAssetInf, CSlice):
         pass
 
     ##############
+
+    def get_realized_return_time_series(self, hedging_ratio=None):
+
+        if not hedging_ratio:
+            hedging_ratio = self.hedging_ratio
+        return self.convert_asset_to_currency(self.schema.currency, hedging_ratio)
 
     def convert_asset_to_currency(self, currency, hedging_ratio):
         return self.assetMgr.convert_asset_to_currency(self, currency, hedging_ratio)
@@ -230,11 +284,11 @@ if __name__ == "__main__":
     rtns = df.get_returns()
 
     from epsilonPhi.core.schema.Schema import ContextCreator
-    schema = ContextCreator(currency='GBP',
+    schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
-    self = CAsset(exposure_currency='WLD',
+    self = CAsset(exposure_currency='USD',
                   denominated_currency='USD',
                   schema=schema,
                   data=rtns,

@@ -5,6 +5,7 @@ from epsilonPhi.ep_strategies.fx.linear.factor import Factor as Carry
 from epsilonPhi.ep_strategies.fx.linear.factor import Signals
 from epsilonPhi.core.factor.Factor import CFactor
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
+from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 import datetime as dt
 from epsilonPhi.core.dataModel.enums.Factor import FACTOR
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
