@@ -46,8 +46,8 @@ class CAsset(CAssetInf, CSlice):
         self._alpha = 0
         self._weight = None
         self._risk_premias = None
-        self._risk_betas = {}
-        self._return_betas = {}
+        self._risk_premias_in_curr_env = None
+        self._return_betas = None
 
         if ((ts_hedge_ratio is not None) and
                 (self.denominated_currency != self.exposure_currency)):
@@ -115,6 +115,12 @@ class CAsset(CAssetInf, CSlice):
     def get_risk_free_rate(self):
         return self._schema.risk_free_rate
 
+    def get_medium_risk_free_rate(self):
+        return self._schema.medium_term_risk_free_rate
+
+    def get_current_risk_free_rate(self):
+        return self._schema.curr_risk_free_rate
+
     ########### Historical Asset Class Performance Metrics ###############
 
     def get_historical_total_return(self, from_date=None, to_date=None):
@@ -170,25 +176,96 @@ class CAsset(CAssetInf, CSlice):
     def get_risk_premia(self):
         return self.get_risk_premias().sum()
 
-    def get_total_return(self):
-        return self.get_risk_premia() + self.get_risk_free_rate()
+    def get_risk_premias_in_current_environment(self):
+        if self._risk_premias_in_curr_env is None:
+            from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
-    
+            # Construct portfolio on the fly
+            ptf = SAAPortfolio(
+                self.name,
+                self.schema,
+            )
+
+            # Add the asset we want the current environ risk premia for
+            ptf.add_asset(self, 1, self._hedge_ratio)
+
+            # Get the current environment risk premia from simulation module
+            self._risk_premias_in_curr_env = ptf.get_current_env_risk_premias()
+        return self._risk_premias_in_curr_env
+
+    def get_risk_premia_in_current_environment(self):
+        return self.get_risk_premias_in_current_environment().sum()
+
+    def get_total_return(self):
+        return self.get_risk_premia() + self.get_risk_free_rate() + self.get_alpha()
+
+    def get_return_in_current_environment(self):
+        return self.get_risk_premia_in_current_environment() + self.get_current_risk_free_rate() + self.get_alpha()
+
+    def get_medium_term_return(self):
+        return self.get_risk_premia() + self.get_medium_risk_free_rate()
 
     def get_alpha(self):
         return self._alpha
 
-    def get_medium_term_return(self):
+    def get_sharpe_ratio(self):
+        return (self.get_risk_premia() + self.get_alpha()) / self.get_volatility()
+
+    def get_sharpe_ratio_in_current_environment(self):
+        return (self.get_risk_premia_in_current_environment() + self.get_alpha()) / self.get_volatility()
+
+    def get_return_betas(self, hedging_ratio=None, normalized=True):
+        return EstimationMgr.get_return_betas(self, hedging_ratio or self.hedging_ratio, normalized=normalized)
+
+    def get_return_betas_not_normalized(self, hedging_ratio=None):
+        return self.get_return_betas(hedging_ratio, normalized=False)
+
+    def get_risk_betas(self):
+        return EstimationMgr.get_risk_betas(self, self.hedging_ratio)
+
+    def get_asset_risk_betas(self):
+        return EstimationMgr.get_risk_betas(self, 1)
+
+    def get_fx_risk_betas(self):
+        return self.get_risk_betas() - self.get_asset_risk_betas()
+
+    def get_fx_risk_decomposition(self):
         pass
 
+    def get_beta_and_idio_risk(self, hedging_ratio=None):
+        return EstimationMgr.get_beta_and_idio_variance(self, hedging_ratio or self.hedging_ratio)
 
-    def get_return_in_current_environment(self):
-        pass
+    def get_variance(self, hedging_ratio=None):
+        return self.get_systematic_variance(hedging_ratio) + self.get_idiosyncratic_variance(hedging_ratio)
 
-    def get_risk_premia(self):
-        return CAppConfig.get_estimation_mgr().get_risk_premium(self)
+    def get_systematic_variance(self, hedging_ratio=None):
+        return EstimationMgr.get_systematic_variance(self, hedging_ratio or self.hedging_ratio)
 
-    def get_risk_premia_in_current_environment(self):
+    def get_idiosyncratic_variance(self, hedging_ratio=None):
+        return EstimationMgr.get_idiosyncratic_variance(self, hedging_ratio or self.hedging_ratio)
+
+    def get_volatility(self, hedging_ratio=None):
+        return EstimationMgr.get_risk_factor_stdev(self, hedging_ratio or self.hedging_ratio)
+
+    def get_data_length(self):
+        return EstimationMgr.get_estimation_length(self)
+
+    def get_residuals(self, hedging_ratio=None):
+        return EstimationMgr.get_residuals(self, hedging_ratio or self.hedging_ratio)
+
+    def get_uncertainty(self):
+        return self.get_volatility() / np.sqrt(self.get_data_length())
+
+    ##############
+
+    def get_realized_return_time_series(self, hedging_ratio=None):
+        return self.convert_asset_to_currency(self.schema.currency, hedging_ratio or self.hedging_ratio)
+
+    def convert_asset_to_currency(self, currency, hedging_ratio):
+        return self.assetMgr.convert_asset_to_currency(self, currency, hedging_ratio)
+
+    def simulate(self):
+
         from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
         # Construct portfolio on the fly
@@ -199,75 +276,7 @@ class CAsset(CAssetInf, CSlice):
 
         # Add the asset we want the current environ risk premia for
         ptf.add_asset(self, 1, self._hedge_ratio)
-
-        # Get the current environm risk premia from simulation module
-        return ptf.get_current_environment_risk_premia()
-
-    def get_Sharpe_ratio(self):
-        return (self.get_risk_premia().sum() + self.get_alpha()) / self.get_volatility()
-
-    def get_return_betas(self, normalized=True):
-        betas = CAppConfig.get_estimation_mgr().get_return_betas(self, normalized=True)
-        return betas
-
-    def get_return_betas_not_normalized(self):
-        return self.get_return_betas(False)
-
-    def get_data_length(self):
-        return EstimationMgr.get_estimation_length(self)
-
-    def get_risk_betas(self):
-        return CAppConfig.get_estimation_mgr().get_risk_betas(self, self.hedging_ratio)
-
-    def get_asset_risk_betas(self):
-        return CAppConfig.get_estimation_mgr().get_risk_betas(self, 1)
-
-    def get_fx_risk_betas(self):
-        return self.get_return_betas() - self.get_asset_risk_betas()
-
-    def get_fx_risk_decomposition(self):
-        pass
-
-    def get_systematic_variance(self):
-        return CAppConfig.get_estimation_mgr().get_systematic_variance(self, self.hedging_ratio)
-
-    def get_idiosyncratic_variance(self):
-        return CAppConfig.get_estimation_mgr().get_idiosyncratic_variance(self, self.hedging_ratio)
-
-    def get_volatility(self, hedging_ratio=None):
-
-        if hedging_ratio is None:
-           hedging_ratio = self.hedging_ratio
-        return EstimationMgr.get_risk_factor_stdev(self, hedging_ratio)
-
-    def get_beta_and_idio_risk(self, hedging_ratio=None):
-
-        if hedging_ratio is None:
-           hedging_ratio = self.hedging_ratio
-        return CAppConfig.get_estimation_mgr().get_beta_and_idio_variance(self, hedging_ratio)
-
-    def get_standard_error(self):
-        pass
-
-    def get_residuals(self):
-        pass
-
-    def get_uncertainty(self):
-        pass
-
-    ##############
-
-    def get_realized_return_time_series(self, hedging_ratio=None):
-
-        if not hedging_ratio:
-            hedging_ratio = self.hedging_ratio
-        return self.convert_asset_to_currency(self.schema.currency, hedging_ratio)
-
-    def convert_asset_to_currency(self, currency, hedging_ratio):
-        return self.assetMgr.convert_asset_to_currency(self, currency, hedging_ratio)
-
-    def simulate(self):
-        pass
+        return ptf.get_portfolio_simulated_returns_panel()
 
     def brownian_bridge(self):
         pass
@@ -280,7 +289,7 @@ if __name__ == "__main__":
 
     gds = GlobalDataSource()
 
-    df = gds.get_time_series_data_from_ticker('CSTMNFH','RI')
+    df = gds.get_time_series_data_from_ticker('S&PCOMP','RI')
     rtns = df.get_returns()
 
     from epsilonPhi.core.schema.Schema import ContextCreator
@@ -294,14 +303,11 @@ if __name__ == "__main__":
                   data=rtns,
                   ts_hedge_ratio=0,
                   returns_type=rtns.returns_type,
-                  ts_type=rtns.type)
+                  ts_type=rtns.type
+                  )
 
     self.set_currency_hedge_ratio(0)
-
-    rp = pd.DataFrame(self.get_risk_premia(), columns=self.schema.BaseModel.return_factor_list, index=['Risk Premia Factor Decomposition']).T
-    vol = self.get_volatility()
-    beta, idio = self.get_beta_and_idio_risk(0)
-    rb = self.get_asset_risk_betas()
+    self.get_residuals()
 
 
 

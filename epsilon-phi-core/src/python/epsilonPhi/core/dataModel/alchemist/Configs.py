@@ -39,9 +39,12 @@ class CurrencyConfig(Base, TemporalMixIn):
 
     risk_free_ticker = Column(String(50), nullable=True)
     risk_free_rate = Column(Float, nullable=False)
+    curr_risk_free_rate = Column(Float, nullable=False)
+    medium_risk_free_rate = Column(Float, nullable=False)
 
     inflation_ticker = Column(String(50), nullable=True)
     inflation_rate = Column(Float, nullable=False)
+    curr_inflation_rate = Column(Float, nullable=False)
 
     frequency = Column(FrequencyType(50), nullable=True, primary_key=True)
     dataversion = Column(Integer, nullable=False, primary_key=True)

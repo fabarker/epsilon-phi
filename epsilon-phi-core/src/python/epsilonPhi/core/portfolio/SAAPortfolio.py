@@ -596,3 +596,4 @@ if __name__ == "__main__":
     self = SAAPortfolio('portfolio', schema)
     self.add_asset_by_name('MSUSAML', 1, 0)
     self.get_portfolio_mgr()
+    self.get_sigma()

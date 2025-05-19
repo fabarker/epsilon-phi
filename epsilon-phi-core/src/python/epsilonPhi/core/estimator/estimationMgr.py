@@ -19,9 +19,9 @@ class EstimationMgr(CEStimationMgrInf):
         return AssetReturnEstimator.get_excess_return_timeseries(asset)
 
     @staticmethod
-    def get_return_betas(asset, normalized=True):
+    def get_return_betas(asset, hedging_ratio, normalized=True):
         from epsilonPhi.core.estimator.assetReturnEstimator import AssetReturnEstimator
-        return AssetReturnEstimator.get_return_betas(asset, normalized)
+        return AssetReturnEstimator.get_return_betas(asset, hedging_ratio, normalized)
 
     ######################
 
@@ -29,6 +29,16 @@ class EstimationMgr(CEStimationMgrInf):
     def get_idiosyncratic_variance(asset, hedging_ratio):
         from epsilonPhi.core.estimator.assetRiskEstimator import AssetRiskEstimator
         return AssetRiskEstimator.get_idiosyncratic_variance(asset, hedging_ratio)
+
+    @staticmethod
+    def get_systematic_variance(asset, hedging_ratio):
+        from epsilonPhi.core.estimator.assetRiskEstimator import AssetRiskEstimator
+        return AssetRiskEstimator.get_systematic_variance(asset, hedging_ratio)
+
+    @staticmethod
+    def get_residuals(asset, hedging_ratio):
+        from epsilonPhi.core.estimator.assetRiskEstimator import AssetRiskEstimator
+        return AssetRiskEstimator.get_residuals(asset, hedging_ratio)
 
     @staticmethod
     def get_risk_betas(asset, hedging_ratio):

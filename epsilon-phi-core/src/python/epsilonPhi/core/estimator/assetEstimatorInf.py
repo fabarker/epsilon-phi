@@ -14,7 +14,7 @@ class CAssetReturnEstimatorInf(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_return_betas(asset, normalized=True):
+    def get_return_betas(asset, hedging_ratio, normalized=True):
         pass
 
 

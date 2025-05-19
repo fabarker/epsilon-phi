@@ -1,15 +1,12 @@
-import math, sys
 from collections import OrderedDict
 from datetime import datetime as dt
-
 import numpy as np
-
 from epsilonPhi.core.schema.Schema import CContext
-from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
-from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.asset.Asset import CAsset
 from epsilonPhi.logging import *
 from typing import Union
+import math, sys
+
 
 class CPortfolio(object):
     _sqrt_epsilon = math.sqrt(sys.float_info.epsilon)
@@ -116,6 +113,8 @@ class CPortfolio(object):
 
         if isinstance(asset, CAsset):
            return asset.name in self._assets
+        elif type(asset).__name__ == 'CAsset':
+            return asset.name in self._assets
         elif isinstance(asset, str):
            return asset in self._assets
         else:
@@ -271,10 +270,6 @@ if __name__ == "__main__":
     self = CPortfolio('portfolio', schema)
     self.add_asset_by_name('MSUSAML', 1, 0)
     self.get_portfolio_mgr()
-
-    import inspect
-    all_methods = [name for name, member in inspect.getmembers(self) if inspect.isroutine(member)]
-    print("All methods:", all_methods)
 
 
 

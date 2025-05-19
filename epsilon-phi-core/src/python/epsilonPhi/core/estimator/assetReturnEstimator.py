@@ -8,8 +8,34 @@ import math
 
 
 class AssetReturnEstimator(CAssetReturnEstimatorInf):
+    _cache = {}
+
     def __init__(self):
         super(AssetReturnEstimator, self).__init__()
+
+    @staticmethod
+    def calc_return_betas(asset, hedging_ratio=0.5, normalized=True):
+
+        schema_currency = asset.schema.currency
+        asset_in_schema_currency = asset.convert_asset_to_currency(schema_currency, hedging_ratio)
+
+        model = CAppConfig.get_BaseModel()
+        factor_df = asset_in_schema_currency.schema.get_return_factors_panel()
+
+        rx = asset.get_excess_return_df()
+        y, X = rx.intersect_over_dates(factor_df)
+
+        regstats = model.regression.regress(X, y,
+                                            orthogonalize_columns=model.orthogonal_list,
+                                            normalize=normalized)
+
+        # if asset.get_asset_name() in CAppConfig.get_config_util().get_market_stress_beta():
+        #   mkt_factor = factor_panel.get_market_factor()
+        #   mkt_factor_index = factor_panel.get_return_factor_list().index(mkt_factor)
+
+        #   stress_betas = CAppConfig.get_config_util().get_market_stress_beta()
+        #   betas[:, mkt_factor_index] = betas[:, mkt_factor_index] * stress_betas[asset.get_asset_name()]
+        return regstats[:, 1:]
 
     @staticmethod
     def get_risk_premium(asset):
@@ -103,26 +129,16 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
 
     @staticmethod
-    def get_return_betas(asset, normalized=True):
+    def get_return_betas(asset, hedging_ratio, normalized=True):
+        if (asset.name, hedging_ratio, normalized) not in AssetReturnEstimator._cache:
+            AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized)] = (
+                AssetReturnEstimator.calc_return_betas(
+                asset,
+                hedging_ratio,
+                normalized)
+            )
+        return AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized)]
 
-        model = CAppConfig.get_BaseModel()
-        factor_df = asset.schema.get_return_factors_panel()
-
-        rx = asset.get_excess_return_df()
-        y, X = rx.intersect_over_dates(factor_df)
-
-        regstats = model.regression.regress(X, y,
-                                            orthogonalize_columns=model.orthogonal_list,
-                                            normalize=True)
-
-
-        #if asset.get_asset_name() in CAppConfig.get_config_util().get_market_stress_beta():
-        #   mkt_factor = factor_panel.get_market_factor()
-        #   mkt_factor_index = factor_panel.get_return_factor_list().index(mkt_factor)
-
-        #   stress_betas = CAppConfig.get_config_util().get_market_stress_beta()
-        #   betas[:, mkt_factor_index] = betas[:, mkt_factor_index] * stress_betas[asset.get_asset_name()]
-        return regstats[:, 1:]
 
 
 

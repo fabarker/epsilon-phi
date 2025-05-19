@@ -219,16 +219,10 @@ class CPortfolioMgr(object):
     ################### Factor Model Return Metrics ###################
 
     def get_current_risk_free_rate(self):
-        pass
+        return self._context.curr_risk_free_rate
 
     def get_risk_free_rate(self) -> float:
-        """
-        Retrieves the long-term/equilibrium risk-free rate for the currency region as specified in the schema
-
-        Returns:
-            float: ann risk free rate
-        """
-        return self.portfolio.risk_free_rate()
+        return self._context.risk_free_rate
 
     def get_asset_total_return(self, asset_name, after_tax=False) -> float:
         asset = self.get_asset(asset_name)
@@ -257,7 +251,7 @@ class CPortfolioMgr(object):
     def get_assets_risk_premias(self):
         assets_risk_premias = nans(self.num_assets, self.get_return_factor_number())
         for i, asset_name in enumerate(self.get_asset_names()):
-            assets_risk_premias[i] = self.get_asset(asset_name).get_risk_premia()
+            assets_risk_premias[i] = self.get_asset(asset_name).get_risk_premias()
         return assets_risk_premias
 
     def get_asset_total_risk_premia(self):
@@ -303,7 +297,7 @@ class CPortfolioMgr(object):
         return self.get_alpha() + self.get_current_env_risk_premia() + self.get_current_risk_free_rate()
 
     def get_current_env_risk_premias(self):
-        return self.get_assets_current_env_risk_premias() @ self.get_weights()
+        return self.get_simulator().get_portfolio_current_env_risk_premia()
 
     def get_current_env_risk_premia(self):
         return self.get_assets_total_current_env_risk_premia() @ self.get_weights()
@@ -315,16 +309,16 @@ class CPortfolioMgr(object):
             return self.get_asset(asset_name).get_Sharpe_ratio()
 
     def get_assets_sharpe_ratios(self):
-        sharpes = nans(self.num_assets)
+        sharpes = []
         for i, asset_name in enumerate(self.get_asset_names()):
-            sharpes[i] = self.get_asset(asset_name).get_sharpe_ratio()
-        return sharpes
+            sharpes.append(self.get_asset(asset_name).get_sharpe_ratio())
+        return np.array(sharpes)
 
     def get_assets_curr_env_sharpe_ratio(self):
-        sharpes = nans(self.num_assets)
+        sharpes = []
         for i, asset_name in enumerate(self.get_asset_names()):
-            sharpes[i] = self.get_asset(asset_name).get_curr_env_sharpe_ratio()
-        return sharpes
+            sharpes.append(self.get_asset(asset_name).get_curr_env_sharpe_ratio())
+        return np.array(sharpes)
 
     def get_asset_curr_env_sharpe_ratio(self, asset_name):
         return self.get_asset(asset_name).get_curr_env_sharpe_ratio()
@@ -333,7 +327,7 @@ class CPortfolioMgr(object):
         return self.get_risk_premia() / self.get_risk()
 
     def get_curr_env_sharpe_ratio(self):
-        return self.get_risk_premia_in_current_environment() / self.get_risk()
+        return self.get_current_env_risk_premia() / self.get_risk()
 
     def get_current_environment_risk_premia_5yr(self):
         pass
@@ -373,22 +367,22 @@ class CPortfolioMgr(object):
         return self.get_asset(asset_name).get_idio_variance()
 
     def get_assets_risk(self):
-        risks = nans(self.num_assets)
-        for i, asset_name in enumerate(self.get_asset_names()):
-            risks[i] = self.get_asset(asset_name).get_risk()
-        return risks
+        return np.array([
+            self.get_asset(name).get_volatility()
+            for name in self.get_asset_names()
+        ])
 
     def get_assets_systematic_variances(self):
-        risks = nans(self.num_assets)
-        for i, asset_name in enumerate(self.get_asset_names()):
-            risks[i] = self.get_asset(asset_name).get_systematic_variance()
-        return risks
+        return np.array([
+            self.get_asset(name).get_systematic_variance()
+            for name in self.get_asset_names()
+        ])
 
     def get_assets_idio_variances(self):
-        risks = nans(self.num_assets)
-        for i, asset_name in enumerate(self.get_asset_names()):
-            risks[i] = self.get_asset(asset_name).get_idiosyncratic_variance()
-        return risks
+        return np.array([
+            self.get_asset(name).get_idiosyncratic_variance()
+            for name in self.get_asset_names()
+        ])
 
     def get_sigma(self):
 
@@ -425,20 +419,19 @@ class CPortfolioMgr(object):
         return self.get_asset(asset_name).get_risk_betas()
 
     def get_assets_risk_betas(self):
-        risk_betas = nans(self.num_assets, self.get_risk_factor_number())
-        for i, asset_name in enumerate(self.get_asset_names()):
-            betas = self.get_asset(asset_name).get_risk_betas()
-            risk_betas[i] = betas.conj().T
-        return risk_betas
+        return np.array([
+            self.get_asset(name).get_risk_betas().conj().T
+            for name in self.get_asset_names()
+        ])
 
     def get_risk_betas(self):
-        return self.get_weights() @ self.get_assets_risk_betas()
+        return self.get_weights().T @ self.get_assets_risk_betas()
 
     def get_systematic_risk(self):
         return math.sqrt(
             np.matmul(
                 np.matmul(
-                    self.get_weights().transpose(), self.get_systematic_sigma()
+                    self.get_weights().T, self.get_systematic_sigma()
                 ),
                 self.get_weights())
         )
@@ -454,12 +447,10 @@ class CPortfolioMgr(object):
 
     def get_risk_decomposition_factor(self):
 
-        fac_cov = self._context.get_risk_factor_covariance()
-        wtd_risk = np.matmul(fac_cov.transpose(), self.get_risk_betas()).T
-        wtd_fac_cov = fac_cov @ wtd_risk
-        fact_cont = wtd_risk * wtd_fac_cov
-        idio = self.get_idio_variance()
-        return fact_cont, idio
+        fac_cov = self._context.get_risk_factor_covariance().values
+        factor_contributions = self.get_risk_betas() @ fac_cov
+        fac_decomp = np.multiply(self.get_risk_betas(), factor_contributions)
+        return fac_decomp / self.get_total_variance()
 
     def get_fx_risk_decomposition(self):
 
@@ -625,4 +616,4 @@ if __name__ == "__main__":
     ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
     ptf.get_weights()
     self = ptf.get_portfolio_mgr()
-    self.get_asset_risk_premia_in_current_environment()
+    self.get_risk()

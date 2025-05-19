@@ -3,7 +3,7 @@ import requests
 from io import StringIO
 import datetime as dt
 
-LIQUIDITY_FACTOR_URL = 'https://finance.wharton.upenn.edu/~stambaug/liq_data_1962_2022.txt'
+LIQUIDITY_FACTOR_URL = 'https://finance.wharton.upenn.edu/~stambaug/liq_data_1962_2024.txt'
 
 class Liquidity(object):
     _df = None

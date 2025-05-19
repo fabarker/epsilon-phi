@@ -90,6 +90,18 @@ class CContext(object):
         return CAppConfig._configUtil.get_currency_config(self.currency,
                                                           self.frequency,
                                                           self.dataversion).risk_free_rate
+    @property
+    def medium_term_risk_free_rate(self):
+        return CAppConfig._configUtil.get_currency_config(self.currency,
+                                                          self.frequency,
+                                                          self.dataversion).medium_risk_free_rate
+
+    @property
+    def curr_risk_free_rate(self):
+        return CAppConfig._configUtil.get_currency_config(self.currency,
+                                                          self.frequency,
+                                                          self.dataversion).medium_risk_free_rate
+
     @staticmethod
     def get_risk_free_rate_ticker(currency, frequency, dataversion):
         return CAppConfig._configUtil.get_currency_config(currency,
