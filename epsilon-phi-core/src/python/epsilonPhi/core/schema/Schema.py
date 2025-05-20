@@ -107,6 +107,11 @@ class CContext(object):
         return CAppConfig._configUtil.get_currency_config(currency,
                                                           frequency,
                                                           dataversion).risk_free_ticker
+
+    @staticmethod
+    def risk_free_floor(currency, frequency, dataversion):
+        return 0
+
     @property
     def inflation_rate_ticker(self):
         return CContext.get_inflation_rate_ticker(self.currency,
@@ -114,7 +119,7 @@ class CContext(object):
                                                   self.dataversion)
     def get_inflation_rate_asset(self):
         from epsilonPhi.core.asset.AssetMgr import CAssetMgr
-        return CAssetMgr(self).get_inflation_asset(self.currency)
+        return CAssetMgr(self).get_inflation_asset(self.currency).reindex(self.dates)
 
     def get_price_deflator(self):
         infl = self.get_inflation_rate_asset()
@@ -122,7 +127,7 @@ class CContext(object):
 
     def get_risk_free_rate_asset(self):
         from epsilonPhi.core.asset.AssetMgr import CAssetMgr
-        return CAssetMgr(self).get_risk_free_asset(self.currency)
+        return CAssetMgr(self).get_risk_free_asset(self.currency).reindex(self.dates)
 
     @staticmethod
     def get_inflation_rate_ticker(currency, frequency, dataversion):
@@ -143,6 +148,9 @@ class CContext(object):
 
     def get_return_factors_sharpe_ratios(self):
         return self.BaseModel.get_return_factor_Sharpe_ratios()
+
+    def get_return_factors_sharpe_ratio_uncapped(self):
+        return self.BaseModel.get_return_factor_Sharpe_ratios_uncapped()
 
     def get_risk_factors_panel(self):
         return self.BaseModel.get_risk_factor_df()\

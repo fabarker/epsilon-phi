@@ -554,8 +554,8 @@ class DATASTREAM_UPDATER(Updater):
 
 if __name__ == "__main__":
 
-    table_names = ['yield_curve','interest_rate','fx_rates','equity_index',
-                   'bond_index','commodity_index','future','hedge_fund_index']
+    table_names = ['interest_rate','fx_rates','equity_index',
+                   'bond_index','commodity_index','hedge_fund_index','yield_curve','future']
 
     for table in table_names:
         Updater.update_table_data(table)

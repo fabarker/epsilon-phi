@@ -510,7 +510,9 @@ class SAABootstrapper(AbstractBootstrapper):
 
     def prepare_cash_paths(self, bs_indicies, long_term_shocks=False):
         asset = self._schema.get_risk_free_rate_asset()
-        return self.prepare_cash_and_inflation_paths(asset, bs_indicies, long_term_shocks, RateType.CASH)
+        rfr_floor = 0
+        return self.prepare_cash_and_inflation_paths(
+            asset, bs_indicies, long_term_shocks, RateType.CASH, rfr_floor)
 
     #def prepare_lending_paths(
     #        self,
@@ -609,11 +611,11 @@ class SAABootstrapper(AbstractBootstrapper):
                     paths[t] = rates[t]
                     trend[t] = rates[t]
                 elif t < round(SAABootstrapper.NUM_MONTHS * hold_start_states):
-                    paths[t] = rates[t]
                     trend[t] = rates[t]
+                    paths[t] = rates[t] + shocks_panel[t]
                 elif t < round(SAABootstrapper.NUM_MONTHS * long_horizon):
-                    paths[t] = rates[t] * (1 - betas[t]) + betas[t] * trend[t - 1]
-                    trend[t] = rates[t] * (1 - betas[t]) + betas[t] * paths[t - 1] + shocks_panel[t]
+                    trend[t] = rates[t] * (1 - betas[t]) + betas[t] * trend[t - 1]
+                    paths[t] = rates[t] * (1 - betas[t]) + betas[t] * paths[t - 1] + shocks_panel[t]
 
                 if AR1_process == 'old' and not RateType.INFLATION == rate_type:
                     paths[t] = np.maximum(risk_free_floor / SAABootstrapper.NUM_MONTHS, paths[t])

@@ -8,6 +8,9 @@ from epsilonPhi.core.asset.AssetMgr import CAssetMgr
 from epsilonPhi.core.schema.Schema import CContext
 from typing import Optional, Union
 import numpy as np
+import pandas as pd
+import math
+import copy
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 class CAsset(CAssetInf, CSlice):
@@ -45,9 +48,7 @@ class CAsset(CAssetInf, CSlice):
         self._hedge_ratio = None
         self._alpha = 0
         self._weight = None
-        self._risk_premias = None
         self._risk_premias_in_curr_env = None
-        self._return_betas = None
 
         if ((ts_hedge_ratio is not None) and
                 (self.denominated_currency != self.exposure_currency)):
@@ -56,7 +57,7 @@ class CAsset(CAssetInf, CSlice):
             self._ts_hedge_ratio = 0
 
     def deepcopy(self):
-        return super().deepcopy()
+        return copy.deepcopy(self)
 
     ###############
 
@@ -124,7 +125,7 @@ class CAsset(CAssetInf, CSlice):
     ########### Historical Asset Class Performance Metrics ###############
 
     def get_historical_total_return(self, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_total_return(self)
+        return EstimationMgr.get_historical_total_return(self[from_date:to_date])
 
     def get_historical_sharpe_ratio(self, from_date=None, to_date=None):
         return EstimationMgr.get_historical_sharpe_ratio(self[from_date:to_date])
@@ -168,10 +169,46 @@ class CAsset(CAssetInf, CSlice):
 
     ################### Factor Model Asset Metrics ###################
 
+    def get_stressed_factor_based_risk_premium(self):
+
+        from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+
+        # Construct portfolio on the fly
+        ptf = SAAPortfolio(
+            self.name,
+            self.schema,
+        )
+
+        # Add the asset we want the current environ risk premia for
+        ptf.add_asset(self, 1, self._hedge_ratio)
+
+        # Get the stressed returns panel
+        returns_panel = ptf.get_stressed_returns_panel()
+
+        # Use Historical Sharpe Ratios
+        factor_sharpes_uncapped = (self.schema.get_return_factors_sharpe_ratio_uncapped()
+                                   / math.sqrt(self.schema.frequency.obs_per_year()))
+
+        # Update Factor Sharpes
+        normalized_factors = np.copy(returns_panel.factor_panel_normalized)
+        renorm_factors = ((normalized_factors - np.mean(normalized_factors, axis=0)) +
+                          factor_sharpes_uncapped.values.flatten())
+        rp = (renorm_factors * returns_panel.stress_coeff_panels) @ returns_panel.betas
+        return pd.Series(rp, name=self.name, index=returns_panel.dates)
+
+
+    def get_stressed_factor_based_returns(self):
+        risk_premium = self.get_stressed_factor_based_risk_premium()
+        rfr = self.get_risk_free_asset().reindex(risk_premium.index)
+        return risk_premium + rfr.values + (self.get_alpha() / self.schema.frequency.obs_per_year())
+
+    def get_factor_backfilled_returns(self):
+        hist = self.get_realized_return_time_series()
+        fact = self.get_stressed_factor_based_returns()
+        return pd.concat((fact[fact.index < hist.index.min()], hist)).sort_index()
+
     def get_risk_premias(self):
-        if self._risk_premias is None:
-            self._risk_premias = CAppConfig.get_estimation_mgr().get_risk_premium(self)
-        return self._risk_premias
+        return EstimationMgr.get_risk_premium(self)
 
     def get_risk_premia(self):
         return self.get_risk_premias().sum()
@@ -297,7 +334,7 @@ if __name__ == "__main__":
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
-    self = CAsset(exposure_currency='USD',
+    asset = CAsset(exposure_currency='USD',
                   denominated_currency='USD',
                   schema=schema,
                   data=rtns,
@@ -306,8 +343,9 @@ if __name__ == "__main__":
                   ts_type=rtns.type
                   )
 
-    self.set_currency_hedge_ratio(0)
-    self.get_residuals()
+    asset.set_currency_hedge_ratio(0.5)
+    asset.get_risk_premias_in_current_environment()
+    asset.deepcopy()
 
 
 

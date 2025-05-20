@@ -198,6 +198,17 @@ class BaseModel(object):
             sr = self.get_factor(factor_name).get_historical_Sharpe()
         return np.minimum(sr, self.factor_Sharpe_caps.get(factor_name, np.inf))
 
+    def get_return_factor_Sharpe_ratios_uncapped(self):
+        return pd.DataFrame([self.get_return_factor_Sharpe_ratio_uncapped(x) for x in self.return_factor_list],
+                             index=self.return_factor_list)
+
+    def get_return_factor_Sharpe_ratio_uncapped(self, factor_name):
+
+        if self.is_orthogonalized(factor_name):
+            return self.get_factor(factor_name, True).get_historical_Sharpe()
+        else:
+            return self.get_factor(factor_name).get_historical_Sharpe()
+
     def get_risk_factor_covariance(self, dates):
         panel = self.get_risk_factor_df().loc[dates]
         return panel.cov()

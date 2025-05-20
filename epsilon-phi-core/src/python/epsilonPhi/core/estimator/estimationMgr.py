@@ -90,7 +90,7 @@ class EstimationMgr(CEStimationMgrInf):
     def get_historical_value_at_risk(asset, confidence=0.99, horizon=1):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
         return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_value_at_risk(confidence_level=confidence,
-                                                                                                           horizon=horizon)
+                                                                                                        horizon=horizon)
 
 
     @staticmethod

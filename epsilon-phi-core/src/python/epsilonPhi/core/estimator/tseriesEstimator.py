@@ -180,7 +180,7 @@ class CTimeSeriesEstimator(CTimeSeriesEstimatorInf):
             period = 1/self.obs_per_year
 
         returns = self.levels[from_date:to_date].pct_change(round(period * self.obs_per_year)).dropna()
-        return np.mean(returns[returns != 0] > 0)
+        return np.mean(returns[returns != 0] > 0).item()
 
     def avg_win(self, from_date=None, to_date=None):
         """
@@ -614,13 +614,17 @@ class CTimeSeriesEstimator(CTimeSeriesEstimatorInf):
         """Returns the matrix of monthly returns for strategy"""
 
         mnthly_rtns = self.returns.get_bmonthly_returns()
+
+        if mnthly_rtns is None:
+            return None
+
         for col in mnthly_rtns.columns:
             col_mnthly = mnthly_rtns.get([col])
             col_mnthly['Year'] = mnthly_rtns.index.year
             col_mnthly['Month'] = mnthly_rtns.index.month
             matrix = col_mnthly.groupby(['Year', 'Month']).first().unstack(level=-1)
             matrix[(col, 'YTD')] = matrix.add(1).product(axis=1) - 1
-            return matrix.copy()
+        return matrix
 
     def rolling(self, period_length=252, func_apply=None, **kwargs):
 

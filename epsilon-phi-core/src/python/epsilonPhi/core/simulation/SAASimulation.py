@@ -1,6 +1,11 @@
+import scipy.stats.mstats
+
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.reporting.quantstats.stats import cpc_index
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.simulation.Bootstrap import SAABootstrapper
-from epsilonPhi.core.simulation.SimStructs import ReturnsPanel, FactorStressTestLosses, HistoricalStressTestLosses
+from epsilonPhi.core.asset.proxies.LendingRate import CLendingRate
+from epsilonPhi.core.simulation.SimStructs import ReturnsPanel, FactorStressTestLosses, HistoricalStressTestLosses, PerformanceVaRMetrics, WealthFlows, WealthProjections
 from epsilonPhi.core.config.appConfig import CAppConfig
 from collections import OrderedDict
 from scipy.stats import zscore
@@ -56,6 +61,14 @@ class SAASimulation:
         self._bootstrap = None
         self._is_setup = False
         self.setup()
+
+    @property
+    def nbstraps(self):
+        return self.bootstrap.nbstraps
+
+    @property
+    def long_horizon(self):
+        return self.bootstrap.long_horizon
 
     @property
     def schema(self):
@@ -174,6 +187,10 @@ class SAASimulation:
             stress_losses[crisis_name] = losses
 
         return stress_losses
+
+    def get_factor_panel_normalized(self):
+        return self.get_stressed_returns_panel().factor_panel_normalized
+
 
     def get_stressed_returns_panel(self,
                                    start_date=None,
@@ -412,23 +429,260 @@ class SAASimulation:
     def get_portfolio_current_env_risk_premia(self):
         return self.get_portfolio_paths().get_returns_panel().medium_term_risk_premia
 
-    def get_factor_backfilled_asset_returns(self):
-        pass
+    def get_inflation_panels(self, frequency=Frequency.MONTHLY):
 
-    def get_factor_backfilled_portfolio_returns(self):
-        pass
+        # Get panel of periodic inflation returns
+        inflation_panel = self.bootstrap.prepare_inflation_paths(
+            self.bootstrap.get_bootstrap_indicies()
+        ).get_panel()
 
-    def get_portfolio_var_pol_exc_ss(self):
-        pass
+        # convert to inflation price index
+        inflation_levels = np.cumprod(1 + inflation_panel, axis=0)
 
-    def get_portfolio_var_pol(self):
-        pass
+        # simulation frequency, in schema
+        base_freq = self.portfolio_mgr._context.frequency
 
-    def get_simulated_portfolio_returns(self):
-        pass
+        # Downsample monthly data to yearly if needed
+        if frequency in [Frequency.YEARLY, Frequency.BUSINESS_YEARLY] and base_freq in [Frequency.MONTHLY,
+                                                                                        Frequency.BUSINESS_MONTHLY]:
+            # Use index 11 to get end-of-year (i.e., December)
+            inflation_levels = inflation_levels[11::12, :]
 
-    def get_portfolio_wealth_projection(self):
-        pass
+        # Compute cumulative inflation over time
+        return inflation_levels
+
+
+    def get_simulated_portfolio_returns(self, long_term_shocks=0, frequency=Frequency.MONTHLY):
+
+        lending_wt = 0  # This seems to be hardcoded. Should this be dynamically retrieved?
+
+        idxs = self.bootstrap.get_bootstrap_indicies()
+
+        # Prepare core paths
+        cp = self.bootstrap.prepare_cash_paths(idxs, long_term_shocks)
+        pp = self.bootstrap.prepare_portfolio_paths(self.portfolio_mgr, idxs, long_term_shocks)
+
+        if abs(lending_wt) < self.portfolio_mgr._sqrt_epsilon:
+            # No lending case
+            total_returns = (
+                    cp.get_panel() +
+                    pp.systematic_panel +
+                    pp.idiosyncratic_panel +
+                    pp.alpha_monthly_total
+            )
+        else:
+            # Lending case
+            lending_paths = []
+            lending_weights = []
+            for asset_name, weight in zip(self.portfolio_mgr.get_asset_names(), self.portfolio_mgr.get_weights()):
+                asset = self.portfolio_mgr.get_asset(asset_name)
+                if isinstance(asset, CLendingRate):
+                    lending_weights.append(weight)
+                    lending_paths.append(self.bootstrap.prepare_lending_paths(asset, idxs, long_term_shocks))
+
+            # Aggregate lending panel
+            lending_panel = np.zeros_like(cp.get_panel())
+            for weight, lp in zip(lending_weights, lending_paths):
+                lending_panel += weight * lp.get_panel()
+
+            base_returns = (
+                    cp.get_panel() +
+                    pp.systematic_panel +
+                    pp.idiosyncratic_panel +
+                    pp.alpha_monthly_total
+            )
+            total_returns = (1 - lending_wt) * base_returns + lending_panel
+
+        # Conver to levels/cumulative return in schema frequency
+        indexed_panel = np.cumprod(1 + total_returns, axis=0)
+
+        # simulation frequency, in schema
+        base_freq = self.portfolio_mgr._context.frequency
+
+        # Downsample monthly data to yearly if needed
+        if frequency in [Frequency.YEARLY, Frequency.BUSINESS_YEARLY] and base_freq in [Frequency.MONTHLY,
+                                                                                        Frequency.BUSINESS_MONTHLY]:
+            # Use index 11 to get end-of-year (i.e., December)
+            indexed_panel_with_start = np.vstack((np.ones((1, self.nbstraps)), indexed_panel))
+            indexed_panel = indexed_panel_with_start[::12, :]
+            total_returns = indexed_panel[1:, :] / indexed_panel[:-1, :] - 1
+
+        # Compute cumulative inflation over time
+        return total_returns, indexed_panel
+
+    def get_portfolio_var_pol_exc_ss(self, confidence=0.99, loss=0):
+
+        _, lvls_panel = self.get_simulated_portfolio_returns(long_term_shocks=0)
+        real_panel = lvls_panel / self.get_inflation_panels()
+
+        # Value At Risk
+        var_n = np.clip(-(np.quantile(lvls_panel, 1-confidence, axis=1) - 1), 0, np.inf)
+        var_r = np.clip(-(np.quantile(real_panel, 1-confidence, axis=1) - 1), 0, np.inf)
+
+        # PoL
+        pol_n = np.mean(lvls_panel < (1-loss), axis=1)
+        pol_r = np.mean(real_panel < (1-loss), axis=1)
+
+        # Conditional Value at Risk
+        lvls_panel[lvls_panel > np.quantile(lvls_panel, 1-confidence, axis=1).reshape(-1, 1)] = np.nan
+        real_panel[real_panel > np.quantile(real_panel, 1-confidence, axis=1).reshape(-1, 1)] = np.nan
+        cvar_n = np.clip(-(np.nanmean(lvls_panel, axis=1) - 1), 0, np.inf)
+        cvar_r = np.clip(-(np.nanmean(real_panel, axis=1) - 1), 0, np.inf)
+
+        return PerformanceVaRMetrics(
+            np.stack((var_n, var_r)).T,
+            np.stack((cvar_n, cvar_r)).T,
+            np.stack((pol_n, pol_r)).T,
+            confidence,
+            loss,
+        )
+
+
+    def get_portfolio_var_pol(self, confidence=0.99, loss=0):
+
+        if self.portfolio_mgr.has_single_stock():
+           ptf_x_ss, ss_wt = self.portfolio_mgr.get_portfolio_excl_single_stock()
+           risk = ptf_x_ss.get_portfolio_var_pol_exc_ss(confidence=confidence, loss=loss)
+
+           # Compute the single stock losses
+           ss_loss = risk * (1-ss_wt) + confidence * ss_wt
+           return ss_loss
+        return self.get_portfolio_var_pol_exc_ss(confidence=confidence, loss=loss)
+
+
+    def get_portfolio_wealth_projection(self,
+                                        ws_inflows=None,
+                                        ws_outflows=None,
+                                        ptf_sim_order=None,
+                                        quantiles=None,
+                                        ptf_list=None,
+                                        frequency=Frequency.YEARLY
+                                        ):
+
+        if self.portfolio_mgr.get_current_value() is None or self.portfolio_mgr.get_current_value() <= 0:
+            raise ValueError('Error - not current value set in portfolio')
+
+        if not quantiles:
+            quantiles = [0.01, 0.1, 0.5, 0.9]
+
+        # Multiplier to deal with differing freq/periodcities
+        freq_mult = frequency.obs_per_year()
+        long_horizon = self.long_horizon * freq_mult
+
+        if not ws_inflows:
+            ws_inflows = [WealthFlows() for i in range(long_horizon)]
+
+        if not ws_outflows:
+            ws_outflows = [WealthFlows() for i in range(long_horizon)]
+
+        if ptf_sim_order is None:
+           ptf_sim_order = np.zeros(long_horizon, dtype=int)
+        elif len(ptf_sim_order) != long_horizon:
+            raise ValueError('Error - number of points to simulate is inconsistent')
+
+        # If we only have a single ptf
+        if ptf_list is None:
+           ptf_list = [self.portfolio_mgr.portfolio]
+
+        # tax bill panel
+        tax_bill = [None] * len(ptf_list)
+
+        ptf_panel = np.full((self.long_horizon, self.nbstraps, len(ptf_list)), np.nan)
+        for i, ptf in enumerate(ptf_list):
+            rtns, _ = self.get_simulated_portfolio_returns(long_term_shocks=0, frequency=frequency)
+
+            if ptf.is_taxable:
+               effective_tax_rate = 1 - (ptf.get_return() / ptf.get_return_pre_tax())
+               rtns = rtns - effective_tax_rate * np.mean(rtns, axis=1, keepdims=True)
+            else:
+               effective_tax_rate = 0
+
+            ptf_panel[..., i] = rtns
+            if frequency == Frequency.YEARLY:
+                tax_bill[i] = effective_tax_rate * np.mean(rtns, axis=1, keepdims=True)
+
+        tax_panel = []
+        rtns_panel = np.full((self.long_horizon, self.nbstraps), np.nan)
+        for i in range(self.long_horizon):
+            rtns_panel[i, :] = ptf_panel[i, :, ptf_sim_order[i]]
+
+            if i % 12 == 0 and frequency == Frequency.MONTHLY:
+               tax = tax_bill[ptf_sim_order[i]]
+               tax_panel.append(tax[i // 12])
+
+        # Inflation index
+        ip = self.get_inflation_panels(frequency=frequency)
+
+        # Pre-Allocate Arrays
+        nominal_value_of_real_inflows = np.full((self.long_horizon, self.nbstraps), np.nan)
+        nominal_value_of_real_outflows = np.full((self.long_horizon, self.nbstraps), np.nan)
+
+        # Prepare flows - convert real to nominal
+        for i in range(self.long_horizon):
+            if i == 0:
+               nominal_value_of_real_inflows[0] = ws_inflows[0].real
+               nominal_value_of_real_outflows[0] = ws_outflows[0].real
+            else:
+               nominal_value_of_real_inflows[i] = ws_inflows[i].real * ip[i-1]
+               nominal_value_of_real_outflows[i] = ws_outflows[i].real * ip[i-1]
+
+        nominal_inflow_panel = np.full((self.long_horizon, self.nbstraps), np.nan)
+        nominal_outflow_panel = np.full((self.long_horizon, self.nbstraps), np.nan)
+        value_paths = np.full((self.long_horizon, self.nbstraps), np.nan)
+        for i in range(self.long_horizon):
+
+            # prepare flows for year
+
+            if i == 0:
+                nominal_inflow_panel[i] = (nominal_value_of_real_inflows[i] +
+                                           ws_inflows[i].nominal +
+                                           self.portfolio_mgr.get_current_value() * ws_inflows[i].percent)
+
+                nominal_outflow_panel[i] = (nominal_value_of_real_outflows[i] +
+                                           ws_outflows[i].nominal +
+                                           self.portfolio_mgr.get_current_value() * ws_outflows[i].percent)
+
+                value_pre_flows = self.portfolio_mgr.get_current_value() * (1 + rtns_panel[i])
+            else:
+                nominal_inflow_panel[i] = (nominal_value_of_real_inflows[i] +
+                                           ws_inflows[i].nominal +
+                                           value_paths[i-1] * ws_inflows[i].percent)
+
+                nominal_outflow_panel[i] = (nominal_value_of_real_outflows[i] +
+                                            ws_outflows[i].nominal +
+                                            value_paths[i-1] * ws_outflows[i].percent)
+                value_pre_flows = value_paths[i-1] * (1 + rtns_panel[i])
+
+            value_paths[i] = np.maximum(value_pre_flows + nominal_inflow_panel[i] - nominal_outflow_panel[i], 0)
+
+                # Tax-Accounting to add here
+
+        # Compute real value of simullated paths
+        value_paths_with_current_value = np.vstack((self.portfolio_mgr.get_current_value() * np.ones((1, self.nbstraps)), value_paths))
+        ws = WealthProjections(
+            value_paths_with_current_value,
+            rtns_panel,
+            ip,
+            nominal_inflow_panel,
+            nominal_outflow_panel,
+            quantiles,
+            frequency
+        )
+
+        return ws
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def get_private_assets_distributions(self):
         pass
@@ -448,7 +702,7 @@ if __name__ == "__main__":
 
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
     from epsilonPhi.core.schema.Schema import ContextCreator
-    from epsilonPhi.core.portfolio.Portfolio import CPortfolio
+    from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
@@ -456,14 +710,13 @@ if __name__ == "__main__":
     assetMgr = CAssetMgr(schema)
     asset = assetMgr.get_asset_by_name('MSUSAML')
 
-    ptf = CPortfolio('portfolio', schema)
+    ptf = SAAPortfolio('portfolio', schema)
     ptf.add_asset_by_name('MSUSAML', 1.0, 0)
     ptf.add_asset_by_name('LHAGGBD', 0.0, 0)
     mgr = ptf.get_portfolio_mgr()
 
     self = SAASimulation(mgr)
-    factor_stress = self.get_factor_stress_tests()
-    historical_stressed = ptf.get_historical_stress_tests()
+    ws = self.get_portfolio_wealth_projection()
 
 
 

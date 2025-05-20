@@ -1,7 +1,10 @@
 import math
 import numpy as np
 import logging
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.schema.Schema import CContext
+from epsilonPhi.core.asset.proxies.SingleStock import CSingleStock
+from epsilonPhi.core.asset.proxies.LendingRate import CLendingRate
 from epsilonPhi.core.simulation.SAASimulation import SAASimulation
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, CSlice
 from epsilonPhi.core.asset.Asset import CAsset
@@ -54,9 +57,6 @@ class CPortfolioMgr(object):
         self._simulation = None
 
     def set_portfolio(self, portfolio) -> None:
-        from epsilonPhi.core.portfolio.Portfolio import CPortfolio
-        from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
-        assert isinstance(portfolio, (CPortfolio, SAAPortfolio)), 'Error'
         self._portfolio = portfolio
 
     def set_weights(self, weights):
@@ -175,11 +175,26 @@ class CPortfolioMgr(object):
     def check_weights(self, weights=None):
         self.portfolio.check_weights(weights)
 
-    def get_portfolio_excl_single_stocks(self):
-        pass
+    def get_portfolio_excl_single_stock(self):
+
+        wt = 0
+        copy_obj = self._portfolio.copy()
+        for asset_name in copy_obj.get_asset_names():
+            if self.is_single_stock_asset(asset_name):
+                wt += self.get_asset(asset_name).get_weight()
+                copy_obj.remove_asset_by_name(asset_name, rebalance=True)
+        return copy_obj, wt
 
     def get_portfolio_excl_lending_asset(self):
-        pass
+
+        wt = 0
+        copy_obj = self._portfolio.copy()
+        for asset_name in copy_obj.get_asset_names():
+            if self.is_lending_asset(asset_name):
+                wt += self.get_asset(asset_name).get_weight()
+                copy_obj.remove_asset_by_name(asset_name, rebalance=True)
+        return copy_obj, wt
+
 
     def get_asset_mgr(self):
         return self._context.get_asset_manager()
@@ -490,14 +505,14 @@ class CPortfolioMgr(object):
     def get_factor_stress_tests_extended(self):
         return self._simulation.get_factor_stress_tests_extended()
 
-    def get_portfolio_var_pol(self):
-        return self._simulation.get_portfolio_var_pol()
-
-    def get_portfolio_var_pol_exc_ss(self):
-        pass
-
     def get_stress_multiplier(self):
         return self.get_simulator().get_stress_coeff_ts()
+
+    def get_portfolio_var_pol(self, confidence=0.99, loss=0):
+        return self._simulation.get_portfolio_var_pol(confidence, loss)
+
+    def get_portfolio_var_pol_exc_ss(self, confidence=0.99, loss=0):
+        return self.get_simulator().get_portfolio_var_pol_exc_ss(confidence, loss)
 
     def get_tracking_error(self):
         pass
@@ -509,17 +524,26 @@ class CPortfolioMgr(object):
 
     ################### Optimization Related ###################
 
+    def get_assets_uncertainties(self):
+        return np.array([
+            self.get_asset(name).get_uncertainty()
+            for name in self.get_asset_names()
+        ])
+
     def set_uncertainty_matrix(self, matrix):
         pass
 
     def get_uncertainty_matrix(self):
-        pass
+        return np.diag(self.get_assets_uncertainties())
 
     def get_portfolio_uncertainty(self):
-        pass
+        return (self.get_weights().T @ self.get_uncertainty_matrix() @ self.get_weights()).item()
 
-    def get_asset_data_length(self):
-        pass
+    def get_assets_data_lengths(self):
+        return np.array([
+            self.get_asset(name).get_data_length()
+            for name in self.get_asset_names()
+        ])
 
     def optimize(self, target_vol, contstraints):
         pass
@@ -529,17 +553,42 @@ class CPortfolioMgr(object):
     def get_factor_panels(self):
         return self._context.get_factor_panels()
 
+    def get_portfolio_simulated_returns_panel(self, frequency=Frequency.MONTHLY):
+        return self.get_simulator().get_simulated_portfolio_returns(0, frequency)
+
     def get_stressed_returns_panel(self):
         return self.get_simulator().get_stressed_returns_panel()
 
     def get_stressed_risk_panel(self):
         return self.get_simulator().get_stressed_risk_panel()
 
-    def get_portfolio_simulated_returns_panel(self):
-        return self.get_simulator().get_portfolio_simulated_returns_panel()
 
-    def get_portfolio_wealth_projection(self):
-        pass
+    def get_portfolio_wealth_projection(self,
+                                        ws_inflows=None,
+                                        ws_outflows=None,
+                                        ptf_sim_order=None,
+                                        quantiles=None,
+                                        ptf_list=None,
+                                        frequency=Frequency.YEARLY
+                                        ):
+
+        return self.get_simulator().get_portfolio_wealth_projection(
+            ws_inflows=ws_inflows,
+            ws_outflows=ws_outflows,
+            ptf_sim_order=ptf_sim_order,
+            quantiles=quantiles,
+            ptf_list=ptf_list,
+            frequency=frequency
+        )
+
+    def get_factor_backfilled_assets_returns_panel(self):
+        panel = CTimeSeries()
+        for i, asset_name in enumerate(self.get_asset_names()):
+            panel = panel.concat(self.get_asset(asset_name).get_factor_backfilled_returns())
+        return panel.reindex(self._context.dates).dropna()
+
+    def get_factor_backfilled_return_series(self):
+        return self.get_factor_backfilled_assets_returns_panel() @ self.get_flattened_weights()
 
     ################### Historical Related #######################
 
@@ -562,28 +611,64 @@ class CPortfolioMgr(object):
     def get_historical_real_cuml_return_series(self):
         return self.get_historical_cuml_return_series() / self._context.get_price_deflator().values
 
-    def get_factor_backfilled_returns_panel(self):
-        pass
 
     def get_historical_worst_peak_to_trough_loss(self):
-        pass
+        lvls = self.get_historical_cuml_return_series()
+        return (-1 + (lvls/lvls.expanding().max())).min()
 
     def get_historical_max_drawdown(self):
-        pass
+        lvls = self.get_historical_cuml_return_series()
+        return (-1 + (lvls / lvls.expanding().max())).min()
 
-    def get_get_worst_periodic_return(self):
-        pass
+    def get_get_worst_periodic_return(self, period=1):
+        lvls = self.get_historical_cuml_return_series()
+        return lvls.pct_change(period).min()
 
-    def get_worst_periodic_real_return(self):
-        pass
+    def get_worst_periodic_real_return(self, period=1):
+        lvls = self.get_historical_real_cuml_return_series()
+        return lvls.pct_change(period).min()
 
-    def get_historical_excess_return(self):
-        pass
+    def get_historical_excess_return_time_series(self):
+        rtn = self.get_historical_return_time_series()
+        return rtn - self._context.get_risk_free_rate_asset().reindex(rtn.index)
 
     def get_historical_beta(self):
         pass
 
+    def get_historical_volatility(self):
+        return np.std(self.get_historical_return_time_series(), ddof=1) * np.sqrt(self.portfolio.ann_factor)
+
     ################### Public Portfolio Methods ##################
+
+    def is_single_stock_asset(self, asset_name):
+        return isinstance(self.get_asset(asset_name), CSingleStock) if asset_name in self.get_asset_names() else False
+
+    def has_single_stock(self):
+        return self._portfolio.has_single_stock()
+
+    def get_single_stock_weight(self):
+
+        wt = 0
+        for asset_name in self.get_asset_names():
+            asset = self.get_asset(asset_name)
+            if isinstance(asset, CSingleStock):
+                wt += asset.weight
+        return wt
+
+    def is_lending_asset(self, asset_name):
+        return isinstance(self.get_asset(asset_name), CLendingRate) if asset_name in self.get_asset_names() else False
+
+    def has_lending_asset(self):
+        return self._portfolio.has_lending_asset()
+
+    def get_lending_weight(self):
+
+        wt = 0
+        for asset_name in self.get_asset_names():
+            asset = self.get_asset(asset_name)
+            if isinstance(asset, CLendingRate):
+                wt += asset.weight
+        return wt
 
     def get_income_summary(self, assumption_version=None, income_version=None, df=None):
         pass
@@ -594,11 +679,14 @@ class CPortfolioMgr(object):
     def get_asset_reporting_names(self, weights=False, category_dict_flag=False):
         pass
 
-    def get_lending_weight(self):
+    def get_reference_vol(self, risk_level):
         pass
 
-    def has_single_stock(self):
-        pass
+
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -606,6 +694,7 @@ if __name__ == "__main__":
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
     from epsilonPhi.core.schema.Schema import ContextCreator, CContext
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+    from epsilonPhi.core.portfolio.Portfolio import CPortfolio
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
@@ -616,4 +705,4 @@ if __name__ == "__main__":
     ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
     ptf.get_weights()
     self = ptf.get_portfolio_mgr()
-    self.get_risk()
+    ws = self.get_portfolio_wealth_projection()

@@ -2,6 +2,7 @@ from epsilonPhi.core.portfolio.Portfolio import CPortfolio
 from epsilonPhi.core.config.configUtil import CAppConfig
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.logging import *
+import copy
 
 class TaxInfo:
     def __init__(self, is_taxable, tax_region, is_amt):
@@ -112,6 +113,10 @@ class SAAPortfolio(CPortfolio):
     def reporting_name(self, value):
         self._reportingName = value
 
+    @property
+    def is_taxable(self):
+        return self._is_taxable
+
 
     ############## Setter Methods #################
 
@@ -148,7 +153,7 @@ class SAAPortfolio(CPortfolio):
     ################### Hedging Related ###################
 
     def get_hedge_ratios_from_hedging_option(self, hedging_option):
-        return self.portfolio_mgr.get_hedge_ratios_from_hedging_option(hedging_option)
+        return self.get_portfolio_mgr().get_hedge_ratios_from_hedging_option(hedging_option)
 
     def get_hedging_option(self):
         return self._hedgingOption
@@ -174,12 +179,18 @@ class SAAPortfolio(CPortfolio):
     ###################### Tax Related #######################
 
     def get_tax_info(self):
-        return self._is_taxable, self._tax_region, self._isAMT
+        return self._is_taxable, self._tax_region, self._is_amt
 
     def get_tax_region(self):
         return self._tax_region
 
     ################### Factor Model Return Metrics ###################
+
+    def get_current_risk_free_rate(self):
+        return self.get_portfolio_mgr().get_current_risk_free_rate()
+
+    def get_risk_free_rate(self) -> float:
+        return self.get_portfolio_mgr().get_risk_free_rate()
 
     def get_asset_total_return(self, asset_name, after_tax=False):
         return self.get_portfolio_mgr().get_asset_total_return(asset_name, after_tax)
@@ -224,7 +235,7 @@ class SAAPortfolio(CPortfolio):
         return self.get_portfolio_mgr().get_asset_total_current_env_risk_premia(asset_name)
 
     def get_assets_total_current_env_risk_premia(self):
-        return self.get_portfolio_mgr().get_assets_total_risk_premias()
+        return self.get_portfolio_mgr().get_assets_total_current_env_risk_premia()
 
     def get_current_env_total_return(self):
         return self.get_portfolio_mgr().get_current_env_total_return()
@@ -239,7 +250,7 @@ class SAAPortfolio(CPortfolio):
         return self.get_portfolio_mgr().get_asset_sharpe_ratio(asset_name)
 
     def get_assets_sharpe_ratios(self):
-        return self.get_portfolio_mgr().get_asset_sharpe_ratio()
+        return self.get_portfolio_mgr().get_assets_sharpe_ratios()
 
     def get_assets_curr_env_sharpe_ratio(self):
         return self.get_portfolio_mgr().get_assets_curr_env_sharpe_ratio()
@@ -251,7 +262,7 @@ class SAAPortfolio(CPortfolio):
         return self.get_portfolio_mgr().get_sharpe_ratio()
 
     def get_curr_env_sharpe_ratio(self):
-        pass
+        return self.get_portfolio_mgr().get_curr_env_sharpe_ratio()
 
     def get_current_environment_risk_premia_5yr(self):
         return self.get_portfolio_mgr().get_current_environment_risk_premia_5yr()
@@ -270,7 +281,6 @@ class SAAPortfolio(CPortfolio):
 
     def get_asset_alphas(self):
         return self.get_portfolio_mgr().get_asset_alphas()
-
 
     ################### Factor Model Risk Metrics ###################
 
@@ -343,20 +353,17 @@ class SAAPortfolio(CPortfolio):
     def get_factor_stress_tests(self):
         return self.get_portfolio_mgr().get_factor_stress_tests()
 
-    def get_stress_multiplier(self):
-        return self.get_portfolio_mgr().get_stress_multiplier()
-
     def get_factor_stress_tests_extended(self):
         return self.get_portfolio_mgr().get_factor_stress_tests_extended()
 
-    def get_portfolio_var_pol(self):
-        return self.get_portfolio_mgr().get_portfolio_var_pol()
-
-    def get_portfolio_var_pol_exc_ss(self):
-        return self.get_portfolio_mgr().get_portfolio_var_pol_exc_ss()
-
     def get_stress_multiplier(self):
         return self.get_portfolio_mgr().get_stress_multiplier()
+
+    def get_portfolio_var_pol(self, confidence=0.99, loss=0):
+        return self.get_portfolio_mgr().get_portfolio_var_pol(confidence, loss)
+
+    def get_portfolio_var_pol_exc_ss(self, confidence=0.99, loss=0):
+        return self.get_portfolio_mgr().get_portfolio_var_pol_exc_ss(confidence, loss)
 
     def get_tracking_error(self):
         return self.get_portfolio_mgr().get_tracking_error()
@@ -397,11 +404,28 @@ class SAAPortfolio(CPortfolio):
     def get_stressed_risk_panel(self):
         return self.get_portfolio_mgr().get_stressed_risk_panel()
 
-    def get_portfolio_wealth_projection(self):
-        return self.get_portfolio_mgr().get_portfolio_wealth_projection()
+    def get_portfolio_wealth_projection(self,
+                                        ws_inflows=None,
+                                        ws_outflows=None,
+                                        ptf_sim_order=None,
+                                        quantiles=None,
+                                        ptf_list=None,
+                                        frequency=Frequency.YEARLY
+                                        ):
+        return self.get_portfolio_mgr().get_portfolio_wealth_projection(
+            ws_inflows=ws_inflows,
+            ws_outflows=ws_outflows,
+            ptf_sim_order=ptf_sim_order,
+            quantiles=quantiles,
+            ptf_list=ptf_list,
+            frequency=frequency
+        )
 
-    def get_factor_backfilled_returns_panel(self):
-        return self.get_portfolio_mgr().get_factor_backfilled_returns_panel()
+    def get_factor_backfilled_assets_returns_panel(self):
+        return self.get_portfolio_mgr().get_factor_backfilled_assets_returns_panel()
+
+    def get_factor_backfilled_return_series(self):
+        return self.get_portfolio_mgr().get_factor_backfilled_return_series()
 
 
     ################### Public Portfolio Methods ##################
@@ -409,20 +433,11 @@ class SAAPortfolio(CPortfolio):
     def get_income_summary(self, assumption_version=None, income_version=None, df=None):
         pass
 
-
     def check_for_unhedged_put_writing(self):
         self.get_portfolio_mgr().check_for_unhedged_put_writing()
 
     def get_asset_reporting_names(self, weights=False, category_dict_flag=False):
         pass
-
-    def get_lending_weight(self):
-        return self.get_portfolio_mgr().get_lending_weight()
-
-    def has_single_stock(self):
-        return self.get_portfolio_mgr().has_single_stock()
-
-
 
 
     def get_private_equity_distribution(
@@ -451,81 +466,12 @@ class SAAPortfolio(CPortfolio):
     ):
         pass
 
-    def get_private_equity_distribution_sub_standalone(
-            self,
-            liquid_current_asset_total,
-            subset_class_annual_commitments,
-            pe_curr,
-            pe_target_weights=None,
-            wealth_flows=None,
-            num_years=20,
-            multiplier=2,
-            shocks=None,
-            use_total_mv=False
-    ):
-        pass
-
-    def get_portfolio_wealth_projection(
-            self,
-            inflows,
-            outflows,
-            frequency=Frequency.YEARLY,
-            ptf_array=None,
-            ptf_simulation_order=None,
-            quantiles=[]
-    ):
-        pass
-
-    def get_portfolio_wealth_projection_custom(
-            self,
-            inflows,
-            outflows,
-            frequency=Frequency.YEARLY,
-            ptf_array=None,
-            ptf_simulation_order=None,
-            quantiles=[],
-            custom_class=None,
-            *args,
-            **kwargs):
-        pass
-
-    @staticmethod
-    def _copy_portfolio(portfolio_mgr, name):
-
-        """
-        This method is used from SAAPortfolioMgr to make a copy of portfolio and copying assets with reference.
-        By copying asset reference, we are preserving the asset parameters set on the asset object.
-        If we create new asset object, properties like alpha/idioVar will get wiped out, if set on original asset.
-        :param name: portfolio name
-        :return: SAAPortfolio
-        """
-
-        ptf = SAAPortfolio(
-            name,
-            portfolio_mgr.get_p_context(),
-            portfolio_mgr.get_hedging_option()
-        )
-
-        ptf.set_tax_info(
-            *portfolio_mgr.get_tax_info()
-        )
-
-        for i, asset_name in enumerate(portfolio_mgr.get_asset_names()):
-            asset = portfolio_mgr.get_asset(asset_name)
-            ptf.add_asset(asset, asset.weight, asset.hedge_ratio)
-
-        if portfolio_mgr.is_taxable():
-            ptf.set_tax_rates(*portfolio_mgr.get_tax_rates())
-
-        return ptf
-
 
     @staticmethod
     def create_equal_weighted_portfolio(
             asset_list,
             portfolio_name="EqualWeightedPortfolio",
             context=None,
-            asset_time_series=None,
             tax_info=None
     ):
 
@@ -535,44 +481,41 @@ class SAAPortfolio(CPortfolio):
         SAAPortfolio.check_tax_info_type(tax_info)
         ptf = SAAPortfolio(
             portfolio_name,
-            context
+            context,
+            tax_info=tax_info
         )
 
         n = len(asset_list)
         for asset_name in asset_list:
-            asset_ts = asset_time_series.get(asset_name, None)
             ptf.add_asset_by_name(
                 asset_name,
                 1 / n,
                 0,
-                asset_time_series=asset_ts
             )
 
         if isinstance(tax_info, TaxInfo) and tax_info is not None:
             ptf.set_tax_info(*tax_info.get_tax_info())
 
+        # setup the portfolio
+        ptf.setup()
         return ptf
 
-    @staticmethod
-    def clone_portfolio(portfolio, portfolio_name="Custom Portfolio", equal_weighted=False):
-        if portfolio is None or portfolio.get_p_context() is None:
-            raise Exception("None portfolio or context passed in")
+    def deepcopy(self, name: str = None):
 
-        ptf = SAAPortfolio(portfolio_name, portfolio.get_p_context(), portfolio.get_hedging_option())
-        if equal_weighted:
-            equal_weight = 1 / len(portfolio.get_assets())
-        for i, (asset_name, asset_param) in enumerate(portfolio.get_asset_params().items()):
-            asset_ts = portfolio.get_assets()[asset_name]
-            weight = asset_param.get_weight() if not equal_weighted else equal_weight
-            #from epsilonPhi.core.asset.proxies CCustomAsset
-            #from cyrus.isg.saa.assets.csingle_stock import CSingleStock
-            #if isinstance(asset_ts, (CCustomAsset, CSingleStock)):
-            #    ptf.add_asset_by_name(asset_name, weight, passed_asset_ts=asset_ts)
-            #else:
-            ptf.add_asset_by_name(asset_name, weight)
-        ptf.set_tax_info(*portfolio.get_tax_info())
-        return ptf
+        """
+            Create a deep copy of the object. Optionally assign a new name.
 
+            Args:
+                name (str, optional): New name for the copied object.
+
+            Returns:
+                A fully independent deep copy of the object.
+        """
+
+        copyobj = super().deepcopy()
+        if name is not None:
+            copyobj.reporting_name = name
+        return copyobj
 
     @staticmethod
     def check_tax_info_type(tax_info, type_to_verify=TaxInfo):
@@ -594,6 +537,6 @@ if __name__ == "__main__":
     asset = assetMgr.get_asset_by_name('MSUSAML')
 
     self = SAAPortfolio('portfolio', schema)
-    self.add_asset_by_name('MSUSAML', 1, 0)
-    self.get_portfolio_mgr()
-    self.get_sigma()
+    self.add_asset_by_name('MSUSAML', 0.5, 0)
+    self.add_asset_by_name('LHAGGBD', 0.5, 0)
+    self.deepcopy('same')

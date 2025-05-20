@@ -131,6 +131,69 @@ class HistoricalStressTestLosses:
 class FactorStressTestReal:
         total: float
 
+@dataclass
+class PerformanceVaRMetrics(object):
+    def __init__(self, VaR, CVaR, PoL, confidence, loss):
+        self._VaR = VaR
+        self._CVaR = CVaR
+        self._PoL = PoL
+        self._confidence = confidence
+        self._loss = loss
+
+    @property
+    def confidence(self):
+        return self._confidence
+
+    @property
+    def loss(self):
+        return self._loss
+
+    @property
+    def VaR(self):
+        return self._VaR
+
+    @property
+    def CVaR(self):
+        return self._CVaR
+
+    @property
+    def PoL(self):
+        return self._PoL
+
+    def get_VaR(self, idx):
+        return self.VaR[idx]
+
+    def get_CVaR(self, idx):
+        return self.CVaR[idx]
+
+    def get_PoL(self, idx):
+        return self.PoL[idx]
+
+    def __mul__(self, factor: float) -> "PerformanceVaRMetrics":
+        return self.multiply(factor)
+
+    def multiply(self, factor: float) -> "PerformanceVaRMetrics":
+        """
+        Returns a new PerformanceVaRMetrics object with VaR, CVaR, PoL, and loss
+        scaled by the given factor.
+
+        Args:
+            factor (float): Multiplier to scale the risk metrics.
+
+        Returns:
+            PerformanceVaRMetrics: A new instance with scaled values.
+        """
+        return PerformanceVaRMetrics(
+            VaR=self.VaR * factor,
+            CVaR=self.CVaR * factor,
+            PoL=self.PoL * factor,
+            confidence=self.confidence,
+            loss=self.loss
+        )
+
+
+
+
 class PerformanceVaRData:
     def __init__(self):
         self._one_month = None
@@ -149,6 +212,18 @@ class PortfolioPaths:
         self._systematic_panel = systematic_panel
         self._idio_panel = idio_panel
         self._alpha_total_monthly = alpha_total_monthly
+
+    @property
+    def systematic_panel(self):
+        return self._systematic_panel
+
+    @property
+    def idiosyncratic_panel(self):
+        return self._idio_panel
+
+    @property
+    def alpha_monthly_total(self):
+        return self._alpha_total_monthly
 
     def set_systematic_panel(self, systematic_panel):
         self._systematic_panel = systematic_panel
@@ -173,6 +248,113 @@ class PortfolioPaths:
 
     def get_returns_panel(self):
         return self._returns_panel
+
+class WealthFlows:
+
+    def __init__(self, nominal=0, real=0, percent=0):
+        self._nominal = nominal
+        self._real = real
+        self._percent = percent
+
+
+    @property
+    def nominal(self):
+        return self._nominal
+
+    @property
+    def real(self):
+        return self._real
+
+    @property
+    def percent(self):
+        return self._percent
+
+
+class WealthProjections:
+    def __init__(self,
+            nominal_values,
+            total_returns_panel,
+            inflation_paths,
+            inflows,
+            outflows,
+            quantiles,
+            frequency
+    ):
+
+        self._nominal_values = nominal_values
+        self._total_returns_panel = total_returns_panel
+        self._inflation_paths = inflation_paths
+        self._inflows = inflows
+        self._outflows = outflows
+        self._quantiles = quantiles
+        self._frequency = frequency
+
+    @property
+    def total_returns_panel(self):
+        return self._total_returns_panel
+
+    @property
+    def frequency(self):
+        return self._frequency
+
+    @property
+    def nominal_values(self):
+        return self._nominal_values
+
+    @property
+    def real_values(self):
+        return self._nominal_values / self.inflation_paths
+
+    @property
+    def inflation_paths(self):
+        return self._inflation_paths
+
+    @property
+    def inflows(self):
+        return self._inflows
+
+    @property
+    def outflows(self):
+        return self._outflows
+
+    @property
+    def net_flows(self):
+        return -self._outflows + self._inflows
+
+    @property
+    def quantiles(self):
+        return self._quantiles
+
+    def __calculate_quantiles(self, panel):
+        return np.quantile(panel, self.quantiles, axis=1).T
+
+    def get_inflation_quantiles(self):
+        return self.__calculate_quantiles(self.inflation_paths)
+
+    def get_nominal_quantiles(self):
+        return self.__calculate_quantiles(self.nominal_values)
+
+    def get_real_quantiles(self):
+        return self.__calculate_quantiles(self.real_values)
+
+    def get_nominal_inflow_quantiles(self):
+        return self.__calculate_quantiles(self.inflows)
+
+    def get_real_inflow_quantiles(self):
+        return self.__calculate_quantiles(self.inflows/self.inflation_paths)
+
+    def get_nominal_outflow_quantiles(self):
+        return self.__calculate_quantiles(self.outflows)
+
+    def get_real_outflow_quantiles(self):
+        return self.__calculate_quantiles(self.outflows/self.inflation_paths)
+
+    def get_net_flow_quantiles(self):
+        return self.__calculate_quantiles(self.net_flows)
+
+    def get_real_net_flow_quantiles(self):
+        return self.__calculate_quantiles(self.net_flows/self.inflation_paths)
+
 
 
 
