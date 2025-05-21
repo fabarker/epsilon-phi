@@ -2,6 +2,7 @@ import math
 import numpy as np
 import logging
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.optimizer.Optimizer import CVXOptimizer
 from epsilonPhi.core.schema.Schema import CContext
 from epsilonPhi.core.asset.proxies.SingleStock import CSingleStock
 from epsilonPhi.core.asset.proxies.LendingRate import CLendingRate
@@ -18,6 +19,7 @@ def nans(rows=0, cols=0):
 
 class CPortfolioMgr(object):
     _sqrt_epsilon = math.sqrt(sys.float_info.epsilon)
+    _optimizer = CVXOptimizer()
 
     def __init__(
             self,
@@ -58,6 +60,9 @@ class CPortfolioMgr(object):
 
     def set_portfolio(self, portfolio) -> None:
         self._portfolio = portfolio
+
+    def set_kappa(self, kappa):
+        self.portfolio.set_kappa(kappa)
 
     def set_weights(self, weights):
 
@@ -279,7 +284,7 @@ class CPortfolioMgr(object):
         return self.get_assets_risk_premias().sum(axis=1, keepdims=True)
 
     def get_total_return(self):
-        return (self.get_weights().T @ self.get_assets_total_return()).flatten()
+        return (self.get_weights().T @ self.get_assets_total_return()).item()
 
     def get_risk_premias(self):
         return (self.get_weights().T @ self.get_assets_risk_premias()).flatten()
@@ -545,8 +550,18 @@ class CPortfolioMgr(object):
             for name in self.get_asset_names()
         ])
 
-    def optimize(self, target_vol, contstraints):
-        pass
+    def optimize(self, target_vol, contstraints=None, lower_bounds=None, upper_bounds=None):
+
+        wts, kappa = self._optimizer.optimize_robust(
+            self,
+            target_vol=target_vol,
+            constraints=contstraints,
+            LB=lower_bounds,
+            UB=upper_bounds,
+        )
+
+        self.set_weights(wts)
+        self.set_kappa(kappa)
 
     ################### Simulation Related ###################
 

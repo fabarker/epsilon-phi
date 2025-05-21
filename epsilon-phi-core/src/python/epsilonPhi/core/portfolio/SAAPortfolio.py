@@ -386,8 +386,13 @@ class SAAPortfolio(CPortfolio):
     def get_asset_data_length(self):
         return self.get_portfolio_mgr().get_asset_data_length()
 
-    def optimize(self, target_vol, contstraints):
-        return self.get_portfolio_mgr().optimize(target_vol, contstraints)
+    def optimize(self, target_vol=None, contstraints=None, lower_bounds=None, upper_bounds=None):
+        return self.get_portfolio_mgr().optimize(
+            target_vol or self.get_risk(),
+            contstraints,
+            lower_bounds,
+            upper_bounds
+        )
 
 
     ################### Simulation Related ###################

@@ -351,6 +351,7 @@ if __name__ == "__main__":
     fields = ['PH', 'PL', 'PO', 'PI', 'VM']
 
     from_date = datetime.date(year=1962, month=12, day=31)
+    pyDatastream.get_usage()
     frame = pyDatastream.fetch(ticker, fields, from_date=from_date, frequency='D')
 
 

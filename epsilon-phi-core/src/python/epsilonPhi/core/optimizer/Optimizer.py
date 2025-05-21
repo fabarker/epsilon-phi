@@ -1,3 +1,4 @@
+from epsilonPhi.core.optimizer.constraints.Parser import ConstraintsParser, Constraints
 import numpy as np
 import pandas as pd
 from scipy.linalg import sqrtm
@@ -8,43 +9,42 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class ConstraintsParser(object):
-    def __init__(self):
-        pass
 
-    @staticmethod
-    def parse_constraints_string(string: str):
+class OptimizerPars:
+    def __init__(self,
+                 mu: np.array,
+                 sigma: np.array,
+                 T12: np.array,
+                 asset_list: list,
+                 ):
 
-        spltstr = sorted([x for x in string.split(';') if x])
-        N = len(spltstr)
-        LB = np.ones((N, )) * 0
-        UB = np.ones((N, ))
+        self._mu = mu
+        self._sigma = sigma
+        self._T12 = T12
+        self._asset_list = asset_list
 
-        for s in spltstr:
+    @property
+    def mu(self):
+        return self._mu
 
-            # Remove % sign if its there
-            if s[-1] == '%':
-               s = s[0:-1]
+    @property
+    def sigma(self):
+        return self._sigma
 
-            LT_idx = s.find('<')
-            GT_idx = s.find('>')
-            ET_idx = s.find('=')
+    @property
+    def T12(self):
+        return self._T12
 
-            if LT_idx > -1:
-                pass
-               # Do something
-            elif GT_idx > -1:
-                pass
-               # Do something
-            elif ET_idx > -1:
-                pass
-               # Do something
+    @property
+    def asset_list(self):
+        return self._asset_list
+
 
 class CVXOptimizer(object):
     def __init__(self):
         self._ws = None
 
-    def find_kappa_old(self):
+    def find_kappa_old(self, constraints, optim_pars, target_vol, skew_kappa_l, skew_kappa_r):
 
         f_kappa = None
         error = 0
@@ -57,7 +57,6 @@ class CVXOptimizer(object):
         kappa_l = prec
 
         kappa_r = math.ceil(skew_kappa_r/100) * 100
-
         if kappa < kappa_lim:
             loop = 0
 
@@ -65,21 +64,20 @@ class CVXOptimizer(object):
                 loop += 1
 
                 kappa = (kappa_l + kappa_r) / 2
-
                 if kappa < skew_kappa_l:
                     kappa_l = kappa
                 elif skew_kappa_r < kappa:
                     kappa_r = kappa
                 else:
 
-                    wts, error = self.run_cvx_robust(
+                    wts, error = self.optimizeRobust(
                         constraints,
                         optim_pars,
                         target_vol,
                         kappa
                     )
 
-                    if error !=0:
+                    if error != 0:
                         return 0, error
 
                     sig = 100 * math.sqrt(
@@ -99,11 +97,14 @@ class CVXOptimizer(object):
         else:
             f_kappa = kappa_lim
 
-        logger.info('find_kappa_old() done with kappa {}'.format(fkappa))
+        logger.info('find_kappa_old() done with kappa {}'.format(f_kappa))
         return f_kappa, error
 
 
-    def find_kappa(self):
+    def find_kappa(self,
+                   constraints,
+                   optim_pars,
+                   target_vol):
 
         optimize_loop = False
 
@@ -117,10 +118,11 @@ class CVXOptimizer(object):
 
         # Binary search to fin largest kappa for which we reach the target vol
         logger.info("starting find_kappa")
+        loop = 0
         while abs(kappa_l - kappa_r) > 0.01 and kappa < kappa_limit:
             loop += 1
 
-            wts, error_code = self.run_cvx_robust(
+            wts, error_code = self.optimizeRobust(
                 constraints,
                 optim_pars,
                 target_vol,
@@ -131,7 +133,6 @@ class CVXOptimizer(object):
                 if error_code == -1:
                     if optimize_loop:
                         break
-                        return None
                 else:
                     fkappa = None
                     return fkappa, error_code
@@ -145,7 +146,7 @@ class CVXOptimizer(object):
             )
 
             if sig is not None:
-                if sig >= (target_vol - prec):
+                if sig >= (target_vol - p):
                     kappa_l = kappa
                 else:
                     kappa_r = kappa
@@ -156,33 +157,137 @@ class CVXOptimizer(object):
             kappa = (skew * kappa_l + kappa_r) / (skew + 1)
             logger.info('kappa = [{}] and skew = [{}]'.format(kappa, skew))
         logger.info('find_kappa done with kappa [{}]'.format(kappa))
+        fkappa, error_code = self.find_kappa_old(constraints, optim_pars, target_vol, kappa_l, kappa_r)
         return kappa, error_code
 
-    # Create Inequality Constraints Aeq * x = beq
-    def deconstruct_constraints(self):
-        pass
+    def generate_constraints(self,
+                             constraint_str: str,
+                             asset_list: list,
+                             LB=None,
+                             UB=None,
+                             not_modeled=0):
 
-    def build_constaints_from_string(self, assetList, constraints):
+        # Instantiate parser
+        parser = ConstraintsParser(constraint_str)
 
-        N = len(assetList)
-        T = len(constraints.lowerbounds)
+        if constraint_str and constraint_str != '':
+            if LB is None:
+               res = parser.generate_constraints_UB(constraint_str, asset_list)
+            else:
+               res = parser.generate_constraints_UB_LB(constraint_str, asset_list)
 
-        b_low = np.array(constraints.lowerbounds)
-        b_high = np.array(constraints.upperbounds)
+            if res.error != 0:
+                raise Exception('Error - constraint error in constraint {}'.format(res.error))
 
-        A = np.zeros((N ,T))
-        for i in range(T-1):
-            for j in range(N):
-                s = assetList[j]
-                A[i, j] = constraints._constraints[i][s]
+            res.UB_box = UB if UB is not None else [1] * len(asset_list)
+            res.LB_box = LB if LB is not None else [0] * len(asset_list)
+        else:
+            res = Constraints()
+            res.UB_box = UB if UB is not None else [1] * len(asset_list)
+            res.LB_box = LB if LB is not None else [0] * len(asset_list)
+        return res
 
-        return b_low, b_high, A
+    @staticmethod
+    def get_optim_pars(portfolio):
+        return OptimizerPars(
+            portfolio.get_assets_total_return(),
+            portfolio.get_sigma(),
+            portfolio.get_uncertainty_matrix(),
+            portfolio.get_asset_names(),
+        )
+
+    def optimize_robust(self, portfolio, target_vol, constraints, LB=None, UB=None):
+
+        # Get optimization parameters
+        optim_pars = self.get_optim_pars(portfolio)
+
+        # Generate Constraints
+        const_struct = self.generate_constraints(
+            constraints, optim_pars.asset_list, LB, UB)
+
+        # Kappa
+        kappa = self.find_max_kappa(
+            target_vol,
+            optim_pars,
+            const_struct
+        )
+
+        # Run the CVX Optimizer
+        wts, _ = self.run_cvx_robust(
+            kappa,
+            target_vol,
+            optim_pars,
+            const_struct)
+
+        return wts, kappa
 
 
-    def optimizeGeneric(self):
-        pass
+    def find_max_kappa(
+            self,
+            target_vol,
+            optim_pars,
+            const_struct,
+            kappa_low=0.0,
+            kappa_high=1000.0,
+            tol=1e-3,
+            max_iter=10000,
+    ):
+        """
+        Finds the kappa that results in volatility closest to the target.
 
-    def optimizeRobust(self, mu, sigma, kappa, T, target_volatility):
+        Returns:
+            float: Best kappa such that realized volatility ≈ target_vol
+        """
+        best_kappa = kappa_low
+        best_vol = 0
+
+        for _ in range(max_iter):
+            mid_kappa = (kappa_low + kappa_high) / 2
+            try:
+                w, realized_vol = self.run_cvx_robust(mid_kappa,
+                                                      target_vol,
+                                                      optim_pars,
+                                                      const_struct)
+            except Exception:
+                realized_vol = np.inf
+
+            # Track the kappa that gets closest to target_vol
+            if np.abs(best_vol - target_vol) > np.abs(realized_vol - target_vol):
+               best_vol = realized_vol
+               best_kappa = mid_kappa
+
+            # Early stopping if very close
+            if np.abs(best_vol - target_vol) < 0.0001:
+                break
+
+            # Update bisection bounds
+            if realized_vol < target_vol:
+                # Too conservative → try lower kappa
+                kappa_high = mid_kappa
+            else:
+                # Acceptable or too risky → try higher kappa
+                kappa_low = mid_kappa
+
+            if abs(kappa_high - kappa_low) < tol:
+                break
+
+        if np.abs(best_vol - target_vol) > tol:
+           raise ValueError('Error - target vol not obtainable')
+
+        return best_kappa
+
+
+    def run_cvx_robust(
+            self,
+            kappa,
+            target_vol,
+            optim_pars,
+            constraints,
+    ):
+
+        sigma = optim_pars.sigma
+        T = optim_pars.T12
+        mu = optim_pars.mu
 
         assert len(np.diag(sigma)) == len(mu)
         assert len(np.diag(sigma)) == len(T)
@@ -196,91 +301,62 @@ class CVXOptimizer(object):
         # T is the uncertainty vector (standard errors of the means
         T12 = np.diag(T)
 
-        ub = []
-        lb = []
-        A = []
-        b = []
-        Aeq = []
-        beq = []
-        b_low = []
-        b_high = []
-
+        # Variable of insterest
         w = cp.Variable(n)
-        objfun = cp.Maximize(mu @ w - 0.5 * kappa * cp.norm2(T12) @ w)
-        constraints = [w >= lb,
-                       w <= ub,
-                       b_low <= A @ w,
-                       A @ w <= b_high,
-                       sum(w) == 1,
-                       cp.norm2(sig @ w) <= target_volatility]
 
-        # cp.norm2(sqrtm(cov * 12) @ weights).value
-        # is equivalent to
-        # np.sqrt(cp.quad_form(weights, cov * 12).value)
+        # Objective Function
+        objfun = cp.Maximize(mu @ w - 0.5 * kappa * cp.norm2(T12 @ w))
 
-        problem = cp.Problem(objfun, constraints)
+        # === Core constraints ===
+        constraints_list = []
+
+        # Volatility constraint
+        constraints_list.append(cp.norm2(sig @ w) <= target_vol)
+
+        # Full investment
+        constraints_list.append(cp.sum(w) == 1)
+
+        # Box constraints
+        constraints_list.append(w >= constraints.LB_box)
+        constraints_list.append(w <= constraints.UB_box)
+
+        # Equality/Inequality Constraints
+        if constraints.LB is not None:
+            constraints_list.append(constraints.LB <= constraints.mat @ w)
+        if constraints.UB is not None:
+            constraints_list.append(constraints.mat @ w <= constraints.UB)
+
+        problem = cp.Problem(objfun, constraints_list)
         problem.solve()
-        return problem.w
+        return w.value, cp.norm2(sig @ w).value
 
-
-    # Mean Variance is robust with a kappa of 0
-    def optimizeMeanVariance(self, assetList, mu, sigma, T, target_volatility):
-        return self.optimizeRobust(assetList, mu, sigma, 0, T, target_volatility)
-
-    def optimizeMinVol(self):
-        pass
-
-    def leastRegretOptimize(self):
-        pass
-
-    def optimizeTrackingError(self):
-        pass
 
 
 if __name__ == "__main__":
 
-    import pandas as pd
+    from epsilonPhi.core.schema.Schema import ContextCreator
+    from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
-    project_path = '/Users/francisbarker/Library/Mobile Documents/com~apple~CloudDocs/Data/Misc/Global Factor Premiums.xlsx'
-    df = pd.read_excel(project_path, 'Data', header=[0,1], index_col=0)
-    df = df.dropna()
-    df.index = pd.to_datetime(df.index) + pd.tseries.offsets.MonthEnd(0)
+    schema = ContextCreator(
+        currency='USD',
+        start_date='30-Nov-1983',
+        end_date='31-Dec-2022'
+    ).create_context()
 
-    n_assets = df.shape[1] # Number of assets
-    n_constraints = 2  # Number of inequality constraints
 
-    mu = df.mean().values * 12  # Expected returns
-    cov = df.cov().values * 12 # Covariance matrix
-    sig = sqrtm(cov)
-    serror = np.sqrt(df.std() / df.shape[0])
-    T12 = np.diag(serror.values)
+    ptf = SAAPortfolio('portfolio', schema)
+    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
+    ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
+    ptf.setup()
 
-    # Define variables
-    weights = cp.Variable(n_assets)  # Portfolio weights
+    self = CVXOptimizer()
+    wts = self.optimize_robust(
+        ptf,
+        target_vol=0.07,
+        constraints=None,
+    )
 
-    # Define problem constraints
-    constraints = [
-        cp.sum(weights) == 1,  # Sum of weights must be 1
-        weights >= 0,
-        cp.norm2(sig @ weights) <= 0.07]
+    ptf.optimize(target_vol=0.07)
 
-    # Define problem
-    risk_aversion = 6
-    kappa = 50
-    objective = cp.Maximize(mu @ weights - risk_aversion * cp.quad_form(weights, cov))
-    objfun = cp.Maximize(mu @ weights - 0.5 * kappa * cp.norm2(T12 @ weights))
-
-    problem = cp.Problem(objfun, constraints)
-
-    # Solve problem
-    problem.solve()
-
-    # Retrieve optimal solution
-    optimal_weights = weights.value
-
-    # Print optimal weights
-    print("Optimal Weights:")
-    for i in range(n_assets):
-        print(f"Asset {i + 1}: {optimal_weights[i]}")
 
 
