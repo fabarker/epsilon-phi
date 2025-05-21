@@ -538,10 +538,26 @@ if __name__ == "__main__":
         end_date='31-Dec-2022'
     ).create_context()
 
-    assetMgr = CAssetMgr(schema)
-    asset = assetMgr.get_asset_by_name('MSUSAML')
+    asset_list = [
+        'LHGUSIN',
+        'LHYIELD',
+        'FRUS1GR',
+        'FRUS1VA',
+        'FRUSS2L',
+        'MSEXUKL',
+        'MSUTDKL',
+        'MSJPANL',
+        'MSPXJPL',
+        'MSEMKF$',
+        'SBBRUSL',
+        'CSTEVDH',
+        'CSTLNSH',
+        'CSTMNFH'
+    ]
 
-    self = SAAPortfolio('portfolio', schema)
+
+    self = SAAPortfolio.create_equal_weighted_portfolio(asset_list, context=schema)
+    self.get_assets_risk()
     self.add_asset_by_name('MSUSAML', 0.5, 0)
     self.add_asset_by_name('LHAGGBD', 0.5, 0)
     self.deepcopy('same')

@@ -20,7 +20,7 @@ class FXCurve(object):
 
     _fx_cache = pd.DataFrame()
     _DEFAULT_PRICING_LOCATION = PricingLocation.LONDON
-    _DEFAULT_PROVIDERS = (Provider.WMR, Provider.REFINITIV, Provider.BBI)
+    _DEFAULT_PROVIDERS = (Provider.WMR, Provider.REFINITIV, Provider.BBI, Provider.MSCI)
 
     def __init__(self, provider=None, pricing_location=None):
 
@@ -377,8 +377,8 @@ class FXCurve(object):
 if __name__ == "__main__":
 
 
-    curve = FXCurve(provider=Provider.GS, pricing_location=PricingLocation.NEW_YORK)
-    fx = curve.get_fx_curve_single_currency('EUR/USD')
+    curve = FXCurve()
+    fx = curve.get_fx_curve_single_currency('USD/ARS')
 
 
 
