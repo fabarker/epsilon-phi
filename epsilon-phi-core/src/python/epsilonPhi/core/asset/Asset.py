@@ -332,7 +332,7 @@ if __name__ == "__main__":
     from epsilonPhi.core.schema.Schema import ContextCreator
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
-                            end_date='31-Dec-2022').create_context()
+                            end_date='31-Dec-2024').create_context()
 
     asset = CAsset(exposure_currency='USD',
                   denominated_currency='USD',

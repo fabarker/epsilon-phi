@@ -438,19 +438,3 @@ if __name__ == "__main__":
             sessionMgr.delete_pickle_from_database(id[0])
 
 
-    sessionMgr.get_interest_rate_maturities_for_region('United States')
-
-    from sqlalchemy import create_engine, Table, MetaData, Column, Float
-
-    metadata = MetaData()
-    future_spec_table = Table('future_spec', metadata, autoload_with=session.get_bind())
-    contract_size_column = Column('contract_size', Float, nullable=True)
-
-    # Add the column to the table
-    contract_size_column.create(future_spec_table)
-
-    df = sessionMgr.query_format_df(session.query(FutureSpec))
-
-    second_futures = df.ticker.apply(lambda x: x.replace('CS00','CS20'))
-
-

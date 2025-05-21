@@ -1,7 +1,6 @@
 import scipy.stats.mstats
 
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
-from epsilonPhi.core.reporting.quantstats.stats import cpc_index
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.simulation.Bootstrap import SAABootstrapper
 from epsilonPhi.core.asset.proxies.LendingRate import CLendingRate

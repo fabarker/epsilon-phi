@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 from scipy.linalg import sqrtm
 import cvxpy as cp
+import math
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ConstraintsParser(object):
     def __init__(self):
@@ -38,6 +43,120 @@ class ConstraintsParser(object):
 class CVXOptimizer(object):
     def __init__(self):
         self._ws = None
+
+    def find_kappa_old(self):
+
+        f_kappa = None
+        error = 0
+
+        prec = 0.0001
+        kappa_init = 10
+        kappa_lim = 10000
+
+        kappa = kappa_init
+        kappa_l = prec
+
+        kappa_r = math.ceil(skew_kappa_r/100) * 100
+
+        if kappa < kappa_lim:
+            loop = 0
+
+            while abs(kappa_l - kappa_r) > 0.01:
+                loop += 1
+
+                kappa = (kappa_l + kappa_r) / 2
+
+                if kappa < skew_kappa_l:
+                    kappa_l = kappa
+                elif skew_kappa_r < kappa:
+                    kappa_r = kappa
+                else:
+
+                    wts, error = self.run_cvx_robust(
+                        constraints,
+                        optim_pars,
+                        target_vol,
+                        kappa
+                    )
+
+                    if error !=0:
+                        return 0, error
+
+                    sig = 100 * math.sqrt(
+                        np.matmul(
+                            np.matmul(
+                                weights.T, optim_pars.sigma
+                            ), weights
+                        )
+                    )
+
+                    if sig >= target_vol - prec:
+                        kappa_l = kappa
+                    else:
+                        kappa_r = kappa
+
+                f_kappa = max(kappa - 0.01, 0)
+        else:
+            f_kappa = kappa_lim
+
+        logger.info('find_kappa_old() done with kappa {}'.format(fkappa))
+        return f_kappa, error
+
+
+    def find_kappa(self):
+
+        optimize_loop = False
+
+        p = 0.0001
+        kappa_init = 20
+        kappa_limit = 10000
+
+        kappa = kappa_init
+        kappa_l = p
+        kappa_r = kappa_limit * 1.1
+
+        # Binary search to fin largest kappa for which we reach the target vol
+        logger.info("starting find_kappa")
+        while abs(kappa_l - kappa_r) > 0.01 and kappa < kappa_limit:
+            loop += 1
+
+            wts, error_code = self.run_cvx_robust(
+                constraints,
+                optim_pars,
+                target_vol,
+                kappa
+            )
+
+            if error_code != 0:
+                if error_code == -1:
+                    if optimize_loop:
+                        break
+                        return None
+                else:
+                    fkappa = None
+                    return fkappa, error_code
+
+            sig = 100 * math.sqrt(
+                np.matmul(
+                    np.matmul(
+                        weights.T, optim_pars.sigma
+                    ), weights
+                )
+            )
+
+            if sig is not None:
+                if sig >= (target_vol - prec):
+                    kappa_l = kappa
+                else:
+                    kappa_r = kappa
+            else:
+                raise Exception('find_kappa, sigma is none')
+
+            skew = max(1, np.log10((kappa_r-kappa_l)))
+            kappa = (skew * kappa_l + kappa_r) / (skew + 1)
+            logger.info('kappa = [{}] and skew = [{}]'.format(kappa, skew))
+        logger.info('find_kappa done with kappa [{}]'.format(kappa))
+        return kappa, error_code
 
     # Create Inequality Constraints Aeq * x = beq
     def deconstruct_constraints(self):

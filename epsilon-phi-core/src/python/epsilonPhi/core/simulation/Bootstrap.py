@@ -1,18 +1,18 @@
 import warnings
-
+import os
+import pickle
 import numpy as np
-import pandas as pd
 import typing as tp
 import numpy.lib.scimath as SC
 from epsilonPhi.core.config.appConfig import CAppConfig
-from epsilonPhi.core.dataModel.enums.Factor import FactorType
+from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Rates import RateType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
-from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType
 from epsilonPhi.core.schema.Schema import CContext
 from epsilonPhi.core.simulation.SimStructs import *
 from epsilonPhi.core.timeSeries.regression import *
+
 
 def logicalValues(vec: np.ndarray):
     """
@@ -478,24 +478,50 @@ class SAABootstrapper(AbstractBootstrapper):
             med_count=None,
             long_count=None
     ):
-        bs_indicies = BootstrapIndicies()
 
-        # Current Environemnt
-        bs_indicies.set_short_term_indicies(
-            self.stationary_block_bootstrap(curr_count, nbstraps, q)
-        )
+        cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cache')
+        os.makedirs(cache_dir, exist_ok=True)  # Create it if it doesn't exist
+        # if the path above does not exists, then create it
 
-        # Medium Environment
-        bs_indicies.set_medium_term_indicies(
-            self.stationary_block_bootstrap(med_count, nbstraps, q)
-        )
+        # below is the pickle id
+        id = '_'.join([str(q),
+                       str(nbstraps),
+                       str(curr_count),
+                       str(med_count),
+                       str(long_count),
+                       'BS'])
 
-        # Long Environemnt
-        bs_indicies.set_long_term_indicies(
-            self.stationary_block_bootstrap(long_count, nbstraps, q)
-        )
+        # Construct the pickle ID and file path
+        filename = f"{id}.pkl"
+        full_path = os.path.join(cache_dir, filename)
 
-        return bs_indicies
+        # Check if the pickle file exists and load it
+        if os.path.exists(full_path):
+            with open(full_path, "rb") as f:
+                cached_result = pickle.load(f)
+            return cached_result
+        else:
+            bs_indicies = BootstrapIndicies()
+
+            # Current Environemnt
+            bs_indicies.set_short_term_indicies(
+                self.stationary_block_bootstrap(curr_count, nbstraps, q)
+            )
+
+            # Medium Environment
+            bs_indicies.set_medium_term_indicies(
+                self.stationary_block_bootstrap(med_count, nbstraps, q)
+            )
+
+            # Long Environemnt
+            bs_indicies.set_long_term_indicies(
+                self.stationary_block_bootstrap(long_count, nbstraps, q)
+            )
+
+            # Save the result to cache
+            with open(full_path, "wb") as f:
+                pickle.dump(bs_indicies, f)
+            return bs_indicies
 
     def prepare_inflation_paths(
             self,
@@ -1001,9 +1027,52 @@ class SAABootstrapper(AbstractBootstrapper):
 
         return beta, shocks
 
+    def warmup_run():
+        from epsilonPhi.core.schema.Schema import ContextCreator
+        from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+        schema = ContextCreator(currency='USD',
+                                start_date='30-Nov-1983',
+                                end_date='31-Dec-2022').create_context()
+
+        ptf = SAAPortfolio('portfolio', schema)
+        ptf.add_asset_by_name('MSUSAML', 0.5, 0)
+        ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
+        ptf.setup()
+
+        bootstrap = SAABootstrapper(schema)
+        bs_indicies = bootstrap.get_bootstrap_indicies()
+
+        # 🔁 Warm-up run
+        bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)
+
+        return schema, ptf, bootstrap, bs_indicies
+
+
+def warmup():
+    from epsilonPhi.core.schema.Schema import ContextCreator
+    from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+
+    schema = ContextCreator(currency='USD',
+                            start_date='30-Nov-1983',
+                            end_date='31-Dec-2022').create_context()
+
+    ptf = SAAPortfolio('portfolio', schema)
+    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
+    ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
+    ptf.setup()
+
+    bootstrap = SAABootstrapper(schema)
+    bs_indicies = bootstrap.get_bootstrap_indicies()
+
+    b = bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)  # ⏱ Focus line
+    return schema, ptf, bootstrap, bs_indicies
+
+def profiled_run(ptf, bootstrap, bs_indicies):
+    # 🔽 This is what PyCharm will profile
+    return bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)
+
 
 if __name__ == "__main__":
-
 
     from epsilonPhi.core.schema.Schema import ContextCreator
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
@@ -1019,7 +1088,10 @@ if __name__ == "__main__":
 
     bootstrap = SAABootstrapper(schema)
     bs_indicies = bootstrap.get_bootstrap_indicies()
+
     b = bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)
+    b = bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)
+
 
 
 
