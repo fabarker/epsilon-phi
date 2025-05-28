@@ -4,8 +4,11 @@ import pickle
 import numpy as np
 import typing as tp
 import numpy.lib.scimath as SC
+import pandas as pd
+
 from epsilonPhi.core.config.appConfig import CAppConfig
 from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+from epsilonPhi.core.utils.SimUtils import SimulationHelper
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.Rates import RateType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
@@ -555,7 +558,80 @@ class SAABootstrapper(AbstractBootstrapper):
     #    risk_free_floor)
 
 
+    def get_forward_rates(self, rate_type):
+
+        if rate_type == RateType.CASH:
+            return GlobalDataSource().get_market_implied_forward_ois_for_currency(
+                self._schema.currency
+            )
+        elif rate_type == RateType.INFLATION:
+            return GlobalDataSource().get_imf_forward_inflation_forecast_for_currency(
+                self._schema.currency
+            )
+        else:
+            raise ValueError("Unsupported rate type")
+
+
     def prepare_cash_and_inflation_paths(
+            self,
+            asset,
+            bs_indices,
+            long_term_shocks,
+            rate_type,
+            rate_floor=-np.inf
+    ) -> PathsPanel:
+
+        # get for forward curves we anchor to
+        fwd_curve = self.get_forward_rates(rate_type)
+
+        long_horizon = self.long_horizon
+        if rate_type == RateType.CASH:
+            eq_R = self.currency_config.risk_free_rate / SAABootstrapper.NUM_MONTHS
+        elif rate_type == RateType.INFLATION:
+            eq_R = self.currency_config.inflation_rate / SAABootstrapper.NUM_MONTHS
+        elif rate_type == RateType.LENDING:
+            eq_R = self.currency_config.risk_free_rate / SAABootstrapper.NUM_MONTHS
+            eq_R += (asset.get_spread() + asset.get_borrowing_cost()) / SAABootstrapper.NUM_MONTHS
+        else:
+            raise Exception("Rate type not supported")
+
+        mu_vals, dmu_dt_vals = SimulationHelper.get_mu_path(
+            fwd_curve.values,
+            eq_R * SAABootstrapper.NUM_MONTHS,
+            schema.dt,
+            long_horizon,
+            rate_type
+        )
+
+        current_indicator = self.get_current_environment_indicator()
+        shocks_panels = SimulationHelper.extract_shocks(
+            asset, mu_vals, dmu_dt_vals * schema.dt, current_indicator)
+
+        paths_panel = self.prepare_boostrap_blocks(
+            bs_indices,
+            long_term_shocks
+        )
+        blocks = paths_panel.get_paths()
+        curr_env_idx = paths_panel.get_short_block_indicator().astype(bool)
+
+        shocks_panel = np.vstack([shocks_panels[blocks[x], x, 0] for x in range(240)])
+        demeaned_shocks = np.vstack([shocks_panels[blocks[x], x, 1] for x in range(240)])
+        shocks_panel[curr_env_idx] = demeaned_shocks[curr_env_idx]
+        mean_rev = np.vstack([shocks_panels[blocks[x], x, 2] for x in range(240)])
+
+        paths = SimulationHelper.simulate_paths(
+            mu_vals,
+            dmu_dt_vals * schema.dt,
+            shocks_panel,
+            mean_rev,
+            rate_floor
+        )
+
+        return PathsPanel(paths)
+
+
+
+    def prepare_cash_and_inflation_paths_old(
             self,
             asset,
             bs_indices,
@@ -565,11 +641,8 @@ class SAABootstrapper(AbstractBootstrapper):
     ) -> PathsPanel:
 
         frequency = self._schema.frequency
+        fwd_curve = self.get_forward_rates(rate_type)
 
-        #curr_rate = self.currency_config.medium_risk_free_rate
-        curr_rate = 0.003
-        #curr_rate_name = self.currency_config.risk_free_mapping
-        #equi_rate_name = self.currency_config.risk_free_mapping
 
         alpha, beta, shocks = self.extract_shocks(asset)
 
@@ -581,12 +654,18 @@ class SAABootstrapper(AbstractBootstrapper):
             eq_R = self.currency_config.risk_free_rate / SAABootstrapper.NUM_MONTHS
         elif rate_type == RateType.INFLATION:
             eq_R = self.currency_config.inflation_rate / SAABootstrapper.NUM_MONTHS
-            betas = beta.item()
         elif rate_type == RateType.LENDING:
             eq_R = self.currency_config.risk_free_rate / SAABootstrapper.NUM_MONTHS
             eq_R += (asset.get_spread() + asset.get_borrowing_cost()) / SAABootstrapper.NUM_MONTHS
         else:
             raise Exception("Rate type not supported")
+
+        mu_vals, _ = SimulationHelper.get_mu_path(
+            fwd_curve.values,
+            eq_R * SAABootstrapper.NUM_MONTHS,
+            schema.dt,
+            long_horizon,
+        )
 
         new_methodology_list = ['USD', 'GBP']
         if self._schema.currency in new_methodology_list and rate_type != RateType.INFLATION:
@@ -622,8 +701,9 @@ class SAABootstrapper(AbstractBootstrapper):
         trend = np.full((long_horizon * SAABootstrapper.NUM_MONTHS, 1), np.nan)
 
         AR1_process = 'trend' if self.simulation_config.simAR1Process == 1 else 'old'
-        rates = [eq_R] * T
+        rates = mu_vals
         betas = [beta] * T
+        hold_start_states = 0
 
         for t in range(T):
 
@@ -657,15 +737,17 @@ class SAABootstrapper(AbstractBootstrapper):
 
     def get_current_environment_indicator(self):
         if self._curr_env_ind is None:
-           curr_env_ind = GlobalDataSource().get_time_series_data_from_ticker(self._schema.risk_free_rate_ticker)
-           curr_env_ind = curr_env_ind[self._schema.start_date: self._schema.end_date] / 100
-           self._curr_env_ind = curr_env_ind[self.sim_start_date:self.sim_end_date]
-           self._curr_env_ind = (self._curr_env_ind > self._curr_env_ind.quantile(0.75)).astype(int)
+           path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
+           cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
+           #curr_env_ind = GlobalDataSource().get_time_series_data_from_ticker(self._schema.risk_free_rate_ticker)
+           #curr_env_ind = curr_env_ind[self._schema.start_date: self._schema.end_date] / 100
+           #self._curr_env_ind = curr_env_ind[self.sim_start_date:self.sim_end_date]
+           #self._curr_env_ind = (self._curr_env_ind > self._curr_env_ind.quantile(0.75)).astype(int)
+           self._curr_env_ind = cei.reindex(self._schema.dates).ffill()
         return self._curr_env_ind
 
-
+    @staticmethod
     def demean_values_in_blocks(
-            self,
             shocks: np.array,
             current_indicator,
     ) -> np.array:
@@ -829,7 +911,6 @@ class SAABootstrapper(AbstractBootstrapper):
             returns_panel = ptf.get_stressed_returns_panel()
 
             curr_inds = curr_env_ind.loc[returns_panel.dates].values.astype(bool)
-
 
             # Set Medium Term Returns Panel
             returns_panel.factor_panel_normalized_MT = returns_panel.factor_panel_normalized[curr_inds[:, 0]]
@@ -1081,16 +1162,10 @@ if __name__ == "__main__":
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
-    ptf = SAAPortfolio('portfolio', schema)
-    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
-    ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
-    ptf.setup()
-
-    bootstrap = SAABootstrapper(schema)
-    bs_indicies = bootstrap.get_bootstrap_indicies()
-
-    b = bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)
-    b = bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)
+    asset = schema.get_risk_free_rate_asset()
+    self = SAABootstrapper(schema)
+    bs_indicies = self.get_bootstrap_indicies()
+    ip = self.prepare_inflation_paths(bs_indicies)
 
 
 

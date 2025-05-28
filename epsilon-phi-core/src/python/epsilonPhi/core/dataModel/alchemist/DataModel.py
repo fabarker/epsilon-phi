@@ -117,9 +117,61 @@ class EquityIndexSpec(TimeSeriesSpec):
     __tablename__ = 'equity_index_spec'
 
     uid = Column(Integer, ForeignKey('time_series_spec.uid'), primary_key=True, index=True)
+
+    # Map DB column "denominated_currency" → Python attribute "_denominated_currency"
+    #_denominated_currency = Column(
+    #    "denominated_currency",
+    #    String(3),
+    #    key="_denominated_currency",
+    #    nullable=False,
+    #    index=True
+    #)
+
+    #_exposure_currency = Column(
+    #    "exposure_currency",
+    #    String(3),
+    #    key="_exposure_currency",
+   #     nullable=False,
+   #     index=True
+    #)
+
     denominated_currency = Column(String(3), nullable=False, index=True)
     exposure_currency = Column(String(3), nullable=False, index=True)
     hedge_ratio = Column(FloatOrNone, nullable=True)
+
+    # UID → (denominated_currency, exposure_currency)
+    currency_overrides = {
+        18140: ('USD', 'AAP'),
+        18141: ('AAP', 'AAP'),
+        18144: ('USD', 'ACW'),
+        18145: ('ACW', 'ACW'),
+        18146: ('USD', 'AEM'),
+        18147: ('AEM', 'AEM'),
+        18166: ('USD', 'ACA'),
+        18167: ('ACA', 'ACA'),
+        18179: ('USD', 'EFE'),
+        18180: ('EFE', 'EFE'),
+        18183: ('USD', 'EEP'),
+        18184: ('EEP', 'EEP'),
+        18185: ('USD', 'ELA'),
+        18186: ('ELA', 'ELA'),
+        18191: ('USD', 'EME'),
+        18192: ('EME', 'EME'),
+        18193: ('USD', 'EMA'),
+        18194: ('EMA', 'EMA'),
+        18195: ('USD', 'EMM'),
+        18196: ('EMM', 'EMM'),
+        18199: ('USD', 'ERP'),
+        18200: ('ERP', 'ERP'),
+        18203: ('USD', 'ERP'),
+        18204: ('EXU', 'EXU'),
+        18265: ('USD', 'PAC'),
+        18266: ('PAC', 'PAC'),
+        18277: ('USD', 'PXJ'),
+        18278: ('PXJ', 'PXJ'),
+        18322: ('USD', 'WLD'),
+        18323: ('WLD', 'WLD'),
+    }
 
     __mapper_args__ = {'polymorphic_identity': 'equity_index_spec'}
 

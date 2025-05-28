@@ -71,6 +71,10 @@ class CContext(object):
         return self.frequency.obs_per_year()
 
     @property
+    def dt(self):
+        return 1 / self.obs_per_year
+
+    @property
     def dates(self):
         if self.__dates is None:
             self.load_dates()
@@ -160,6 +164,10 @@ class CContext(object):
         return self.BaseModel.get_return_factor_df() \
             .select_subset_dates(self.dates)
 
+    def get_orthog_return_factors_panel(self):
+        return self.BaseModel.get_return_factor_df(orthogonalize=True) \
+            .select_subset_dates(self.dates)
+
     def get_normalized_return_factors_panel(self):
         return zscore(self.get_return_factors_panel(), ddof=1)
 
@@ -224,6 +232,10 @@ class CContext(object):
         if self.__asset_manager is None:
             self.__load_asset_manager()
         return self.__asset_manager
+
+    def get_asset_from_name(self, name):
+        from epsilonPhi.core.asset.AssetMgr import CAssetMgr
+        return CAssetMgr(self).get_asset_by_name(name)
 
 
 

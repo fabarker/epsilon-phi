@@ -26,73 +26,73 @@ class CFXRate(object):
     _ds = GlobalDataSource()
 
     @staticmethod
-    def load_composite_fx_rates(region):
-        CFXRate._cache[region] = CCompositeFX.get_composite_fx_rates(region)
+    def load_composite_fx_rates(region, maturity):
+        CFXRate._cache[region] = CCompositeFX.get_composite_fx_rates(region, maturity)
 
     @staticmethod
-    def get_fx_rates_for_region(region, maturities):
+    def get_fx_rates_for_region(region, maturity):
 
-        if (region, tuple(maturities)) not in CFXRate._rate_cache.keys():
-            CFXRate.load_fx_rates_for_region(region, maturities)
-        return CFXRate._rate_cache.get((region, tuple(maturities)))
+        if (region, maturity) not in CFXRate._rate_cache.keys():
+            CFXRate.load_fx_rates_for_region(region, maturity)
+        return CFXRate._rate_cache.get((region, maturity))
 
     @staticmethod
-    def load_fx_rates_for_region(region, maturities):
+    def load_fx_rates_for_region(region, maturity):
 
         ccy_pair = 'USD/' + CFXRate._sessionMgr.get_currency_from_region(region)
-        df = CFXRate._ds.get_fx_forward_rates(ccy_pair, maturities, PriceQuote.MID.value)
+        df = CFXRate._ds.get_fx_forward_rates(ccy_pair, maturity, PriceQuote.MID.value)
         df = df[(df != 0).all(axis=1)]
-        CFXRate._rate_cache[(region, tuple(maturities))] = df.deepcopy()
+        CFXRate._rate_cache[(region, maturity)] = df.deepcopy()
 
     @staticmethod
-    def construct_fx_rates(region):
-        return CFXRate.get_fx_rates_for_region(region, '0m').resample('B').asfreq()
+    def construct_fx_rates(region, maturity):
+        return CFXRate.get_fx_rates_for_region(region, maturity).resample('B').asfreq()
 
 
     @staticmethod
-    def load_standard_fx_rate(region):
-        CFXRate._cache[region] = CFXRate.construct_fx_rates(region).get_returns()
+    def load_standard_fx_rate(region, maturity):
+        CFXRate._cache[(region, maturity)] = CFXRate.construct_fx_rates(region, maturity).get_returns()
 
     @staticmethod
-    def load_EUR_fx_rate():
+    def load_EUR_fx_rate(maturity):
 
-        DEM = CFXRate.construct_fx_rates('Germany').get_returns()
+        DEM = CFXRate.construct_fx_rates('Germany', maturity).get_returns()
         DEM.columns = ['Eurozone']
-        EUR = CFXRate.construct_fx_rates('Eurozone').get_returns()
+        EUR = CFXRate.construct_fx_rates('Eurozone', maturity).get_returns()
 
         CFXRate._cache['Eurozone'] = pd.concat((EUR[FX.EUR_START_DATE.value:],
                                                       DEM[DEM.index < FX.EUR_START_DATE.value]),
                                                      axis=0).sort_index()
 
     @staticmethod
-    def load_fx_rate(region):
+    def load_fx_rate(region, maturity):
         if region in CompositeRiskFreeRates.composite_rfr_regions:
-            CFXRate.load_composite_risk_free_rate(region)
+            CFXRate.load_composite_fx_rates(region, maturity)
         elif region.lower() in ['eurozone', 'emu', 'european union']:
-            CFXRate.load_EUR_fx_rate()
+            CFXRate.load_EUR_fx_rate(maturity)
         else:
-            CFXRate.load_standard_fx_rate(region)
+            CFXRate.load_standard_fx_rate(region, maturity)
 
     @staticmethod
-    def get_fx_for_region(region):
+    def get_fx_for_region(region, maturity):
 
-        if region not in CFXRate._cache.keys():
-            CFXRate.load_fx_rate(region)
-        return CFXRate._cache.get(region)
+        if (region, maturity) not in CFXRate._cache.keys():
+            CFXRate.load_fx_rate(region, maturity)
+        return CFXRate._cache.get((region, maturity))
 
     @staticmethod
-    def get_fx_rates_from_currency(currency):
+    def get_fx_rates_from_currency(currency, maturity):
         region = CFXRate._sessionMgr.get_region_from_currency(currency)
         if region:
-            return CFXRate.get_fx_rates_for_region(region)
+            return CFXRate.get_fx_rates_for_region(region, maturity)
         else:
             raise ValueError('Currency {} not supported'.format(currency))
 
     @staticmethod
-    def get_fx_rate_curve_from_currency(currency, type=None):
+    def get_fx_rate_curve_from_currency(currency, maturity):
         region = CFXRate._sessionMgr.get_region_from_currency(currency)
         if region:
-            return CFXRate.get_fx_rate_curve_from_region(region, type)
+            return CFXRate.get_fx_rate_curve_from_region(region, maturity)
         else:
             raise ValueError('Currency {} not supported'.format(currency))
 
@@ -203,9 +203,11 @@ class CCompositeFX(object):
 
     def __init__(self,
                  index_ticker,
+                 maturity='0m'
                  ):
 
         self.ticker = index_ticker
+        self._maturity = maturity
         self._datasource = GlobalDataSource()
         activity_panel = MSCIActivityPanel.get_activity_panel_single_index(self.ticker)
 
@@ -216,7 +218,7 @@ class CCompositeFX(object):
 
         self._activity_panel = activity_panel.copy()
         self._activity_panel.columns = activity_panel.columns.get_level_values('MSCI Region')
-        self.__load_constituent_data()
+        self.__load_constituent_data(maturity)
 
     @property
     def regions(self):
@@ -238,7 +240,7 @@ class CCompositeFX(object):
         return self._datasource.get_interest_rate_tickers(region, maturities=['ON','1m','3m'])
 
     def get_fx_rate_from_constituent_region(self, region):
-        fx = CFXRate.get_fx_for_region(self._info.loc[region].Region)
+        fx = CFXRate.get_fx_for_region(self._info.loc[region].Region, self._maturity)
         fx.columns = pd.MultiIndex.from_tuples([(region, 'FX')])
         return fx.copy()
 
@@ -287,11 +289,15 @@ class CCompositeFX(object):
         dates = self.get_constituent_region_active_dates(region)
 
         MV = self.get_constituent_region_MV(region).reindex(dates)
-        fx = self.get_fx_rate_from_constituent_region(region).reindex(dates)
+
+        if region.upper() == 'USA':
+            fx = pd.DataFrame(np.zeros(MV.shape), index=dates, columns=pd.MultiIndex.from_tuples([(region, 'FX')]))
+        else:
+            fx = self.get_fx_rate_from_constituent_region(region).reindex(dates)
 
         return pd.concat((MV, fx), axis=1).dropna(axis=0)
 
-    def __load_constituent_data(self):
+    def __load_constituent_data(self, maturity):
 
         df_ = CTimeSeries()
         for region in self.regions:
@@ -303,7 +309,7 @@ class CCompositeFX(object):
 
     def get_constituent_region_weights_and_rates(self, region):
         return ((self._panel.get(region).get('MV') / self._index_market_value).to_frame(region),
-                self._panel.get(region).get('RFR').to_frame(region))
+                self._panel.get(region).get('FX').to_frame(region))
 
     def get_constituent_region_contribution(self, region):
         wts, rts = self.get_constituent_region_weights_and_rates(region)
@@ -314,19 +320,19 @@ class CCompositeFX(object):
         panel = pd.DataFrame()
         for region in self.regions:
             panel = pd.concat((panel, self.get_constituent_region_contribution(region)), axis=1)
-        self._rfr = panel.sum(axis=1).to_frame(self.ticker)
+        self._fx = panel.sum(axis=1).to_frame(self.ticker)
 
     @staticmethod
-    def get_composite_fx_rates(index_name):
+    def get_composite_fx_rates(index_name, maturity='0m'):
 
-        _PICKLE_NAME = index_name.upper().replace(' ', '_').replace('-', '') + '_FX'
+        _PICKLE_NAME = index_name.upper().replace(' ', '_').replace('-', '') + '_FX_' + maturity
         if PickleUtils.is_pickled(_PICKLE_NAME):
             res = PickleUtils.load_pickle(_PICKLE_NAME)
             return CTimeSeries(res, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
         else:
-            rfr = CCompositeFX(index_name)
-            rfr.construct_history()
-            rate = CTimeSeries(rfr._rfr, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
+            fx = CCompositeFX(index_name, maturity)
+            fx.construct_history()
+            rate = CTimeSeries(fx._fx, ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
             PickleUtils.pickle_it(rate, _PICKLE_NAME)
             return rate
 
@@ -337,4 +343,4 @@ if __name__ == "__main__":
     from epsilonPhi.core.dataModel.enums.Composites import CompositeRiskFreeRates
 
     for region in CompositeRiskFreeRates.composite_rfr_regions:
-        rfr = CCompositeFX.get_composite_fx_rates(region)
+        rfr = CCompositeFX.get_composite_fx_rates('World', maturity='0m')

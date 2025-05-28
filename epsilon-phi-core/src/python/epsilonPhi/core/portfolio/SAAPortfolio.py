@@ -535,29 +535,33 @@ if __name__ == "__main__":
     schema = ContextCreator(
         currency='USD',
         start_date='30-Nov-1983',
-        end_date='31-Dec-2022'
+        end_date='31-Dec-2021'
     ).create_context()
 
-    asset_list = [
-        'LHGUSIN',
-        'LHYIELD',
-        'FRUS1GR',
-        'FRUS1VA',
-        'FRUSS2L',
-        'MSEXUKL',
-        'MSUTDKL',
-        'MSJPANL',
-        'MSPXJPL',
-        'MSEMKF$',
-        'SBBRUSL',
-        'CSTEVDH',
-        'CSTLNSH',
-        'CSTMNFH'
-    ]
+    import numpy as np
 
+    assets = {
+        'LHTRYIN': 40,
+        'LHYIELD_GE20': 6.5,
+        'FRUS1GR': 13.05,
+        'FRUS1VA': 14.62,
+        'FRUSS2L': 4.57,
+        'MSEXUKL': 5.22,
+        'MSUTDKL': 1.57,
+        'MSJPANL': 2.35,
+        'MSPXJPL': 1.17,
+        'MSEMKF$': 1.17,
+        'SBBRGLL': 1.512,
+        'INFRA_EQUITY': 2.268,
+        'CSTEVDH': 1.2,
+        'CSTLNSH': 2.4,
+        'CSFBMTT': 2.4,
+    }
 
-    self = SAAPortfolio.create_equal_weighted_portfolio(asset_list, context=schema)
-    self.get_assets_risk()
-    self.add_asset_by_name('MSUSAML', 0.5, 0)
-    self.add_asset_by_name('LHAGGBD', 0.5, 0)
-    self.deepcopy('same')
+    weights = np.array(list(assets.values())) / sum(list(assets.values()))
+    HR = [0, 0, 0, 0, 0, 0.7, 0.7, 0.7, 0.7, 0, 0.7, 0.7, 1, 1, 1]
+
+    self = SAAPortfolio.create_equal_weighted_portfolio(assets.keys(), context=schema)
+    self.set_weights(weights)
+    self.set_hedging_ratios(HR)
+    self.get_total_return()

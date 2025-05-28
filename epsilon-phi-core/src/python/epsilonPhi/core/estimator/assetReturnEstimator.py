@@ -25,22 +25,23 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         rx = asset.get_excess_return_df()
         y, X = rx.intersect_over_dates(factor_df)
 
-        regstats = model.regression.regress(X, y,
-                                            orthogonalize_columns=model.orthogonal_list,
-                                            normalize=normalized)
+        regstats = model.regression.regress(
+            X,
+            y,
+            orthogonalize_columns=model.orthogonal_list,
+            normalize=normalized
+        )
 
-        # if asset.get_asset_name() in CAppConfig.get_config_util().get_market_stress_beta():
-        #   mkt_factor = factor_panel.get_market_factor()
-        #   mkt_factor_index = factor_panel.get_return_factor_list().index(mkt_factor)
-
-        #   stress_betas = CAppConfig.get_config_util().get_market_stress_beta()
-        #   betas[:, mkt_factor_index] = betas[:, mkt_factor_index] * stress_betas[asset.get_asset_name()]
-        return regstats[:, 1:]
+        return pd.DataFrame(
+            regstats[:, 1:],
+            index=X.index[-regstats.shape[0]:],
+            columns=model.return_factor_list
+        )
 
     @staticmethod
     def get_risk_premium(asset):
         hist_sharpe = CAppConfig.get_BaseModel().get_return_factor_Sharpe_ratios()
-        betas = asset.get_return_betas()
+        betas = asset.get_return_betas().values
         return np.mean(betas, axis=0) * hist_sharpe.values.T * math.sqrt(asset.schema.obs_per_year)
 
     @staticmethod

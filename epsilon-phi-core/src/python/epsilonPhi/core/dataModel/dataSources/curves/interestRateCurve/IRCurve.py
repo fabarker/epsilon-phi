@@ -65,10 +65,41 @@ class IRCurve(AbstractCurve):
     def get_interest_rate_curve(self, maturities=None):
         return self.get_curve(maturities)
 
+    @staticmethod
+    def get_market_implied_forward_ois_for_region(region):
+
+        # get the curve
+        curve = IRCurve(region=region, type=['OIS Zero'])
+        df = curve.get_curve().iloc[-1].to_frame("Zero_Yield")
+        df.index.name = 'Years'
+        df = df.reset_index(drop=False)
+
+        # Compute t * z(t)
+        df["tz"] = df["Years"] * df["Zero_Yield"]
+
+        # Compute instantaneous forward rate using central differences
+        forward_rates = []
+
+        for i in range(0, len(df)):
+            if i == 0:  # Forward at first point using forward difference
+                fwd = df.iloc[i]["Zero_Yield"]
+            elif i == len(df) - 1:  # Backward difference at the last point
+                t1, tz1 = df.iloc[i - 1]["Years"], df.iloc[i - 1]["tz"]
+                t2, tz2 = df.iloc[i]["Years"], df.iloc[i]["tz"]
+                fwd = (tz2 - tz1) / (t2 - t1)
+            else:  # Central difference
+                t0, tz0 = df.iloc[i - 1]["Years"], df.iloc[i - 1]["tz"]
+                t2, tz2 = df.iloc[i + 1]["Years"], df.iloc[i + 1]["tz"]
+                fwd = (tz2 - tz0) / (t2 - t0)
+            forward_rates.append(fwd)
+
+        df["Forward_OIS"] = forward_rates
+        return df["Forward_OIS"]
+
 
 if __name__ == "__main__":
 
-    self = IRCurve(region='United States', type=['Interbank'])
-    curve = self.get_curve()
+    self = IRCurve(region='United States', type=['OIS Zero'])
+    curve = self.get_market_implied_forward_ois_for_region()
 
     np.timedelta64

@@ -1,17 +1,15 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
-from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
 from epsilonPhi.core.asset.Asset import CAsset
-from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
-from epsilonPhi.core.config.appConfig import CAppConfig
-from epsilonPhi.core.asset.AssetMgr import CAssetMgr
 from epsilonPhi.core.schema.Schema import CContext
 from typing import Optional, Union
 
 gds = GlobalDataSource()
 
+__all__ = ['CBankLoans']
+
 class CBankLoans(CAsset):
-    _ASSET_NAME = 'CSLEVLOANS'
+    _asset_name = 'CSLEVLOANS'
     _RP_TARGET  = 0.011
 
     def __init__(

@@ -6,7 +6,7 @@ from epsilonPhi.core.dataModel.dataSources.futures.Futures import Futures
 from epsilonPhi.core.timeSeries.timeSeriesMain import *
 from epsilonPhi.core.utils.TimeSeriesUtils import TimeSeriesUtils
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
-
+import datetime as dt
 
 @SingletonDecorator
 class GlobalDataSource(object):
@@ -17,6 +17,7 @@ class GlobalDataSource(object):
     # Cache Time Series Objects
     _cache_df = dict()
     _cache_ts = dict()
+    _cache_region_map = None
 
 
     def __init__(self):
@@ -182,6 +183,44 @@ class GlobalDataSource(object):
         rf = self.get_risk_free_rate_for_currency_region(foreign_currency)
         return rf.subtract_over_common_dates(rd)
 
+    def get_region_from_currency(self, currency):
+        if self._cache_region_map is None:
+            self._cache_region_map = self._session_mgr.load_currency_mapping()
+        return next(x for x in self._cache_region_map if x.code == currency).region
+
+    def get_currency_from_region(self, region):
+        if self._cache_region_map is None:
+            self._cache_region_map = self._session_mgr.load_currency_mapping()
+        return next(x for x in self._cache_region_map if x.region == region).code
+
+    def get_market_implied_forward_ois_for_region(self, region):
+        from epsilonPhi.core.dataModel.dataSources.curves.interestRateCurve.IRCurve import IRCurve
+        return IRCurve.get_market_implied_forward_ois_for_region(region)
+
+    def get_market_implied_forward_ois_for_currency(self, currency):
+        region = self.get_region_from_currency(currency)
+        return self.get_market_implied_forward_ois_for_region(region)
+
+    def get_imf_yearly_inflation_forecast_for_region(self, region):
+        from epsilonPhi.core.dataModel.dataSources.vendor.IMF import IMFQuery
+        return IMFQuery.get_region_inflation_forecast(region)
+
+    def get_imf_yearly_inflation_forecast_for_currency(self, currency):
+        region = self.get_region_from_currency(currency)
+        return self.get_imf_yearly_inflation_forecast_for_region(region)
+
+    def get_imf_forward_inflation_forecast_for_currency(self, currency):
+        ip = self.get_imf_yearly_inflation_forecast_for_currency(currency)
+        ip.index = ip.index.to_timestamp().year - dt.date.today().year
+        return ip.loc[0:]
+
+    def get_cash_rate_carry(self, foreign_currency, domestic_currency):
+        for_region = self.get_region_from_currency(foreign_currency)
+        dom_region = self.get_region_from_currency(domestic_currency)
+        f_rf = self.get_interest_rates_for_region(for_region, ['ON', '1m', '3m']).mean(axis=1)
+        d_rf = self.get_interest_rates_for_region(dom_region, ['ON', '1m', '3m']).mean(axis=1)
+        return d_rf.subtract_over_common_dates(f_rf).to_frame(foreign_currency + domestic_currency)
+
     def fx_convert_timeseries_to_currency(self, timeseries, denominated_currency, target_currency, hedge_ratio):
         return
 
@@ -257,7 +296,9 @@ if __name__ == "__main__":
     self = GlobalDataSource()
     session = self._session
 
-    uids = [19421, 19438, 23293]
+    uids = [5906]
+    res = self.get_dataframe_from_uid(5906)
+
 
     rates = pd.DataFrame()
     for uid in uids:
@@ -269,10 +310,9 @@ if __name__ == "__main__":
 
     gds = GlobalDataSource()
 
-    uk = gds.get_interest_rates_for_region('United Kingdom', '1m')
-    us = gds.get_interest_rates_for_region('United States', '1m')
-    eu = gds.get_interest_rates_for_region('Germany', '1m')
-    jp = gds.get_interest_rates_for_region('Japan', '1m')
+    uk = gds.get_market_implied_forward_ois_for_currency('GBP')
+    us = gds.get_market_implied_forward_ois_for_currency('USD')
+    eu = gds.get_market_implied_forward_ois_for_currency('EUR')
 
     df = gds.get_time_series_data_from_ticker('MSUSAM$', 'RI')
 

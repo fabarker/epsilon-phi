@@ -96,7 +96,7 @@ class CPortfolioMgr(object):
                                      ) -> None:
 
         if asset_name in self.get_asset_names():
-           self.get_asset(asset_name).set_hedge_ratio(hedge_ratio)
+           self.get_asset(asset_name).set_currency_hedge_ratio(hedge_ratio)
         # Reset the risk metrics in the portfolio
         self.portfolio.reset_properties()
 
@@ -266,7 +266,7 @@ class CPortfolioMgr(object):
         return np.asarray(total_returns)
 
     def get_asset_risk_premias(self, asset_name):
-        return self.get_asset(asset_name).get_risk_premia()
+        return self.get_asset(asset_name).get_risk_premias().flatten()
 
     def get_assets_risk_premias(self):
         assets_risk_premias = nans(self.num_assets, self.get_return_factor_number())
@@ -274,14 +274,14 @@ class CPortfolioMgr(object):
             assets_risk_premias[i] = self.get_asset(asset_name).get_risk_premias()
         return assets_risk_premias
 
-    def get_asset_total_risk_premia(self):
-        return self.get_assets_total_return() - self.get_risk_free_rate()
+    def get_asset_total_risk_premia(self, asset):
+        return sum(self.get_asset_risk_premias(asset))
 
     def get_assets_total_risk_premia(self):
         return self.get_assets_total_return() - self.get_risk_free_rate()
 
     def get_assets_total_risk_premia_(self):
-        return self.get_assets_risk_premias().sum(axis=1, keepdims=True)
+        return self.get_assets_risk_premias().sum(axis=1)
 
     def get_total_return(self):
         return (self.get_weights().T @ self.get_assets_total_return()).item()
@@ -290,7 +290,7 @@ class CPortfolioMgr(object):
         return (self.get_weights().T @ self.get_assets_risk_premias()).flatten()
 
     def get_risk_premia(self):
-        return self.get_risk_premias().sum(axis=1)
+        return sum(self.get_risk_premias())
 
     def get_asset_current_env_total_return(self, asset_name):
         return self.get_asset(asset_name).get_risk_premia_in_current_environment() + self.get_current_risk_free_rate()
@@ -299,16 +299,16 @@ class CPortfolioMgr(object):
         return self.get_assets_current_env_risk_premias().sum(axis=1) + self.get_current_risk_free_rate()
 
     def get_asset_current_env_risk_premias(self, asset_name):
-        return self.get_asset(asset_name).get_risk_premia_in_current_environment()
+        return self.get_asset(asset_name).get_risk_premias_in_current_environment()
 
     def get_assets_current_env_risk_premias(self):
         risk_premias = nans(self.num_assets, self.get_return_factor_number())
         for i, asset_name in enumerate(self.get_asset_names()):
-            risk_premias[i] = self.get_asset(asset_name).get_risk_premia_in_current_environment()
+            risk_premias[i] = self.get_asset(asset_name).get_risk_premias_in_current_environment()
         return risk_premias
 
     def get_asset_total_current_env_risk_premia(self, asset_name):
-        return self.get_asset_current_env_risk_premias(asset_name).sum(axis=1)
+        return sum(self.get_asset_current_env_risk_premias(asset_name))
 
     def get_assets_total_current_env_risk_premia(self):
         return self.get_assets_current_env_risk_premias().sum(axis=1)
@@ -320,13 +320,13 @@ class CPortfolioMgr(object):
         return self.get_simulator().get_portfolio_current_env_risk_premia()
 
     def get_current_env_risk_premia(self):
-        return self.get_assets_total_current_env_risk_premia() @ self.get_weights()
+        return (self.get_assets_total_current_env_risk_premia() @ self.get_weights()).item()
 
     def get_asset_sharpe_ratio(self, asset_name):
         if asset_name not in self.get_asset_names():
             return None
         else:
-            return self.get_asset(asset_name).get_Sharpe_ratio()
+            return self.get_asset(asset_name).get_sharpe_ratio()
 
     def get_assets_sharpe_ratios(self):
         sharpes = []
@@ -349,7 +349,7 @@ class CPortfolioMgr(object):
     def get_curr_env_sharpe_ratio(self):
         return self.get_current_env_risk_premia() / self.get_risk()
 
-    def get_current_environment_risk_premia_5yr(self):
+    def get_current_env_risk_premia_5yr(self):
         pass
 
     def get_asset_return_medium(self):
@@ -505,16 +505,16 @@ class CPortfolioMgr(object):
         return self.get_total_asset_risk_contribution() / self.get_total_variance()
 
     def get_factor_stress_tests(self):
-        return self._simulation.get_factor_stress_tests()
+        return self.get_simulator().get_factor_stress_tests()
 
     def get_factor_stress_tests_extended(self):
-        return self._simulation.get_factor_stress_tests_extended()
+        return self.get_simulator().get_factor_stress_tests_extended()
 
     def get_stress_multiplier(self):
         return self.get_simulator().get_stress_coeff_ts()
 
     def get_portfolio_var_pol(self, confidence=0.99, loss=0):
-        return self._simulation.get_portfolio_var_pol(confidence, loss)
+        return self.get_simulator().get_portfolio_var_pol(confidence, loss)
 
     def get_portfolio_var_pol_exc_ss(self, confidence=0.99, loss=0):
         return self.get_simulator().get_portfolio_var_pol_exc_ss(confidence, loss)
@@ -650,6 +650,9 @@ class CPortfolioMgr(object):
     def get_historical_beta(self):
         pass
 
+    def get_historical_risk_premia(self):
+        return np.mean(self.get_historical_excess_return_time_series()) * self.portfolio.ann_factor
+
     def get_historical_volatility(self):
         return np.std(self.get_historical_return_time_series(), ddof=1) * np.sqrt(self.portfolio.ann_factor)
 
@@ -716,8 +719,9 @@ if __name__ == "__main__":
 
 
     ptf = SAAPortfolio('portfolio', schema)
-    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
+    ptf.add_asset_by_name('MSEXUKL', 0.5, 0)
     ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
     ptf.get_weights()
+    ptf.get_risk()
     self = ptf.get_portfolio_mgr()
     ws = self.get_portfolio_wealth_projection()

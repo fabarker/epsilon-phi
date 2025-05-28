@@ -276,10 +276,10 @@ class CPortfolio(object):
         return self.get_portfolio_mgr().get_historical_excess_return_time_series()
 
     def get_historical_risk_premia(self):
-        return self.get_historical_excess_return_time_series() * self.ann_factor
+        return self.get_historical_excess_return_time_series()
 
     def get_historical_volatility(self):
-        return self.get_portfolio_mgr().get_historical_volatility() * np.sqrt(self.ann_factor)
+        return self.get_portfolio_mgr().get_historical_volatility()
 
     def get_historical_beta(self):
         return self.get_portfolio_mgr().get_historical_beta()

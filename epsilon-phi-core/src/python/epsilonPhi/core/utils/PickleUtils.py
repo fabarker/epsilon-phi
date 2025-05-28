@@ -54,6 +54,12 @@ class PickleUtils(object):
         pickle_name = factor_name + end_date + frequency
         PickleUtils.pickle_it(factor_object, pickle_name)
 
+    @staticmethod
+    def delete_pickle(pickle_id):
+        if PickleUtils.is_pickled(pickle_id):
+            sessionMgr.delete_pickle_from_database(pickle_id)
+
+
 
 
 

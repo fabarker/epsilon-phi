@@ -316,7 +316,7 @@ class CSlice(pd.Series):
         self_rtns = self.get_returns(self.returns_type)
         backfill_rtns = backfill.get_returns(self.returns_type)
 
-        backfilled_rtns = self_rtns._backfill_returns(backfill_rtns)
+        backfilled_rtns = self_rtns.backfill_returns(backfill_rtns)
         backfilled_lvls = backfilled_rtns.get_levels()
 
         rescaled = backfilled_lvls * (self.loc[self.first_valid_index()] / backfilled_lvls.loc[self.first_valid_index()])

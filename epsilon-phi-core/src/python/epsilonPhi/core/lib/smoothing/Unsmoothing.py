@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-from typing import Optional
+from typing import Optional, Union
 
 class Geltner:
 
-    def __init__(self, returns: Optional[pd.Series, pd.DataFrame]):
+    def __init__(self, returns: Optional[Union[pd.Series, pd.DataFrame]]):
         self._returns = returns.dropna()
 
     @staticmethod
@@ -16,7 +16,7 @@ class Geltner:
         returns = np.array(returns)
 
         # clean nans
-        returns = returns[~np.isnan(returns)]
+        returns = pd.Series(returns[~np.isnan(returns)])
 
         # current auto-correlation
         current_rho = returns.autocorr(lag=1)

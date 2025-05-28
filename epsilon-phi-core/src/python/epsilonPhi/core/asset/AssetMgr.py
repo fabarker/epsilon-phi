@@ -1,7 +1,11 @@
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from abc import ABC, abstractmethod
+from epsilonPhi.core.dataModel.enums.Asset import CustomAssets
 import pandas as pd
+
+from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
+
 
 class CAssetMgrInf(ABC):
     def __init__(self):
@@ -61,7 +65,7 @@ class CAssetMgr(CAssetMgrInf):
         else:
             ts_ = CSlice(df_, ts_type=df_.type, returns_type=df_.returns_type)
 
-        ts_.insert_dates(schema.dates)
+        # Comment this out due to issues casting assets ts_.insert_dates(schema.dates)
         if df_.type == TimeSeriesType.LEVELS:
            return ts_.get_periodic_levels(schema.frequency)
         elif df_.type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
@@ -69,7 +73,26 @@ class CAssetMgr(CAssetMgrInf):
         else:
             raise ValueError('Error - unknown time series type')
 
+    def get_asset_type_from_name(self, asset_name):
+        pass
+
+    def get_custom_asset_class(self, asset_name):
+        pass
+
+    def load_custom_proxy(self, asset_name):
+        from epsilonPhi.core.asset.proxies import get_proxy_object_from_name
+        klass = get_proxy_object_from_name(asset_name)
+        asset =  klass(self._schema)
+        key = self.get_asset_key(asset_name)
+        CAssetMgr._cache[key] = asset.deepcopy()
+
     def load_asset_by_name(self, asset_name):
+        if CustomAssets.is_custom_asset(asset_name):
+           self.load_custom_proxy(asset_name)
+        else:
+           self.load_standard_asset(asset_name)
+
+    def load_standard_asset(self, asset_name):
 
         from epsilonPhi.core.asset.Asset import CAsset
         df_ = self.get_dataframe_for_asset(asset_name)
@@ -183,15 +206,13 @@ if __name__ == "__main__":
 
     from epsilonPhi.core.schema.Schema import ContextCreator
 
-    schema = ContextCreator(currency='GBP',
-                            start_date='31-Dec-1999',
-                            end_date='31-Dec-2022').create_context()
+    schema = ContextCreator(
+        currency='USD',
+        start_date='30-Nov-1983',
+        end_date='31-Dec-2022'
+    ).create_context()
 
     assetMgr = CAssetMgr(schema)
-    asset = assetMgr.get_asset_by_name('MSUSAML')
-
-    from epsilonPhi.core.dataModel.enums.TimeSeries import ReturnsType
-    asset_GBP_LOG = asset.get_returns(ReturnsType.LOG)
-    asset_GBP_LOG_SIMPLE = asset_GBP_LOG.get_returns(ReturnsType.SIMPLE)
-
-
+    asset = assetMgr.get_asset_by_name('FRUSS2L')
+    asset.set_currency_hedge_ratio(0)
+    res = asset.get_return_betas()

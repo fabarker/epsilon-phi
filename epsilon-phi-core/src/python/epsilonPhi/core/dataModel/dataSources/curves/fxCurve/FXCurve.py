@@ -156,7 +156,7 @@ class FXCurve(object):
         assert np.all(maturity_date >= pricing_dates[1:]), 'Error - maturity date must fall on or after end pricing date'
         prices_t = self.get_forward_prices(bbid, pricing_dates[1:]  , maturity_date, quote)
         prices_t = prices_t.reset_index(level='maturity_dates', drop=True).sort_index()
-        df_ = pd.DataFrame(np.log(prices_t.values / prices_s.values), index=prices_t.index, columns=[bbid])
+        df_ = CTimeSeries(np.log(prices_t.values / prices_s.values), index=prices_t.index, columns=[bbid])
         return df_.sort_index()
 
     def hedge_time_series_from_local(self, time_series, from_currency, to_currency, hedge_ratio, hedge_frequency=Frequency.BUSINESS_MONTHLY):
@@ -198,7 +198,7 @@ class FXCurve(object):
         fx_conversion = self.unhedged_time_series(time_series, denominated_currency, target_currency)
         fx_conversion = fx_conversion.get_returns(ReturnsType.LOG)
         fwds_exp_den = current_hedge_ratio * self.get_forward_contract_return(exposure_currency + denominated_currency, lvls.dates, maturity_date)
-        fwds_exp_tar = target_currency * self.get_forward_contract_return(exposure_currency + target_currency, lvls.dates, maturity_date)
+        fwds_exp_tar = target_hedge_ratio * self.get_forward_contract_return(exposure_currency + target_currency, lvls.dates, maturity_date)
         fx_conversion = fx_conversion.addition_over_common_dates(fwds_exp_den).subtract_over_common_dates(fwds_exp_tar)
         return fx_conversion.get_returns(time_series.returns_type).to_time_series_type(time_series.type)
 
@@ -376,9 +376,28 @@ class FXCurve(object):
 
 if __name__ == "__main__":
 
+    curve = FXCurve()
+    fx = curve.get_fx_curve_single_currency('EMMUSD')
+
+    ccys = ['AAP',
+            'ACW',
+            'AEM',
+            'ACA',
+            'EFE',
+            'EEP',
+            'ELA',
+            'EME',
+            'EMA',
+            'EMM',
+            'ERP',
+            'EXU',
+            'PAC',
+            'PXJ',
+            'WLD']
 
     curve = FXCurve()
-    fx = curve.get_fx_curve_single_currency('USD/ARS')
+    for ccy in ccys:
+        fx = curve.get_fx_curve_single_currency('EMMUSD')
 
 
 

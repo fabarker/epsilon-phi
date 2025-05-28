@@ -10,8 +10,11 @@ from typing import Optional, Union
 
 gds = GlobalDataSource()
 
+__all__ = ['CIncomeEquity']
+
+
 class CIncomeEquity(CAsset):
-    _ASSET_NAME = 'INCOME_EQUITY'
+    _asset_name = 'INCOME_EQUITY'
     _PROXIES = [('ACEMLPIT', .50), ('MSWDIF', .50)]
 
     def __init__(

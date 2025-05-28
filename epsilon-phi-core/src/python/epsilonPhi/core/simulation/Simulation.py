@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 class HullWhiteDynamicMean(object):
+    rfr = 0.02
 
     def __init__(self):
         pass
@@ -9,8 +10,11 @@ class HullWhiteDynamicMean(object):
     def simulate(self):
         pass
 
-    def get_forward_curve(self):
+    def get_forward_curve(self) -> list:
         pass
+
+    def get_mean_path(self):
+        return self.get_forward_curve() + [self.rfr] * 15
 
     def extract_shocks(self):
         pass

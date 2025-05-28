@@ -1,11 +1,16 @@
 from imfpy import searches, retrievals, tools
 from imfpy.retrievals import dots
+from weo import download, WEO, all_releases
+from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 import requests
 import pandas as pd
 import numpy as np
 import datetime as dt
+from weo import download, WEO
 
-mapper_df = pd.read_excel(r'/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/templates/IMF Data Mapper.xlsx', sheet_name='IMF Mapping', index_col=0)
+#mapper_df = pd.read_excel(r'/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/templates/IMF Data Mapper.xlsx', sheet_name='IMF Mapping', index_col=0)
+mgr = SessionMgr()
+session = mgr.getSessionFactory()
 
 class IMFQuery(object):
     _BASE_URL = r'http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/IFS/'
@@ -65,33 +70,32 @@ class IMFQuery(object):
             raise ValueError('Error {} not suppported'.format(ticker))
 
     @staticmethod
-    def get_database_region(region):
-        return mapper_df.loc[region].Region
-
-    @staticmethod
     def get_currency_iso(region):
-        return mapper_df.loc[region].Currency
+        return mgr.get_currency_from_region(region)
 
     @staticmethod
-    def get_country_code_from_name(country_name):
-        res = searches.country_search(country_name).get('Country Code', pd.DataFrame())
-        if res.size == 1:
-           return res.values[0]
-        else:
-           return None
+    def get_country_code_from_name(region):
+        return mgr.get_imf_code_from_region(region)
 
     @staticmethod
     def get_all_country_codes():
         return searches.country_codes().set_index('Country', drop=True)
 
     @staticmethod
+    def get_region_inflation_forecast(region):
+        latest_release = all_releases()[-1]
+        path, url = download(latest_release[0], latest_release[1])
+        iso3 = WEO(path).iso_code3(region)
+        return WEO(path).inflation().get(iso3) / 100
+
+    @staticmethod
     def get_region_interest_rates(region):
 
-        code = mapper_df.loc[region].get('Country Code')
+        code = IMFQuery.get_country_code_from_name(region)
         currency = IMFQuery.get_currency_iso(region)
-        db_region = IMFQuery.get_database_region(region)
 
         year = str(dt.date.today().year)
+
         url = 'http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/IFS/M.{}.FPOLM_PA+FID_PA+FITB_PA.?startPeriod=1900&endPeriod={}'.format(code, year)
         data = requests.get(url).json()
         series_list = data.get('CompactData').get('DataSet').get('Series')
@@ -117,7 +121,7 @@ class IMFQuery(object):
                     new_df.columns = ['date', dbticker]
                     new_df = new_df.set_index('date', drop=True)
                     new_df.index = pd.to_datetime([x + '-01' for x in new_df.index])
-                    col = (dbticker, db_region + ' ' + name, db_region, 'Interest Rate', 'IMF', 'IMF', s.get('@INDICATOR'), currency, mat, type, 'IR')
+                    col = (dbticker, region + ' ' + name, region, 'Interest Rate', 'IMF', 'IMF', s.get('@INDICATOR'), currency, mat, type, 'IR')
                     new_df.columns = pd.MultiIndex.from_tuples([col])
 
                     df_ = pd.concat((df_, new_df), axis=1)
@@ -128,20 +132,10 @@ class IMFQuery(object):
 
 if __name__ == "__main__":
 
-    import time
-    from epsilonPhi.core.asset.proxies.RiskFreeRate import MSCIActivityPanel
-    panel = MSCIActivityPanel.get_activity_panel_single_index('ACWI')
-    regions = panel.columns.get_level_values('Region')
-
-    rfrs = pd.DataFrame()
-    failed = list()
-
+    regions = ['United States']
     for region in regions:
-        imf_region = mapper_df.reset_index(drop=False).set_index('Region').loc[region].Country
         print(region)
-
-        time.sleep(5)
-        rfr = IMFQuery.get_region_interest_rates(region)
+        rfr = IMFQuery.get_region_inflation_forecast(region)
         rfrs = pd.concat((rfrs, rfr), axis=1)
     rfrs.to_clipboard()
 

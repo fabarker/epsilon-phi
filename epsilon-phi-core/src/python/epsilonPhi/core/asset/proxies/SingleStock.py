@@ -2,6 +2,8 @@ from epsilonPhi.core.asset.Asset import CAsset
 from epsilonPhi.core.schema.Schema import CContext
 from typing import Optional
 
+__all__ = ['CSingleStock']
+
 class CSingleStock(CAsset):
 
     def __init__(

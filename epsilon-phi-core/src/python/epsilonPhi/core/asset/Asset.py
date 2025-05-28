@@ -107,6 +107,15 @@ class CAsset(CAssetInf, CSlice):
     def set_weight(self, weight):
         self._weight = float(weight)
 
+    def get_asset_params(self):
+        return {
+            'denominated_currency': self.denominated_currency,
+            'exposure_currency': self.exposure_currency,
+            'ts_hedge_ratio': self._ts_hedge_ratio,
+            'returns_type': self._returns_type,
+            'ts_type': self._type,
+        }
+
 
     ##################### Asset risk free rate ###########################
 
@@ -180,7 +189,7 @@ class CAsset(CAssetInf, CSlice):
         )
 
         # Add the asset we want the current environ risk premia for
-        ptf.add_asset(self, 1, self._hedge_ratio)
+        ptf.add_asset(self.deepcopy(), 1, self._hedge_ratio)
 
         # Get the stressed returns panel
         returns_panel = ptf.get_stressed_returns_panel()
@@ -224,7 +233,7 @@ class CAsset(CAssetInf, CSlice):
             )
 
             # Add the asset we want the current environ risk premia for
-            ptf.add_asset(self, 1, self._hedge_ratio)
+            ptf.add_asset(self.deepcopy(), 1, self._hedge_ratio)
 
             # Get the current environment risk premia from simulation module
             self._risk_premias_in_curr_env = ptf.get_current_env_risk_premias()
@@ -312,7 +321,7 @@ class CAsset(CAssetInf, CSlice):
         )
 
         # Add the asset we want the current environ risk premia for
-        ptf.add_asset(self, 1, self._hedge_ratio)
+        ptf.add_asset(self.deepcopy(), 1, self._hedge_ratio)
         return ptf.get_portfolio_simulated_returns_panel()
 
     def brownian_bridge(self):
@@ -326,7 +335,7 @@ if __name__ == "__main__":
 
     gds = GlobalDataSource()
 
-    df = gds.get_time_series_data_from_ticker('S&PCOMP','RI')
+    df = gds.get_time_series_data_from_ticker('MSWRLDL','RI')
     rtns = df.get_returns()
 
     from epsilonPhi.core.schema.Schema import ContextCreator

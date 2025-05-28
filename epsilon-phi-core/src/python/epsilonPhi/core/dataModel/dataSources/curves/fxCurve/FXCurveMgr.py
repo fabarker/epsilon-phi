@@ -20,6 +20,7 @@ class FXCurveManager(object):
     _cached_pairs = list()
 
     _fx_curve_cache = dict()
+    _carry_cache = dict()
 
     _sessionMgr = SessionMgr()
     _session = SessionMgr().getSessionFactory()
@@ -246,6 +247,9 @@ class FXCurveManager(object):
 
     def get_xUSD_carry(self, currency):
 
+        if currency in self._carry_cache.keys():
+            return self._carry_cache[currency]
+
         from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
         gds = GlobalDataSource()
 
@@ -253,20 +257,21 @@ class FXCurveManager(object):
             self._construct_composite_forward_rates(currency)
 
         # Construct the regions forward rates from interest rate carry and index implied spot rates
-        subregion = self._sessionMgr.get_region_from_currency(currency)
-        f_rf = gds.get_interest_rates_for_region(subregion, ['ON', '1m', '3m']).mean(axis=1)
-        d_rf = gds.get_interest_rates_for_region('United States', ['ON', '1m', '3m']).mean(axis=1).resample('B').asfreq()
-        carry = d_rf.subtract_over_common_dates(f_rf).to_frame(currency)
+        carry = gds.get_cash_rate_carry(currency, 'USD')
 
         # Get the carry from the database, if it exists, we use it where data is available
         fwd_carry = gds.get_fx_carry([currency + 'USD'], '1m', 'mid')
-        if fwd_carry.size > 0:
+
+        EXCLUSION_LIST = ['ARS', 'BRL', 'EGP', 'IDR', 'JOD', 'RUB', 'TRY']
+        if fwd_carry.size > 0 and currency not in EXCLUSION_LIST:
             fwd_carry.columns = carry.columns
             fx_carry = pd.concat((carry[carry.index < fwd_carry.index.min()],
                                       fwd_carry), axis=0).sort_index()
         else:
             fx_carry = carry.copy()
             fx_carry.columns = carry.columns
+
+        self._carry_cache[currency] = fx_carry.copy()
         return fx_carry.copy()
 
     def _construct_composite_forward_rates(self, bbid, provider, pricing_location):
@@ -279,7 +284,7 @@ class FXCurveManager(object):
         if not self.is_composite_currency(currency):
             raise ValueError('Error - currency {} is not a defined composite fx'.format(currency))
 
-        region = self._sessionMgr.get_region_from_currency(currency)
+        region = gds.get_region_from_currency(currency)
         currency_activity = MSCIActivityPanel.get_activity_panel_single_index(region)
         unique_currencies = np.unique(currency_activity.columns.get_level_values('Currency'))
 
@@ -316,7 +321,8 @@ class FXCurveManager(object):
         # Get the 1m forwards
         fwd = spt.multiply_over_common_dates(np.exp(fx_carry.to_frame('carry') * (1 / 12)))
         fwd.set_attribute_single('maturity', '1m')
-        fwd[fwd.columns.copy().set_levels(['3m'], level='maturity')] = spt.values + 3 * (fwd.values - spt.values)
+        fwd_3m = spt.multiply_over_common_dates(np.exp(fx_carry.to_frame('carry') * 0.25))
+        fwd[fwd.columns.copy().set_levels(['3m'], level='maturity')] = fwd_3m
         curve_df = spt.concat(fwd)
 
         rvs_curve = self.reverse_fx_curve(curve_df)
@@ -350,13 +356,13 @@ class FXCurveManager(object):
             exposure_currency = 'EUR'
 
         q = self._session.query(EquityIndexSpec.ticker).filter(EquityIndexSpec.exposure_currency == exposure_currency,
-                                                                  EquityIndexSpec.denominated_currency == denominated_currency,
-                                                                  EquityIndexSpec.region == region,
-                                                                  EquityIndexSpec.provider == 'MSCI',
-                                                                  not_(EquityIndexSpec.name.like('%Hedge%')),
-                                                                  not_(EquityIndexSpec.name.like('%Hedged%')),
-                                                                  not_(EquityIndexSpec.name.like('%Growth%')),
-                                                                  not_(EquityIndexSpec.name.like('%Value%')))
+                                                               EquityIndexSpec.denominated_currency == denominated_currency,
+                                                               EquityIndexSpec.region == region,
+                                                               EquityIndexSpec.provider == 'MSCI',
+                                                               not_(EquityIndexSpec.name.like('%Hedge%')),
+                                                               not_(EquityIndexSpec.name.like('%Hedged%')),
+                                                               not_(EquityIndexSpec.name.like('%Growth%')),
+                                                               not_(EquityIndexSpec.name.like('%Value%')))
         if denominated_currency == 'USD':
             q = q.filter(EquityIndexSpec.ticker.like('%$'))
         elif exposure_currency == denominated_currency:
@@ -407,6 +413,14 @@ if __name__ == "__main__":
 
     mgr = FXCurveManager()
 
-    currency = 'WLD'
-    curve = mgr.get_msci_composite_xUSD_fwd_rates('WLD')
+    gds = GlobalDataSource()
+
+    gds.get_interest_rates_for_region('Brazil', ['ON', '1m', '3m']).to_clipboard()
+
+    cash_carry = gds.get_cash_rate_carry('TRY', 'USD')
+    carry = gds.get_fx_carry('TRY/USD', '1m', 'mid')
+    pd.concat((cash_carry, carry), axis=1).dropna().to_clipboard()
+
+
+    curve = mgr._get_regional_equity_index('VEB', 'USD')
 

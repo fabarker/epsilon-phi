@@ -347,11 +347,21 @@ if __name__ == "__main__":
 
 
 
-    ticker = ['ARGPESO']
-    fields = ['X', 'ER']
+
+    rates = [
+   'USDSFON', 'GBPSOON', 'EUESTON', 'CHFSAON', 'CADCOON', 'AUDAOON',
+   'USDSF1Y', 'GBPSO1Y', 'EUEST1Y', 'CHFSA1Y', 'CADCO1Y', 'AUDAO1Y',
+   'USDSF2Y', 'GBPSO2Y', 'EUEST2Y', 'CHFSA2Y', 'CADCO2Y', 'AUDAO2Y',
+   'USDSF3Y', 'GBPSO3Y', 'EUEST3Y', 'CHFSA3Y', 'CADCO3Y', 'AUDAO3Y',
+   'USDSF4Y', 'GBPSO4Y', 'EUEST4Y', 'CHFSA4Y', 'CADCO4Y', 'AUDAO4Y',
+   'USDSF5Y', 'GBPSO5Y', 'EUEST5Y', 'CHFSA5Y', 'CADCO5Y', 'AUDAO5Y'
+    ]
+
+    fields = ['X']
 
     from_date = datetime.date(year=1962, month=12, day=31)
-    frame = pyDatastream.fetch(ticker, fields, from_date=from_date, frequency='D')
+    frame = pyDatastream.fetch(rates, fields, from_date=from_date, frequency='D')
+    frame.dropna().unstack(level=0).to_clipboard()
 
 
     from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg

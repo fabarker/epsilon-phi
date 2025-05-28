@@ -104,6 +104,9 @@ class SessionMgr(object):
     def get_region_from_currency(self, currency):
         return self.getSessionFactory().query(CurrencyMapper.region).filter(CurrencyMapper.code == currency.upper()).scalar()
 
+    def load_currency_mapping(self):
+        return self.getSessionFactory().query(CurrencyMapper).all()
+
     def is_EURO_legacy(self, currency):
         return self.getSessionFactory().query(CurrencyMapper.EUR_legacy).filter(
             CurrencyMapper.code == currency.upper()).scalar()
@@ -208,6 +211,7 @@ class SessionMgr(object):
         else:
            return q.first()
 
+
     def get_time_series_currency(self, ticker_uid):
 
         if isinstance(ticker_uid, str):
@@ -215,6 +219,14 @@ class SessionMgr(object):
         else:
            spec = self.get_time_series_spec_from_uid(ticker_uid)
         return spec.denominated_currency, spec.exposure_currency, spec.hedge_ratio
+
+    def get_imf_code_from_region(self, region):
+        return self.getSessionFactory().query(CurrencyMapper.code_imf).filter(
+            CurrencyMapper.region == region).scalar()
+
+    def get_imf_code_from_currency(self, currency):
+        return self.getSessionFactory().query(CurrencyMapper.code_imf).filter(
+            CurrencyMapper.currency == currency).scalar()
 
     def get_factor_ticker(self, factor_mnemonic, region=None, universe=None, provider=None):
         q = self.getSessionFactory().query(FactorSpec.ticker).filter(FactorSpec.factor == factor_mnemonic)

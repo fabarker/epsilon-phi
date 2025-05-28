@@ -1,12 +1,16 @@
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice
 import numpy as np
+import datetime as dt
 import math
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 
 
 class CFactor(CSlice):
+
+    SHARPE_END_DATE = dt.date(year=2018, month=12, day=31)
+
     def __init__(self,
                  data=None,
                  name=None,
@@ -43,10 +47,10 @@ class CFactor(CSlice):
         return self.__class__(*args, **kwargs)
 
     def get_historical_risk_premia(self):
-        return np.mean(self.values) * math.sqrt(self.obs_per_year)
+        return np.mean(self.values) * self.obs_per_year
 
     def get_historical_Sharpe(self):
-        return np.mean(self.values) / np.std(self.values, ddof=1) * math.sqrt(self.obs_per_year)
+        return np.mean(self[:CFactor.SHARPE_END_DATE].values) / np.std(self[:CFactor.SHARPE_END_DATE].values, ddof=1) * math.sqrt(self.obs_per_year)
 
     def get_historical_volatility(self):
         return np.std(self.values, ddof=1) * math.sqrt(self.obs_per_year)
