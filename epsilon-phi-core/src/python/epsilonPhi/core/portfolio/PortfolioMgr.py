@@ -358,6 +358,12 @@ class CPortfolioMgr(object):
     def get_medium_return(self):
         pass
 
+    def get_assets_return_betas(self):
+        betas = nans(self.num_assets, self.get_return_factor_number())
+        for i, asset_name in enumerate(self.get_asset_names()):
+            betas[i] = self.get_asset(asset_name).get_return_betas().values
+        return betas
+
     def get_return_betas(self):
         risk_premia = self.get_risk_premias()
         factor_sharpes = np.array(self._context.get_return_factors_sharpe_ratios()).flatten()
@@ -724,4 +730,4 @@ if __name__ == "__main__":
     ptf.get_weights()
     ptf.get_risk()
     self = ptf.get_portfolio_mgr()
-    ws = self.get_portfolio_wealth_projection()
+    ws = self.get_assets_return_betas()

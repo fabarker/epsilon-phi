@@ -23,7 +23,8 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         factor_df = asset_in_schema_currency.schema.get_return_factors_panel()
 
         rx = asset.get_excess_return_df()
-        y, X = rx.intersect_over_dates(factor_df)
+        y, X = rx.intersect_over_date_range(factor_df)
+        assert np.all(y.index == X.index), 'Error - date mismatch in regression'
 
         regstats = model.regression.regress(
             X,
@@ -34,7 +35,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
         return pd.DataFrame(
             regstats[:, 1:],
-            index=X.index[-regstats.shape[0]:],
+            index=factor_df.index[-regstats.shape[0]:],
             columns=model.return_factor_list
         )
 
@@ -42,7 +43,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
     def get_risk_premium(asset):
         hist_sharpe = CAppConfig.get_BaseModel().get_return_factor_Sharpe_ratios()
         betas = asset.get_return_betas().values
-        return np.mean(betas, axis=0) * hist_sharpe.values.T * math.sqrt(asset.schema.obs_per_year)
+        return betas * hist_sharpe.values.T * math.sqrt(asset.schema.obs_per_year)
 
     @staticmethod
     def get_excess_return_timeseries(asset):

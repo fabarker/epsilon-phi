@@ -261,6 +261,9 @@ class CAsset(CAssetInf, CSlice):
         return (self.get_risk_premia_in_current_environment() + self.get_alpha()) / self.get_volatility()
 
     def get_return_betas(self, hedging_ratio=None, normalized=True):
+        return self.get_rolling_return_betas(hedging_ratio, normalized).mean(axis=0)
+
+    def get_rolling_return_betas(self, hedging_ratio=None, normalized=True):
         return EstimationMgr.get_return_betas(self, hedging_ratio or self.hedging_ratio, normalized=normalized)
 
     def get_return_betas_not_normalized(self, hedging_ratio=None):
@@ -343,18 +346,10 @@ if __name__ == "__main__":
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2024').create_context()
 
-    asset = CAsset(exposure_currency='USD',
-                  denominated_currency='USD',
-                  schema=schema,
-                  data=rtns,
-                  ts_hedge_ratio=0,
-                  returns_type=rtns.returns_type,
-                  ts_type=rtns.type
-                  )
+    asset = schema.get_asset_from_name('MSEXUKL')
+    asset.set_currency_hedge_ratio(0.7)
 
-    asset.set_currency_hedge_ratio(0.5)
-    asset.get_risk_premias_in_current_environment()
-    asset.deepcopy()
+    asset.get_risk_premia()
 
 
 

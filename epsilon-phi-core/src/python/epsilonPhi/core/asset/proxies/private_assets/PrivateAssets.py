@@ -4,6 +4,7 @@ from epsilonPhi.core.schema.Schema import CContext
 from typing import Optional
 import numpy as np
 import datetime as dt
+import math
 
 __all__ = ['CPrivateAsset']
 
@@ -63,7 +64,9 @@ class CPrivateAsset(CAsset):
                 'frequency': self._pme.frequency}
 
     def get_return_betas(self, hedging_ratio=None, normalized=True):
-        raise Exception("Not supported for private assets")
+        rp = self.get_risk_premias()
+        hist_sharpe =  np.array(self._schema.get_return_factors_sharpe_ratios()).flatten()
+        return rp / hist_sharpe / math.sqrt(self._schema.frequency.obs_per_year())
 
     def get_excess_return_df(self, from_date=None, to_date=None):
         raise Exception("Not supported for private assets")
@@ -163,7 +166,7 @@ if __name__ == "__main__":
     ).create_context()
 
     tt = CPrivateAsset(schema, 'MSWRLD$', 'PE_BUYOUT')
-    rp_pme = tt.get_data_length()
+    rp_pme = tt.get_return_betas()
 
 
 

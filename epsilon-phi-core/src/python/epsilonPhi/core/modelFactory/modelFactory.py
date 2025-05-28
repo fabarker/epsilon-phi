@@ -16,6 +16,7 @@ class BaseModel(object):
     __DEFAULT_RISK_FACTORS = FACTOR.get_default_risk_factor_list()
     __DEFAULT_RETURN_FACTORS = FACTOR.get_default_return_factor_list()
     __DEFAULT_END_DATE = dt.date(year=2022, month=12, day=31)
+    __DEFAULT_SHARPE_FACTOR_END_DATE = dt.date(year=2018, month=12, day=31)
     __DEFAULT_FREQUENCY = Frequency.BUSINESS_MONTHLY
 
     def __init__(self,
@@ -181,7 +182,7 @@ class BaseModel(object):
         if orthogonalized:
             df_ = self.factor_panels.get_factors_df(self.return_factor_list)
 
-            X = df_.get(np.setdiff1d(self.return_factor_list, factor_name))
+            X = df_.get(np.setdiff1d(self.return_factor_list, self.orthogonal_list))
             y = self.factor_panels.get_factor(factor_name).select_subset_dates(X.index)
             return self.regression.orthorgonalize(X, y)
         return self.factor_panels.get_factor(factor_name)

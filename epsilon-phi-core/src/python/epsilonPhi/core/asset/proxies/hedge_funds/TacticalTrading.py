@@ -10,7 +10,7 @@ gds = GlobalDataSource()
 __all__ = ['CTacticalTrading']
 
 class CTacticalTrading(CAsset):
-    _ASSET_NAME = 'CSFBMTT'
+    _asset_name = 'CSFBMTT'
     _MF = 'CSTMNFH'
     _GM = 'CSTGLMH'
 
@@ -31,7 +31,7 @@ class CTacticalTrading(CAsset):
         mf = CTacticalTrading.get_managed_futures_time_series(schema)
         gm = CTacticalTrading.get_global_macro_time_series(schema)
         res = 0.5 * mf.addition_over_common_dates(gm)
-        res.name = (CTacticalTrading._ASSET_NAME, 'RI')
+        res.name = (CTacticalTrading._asset_name, 'RI')
         return res
 
     @staticmethod

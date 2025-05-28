@@ -178,8 +178,7 @@ class Regression(object):
         """
 
         self._reg.fit(X, y)
-        predictions = self.predict(X)
-        residuals = y - predictions
+        residuals = y - X @ self._reg.coef_
         return residuals
 
     @property
@@ -245,7 +244,7 @@ class Regression(object):
         copy_df = df.copy()
         cols = np.intersect1d(columns, copy_df.columns)
         for col in cols:
-            copy_df.loc[:, col] = self.residuals(copy_df.loc[:, np.setdiff1d(copy_df.columns, col)], copy_df.loc[:, col])
+            copy_df.loc[:, col] = self.orthorgonalize(copy_df.loc[:, np.setdiff1d(copy_df.columns, columns)], copy_df.loc[:, col])
         return copy_df
 
     @staticmethod

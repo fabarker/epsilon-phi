@@ -737,8 +737,13 @@ class SAABootstrapper(AbstractBootstrapper):
 
     def get_current_environment_indicator(self):
         if self._curr_env_ind is None:
-           path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
-           cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
+
+           try:
+              path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
+              cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
+           except:
+              path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
+              cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
            #curr_env_ind = GlobalDataSource().get_time_series_data_from_ticker(self._schema.risk_free_rate_ticker)
            #curr_env_ind = curr_env_ind[self._schema.start_date: self._schema.end_date] / 100
            #self._curr_env_ind = curr_env_ind[self.sim_start_date:self.sim_end_date]
@@ -1165,10 +1170,21 @@ if __name__ == "__main__":
     asset = schema.get_risk_free_rate_asset()
     self = SAABootstrapper(schema)
     bs_indicies = self.get_bootstrap_indicies()
+
     ip = self.prepare_inflation_paths(bs_indicies)
 
+    # Over the next year
+    ny = pd.DataFrame(np.prod(1 + ip._panel[1:13, :], axis=0) - 1).describe()
 
+    # Long term
+    lt = pd.DataFrame(np.prod(1 + ip._panel[-12:, :], axis=0) - 1).describe()
 
+    inf = schema.get_inflation_rate_asset()
+    idx = self.get_current_environment_indicator()
+
+    curr_vol = inf.iloc[idx.values.flatten().astype(bool)].std(ddof=1) * np.sqrt(12)
+    unco_vol = inf.std(ddof=1) * np.sqrt(12)
+    print(unco_vol/curr_vol)
 
 
 

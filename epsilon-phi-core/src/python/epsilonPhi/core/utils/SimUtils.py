@@ -1,3 +1,4 @@
+from epsilonPhi.core.dataModel.enums.Rates import RateType
 from epsilonPhi.core.schema.Schema import ContextCreator
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 import numpy as np
@@ -10,6 +11,78 @@ from sklearn.linear_model import LinearRegression
 class SimulationHelper:
 
     @staticmethod
+    def get_inflation_mu_path(
+            forward_rates,
+            r_star,
+            dt,
+            T,
+            convergence_target=0.95,
+            convergence_years=5,
+    ):
+
+        rend = forward_rates[-1]
+        a_decay = -np.log(1 - convergence_target) / convergence_years
+
+        yearly_years = np.arange(0, T + 1)
+        start_decay = len(forward_rates) - 2
+        decay_years = yearly_years[start_decay + 1:]
+        mu_decay = rend * np.exp(-a_decay * (decay_years - start_decay)) + r_star * (
+                    1 - np.exp(-a_decay * (decay_years - start_decay)))
+        mu_yearly = np.concatenate([forward_rates, mu_decay])
+
+        # Step 1: Convert yearly % returns to log returns
+        log_returns = np.log(1 + mu_yearly)  # shape (N,)
+
+        # Step 2: Construct log cumulative return
+        log_cumulative = np.cumsum(log_returns)  # shape (N,)
+
+        # Step 3: Fit spline over actual years (0, 1, 2, ..., T)
+        years = np.arange(len(log_cumulative)) - 1
+        spline = CubicSpline(years, log_cumulative, bc_type='natural')
+
+        # Step 4: Evaluate at fine grid and convert back to monthly % returns
+        monthly_time = np.array(range(-int(1 / dt), T * int(1 / dt))) * dt
+        log_cum_interp = spline(monthly_time)
+        mu_vals = np.exp(np.diff(log_cum_interp)) - 1
+
+        dmu_dt_vals = np.diff(mu_vals) / dt
+        dmu_dt_vals = np.append(dmu_dt_vals, dmu_dt_vals[-1])
+
+        mu_vals = mu_vals[monthly_time[1:] >= 0]
+        dmu_dt_vals = dmu_dt_vals[monthly_time[1:] >= 0]
+
+        return mu_vals, dmu_dt_vals
+
+    @staticmethod
+    def get_rfr_mu_path(
+            forward_rates,
+            r_star,
+            dt,
+            T,
+            convergence_target=0.95,
+            convergence_years=5,
+    ):
+
+        rend = forward_rates[-1]
+        a_decay = -np.log(1 - convergence_target) / convergence_years
+
+        yearly_years = np.arange(0, T + 1)
+        start_decay = len(forward_rates) - 1
+        decay_years = yearly_years[start_decay + 1:]
+        mu_decay = rend * np.exp(-a_decay * (decay_years - start_decay)) + r_star * (
+                    1 - np.exp(-a_decay * (decay_years - start_decay)))
+        mu_yearly = np.concatenate([forward_rates, mu_decay]) * dt
+
+        mu_spline = CubicSpline(yearly_years, mu_yearly, bc_type='natural')
+        time = np.linspace(0, T, int(T / dt))
+        mu_vals = mu_spline(time)
+        dmu_dt_vals = mu_spline(time, 1)
+        return mu_vals, dmu_dt_vals
+
+
+
+
+    @staticmethod
     def get_mu_path(
             forward_rates,
             r_star,
@@ -19,22 +92,26 @@ class SimulationHelper:
             convergence_target=0.95,
             convergence_years=5,
     ):
+        if rate_type == RateType.INFLATION:
+           return SimulationHelper.get_inflation_mu_path(
+                        forward_rates,
+                        r_star,
+                        dt,
+                        T,
+                        convergence_target,
+                        convergence_years)
+        elif rate_type == RateType.CASH:
+            return SimulationHelper.get_rfr_mu_path(
+                forward_rates,
+                r_star,
+                dt,
+                T,
+                convergence_target,
+                convergence_years)
+        else:
+            raise Exception("Rate type not supported")
 
-        rend = forward_rates[-1]
-        a_decay = -np.log(1 - convergence_target) / convergence_years
 
-        yearly_years = np.arange(0, T+1)
-        start_decay = len(forward_rates) - 1
-        decay_years = yearly_years[start_decay+1:]
-        mu_decay = rend * np.exp(-a_decay * (decay_years - start_decay)) + r_star * (1 - np.exp(-a_decay * (decay_years - start_decay)))
-        mu_yearly = np.concatenate([forward_rates, mu_decay])
-
-        mu_spline = CubicSpline(yearly_years, np.cumprod(1 + mu_yearly), bc_type='natural')
-        time = np.linspace(0, T, int(T / dt))
-        mu_lvls = mu_spline(time)
-        mu_vals = -1 + (mu_lvls[1:] / mu_lvls[:-1])
-        dmu_dt_vals = mu_spline(time, 1)
-        return mu_vals, dmu_dt_vals
 
     @staticmethod
     def extract_shocks(

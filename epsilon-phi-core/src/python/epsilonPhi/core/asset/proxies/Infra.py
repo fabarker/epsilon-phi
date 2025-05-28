@@ -38,7 +38,7 @@ class CInfra(CAsset):
         mf = CInfra.get_MLP_time_series(schema)
         gm = CInfra.get_infra_time_series(schema)
         res = 0.5 * mf.addition_over_common_dates(gm)
-        res.name = (CInfra._ASSET_NAME, 'RI')
+        res.name = (CInfra._asset_name, 'RI')
         return res
 
     @staticmethod

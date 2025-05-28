@@ -108,3 +108,14 @@ class CFactorPanels(CFactorPanelInf):
 
     def get_factors_historical_stds(self, factor_list: list):
         return [ self.get_factor(x).get_historical_volatility() for x in factor_list ]
+
+    def get_factor_unorthogonalized(self):
+        pass
+
+    def get_factor_orthogonalized(self):
+        pass
+
+    def get_factors_unorthogonalized(self, factor_list, end_date=None):
+        df = self.get_factors_df(factor_list).loc[:end_date]
+
+

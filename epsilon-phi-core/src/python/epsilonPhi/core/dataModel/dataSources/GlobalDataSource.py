@@ -212,7 +212,7 @@ class GlobalDataSource(object):
     def get_imf_forward_inflation_forecast_for_currency(self, currency):
         ip = self.get_imf_yearly_inflation_forecast_for_currency(currency)
         ip.index = ip.index.to_timestamp().year - dt.date.today().year
-        return ip.loc[0:]
+        return ip.loc[-1:]
 
     def get_cash_rate_carry(self, foreign_currency, domestic_currency):
         for_region = self.get_region_from_currency(foreign_currency)

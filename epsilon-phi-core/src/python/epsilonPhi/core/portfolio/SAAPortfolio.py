@@ -195,6 +195,9 @@ class SAAPortfolio(CPortfolio):
     def get_asset_total_return(self, asset_name, after_tax=False):
         return self.get_portfolio_mgr().get_asset_total_return(asset_name, after_tax)
 
+    def get_assets_return_betas(self):
+        return self.get_portfolio_mgr().get_assets_return_betas()
+
     def get_assets_total_return(self):
         return self.get_portfolio_mgr().get_assets_total_return()
 
@@ -505,6 +508,7 @@ class SAAPortfolio(CPortfolio):
         ptf.setup()
         return ptf
 
+    #TODO - Fix this function so it works
     def deepcopy(self, name: str = None):
 
         """
@@ -535,33 +539,41 @@ if __name__ == "__main__":
     schema = ContextCreator(
         currency='USD',
         start_date='30-Nov-1983',
-        end_date='31-Dec-2021'
+        end_date='31-Dec-2022'
     ).create_context()
 
     import numpy as np
 
     assets = {
-        'LHTRYIN': 40,
-        'LHYIELD_GE20': 6.5,
-        'FRUS1GR': 13.05,
-        'FRUS1VA': 14.62,
-        'FRUSS2L': 4.57,
-        'MSEXUKL': 5.22,
-        'MSUTDKL': 1.57,
-        'MSJPANL': 2.35,
-        'MSPXJPL': 1.17,
-        'MSEMKF$': 1.17,
-        'SBBRGLL': 1.512,
-        'INFRA_EQUITY': 2.268,
-        'CSTEVDH': 1.2,
-        'CSTLNSH': 2.4,
-        'CSFBMTT': 2.4,
+        'LHTRYIN': 38.0,
+        'LHYIELD_GE20': 4.5,
+        'FRUS1GR': 10.0,
+        'FRUS1VA': 11.2,
+        'FRUSS2L': 3.5,
+        'MSEXUKL': 4.0,
+        'MSUTDKL': 1.2,
+        'MSJPANL': 1.8,
+        'MSPXJPL': 0.9,
+        'MSEMKF$': 0.9,
+        'SBBRGLL': 1.0,
+        'INFRA_EQUITY': 1.0,
+        'CSTEVDH': 0.9,
+        'CSTLNSH': 1.8,
+        'CSFBMTT': 1.8,
+        'PE_BUYOUT': 8.4,
+        'PE_VENTURE': 0.8,
+        'PE_DISTRESSED': 2.8,
+        'PRIVATE_CREDIT': 3.5,
+        'PA_REAL_ESTATE': 4.0
     }
 
     weights = np.array(list(assets.values())) / sum(list(assets.values()))
-    HR = [0, 0, 0, 0, 0, 0.7, 0.7, 0.7, 0.7, 0, 0.7, 0.7, 1, 1, 1]
+    HR = [0, 0, 0, 0, 0, 0.7, 0.7, 0.7, 0.7, 0, 0.7, 0.7, 1, 1, 1, 0, 0, 0, 0, 0]
 
     self = SAAPortfolio.create_equal_weighted_portfolio(assets.keys(), context=schema)
     self.set_weights(weights)
     self.set_hedging_ratios(HR)
-    self.get_total_return()
+
+    import pandas as pd
+    r = pd.DataFrame(self.get_assets_risk_premias(), index=self.get_asset_names())
+    r.to_clipboard()
