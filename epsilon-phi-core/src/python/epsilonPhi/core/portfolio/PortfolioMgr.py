@@ -421,7 +421,7 @@ class CPortfolioMgr(object):
         # Get assets idio risk
         idio = self.get_assets_idio_variances()
 
-        # Get Factor Covariance Matrix
+        # Get Factor Covariance Matrix - ENFORCE FACTOR SHARPE END DATE HERE
         factor_cov = self._context.get_risk_factor_covariance()
 
         betas_mult_cov = np.matmul(betas, factor_cov.values)
@@ -621,6 +621,13 @@ class CPortfolioMgr(object):
         panel = CTimeSeries()
         for i, asset_name in enumerate(self.get_asset_names()):
             panel = panel.concat(self.get_asset(asset_name).get_realized_return_time_series())
+        return panel.reindex(self._context.dates).dropna()
+
+    def get_realized_asset_excess_return_panel(self):
+
+        panel = CTimeSeries()
+        for i, asset_name in enumerate(self.get_asset_names()):
+            panel = panel.concat(self.get_asset(asset_name).get_realized_excess_return_time_series())
         return panel.reindex(self._context.dates).dropna()
 
     def get_historical_return_time_series(self):

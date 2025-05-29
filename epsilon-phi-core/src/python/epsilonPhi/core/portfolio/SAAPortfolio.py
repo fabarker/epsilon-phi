@@ -297,7 +297,7 @@ class SAAPortfolio(CPortfolio):
         return self.get_portfolio_mgr().get_asset_idio_variance(asset_name)
 
     def get_assets_idio_variance(self):
-        return self.get_portfolio_mgr().get_assets_idio_variance()
+        return self.get_portfolio_mgr().get_assets_idio_variances()
 
     def get_assets_risk(self):
         return self.get_portfolio_mgr().get_assets_risk()
@@ -545,27 +545,24 @@ if __name__ == "__main__":
     import numpy as np
 
     assets = {
-        'LHTRYIN': 38.0,
-        'LHYIELD_GE20': 4.5,
-        'FRUS1GR': 10.0,
-        'FRUS1VA': 11.2,
-        'FRUSS2L': 3.5,
-        'MSEXUKL': 4.0,
-        'MSUTDKL': 1.2,
-        'MSJPANL': 1.8,
-        'MSPXJPL': 0.9,
-        'MSEMKF$': 0.9,
-        'SBBRGLL': 1.0,
-        'INFRA_EQUITY': 1.0,
-        'CSTEVDH': 0.9,
-        'CSTLNSH': 1.8,
-        'CSFBMTT': 1.8,
-        'PE_BUYOUT': 8.4,
-        'PE_VENTURE': 0.8,
-        'PE_DISTRESSED': 2.8,
-        'PRIVATE_CREDIT': 3.5,
-        'PA_REAL_ESTATE': 4.0
+        'LHTRYIN': 40,
+        'LHYIELD_GE20': 6.5,
+        'FRUS1GR': 13.4,
+        'FRUS1VA': 14.9,
+        'FRUSS2L': 4.6,
+        'MSEXUKL': 5.4,
+        'MSUTDKL': 1.6,
+        'MSJPANL': 2.4,
+        'MSPXJPL': 1.2,
+        'MSEMKF$': 1.2,
+        'SBBRGLL': 1.3,
+        'INFRA_EQUITY': 1.3,
+        'CSTEVDH': 1.2,
+        'CSTLNSH': 2.4,
+        'CSFBMTT': 2.4,
     }
+
+    ISG_FACTOR_SHARPES = [0.37, 0.36, 0.58, 0.33, 0.28, 0.12]
 
     weights = np.array(list(assets.values())) / sum(list(assets.values()))
     HR = [0, 0, 0, 0, 0, 0.7, 0.7, 0.7, 0.7, 0, 0.7, 0.7, 1, 1, 1, 0, 0, 0, 0, 0]
@@ -573,7 +570,10 @@ if __name__ == "__main__":
     self = SAAPortfolio.create_equal_weighted_portfolio(assets.keys(), context=schema)
     self.set_weights(weights)
     self.set_hedging_ratios(HR)
+    self.get_realized_excess_return_panel().mean(axis=0) * 12
+    self.get_sigma()
+    risk = self.get_risk()
 
     import pandas as pd
-    r = pd.DataFrame(self.get_assets_risk_premias(), index=self.get_asset_names())
+    r = pd.DataFrame(self.get_assets_total_risk_premia(), index=self.get_asset_names())
     r.to_clipboard()

@@ -84,7 +84,7 @@ class YieldCurve(object):
         df.columns = df_db.columns
 
         df_ = pd.concat((df_db, df[df.index < df_db.index.min()]), axis=0).sort_index()
-        return (1+df_).cumprod().resample(frequency).asfreq().dropna()
+        return df_.add(1).cumprod().resample(frequency).asfreq().dropna()
 
     @staticmethod
     def get_total_return_time_series(region, maturity, frequency='B', ts_type=TimeSeriesType.RETURNS):

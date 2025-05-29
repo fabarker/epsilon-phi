@@ -310,6 +310,9 @@ class CAsset(CAssetInf, CSlice):
     def get_realized_return_time_series(self, hedging_ratio=None):
         return self.convert_asset_to_currency(self.schema.currency, hedging_ratio or self.hedging_ratio)
 
+    def get_realized_excess_return_time_series(self, hedging_ratio=None):
+        return self.get_realized_return_time_series(hedging_ratio or self.hedging_ratio).get_excess_return_df()
+
     def convert_asset_to_currency(self, currency, hedging_ratio):
         return self.assetMgr.convert_asset_to_currency(self, currency, hedging_ratio)
 

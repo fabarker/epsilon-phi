@@ -13,21 +13,37 @@ class AssetRiskEstimator(CAssetRiskEstimatorInf):
     @staticmethod
     def calc_betas_and_idio_variance(asset, hedging_ratio):
 
+        # Get the asset in schema currency with correct hedging proportions
         schema_currency = asset.schema.currency
-        asset_in_schema_currency = asset.convert_asset_to_currency(schema_currency, hedging_ratio)
+        asset_in_schema_currency = asset.convert_asset_to_currency(
+            schema_currency,
+            hedging_ratio
+        )
 
-        model = CAppConfig.get_BaseModel()
+        # convert asset to factor / excess return
+        rx = asset_in_schema_currency.get_excess_return_df()
+
+        # get the unorthogonalized risk factor panel
         factor_df = asset.schema.get_risk_factors_panel()
 
-        rx = asset_in_schema_currency.get_excess_return_df()
-        y, X = rx.intersect_over_dates(factor_df)
-        regstats = model.regression.regress(X,
-                                            y,
-                                            model.orthogonal_list,
-                                            False)
+        # Intersect over dates before running orthogonalization
+        y, X = rx.intersect_over_date_range(factor_df)
+        assert np.all(y.index == X.index), 'Error - date mismatch in regression'
 
-        betas = np.mean(regstats[:, 1:], 0)
-        residuals = y - model.regression.orthogonalize_columns(X, model.orthogonal_list) @ betas
+        # Orthogonalize the factor panel
+        model = CAppConfig.get_BaseModel()
+        orth_factor_df = model.regression.orthogonalize_columns(
+            X,
+            model.orthogonal_list
+        )
+
+        # Run simple OLS regression with array (Linear, one-shot with intercept)
+        alpha, betas = model.regression.simple_regression_OLS_with_array(
+            orth_factor_df, y
+        )
+
+
+        residuals = y - orth_factor_df @ betas
         return betas, np.var(residuals, ddof=1) * asset.schema.obs_per_year, residuals
 
     @staticmethod

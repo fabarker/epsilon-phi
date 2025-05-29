@@ -248,6 +248,9 @@ class CPortfolio(object):
     def get_historical_stress_tests(self):
         return self.get_portfolio_mgr().get_historical_stress_tests()
 
+    def get_realized_excess_return_panel(self):
+        return self.get_portfolio_mgr().get_realized_asset_excess_return_panel()
+
     def get_realized_asset_return_panel(self):
         return self.get_portfolio_mgr().get_realized_asset_return_panel()
 

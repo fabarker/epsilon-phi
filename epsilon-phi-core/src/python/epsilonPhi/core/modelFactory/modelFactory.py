@@ -210,8 +210,8 @@ class BaseModel(object):
         else:
             return self.get_factor(factor_name).get_historical_Sharpe()
 
-    def get_risk_factor_covariance(self, dates):
-        panel = self.get_risk_factor_df().loc[dates]
+    def get_risk_factor_covariance(self, dates, orthogonalize=True):
+        panel = self.get_risk_factor_df(orthogonalize).loc[dates]
         return panel.cov()
 
     def get_risk_factor_correlation(self, dates):

@@ -19,6 +19,7 @@ __date__ = '01/07/2023'
 _Env = Env.get_env()
 _START_DATE = None
 _END_DATE = None
+_FACTOR_SHARPE_END_DATE = datetime.datetime(2018, 12, 31)
 
 class CContext(object):
 
@@ -145,7 +146,9 @@ class CContext(object):
 
 
     def get_risk_factor_covariance(self):
-        return self.BaseModel.get_risk_factor_covariance(self.dates) * self.obs_per_year
+        return self.BaseModel.get_risk_factor_covariance(
+            self.dates[self.dates <= _FACTOR_SHARPE_END_DATE],
+            True) * self.obs_per_year
 
     def get_factor_panels(self):
         return self.BaseModel.factor_panels
