@@ -539,7 +539,7 @@ if __name__ == "__main__":
     schema = ContextCreator(
         currency='USD',
         start_date='30-Nov-1983',
-        end_date='31-Dec-2022'
+        end_date='31-Dec-2023'
     ).create_context()
 
     import numpy as np
@@ -561,6 +561,7 @@ if __name__ == "__main__":
         'CSTLNSH': 2.4,
         'CSFBMTT': 2.4,
     }
+
 
     ISG_FACTOR_SHARPES = [0.37, 0.36, 0.58, 0.33, 0.28, 0.12]
 

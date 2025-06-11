@@ -345,41 +345,26 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-
-
-
-    rates = [
-   'USDSFON', 'GBPSOON', 'EUESTON', 'CHFSAON', 'CADCOON', 'AUDAOON',
-   'USDSF1Y', 'GBPSO1Y', 'EUEST1Y', 'CHFSA1Y', 'CADCO1Y', 'AUDAO1Y',
-   'USDSF2Y', 'GBPSO2Y', 'EUEST2Y', 'CHFSA2Y', 'CADCO2Y', 'AUDAO2Y',
-   'USDSF3Y', 'GBPSO3Y', 'EUEST3Y', 'CHFSA3Y', 'CADCO3Y', 'AUDAO3Y',
-   'USDSF4Y', 'GBPSO4Y', 'EUEST4Y', 'CHFSA4Y', 'CADCO4Y', 'AUDAO4Y',
-   'USDSF5Y', 'GBPSO5Y', 'EUEST5Y', 'CHFSA5Y', 'CADCO5Y', 'AUDAO5Y'
-    ]
-
-    fields = ['X']
-
-    from_date = datetime.date(year=1962, month=12, day=31)
-    frame = pyDatastream.fetch(rates, fields, from_date=from_date, frequency='D')
-    frame.dropna().unstack(level=0).to_clipboard()
-
-
-    from epsilonPhi.core.dataModel.dataSources.vendor.Bloomberg import Bloomberg
     from epsilonPhi.core.dataModel.alchemist.DataModel import *
     from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
 
     sessionMgr = SessionMgr()
     session = SessionMgr().getSessionFactory()
 
-    fullfile = '/Users/francisbarker/Desktop/Trend Following/Moskowitz, Ooi and Pedersen.xlsx'
-    futures_spec = pd.read_excel(fullfile, sheet_name='Series to Add', index_col=0)
-    tickers = np.unique(futures_spec.index)
+    #tickers = [
+    #    "COFC.02",
+    #    "COFC.01",
+    #]
+
+    #res = pyDatastream.get_futures_meta(tickers)
+
+    info = pd.read_excel('/Users/francisbarker/Desktop/Futures Info.xlsx', sheet_name='Sheet7', index_col=0)
 
     flds = ['L','OI','PH','PL','PS','PO','VM']
-    for ticker in tickers:
+    for uid in info.index:
 
-        tmp_spec = futures_spec.loc[ticker]
-        frame = pyDatastream.fetch([ticker], flds, from_date=from_date, frequency='D')
+        tmp_spec = info.loc[uid]
+        frame = pyDatastream.fetch([tmp_spec.ticker], flds, from_date='31-Dec-1969', frequency='D')
         frame = frame.dropna(how='all')
 
         if frame.size > 0:
@@ -413,17 +398,16 @@ if __name__ == "__main__":
                 spec.position_forward = int(tmp_spec.get('position_forward'))
                 spec.region = tmp_spec.get('region')
                 spec.start_date = tmp_spec.get('start_date').strftime("%Y-%m-%d %H:%M:%S")
-                spec.ticker = ticker
+                spec.ticker = tmp_spec.ticker
 
-                spec.uid = Bloomberg.get_max_uid() + 1
+                spec.uid = uid
 
                 session.add_all([spec])
                 session.commit()
 
-                df = frame.loc[ticker].dropna(how='all', axis=0)
+                df = frame.loc[tmp_spec.ticker].dropna(how='all', axis=0)
                 df.index.name = 'date'
                 df = df.reset_index(drop=False)
-                uid = Bloomberg.get_uid_from_ticker(ticker)
 
                 for_db = df.copy()
                 for_db['uid'] = uid
@@ -432,10 +416,10 @@ if __name__ == "__main__":
                               if_exists='append',
                               index=False)
 
-                print('Time series {} added'.format(ticker))
+                print('Time series {} added'.format(tmp_spec.ticker))
             except:
                 session.rollback()
-                print('Error - could not add time series for ticker {}'.format(ticker))
+                print('Error - could not add time series for ticker {}'.format(tmp_spec.ticker))
             finally:
                 session.close()
     session.close()

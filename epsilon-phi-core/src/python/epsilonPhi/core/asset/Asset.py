@@ -347,10 +347,10 @@ if __name__ == "__main__":
     from epsilonPhi.core.schema.Schema import ContextCreator
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
-                            end_date='31-Dec-2024').create_context()
+                            end_date='31-Dec-2022').create_context()
 
     asset = schema.get_asset_from_name('MSEXUKL')
-    asset.set_currency_hedge_ratio(0.7)
+    asset.set_currency_hedge_ratio(0.5)
 
     asset.get_risk_premia()
 

@@ -142,6 +142,20 @@ class Futures(object):
             ts = ts.concat(self.get_futures_continuous_series_forward(mnemonic, fwd))
         return ts.deepcopy()
 
+    def get_all_continuous_series(self, mnemonic):
+
+        res = session.query(FutureSpec.ticker) \
+            .filter(FutureSpec.future == mnemonic) \
+            .order_by(desc(FutureSpec.start_date)) \
+            .all()
+
+        ts = CTimeSeries(ts_type=TimeSeriesType.LEVELS, returns_type=ReturnsType.DIFFERENCE)
+        for ticker in res:
+            tmp = self.get_continuous_series_single_ticker(ticker[0])
+            ts = ts.concat(tmp)
+        return ts.deepcopy()
+
+
     def get_front_futures_continuous_series_settlement_price(self, mnemonic):
         return (self.get_futures_continuous_series_settlement_price(mnemonic).
                 select_subset_attribute('forward', 0))
@@ -185,22 +199,44 @@ class Futures(object):
 if __name__ == "__main__":
 
 
-
-
-    fullfile = '/Users/francisbarker/Desktop/Trend Following/Moskowitz, Ooi and Pedersen.xlsx'
-    df = pd.read_excel(fullfile, sheet_name='Tickers', index_col=0)
-
     self = Futures()
-
     df_ = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
 
-    carry = self.get_futures_carry_continuous('ABB')
+    codes = [
+        "NHO",
+        "NRB",
+        "NCL",
+        "NNG",
+        "NHG",
+        "NGC",
+        "NSL",
+        "CFD",
+        "CLG",
+        "CLD",
+        "CNR",
+        "CCF",
+        "CZO",
+        "CWF",
+        "NSB",
+        "CSY",
+        "CSN",
+        "NCC",
+        "NKC",
+        "NJO",
+        "NCT",
+        "CMS"
+    ]
 
-    labels = df.index.tolist()
-    for name in labels:
-        res = self.get_front_futures_continuous_series_settlement_price(name)
-        df_ = df_.concat(res)
+    frame_dict = {}
+    for name in codes:
+        res = self.get_futures_continuous_series_settlement_price(name).dropna()
+        frame_dict[name] = res.copy()
 
-    df_.to_clipboard()
+    from epsilonPhi.core.utils.ExcelUtils import *
+    ExcelUtils.dict_to_excel(
+        frame_dict,
+        filename='futures.xlsx',
+        include_index=True,
+    )
 
 

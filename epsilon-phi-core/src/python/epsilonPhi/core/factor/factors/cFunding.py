@@ -25,7 +25,7 @@ _REGRESSORS = ['FFS1B1', 'FFS1B2', 'FFS1B3', 'FFS2B1', 'FFS2B2',
 
 FFFactors = FFDataReader.get_funding_related_factors(Frequency.MONTHLY)
 
-filepath = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/resources/templates/LEV.xlsx'
+filepath = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/templates/LEV.xlsx'
 AEM = pd.read_excel(filepath, index_col=0)
 
 

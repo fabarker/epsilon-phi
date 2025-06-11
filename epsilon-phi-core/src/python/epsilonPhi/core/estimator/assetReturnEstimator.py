@@ -26,16 +26,41 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         y, X = rx.intersect_over_date_range(factor_df)
         assert np.all(y.index == X.index), 'Error - date mismatch in regression'
 
-        regstats = model.regression.regress(
-            X,
-            y,
-            orthogonalize_columns=model.orthogonal_list,
-            normalize=normalized
-        )
+        win = 60
+        start = 60
+        end = y.shape[0] + 1
+
+        betas = np.full((end - win, 6), np.nan)
+        for i in range(start, end):
+
+            X_prime = X.iloc[i - win:i].copy()
+            y_prime = y.iloc[i - win:i].copy()
+            orth_X = model.regression.orthogonalize_columns(X_prime,
+                                                            model.orthogonal_list)
+
+            if normalized:
+                stdev = np.std(orth_X, axis=0, ddof=1)
+            else:
+                stdev = 1
+
+            eDfArray = X_prime / stdev
+            _, b = model.regression.simple_regression_OLS_with_array(
+                eDfArray.values,
+                y_prime.values
+            )
+
+            betas[i - win] = b
+
+        #regstats = model.regression.regress(
+        #    X,
+        #    y,
+        #    orthogonalize_columns=model.orthogonal_list,
+        #    normalize=normalized
+        #)
 
         return pd.DataFrame(
-            regstats[:, 1:],
-            index=factor_df.index[-regstats.shape[0]:],
+            betas,
+            index=factor_df.index[-betas.shape[0]:],
             columns=model.return_factor_list
         )
 

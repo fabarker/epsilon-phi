@@ -9,7 +9,7 @@ ts_type: TimeSeriesType = TimeSeriesType.LEVELS
 
 class CFactor(CSlice):
 
-    SHARPE_END_DATE = dt.date(year=2022, month=12, day=31)
+    SHARPE_END_DATE = dt.date(year=2018, month=12, day=31)
 
     def __init__(self,
                  data=None,
