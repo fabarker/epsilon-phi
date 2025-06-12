@@ -345,85 +345,36 @@ class pyDatastreamFO(object):
 
 if __name__ == "__main__":
 
-    from epsilonPhi.core.dataModel.alchemist.DataModel import *
-    from epsilonPhi.core.dataModel.alchemist.SessionManager import SessionMgr
+    import os
+    import glob
+    from pathlib import Path
 
-    sessionMgr = SessionMgr()
-    session = SessionMgr().getSessionFactory()
+    folder_path = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/futures/futures_info"
 
-    #tickers = [
-    #    "COFC.02",
-    #    "COFC.01",
-    #]
+    # Method 2: Using os.listdir
+    xlsx_files = []
+    for file in os.listdir(folder_path):
+        if file.endswith('.xlsx'):
+            xlsx_files.append(os.path.join(folder_path, file))
 
-    #res = pyDatastream.get_futures_meta(tickers)
+    for file in xlsx_files:
 
-    info = pd.read_excel('/Users/francisbarker/Desktop/Futures Info.xlsx', sheet_name='Sheet7', index_col=0)
+        output = file.replace('xlsx', 'pkl')
+        if not os.path.exists(output):
 
-    flds = ['L','OI','PH','PL','PS','PO','VM']
-    for uid in info.index:
+            # Load Info
+            info = pd.read_excel(file, index_col=0)
 
-        tmp_spec = info.loc[uid]
-        frame = pyDatastream.fetch([tmp_spec.ticker], flds, from_date='31-Dec-1969', frequency='D')
-        frame = frame.dropna(how='all')
+            # Get info from datastream
+            df = pyDatastream.fetch(list(info.index), ['OI','PH','PL','PS','PO','VM'], from_date='31-Dec-1969', frequency='D')
+            df.dropna(how='all').to_pickle(output)
 
-        if frame.size > 0:
 
-            try:
 
-                spec = FutureSpec()
-                spec.name = tmp_spec.get('long_name')
+    info = pd.read_excel('/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/futures/futures_info/KC.xlsx', sheet_name='KC')
 
-                spec.denominated_currency = tmp_spec.get('denominated_currency')
-                spec.exposure_currency = tmp_spec.get('exposure_currency')
-                spec.ticker = tmp_spec.get('ticker')
-                spec.provider = tmp_spec.get('provider')
-                spec.frequency = tmp_spec.get('frequency')
-                spec.category = tmp_spec.get('category')
-                spec.contract_size = float(tmp_spec.get('contract_size'))
-                spec.tick_size = float(tmp_spec.get('tick_size'))
-                spec.tick_value = float(tmp_spec.get('tick_value'))
-                spec.symbol = tmp_spec.get('symbol')
-                spec.security = tmp_spec.get('security')
-                spec.security_name = tmp_spec.get('security_name')
-                spec.security_type = tmp_spec.get('security_type')
-                spec.security_unit = tmp_spec.get('security_unit')
-                spec.future = tmp_spec.get('future')
-                spec.hedge_ratio = int(tmp_spec.get('hedge_ratio'))
-
-                spec.cycle = tmp_spec.get('cycle')
-                spec.datasource = tmp_spec.get('datasource')
-                spec.exchange = tmp_spec.get('exchange')
-                spec.exchange_name = tmp_spec.get('exchange_name')
-                spec.position_forward = int(tmp_spec.get('position_forward'))
-                spec.region = tmp_spec.get('region')
-                spec.start_date = tmp_spec.get('start_date').strftime("%Y-%m-%d %H:%M:%S")
-                spec.ticker = tmp_spec.ticker
-
-                spec.uid = uid
-
-                session.add_all([spec])
-                session.commit()
-
-                df = frame.loc[tmp_spec.ticker].dropna(how='all', axis=0)
-                df.index.name = 'date'
-                df = df.reset_index(drop=False)
-
-                for_db = df.copy()
-                for_db['uid'] = uid
-                for_db.to_sql(name='future',
-                              con=SessionMgr().getEngine(),
-                              if_exists='append',
-                              index=False)
-
-                print('Time series {} added'.format(tmp_spec.ticker))
-            except:
-                session.rollback()
-                print('Error - could not add time series for ticker {}'.format(tmp_spec.ticker))
-            finally:
-                session.close()
-    session.close()
-
+    flds = ['OI','PH','PL','PS','PO','VM']
+    frame = pyDatastream.fetch(info['Symbol'].to_list(), flds, from_date='31-Dec-1969', frequency='D')
 
 
 
