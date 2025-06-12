@@ -183,11 +183,14 @@ class Futures(object):
         return np.log(back.division_over_common_dates(front))
 
     def estimate_bid_ask_prices_for_futures_continuous(self, mnemonic):
-        OHLC = self.get_OHLC_for_continuous_future(mnemonic).dropna(how='any', axis=0)
-        bid, ask = StrategyUtils.estimate_bid_ask_prices(open=OHLC.select_subset_attribute('field', 'PO'),
-                                                         high=OHLC.select_subset_attribute('field', 'PH'),
-                                                         low=OHLC.select_subset_attribute('field', 'PL'),
-                                                         close=OHLC.select_subset_attribute('field', 'PS'))
+        ohlc = self.get_OHLC_for_continuous_future(mnemonic).dropna(how='any', axis=0)
+        bid, ask = StrategyUtils.estimate_bid_ask_prices(
+            open=ohlc.select_subset_attribute('field', 'PO'),
+            high=ohlc.select_subset_attribute('field', 'PH'),
+            low=ohlc.select_subset_attribute('field', 'PL'),
+            close=ohlc.select_subset_attribute('field', 'PS')
+        )
+
         prices = bid.concat(ask)
         prices.set_attribute_single('price_quote_type', ['bid', 'ask'])
         return prices.copy()
