@@ -3,6 +3,7 @@ import datetime
 from pydatastream import Datastream as pyds
 from epsilonPhi.core.utils.ListUtils import ListUtils as lutils
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
 from epsilonPhi.core.env.Env import DS_USERNAME, DS_PASSWORD
 from typing import Optional, Union
 import numpy as np
@@ -346,35 +347,53 @@ class pyDatastreamFO(object):
 if __name__ == "__main__":
 
     import os
-    import glob
-    from pathlib import Path
 
-    folder_path = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/futures/futures_info"
+    fields = ['FLOT', 'FEX', 'EXCODE', 'ISOCUR', 'DS.EXPNAME', 'NAME',
+       'FUTBDATE', 'TICKS', 'TICKV', 'TCYCLE', 'TYPE', 'UNITS', 'FUI', 'GEOG', 'LTDT']
+
+    folder_path = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/futures/futures_info"
 
     # Method 2: Using os.listdir
     xlsx_files = []
     for file in os.listdir(folder_path):
-        if file.endswith('.xlsx'):
+        if '_' in file and file.endswith('.xlsx'):
             xlsx_files.append(os.path.join(folder_path, file))
 
     for file in xlsx_files:
 
         output = file.replace('xlsx', 'pkl')
-        if not os.path.exists(output):
+        # Load Info
 
-            # Load Info
-            info = pd.read_excel(file, index_col=0)
+        info = pd.read_excel(file, index_col=0, sheet_name=None)
+        missing = info.get("Sheet2")
+        info = info.get("Sheet1")
 
-            # Get info from datastream
-            df = pyDatastream.fetch(list(info.index), ['OI','PH','PL','PS','PO','VM'], from_date='31-Dec-1969', frequency='D')
-            df.dropna(how='all').to_pickle(output)
+        if missing.size > 0:
 
+            old_info = pd.read_excel(file.replace("_.xlsx", ".xlsx"), index_col=0)
+            missing_mats = list(missing.Maturity)
+            tmp = pd.concat([ old_info[old_info.Maturity == x] for x in missing_mats ], axis=0)
+            candidates = np.setdiff1d(tmp.index, missing.index)
 
+            if len(candidates) > 0:
 
-    info = pd.read_excel('/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/futures/futures_info/KC.xlsx', sheet_name='KC')
+                    output = {}
+                    output['Sheet1'] = info
+                    output['Sheet2'] = missing
+                    output['Sheet3'] = old_info.loc[candidates]
+                    ExcelUtils.dict_to_excel(
+                            output,
+                            file,
+                            include_index=True,
+                        )
 
-    flds = ['OI','PH','PL','PS','PO','VM']
-    frame = pyDatastream.fetch(info['Symbol'].to_list(), flds, from_date='31-Dec-1969', frequency='D')
+        #if len(missing) > 0:
+        #     flds = ['OI', 'PH', 'PL', 'PS', 'PO', 'VM']
+        #    frame = pyDatastream.fetch(missing, flds, from_date='31-Dec-1969', frequency='D')
+        #    out_df = pd.concat((df, frame.dropna().get(df.columns)), axis=0)
+        #    out_df.to_pickle(output.replace("_.pkl", ".pkl"))
+        #else:
+        #    out_df.to_pickle(output.replace("_.pkl", ".pkl"))
 
 
 

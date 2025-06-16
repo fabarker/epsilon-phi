@@ -9,11 +9,92 @@ from epsilonPhi.core.utils.FrameUtils import FrameUtils
 from sqlalchemy import desc
 import pandas as pd
 import warnings
+import os
+import polars as pl
+import glob
 
 warnings.filterwarnings(action='ignore', message='All-NaN slice encountered')
 
 sessionMgr = SessionMgr()
 session = sessionMgr.getSessionFactory()
+
+EXCLUSION_LIST = [
+    'CFD0106',
+    'CFD0106',
+    'CFD1006',
+    'CHE0215',
+    'CW.0709',
+    'CC.0710',
+    'CCF1210',
+    'CCF1213',
+    'CHE1011',
+    'CZR0197',
+    'CZR0397',
+    'CZR0597',
+    'CZR0797',
+    'CZR0997',
+    'CRR0109',
+    'CRR0709',
+    'CZR0313',
+    'CZR0306',
+    'CZR0106',
+    'CZR0903',
+    'CZR0103',
+    'CZR0902',
+    'CZR0502',
+    'CZR0702',
+    'CZR0302',
+    'CZR0102',
+    'CZR0700',
+    'CZR0500',
+    'CZR1199',
+    'CZR0999',
+    'CZR0799',
+    'CZR1197',
+    'CZR0198',
+    'CZR0398',
+    'CZR0998',
+    'CZR0798',
+    'CZR1198',
+    'CZR0399',
+    'CZR0599',
+    'CZR1100',
+    'CZR0900',
+    'CZR0101',
+    'CZR0501',
+    'CZR1110',
+    'CRR1110',
+    'CZC0912',
+    'CLC0216',
+    'CLD0615',
+    'CLC1000',
+    'CLC1001',
+]
+
+map = {
+    'CL': 'NCL',
+    'LE': 'CLD',
+    'ZO': 'COF',
+    'ZW': 'KKK', # New
+    'ZC': 'CCF',
+    'NG': 'NNG',
+    'CT': 'NCT',
+    'CC': 'NCC',
+    'ZR': 'CRR', # New
+    'ZS': 'CSY', # New
+    'HE': 'CLG', # New
+    'HG': 'NHG',
+    'SI': 'NSL',
+    'GC': 'NGC',
+    'RB': 'NRB',
+    'KC': 'NKC',
+    'HO': 'NHO',
+    'GF': 'CFD',
+    'SB': 'NSB',
+    'OJ': 'NJO',
+    'ZL': 'CSN', # New
+    'ZM': 'CMS', # New
+}
 
 @SingletonDecorator
 class Futures(object):
@@ -198,48 +279,309 @@ class Futures(object):
     def display_futures_info(self):
         sessionMgr.show_table(FutureSpec)
 
+    @staticmethod
+    def select_symbols_polars_advanced(df_pandas):
+        """
+        Advanced Polars implementation with all operations vectorized
+        """
+        # Convert to Polars
+        if isinstance(df_pandas.index, pd.MultiIndex):
+            df_work = df_pandas.reset_index()
+        else:
+            df_work = df_pandas.copy()
+
+        df = pl.from_pandas(df_work)
+
+        # Add maturity column
+        df = df.with_columns([
+            pl.col('symbol').str.slice(-4).alias('mat')
+        ])
+
+        # All operations in single chain for maximum efficiency
+
+        # For each mat and symbol, get
+
+        # 1. the ps_count (number of prices, no nans)
+        # 2. distance between the max pricing date and the settlement date
+
+        selected_symbols = (
+            df
+            .group_by(['mat', 'symbol'])
+            .agg([
+                pl.col('PS').is_not_null().sum().alias('ps_count'),
+                pl.col('settlement').max().alias('max_settlement'),
+                pl.col('date').max().alias('max_date'),
+                pl.col('symbol').first().alias('symbol_name')
+            ])
+            .with_columns([
+                (pl.col('max_date') - pl.col('max_settlement')).dt.total_seconds().alias('distance'),
+                (~pl.col('symbol_name').str.contains('.')).alias('no_dot')
+            ])
+            .with_columns([
+                pl.col('ps_count').max().over('mat').alias('max_count_per_mat'),
+                pl.col('distance').min().over('mat').alias('min_distance_per_mat')
+            ])
+            .filter(pl.col('ps_count') == pl.col('max_count_per_mat'))  # Keep max count symbols
+            .filter(pl.col('distance') == pl.col('min_distance_per_mat'))  # Keep min distance symbols
+            .with_columns([
+                pl.col('no_dot').max().over('mat').alias('has_no_dot_candidate')
+            ])
+            .filter(
+                pl.when(pl.col('has_no_dot_candidate'))
+                .then(pl.col('no_dot'))
+                .otherwise(pl.lit(True))
+            )
+            .group_by('mat')
+            .agg([
+                pl.col('symbol_name').first().alias('selected_symbol')
+            ])
+            .select('selected_symbol')
+            .to_series()
+            .to_list()
+        )
+
+        return df_pandas.loc[selected_symbols].copy()
+
+    @staticmethod
+    def process_symbols(df, short_code):
+
+        keep_symbols = []
+        df['mat'] = [ x[-4:] for x in df.index.get_level_values(0) ]
+        for mat in df['mat'].unique():
+            tmp = df[df['mat'] == mat].get('PS')
+
+            unique_symbols = list(
+                tmp.index.get_level_values(0).unique()
+            )
+
+            # if the number of signals, is greater than one, process
+            if len(unique_symbols) == 1:
+                keep_symbols.append(unique_symbols[0])
+                continue
+
+            # Step 1: Pick the series that has the longest/highest number of price observations
+            symbol_counts = {symbol: tmp.loc[symbol].notna().sum().item() for symbol in unique_symbols}
+            max_count = max(symbol_counts.values())
+            candidates = np.array([symbol for symbol, count in symbol_counts.items() if count == max_count])
+
+            if len(candidates) == 1:
+                keep_symbols.append(candidates[0])
+                continue
+
+            mat_date = max(tmp.index.get_level_values('settlement'))
+            distance = np.array([(tmp.loc[x].index.get_level_values('date').max() - mat_date).total_seconds() for x in candidates])
+            candidates = candidates[distance == min(distance)]
+
+            if len(candidates) == 1:
+                keep_symbols.append(candidates[0])
+                continue
+
+            #assert np.all(tmp.loc[candidates].unstack(level=0).diff(axis=1).dropna(axis=1) == 0), 'Error in prices for {}'.format(candidates)
+            price_diff = tmp.loc[candidates].unstack(level=0).diff(axis=1).dropna(axis=1)
+            if not np.all(price_diff == 0):
+                print(f'Price differences found for candidates: {candidates}')
+
+                # Show the actual differences
+                non_zero_diffs = price_diff[np.any(price_diff != 0, axis=1)].dropna()
+                print(f'Dates and prices with differences:')
+                for date_idx, row in non_zero_diffs.iterrows():
+                    prices_at_date = tmp.loc[candidates].xs(date_idx, level='date')
+                    prices_at_date = prices_at_date.get('PS').to_dict()
+                    print(f'  Date: {date_idx}, Code: {short_code}, Prices: {prices_at_date}')
+
+            final_candidate = [ x for x in candidates if '.' not in x ]
+            if len(final_candidate) == 0:
+                keep_symbols.append(candidates[0])
+                continue
+
+            keep_symbols.append(final_candidate[0])
+        return df.loc[keep_symbols].copy()
+
+    @staticmethod
+    def load_futures_prices_from_pickle(short_code):
+
+
+        path = 'futures_info/' + short_code + '.pkl'
+        if os.path.exists(path):
+            df = pd.read_pickle('futures_info/' + short_code + '.pkl')
+            info = pd.read_excel('futures_info/' + short_code + '_.xlsx', index_col=0, sheet_name='Sheet1')
+            #df = df.loc[np.intersect1d(list(info.index), np.unique(df.index.get_level_values(0)))]
+            df = df.loc[list(info.index)]
+            df.index.names = ['symbol', 'date']
+            df['settlement'] = info.reindex(df.index.get_level_values(0)).LTDT.values
+            df['days'] = (df['settlement'] - df.index.get_level_values('date')).dt.days
+            return df.reset_index().set_index(['symbol', 'date', 'settlement', 'days']).sort_index(level=[1, 2]).dropna()
+        else:
+            return None
+
+    @staticmethod
+    def load_all_futures_from_directory(directory='futures_info/', pattern="*.pkl", columns=['PS']):
+
+        """Load all pickle files matching pattern from directory."""
+
+        files = glob.glob(os.path.join(directory, pattern))
+        codes = [os.path.basename(f).replace('.pkl', '') for f in files]
+        # Load and combine all DataFrames
+        dataframes = []
+        for code in codes:
+            pd_df = Futures().load_futures_prices_from_pickle(code).get(columns).reset_index()
+            pd_df['code'] = code
+            dataframes.append(pl.from_pandas(pd_df))
+
+        # Concatenate all at once
+        return pl.concat(dataframes, how="vertical_relaxed", rechunk=True)
+
+
+
 
 if __name__ == "__main__":
 
+    files = glob.glob(os.path.join('futures_info/', "*.pkl"))
+    codes = [os.path.basename(f).replace('.pkl', '') for f in files]
+    results = {}
 
-    self = Futures()
-    df_ = CTimeSeries(ts_type=TimeSeriesType.LEVELS)
+    for code in codes:
 
-    codes = [
-        "NHO",
-        "NRB",
-        "NCL",
-        "NNG",
-        "NHG",
-        "NGC",
-        "NSL",
-        "CFD",
-        "CLG",
-        "CLD",
-        "CNR",
-        "CCF",
-        "CZO",
-        "CWF",
-        "NSB",
-        "CSY",
-        "CSN",
-        "NCC",
-        "NKC",
-        "NJO",
-        "NCT",
-        "CMS"
-    ]
+        df = Futures().load_futures_prices_from_pickle(code).get(['PS']).reset_index()
 
-    frame_dict = {}
-    for name in codes:
-        res = self.get_futures_continuous_series_settlement_price(name).dropna()
-        frame_dict[name] = res.copy()
+        df['rets'] = df.sort_values(['symbol', 'date']).groupby('symbol')['PS'].pct_change()
+        df['week'] = pd.Categorical(pd.to_datetime(df.get('date').values).to_period('W')).codes
 
-    from epsilonPhi.core.utils.ExcelUtils import *
+        weekly_returns = (df.groupby(['week', 'symbol'], group_keys=False)
+                       .agg({
+                           'rets': lambda x: -1 + (x + 1).prod(),  # Weekly return
+                           'date': 'last',        # Preserve max date
+                           'days': 'last'
+                       })
+                       .rename(columns={'rets': 'weekly_return'})
+                       ).reset_index().set_index('week')
+
+        output = pd.DataFrame()
+        for i in range(1, max(weekly_returns.index.get_level_values(0))):
+
+            # Find the contracts we want
+            candidates = weekly_returns.query(
+                f'days > {30} and week == {i} and symbol in '
+                f'{list(weekly_returns.query(f"week == {i - 1}")["symbol"].unique())}'
+            ).drop_duplicates('days').nsmallest(2, 'days')
+
+            if candidates.shape[0] > 1:
+
+                tmp = weekly_returns.query(
+                        f'symbol in {list(candidates.symbol)} and week in {[i, i-1]}'
+                    ).sort_index()
+
+                spd = pd.concat(
+                    [
+                        tmp.loc[x].sort_values('date').get('weekly_return').diff().dropna().to_frame()
+                        for x in np.unique(tmp.index)
+                    ]
+                )
+
+                spd.index = ['t0', 't']
+                spd.columns = [i]
+                spd = spd.T
+                spd['short_symbol'] = candidates.sort_values('days').symbol.iloc[0]
+                spd['long_symbol'] =  candidates.sort_values('days').symbol.iloc[1]
+                spd['short_days'] = candidates.sort_values('days').days.iloc[0]
+                spd['long_days'] = candidates.sort_values('days').days.iloc[1]
+                spd['date'] = candidates.sort_values('days').date.iloc[0]
+                output = pd.concat((output, spd), axis=0)
+        results[code] = output.copy()
+
+    from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
     ExcelUtils.dict_to_excel(
-        frame_dict,
-        filename='futures.xlsx',
+        results,
+        os.path.join('futures_info/results.xlsx'),
         include_index=True,
     )
 
+    res = pd.concat(results.values(), axis=0)
+
+    res['quartile'] = pd.qcut(res['t0'], q=5, labels=['Q1', 'Q2', 'Q3', 'Q4', 'Q5'])
+    # Compute means and standard errors per bucket
+    grouped = res.groupby('quartile')[['t0', 't']]
+
+    # Mean * 52 as in your original
+    mean_annualised = grouped.mean() * 52
+
+    # Standard error = std / sqrt(n) → also annualised
+    standard_errors = grouped.std() / np.sqrt(grouped.count()) * 52
+
+    # Combine results
+    quartile_stats = mean_annualised.rename(columns=lambda c: f'{c}_mean')
+    quartile_stats[[f'{col}_se' for col in standard_errors.columns]] = standard_errors.values
+
+    # Optional: include confidence intervals
+    for col in ['t0', 't']:
+        quartile_stats[f'{col}_ci_lower'] = quartile_stats[f'{col}_mean'] - 1.96 * quartile_stats[f'{col}_se']
+        quartile_stats[f'{col}_ci_upper'] = quartile_stats[f'{col}_mean'] + 1.96 * quartile_stats[f'{col}_se']
+
+    # Pandas Implementation
+    df = pl.from_pandas(
+        Futures().load_futures_prices_from_pickle(code).get(['PS']).reset_index()
+    )
+
+    # Sort and compute returns with proper week coding
+    df = (
+        df.sort(['symbol', 'date'])
+        .with_columns([
+            pl.col('PS').pct_change().over('symbol').alias('rets'),
+            # Create sequential week codes like pandas Categorical codes
+            # Cast to date first, then format
+            pl.col('date').cast(pl.Date)
+            .dt.strftime('%Y-W%U')  # Year-Week format
+            .cast(pl.Categorical)
+            .to_physical()  # Get the underlying integer codes
+            .alias('week')
+        ])
+        .drop_nulls('rets')
+    )
+
+    weekly_returns = (
+        df.group_by(['week', 'symbol'])
+        .agg([
+            ((-1 + (pl.col('rets') + 1).product())).alias('weekly_return'),
+            pl.col('date').max().alias('date'),
+            pl.col('days').last().alias('days')  # Use last() to match original
+        ])
+    )
+
+    symbols_per_week = (
+        weekly_returns
+        .group_by('week')
+        .agg(pl.col('symbol').alias('symbols_in_week'))
+    )
+
+    symbols_with_prev = (
+        symbols_per_week
+        .with_columns((pl.col('week') + 1).alias('next_week'))
+        .join(
+            symbols_per_week.rename({'week': 'next_week', 'symbols_in_week': 'prev_week_symbols'}),
+            on='next_week',
+            how='inner'
+        )
+        .select(['next_week', 'prev_week_symbols'])
+        .rename({'next_week': 'week'})
+    )
+
+    candidates = (
+        weekly_returns
+        .join(symbols_with_prev, on='week', how='inner')
+        .filter(
+            (pl.col('days') > 30) &
+            (pl.col('symbol').is_in(pl.col('prev_week_symbols')))
+        )
+        .with_columns([
+            pl.col('days').rank(method='ordinal').over('week').alias('days_rank')
+        ])
+        .filter(pl.col('days_rank') <= 2)  # Take 2 shortest days
+        .group_by('week')
+        .agg([
+            pl.col('symbol').alias('candidate_symbols'),
+            pl.col('days').alias('candidate_days'),
+            pl.col('date').alias('candidate_dates')
+        ])
+        .filter(pl.col('candidate_symbols').list.len() >= 2)  # Need at least 2 candidates
+    )
 
