@@ -438,10 +438,19 @@ if __name__ == "__main__":
 
     files = glob.glob(os.path.join('futures_info/', "*.pkl"))
     codes = [os.path.basename(f).replace('.pkl', '') for f in files]
+
     results = {}
 
+    info_out = []
+    for code in codes:
+        info =  pd.read_excel('futures_info/' + code + '_.xlsx', index_col=0, sheet_name='Sheet1')
+        df = Futures().load_futures_prices_from_pickle(code).get(['PS']).reset_index()
+        info_out.append((info['Full Name'].iloc[0], df['date'].min().strftime('%Y-%m')))
+
+    results = {}
     for code in codes:
 
+        # Load for instrument
         df = Futures().load_futures_prices_from_pickle(code).get(['PS']).reset_index()
 
         df['rets'] = df.sort_values(['symbol', 'date']).groupby('symbol')['PS'].pct_change()
@@ -489,12 +498,12 @@ if __name__ == "__main__":
                 output = pd.concat((output, spd), axis=0)
         results[code] = output.copy()
 
-    from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
-    ExcelUtils.dict_to_excel(
-        results,
-        os.path.join('futures_info/results.xlsx'),
-        include_index=True,
-    )
+    #from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
+    #ExcelUtils.dict_to_excel(
+    #    results,
+    #    os.path.join('futures_info/results_old.xlsx'),
+    #    include_index=True,
+    #)
 
     res = pd.concat(results.values(), axis=0)
 
@@ -516,72 +525,3 @@ if __name__ == "__main__":
     for col in ['t0', 't']:
         quartile_stats[f'{col}_ci_lower'] = quartile_stats[f'{col}_mean'] - 1.96 * quartile_stats[f'{col}_se']
         quartile_stats[f'{col}_ci_upper'] = quartile_stats[f'{col}_mean'] + 1.96 * quartile_stats[f'{col}_se']
-
-    # Pandas Implementation
-    df = pl.from_pandas(
-        Futures().load_futures_prices_from_pickle(code).get(['PS']).reset_index()
-    )
-
-    # Sort and compute returns with proper week coding
-    df = (
-        df.sort(['symbol', 'date'])
-        .with_columns([
-            pl.col('PS').pct_change().over('symbol').alias('rets'),
-            # Create sequential week codes like pandas Categorical codes
-            # Cast to date first, then format
-            pl.col('date').cast(pl.Date)
-            .dt.strftime('%Y-W%U')  # Year-Week format
-            .cast(pl.Categorical)
-            .to_physical()  # Get the underlying integer codes
-            .alias('week')
-        ])
-        .drop_nulls('rets')
-    )
-
-    weekly_returns = (
-        df.group_by(['week', 'symbol'])
-        .agg([
-            ((-1 + (pl.col('rets') + 1).product())).alias('weekly_return'),
-            pl.col('date').max().alias('date'),
-            pl.col('days').last().alias('days')  # Use last() to match original
-        ])
-    )
-
-    symbols_per_week = (
-        weekly_returns
-        .group_by('week')
-        .agg(pl.col('symbol').alias('symbols_in_week'))
-    )
-
-    symbols_with_prev = (
-        symbols_per_week
-        .with_columns((pl.col('week') + 1).alias('next_week'))
-        .join(
-            symbols_per_week.rename({'week': 'next_week', 'symbols_in_week': 'prev_week_symbols'}),
-            on='next_week',
-            how='inner'
-        )
-        .select(['next_week', 'prev_week_symbols'])
-        .rename({'next_week': 'week'})
-    )
-
-    candidates = (
-        weekly_returns
-        .join(symbols_with_prev, on='week', how='inner')
-        .filter(
-            (pl.col('days') > 30) &
-            (pl.col('symbol').is_in(pl.col('prev_week_symbols')))
-        )
-        .with_columns([
-            pl.col('days').rank(method='ordinal').over('week').alias('days_rank')
-        ])
-        .filter(pl.col('days_rank') <= 2)  # Take 2 shortest days
-        .group_by('week')
-        .agg([
-            pl.col('symbol').alias('candidate_symbols'),
-            pl.col('days').alias('candidate_days'),
-            pl.col('date').alias('candidate_dates')
-        ])
-        .filter(pl.col('candidate_symbols').list.len() >= 2)  # Need at least 2 candidates
-    )
-
