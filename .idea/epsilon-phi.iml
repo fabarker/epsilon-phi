@@ -4,7 +4,7 @@
     <content url="file://$MODULE_DIR$/epsilon-phi-core">
       <sourceFolder url="file://$MODULE_DIR$/epsilon-phi-core/src/python" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="/opt/anaconda3/envs/epsilon-phi (2)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="epsilon-phi" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
