@@ -398,19 +398,72 @@ class Futures(object):
         return df.loc[keep_symbols].copy()
 
     @staticmethod
+    def load_futures_prices_raw(short_code):
+
+        df = pd.read_pickle('futures_info/' + short_code + '.pkl')
+        df = df[~df.index.duplicated(keep='first')]
+        # keep only the instruments in the info
+        df.index.names = ['symbol', 'date']
+        df = df.reset_index().set_index('date')
+
+        # Resample cols
+        cols = np.setdiff1d(df.columns, 'VM')
+        resampled = df.groupby('symbol', group_keys=False)[cols].resample('1B').ffill()
+        resampled = resampled.reset_index().set_index(['symbol', 'date'])
+
+        return pd.concat(
+            (
+                resampled,
+                df.reset_index().set_index(['symbol', 'date']).get(np.setdiff1d(df.columns, cols))
+             ), axis=1
+        )
+        #pl_df = pl.from_pandas(df.reset_index())
+        #pl_df = pl_df.with_columns(pl.col('date').cast(pl.Date))
+
+        #symbol_ranges = (
+        #    pl_df
+        #    .group_by('symbol')
+        #    .agg([
+        #        pl.col('date').min().alias('start'),
+        #        pl.col('date').max().alias('end')
+        #    ])
+        #)
+
+        #calendar = symbol_ranges.select([
+        #    pl.col('symbol'),
+        #    pl.date_ranges(
+        #        pl.col('start'),
+        #        pl.col('end'),
+        #        "1d",  # business days
+        #        closed='both'
+        #    ).alias("date")
+        #]).explode("date")
+
+        #joined = (
+        #    calendar
+        #    .join(pl_df, on=["symbol", "date"], how="left")
+        #    .sort(["symbol", "date"])
+        #)
+
+        # 4. Forward fill within each group
+        # Fill all nulls in a group with `.with_columns(...).over('symbol')`
+        #cols_to_fill = [c for c in joined.columns if c not in ['symbol', 'date', 'VM']]
+        #filled = joined.with_columns([
+        #    pl.col(c).fill_null(strategy="forward").over("symbol") for c in cols_to_fill
+        #])
+
+    @staticmethod
     def load_futures_prices_from_pickle(short_code):
 
 
         path = 'futures_info/' + short_code + '.pkl'
         if os.path.exists(path):
-            df = pd.read_pickle('futures_info/' + short_code + '.pkl')
             info = pd.read_excel('futures_info/' + short_code + '_.xlsx', index_col=0, sheet_name='Sheet1')
-            #df = df.loc[np.intersect1d(list(info.index), np.unique(df.index.get_level_values(0)))]
-            df = df.loc[list(info.index)]
+            df = Futures().load_futures_prices_raw(short_code)
             df.index.names = ['symbol', 'date']
             df['settlement'] = info.reindex(df.index.get_level_values(0)).LTDT.values
             df['days'] = (df['settlement'] - df.index.get_level_values('date')).dt.days
-            return df.reset_index().set_index(['symbol', 'date', 'settlement', 'days']).sort_index(level=[1, 2]).dropna()
+            return df.reset_index().set_index(['symbol', 'date', 'settlement', 'days']).sort_index(level=[1, 2])
         else:
             return None
 
@@ -438,14 +491,6 @@ if __name__ == "__main__":
 
     files = glob.glob(os.path.join('futures_info/', "*.pkl"))
     codes = [os.path.basename(f).replace('.pkl', '') for f in files]
-
-    results = {}
-
-    info_out = []
-    for code in codes:
-        info =  pd.read_excel('futures_info/' + code + '_.xlsx', index_col=0, sheet_name='Sheet1')
-        df = Futures().load_futures_prices_from_pickle(code).get(['PS']).reset_index()
-        info_out.append((info['Full Name'].iloc[0], df['date'].min().strftime('%Y-%m')))
 
     results = {}
     for code in codes:
