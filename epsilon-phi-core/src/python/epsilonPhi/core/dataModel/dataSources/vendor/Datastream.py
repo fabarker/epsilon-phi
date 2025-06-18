@@ -351,49 +351,47 @@ if __name__ == "__main__":
     fields = ['FLOT', 'FEX', 'EXCODE', 'ISOCUR', 'DS.EXPNAME', 'NAME',
        'FUTBDATE', 'TICKS', 'TICKV', 'TCYCLE', 'TYPE', 'UNITS', 'FUI', 'GEOG', 'LTDT']
 
-    folder_path = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/dataModel/dataSources/futures/futures_info"
+    folder_path = "/Users/francisbarker/Desktop/Futures/"
+    instruments = ['Platinum', 'White Sugar']
 
-    # Method 2: Using os.listdir
-    xlsx_files = []
-    for file in os.listdir(folder_path):
-        if '_' in file and file.endswith('.xlsx'):
-            xlsx_files.append(os.path.join(folder_path, file))
+    for instrument in instruments:
+        path = os.path.join(folder_path, instrument + '.xlsx')
 
-    for file in xlsx_files:
+        info = pd.read_excel(path).set_index('Symbol')
+        symbols = list(info.index)
 
-        output = file.replace('xlsx', 'pkl')
-        # Load Info
+        # Get meta data
+        meta = pyDatastream.fetch_static(
+            symbols,
+            fields
+        )
 
-        info = pd.read_excel(file, index_col=0, sheet_name=None)
-        missing = info.get("Sheet2")
-        info = info.get("Sheet1")
+        new_meta = pd.concat((info, meta), axis=1)
+        new_meta['Code'] = [ x[:3] for x in new_meta.index ]
+        new_meta['Maturity'] = [ x[3:] for x in new_meta.index ]
 
-        if missing.size > 0:
+        # pull data
+        flds = ['OI', 'PH', 'PL', 'PS', 'PO', 'VM']
+        frame = pyDatastream.fetch(
+            list(new_meta.index),
+            flds,
+            from_date='31-Dec-1969',
+            frequency='D'
+        ).dropna(axis=0, how='all')
 
-            old_info = pd.read_excel(file.replace("_.xlsx", ".xlsx"), index_col=0)
-            missing_mats = list(missing.Maturity)
-            tmp = pd.concat([ old_info[old_info.Maturity == x] for x in missing_mats ], axis=0)
-            candidates = np.setdiff1d(tmp.index, missing.index)
+        common_tickers = np.intersect1d(
+            list(new_meta.index),
+            list(frame.index.get_level_values(0))
+        )
 
-            if len(candidates) > 0:
+        # save the meta
+        out_meta = new_meta.loc[common_tickers]
+        out_data = frame.loc[common_tickers]
 
-                    output = {}
-                    output['Sheet1'] = info
-                    output['Sheet2'] = missing
-                    output['Sheet3'] = old_info.loc[candidates]
-                    ExcelUtils.dict_to_excel(
-                            output,
-                            file,
-                            include_index=True,
-                        )
-
-        #if len(missing) > 0:
-        #     flds = ['OI', 'PH', 'PL', 'PS', 'PO', 'VM']
-        #    frame = pyDatastream.fetch(missing, flds, from_date='31-Dec-1969', frequency='D')
-        #    out_df = pd.concat((df, frame.dropna().get(df.columns)), axis=0)
-        #    out_df.to_pickle(output.replace("_.pkl", ".pkl"))
-        #else:
-        #    out_df.to_pickle(output.replace("_.pkl", ".pkl"))
-
+        instr_code = np.unique(new_meta['Code'])[0]
+        out_meta.to_excel(os.path.join(folder_path, instr_code[1:] + '.xlsx'))
+        out_data.to_pickle(
+            path=os.path.join(folder_path, instr_code[1:] + '.pkl')
+        )
 
 

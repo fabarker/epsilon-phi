@@ -135,7 +135,9 @@ def process_code(code):
 
 if __name__ == "__main__":
 
-    codes = ['CL', 'ZO', 'ZM', 'ZL', 'LE', 'OJ', 'SB', 'GF', 'HO', 'KC', 'RB', 'GC', 'SI', 'HG', 'HE', 'ZS', 'ZR', 'CC', 'CT', 'ZW', 'NG', 'ZC']
+    import os, glob
+    files = glob.glob(os.path.join('futures_info/', "*.pkl"))
+    codes = [os.path.basename(f).replace('.pkl', '') for f in files]
 
     res = {}
     for code in codes:
@@ -143,6 +145,6 @@ if __name__ == "__main__":
 
 ExcelUtils.dict_to_excel(
     res,
-    os.path.join('futures_info/results_polars.xlsx'),
+    os.path.join('futures_info/Results/results_polars.xlsx'),
     include_index=True,
 )
