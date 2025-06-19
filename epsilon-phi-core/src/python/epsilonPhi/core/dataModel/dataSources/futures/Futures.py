@@ -398,6 +398,11 @@ class Futures(object):
         return df.loc[keep_symbols].copy()
 
     @staticmethod
+    def load_futures_prices_polars(short_code):
+        df = pd.read_pickle('futures_info/' + short_code + '.pkl')
+        df = df[~df.index.duplicated(keep='first')]
+
+    @staticmethod
     def load_futures_prices_raw(short_code):
 
         df = pd.read_pickle('futures_info/' + short_code + '.pkl')
@@ -461,6 +466,7 @@ class Futures(object):
             info = pd.read_excel('futures_info/' + short_code + '_.xlsx', index_col=0, sheet_name='Sheet1')
             df = Futures().load_futures_prices_raw(short_code)
             df.index.names = ['symbol', 'date']
+            df = df.loc[info.index]
             df['settlement'] = info.reindex(df.index.get_level_values(0)).LTDT.values
             df['days'] = (df['settlement'] - df.index.get_level_values('date')).dt.days
             return df.reset_index().set_index(['symbol', 'date', 'settlement', 'days']).sort_index(level=[1, 2])
@@ -491,6 +497,16 @@ if __name__ == "__main__":
 
     files = glob.glob(os.path.join('futures_info/', "*.pkl"))
     codes = [os.path.basename(f).replace('.pkl', '') for f in files]
+
+    frames = pd.DataFrame()
+    for code in codes:
+        df = Futures().load_futures_prices_from_pickle(code)
+        df.index.names = ['ticker', 'date', 'settlement', 'days']
+        df['symbol'] = code
+        print("num of unique symbols {} for code {}".format(len(df['symbol'].unique()), code))
+        frames = pd.concat((frames, df), axis=0)
+
+    frames.reset_index().to_parquet('futures_info/Parquet/futures_data.parquet', index=False)
 
     results = {}
     for code in codes:

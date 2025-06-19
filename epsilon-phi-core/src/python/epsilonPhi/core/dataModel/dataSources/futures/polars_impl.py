@@ -1,14 +1,21 @@
-from epsilonPhi.core.dataModel.dataSources.futures.Futures import Futures
-from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
-import polars as pl
+import glob
+import os
+
 import numpy as np
 import pandas as pd
-import os
+import polars as pl
+
+from epsilonPhi.core.dataModel.dataSources.futures.Futures import Futures
+from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
 
 fut = Futures()
 
 
-def process_code(code):
+def process_code(
+        code,
+        mat_cutoff=30,
+        periodocity="W-SUN",
+):
 
     print('processing {}'.format(code))
     df = fut.load_futures_prices_from_pickle(code).get(['PS']).reset_index()
@@ -35,7 +42,7 @@ def process_code(code):
     week_codes = pd.Categorical(
         pd.to_datetime(
             df.select('date').to_pandas().values.flatten()
-        ).to_period('W')).codes
+        ).to_period(periodocity)).codes
 
     df = df.with_columns(
         pl.Series('week', week_codes)
@@ -60,7 +67,7 @@ def process_code(code):
         prev_df = weekly.filter(pl.col('week') == prev_w)
         next_df = weekly.filter(
             (pl.col('week') == next_w) &
-            (pl.col('days') > 30)
+            (pl.col('days') > mat_cutoff)
         ).sort('days')
 
         # Only keep symbols present in both periods
@@ -70,8 +77,8 @@ def process_code(code):
         # Drop duplicate days, keep first 2
         candidates = (
             next_df.unique(subset=['days'])
-                   .sort('days')
-                   .limit(2)
+            .sort('days')
+            .limit(2)
         )
 
         def get_eop(w):
@@ -99,8 +106,7 @@ def process_code(code):
         def get_days(w, s):
             return weekly.filter((pl.col('week') == w) & (pl.col('symbol') == s))['days'][0]
 
-
-        res = [
+        res_t = [
             spread_0,
             spread_t,
             f0_ret_0,
@@ -117,7 +123,7 @@ def process_code(code):
             get_eop(next_w),
             code
         ]
-        results.append(res)
+        results.append(res_t)
 
     return pd.DataFrame(
         results,
@@ -135,13 +141,40 @@ def process_code(code):
 
 if __name__ == "__main__":
 
-    import os, glob
-    files = glob.glob(os.path.join('futures_info/', "*.pkl"))
-    codes = [os.path.basename(f).replace('.pkl', '') for f in files]
+    df = pl.read_parquet(
+        'futures_info/Parquet/futures_data.parquet'
+    )
+
+    # Compute daily returns
+    df = df.sort(['symbol', 'date']).with_columns(
+        pl.col('PS').pct_change().over('symbol').alias('rets')
+    )
+
+    week_codes = pd.Categorical(
+        pd.to_datetime(
+            df.select('date').to_pandas().values.flatten()
+        ).to_period('W')).codes
+
+    df = df.with_columns(
+        pl.Series('week', week_codes)
+    )
+
+    weekly = (
+        df
+        .group_by(['week', 'symbol'])
+        .agg([
+            ((pl.col('rets') + 1).product() - 1).alias('rets'),
+            pl.col('days').last().alias('days'),
+            pl.col('date').last().alias('date')
+        ])
+        .sort(['week', 'symbol'])
+    )
+
+    unique_instr = df.select('symbol').unique()
 
     res = {}
-    for code in codes:
-        res[code] = process_code(code).copy()
+    for c in codes:
+        res[c] = process_code(c, mat_cutoff=30, periodocity="W-SUN").copy()
 
 ExcelUtils.dict_to_excel(
     res,

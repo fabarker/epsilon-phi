@@ -1,13 +1,21 @@
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
+from epsilonPhi.core.dataModel.dataSources.futures.full_polars_impl import *
+
+instrument_list = ['ZS', 'NG', 'OF', 'RR', 'MS', 'HG', 'CL', 'LG', 'KK', 'SB', 'CC', 'SY',
+                    'SL', 'CT', 'KC', 'GC', 'HO', 'JO', 'FD', 'NR', 'CF', 'SN', 'RB', 'LD']
+
+strat = Strategy(instrument_list)
+res_1 = strat.get_results()
+
 
 # Load data
-res = pd.read_excel('futures_info/results_new.xlsx', sheet_name=None, index_col=0)
+res = pd.read_excel('futures_info/Results/results_1706.xlsx', sheet_name=None, index_col=0)
 df = pd.concat(res.values(), axis=0).reset_index()
 
-df['quartile'] = pd.qcut(df['t0'], q=5, labels=['Q1', 'Q2', 'Q3', 'Q4', 'Q5'])
-return_cols = ['t', 'back_sub', 'front_sub']
+df['quartile'] = pd.qcut(df['spread_0'], q=5, labels=['Q1', 'Q2', 'Q3', 'Q4', 'Q5'])
+return_cols = ['spread_t', 'f0_ret_1', 'f1_ret_1']
 
 nw_stats = []
 for q in df['quartile'].unique():
@@ -49,11 +57,11 @@ nw_df = pd.DataFrame(nw_stats)
 nw_df = nw_df.set_index('quartile').loc[['Q1', 'Q2', 'Q3', 'Q4', 'Q5']]
 
 # Optional: include confidence intervals
-for col in ['t', 'back_sub', 'front_sub']:
+for col in return_cols:
     nw_df[f'{col}_error_plus'] = nw_df[f'ci_upper_{col}'] - nw_df[f'mean_{col}']
     nw_df[f'{col}_error_minus'] = nw_df[f'mean_{col}'] - nw_df[f'ci_lower_{col}']
 
-keep_cols = ['mean_t', 'mean_back_sub', 'mean_front_sub', 't_error_plus', 't_error_minus', 'back_sub_error_plus', 'back_sub_error_minus', 'front_sub_error_plus', 'front_sub_error_minus']
+keep_cols = ['mean_spread_t', 'mean_f0_ret_1', 'mean_f1_ret_1', 't_error_plus', 't_error_minus', 'back_sub_error_plus', 'back_sub_error_minus', 'front_sub_error_plus', 'front_sub_error_minus']
 nw_df[keep_cols].to_clipboard()
 
 
