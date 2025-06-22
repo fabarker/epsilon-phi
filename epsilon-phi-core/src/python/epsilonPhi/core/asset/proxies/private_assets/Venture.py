@@ -6,6 +6,9 @@ class CVenture(CPrivateAsset):
     _asset_name = 'PE_VENTURE'
     _pme_name = 'VENTURE_PME'
 
+    _reporting_name = 'Venture'
+    _category = 'Private Equity'
+
     def __init__(self, schema):
         CPrivateAsset.__init__(
             self,

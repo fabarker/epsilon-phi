@@ -13,6 +13,9 @@ class DistressedPME(CAsset):
     _hf = 'CSTEVDH' # Event Driven
     _eq = 'MSWRLD$' # MSCI World
 
+    _reporting_name = 'Distressed PME'
+    _category = 'Public Equity'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

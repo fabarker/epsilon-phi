@@ -6,6 +6,9 @@ class CDistressed(CPrivateAsset):
     _asset_name = 'PE_DISTRESSED'
     _pme_name = 'DISTRESSED_PME'
 
+    _reporting_name = 'Distressed'
+    _category = 'Private Equity'
+
     def __init__(self, schema):
         CPrivateAsset.__init__(
             self,

@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from datetime import datetime as dt
 import numpy as np
+import pandas as pd
+
 from epsilonPhi.core.schema.Schema import CContext
 from epsilonPhi.core.asset.Asset import CAsset
 from epsilonPhi.logging import *
@@ -311,11 +313,14 @@ class CPortfolio(object):
 
 if __name__ == "__main__":
 
+    import pandas as pd
+    import numpy as np
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
     from epsilonPhi.core.schema.Schema import ContextCreator
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
+
 
     assetMgr = CAssetMgr(schema)
     asset = assetMgr.get_asset_by_name('MSUSAML')

@@ -12,6 +12,9 @@ class CBankLoans(CAsset):
     _asset_name = 'CSLEVLOANS'
     _RP_TARGET  = 0.011
 
+    _reporting_name = 'Bank Loans'
+    _category = 'Other Fixed Income'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

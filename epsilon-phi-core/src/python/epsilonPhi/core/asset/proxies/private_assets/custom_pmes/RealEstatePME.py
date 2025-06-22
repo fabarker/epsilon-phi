@@ -12,6 +12,9 @@ __all__ = ['RealEstatePME']
 class RealEstatePME(CAsset):
     _asset_name = 'REAL_ESTATE_PME'
 
+    _reporting_name = 'Private Real Estate PME'
+    _category = 'Public Equity'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

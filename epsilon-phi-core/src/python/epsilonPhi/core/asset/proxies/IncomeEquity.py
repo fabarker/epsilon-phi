@@ -17,6 +17,9 @@ class CIncomeEquity(CAsset):
     _asset_name = 'INCOME_EQUITY'
     _PROXIES = [('ACEMLPIT', .50), ('MSWDIF', .50)]
 
+    _reporting_name = 'Income Equity'
+    _category = 'Public Equity'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

@@ -1,20 +1,21 @@
 from epsilonPhi.core.asset.proxies.private_assets.PrivateAssets import CPrivateAsset
 
-__all__ = ['CBuyout']
+__all__ = ['CInfrastructure']
 
-class CBuyout(CPrivateAsset):
-    _asset_name = 'PE_BUYOUT'
-    _pme_name = 'MSWRLD$'
+class CInfrastructure(CPrivateAsset):
+    _asset_name = 'PA_INFRA'
+    _pme_name = 'VENTURE_PME'
 
-    _reporting_name = 'Buyout'
-    _category = 'Private Equity'
+    _reporting_name = 'Infrastructure'
+    _category = 'Other Private Assets'
 
     def __init__(self, schema):
         CPrivateAsset.__init__(
             self,
             schema,
-            CBuyout._pme_name,
-            CBuyout._asset_name)
+            CInfrastructure._pme_name,
+            CInfrastructure._asset_name)
+
 
 if __name__ == "__main__":
 
@@ -26,5 +27,5 @@ if __name__ == "__main__":
         end_date='31-Dec-2022'
     ).create_context()
 
-    tt = CBuyout(schema)
+    tt = CInfrastructure(schema)
     rp_pme = tt.get_risk_premias()

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries, CSlice
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 
-_assetmeta = ["_denominated_currency", "_exposure_currency", "_schema", "_assetMgr", "_hedge_ratio",
+_assetmeta = ["_denominated_currency", "_exposure_currency", "_schema", "_assetMgr", "_hedge_ratio", "_reporting_name", "_category",
               "_ts_hedge_ratio", "_added_attributes", "_type", "_name", "_returns_type", "_alpha", "_return_betas", "_risk_betas"]
 
 __author__ = 'Francis Barker'

@@ -2,6 +2,7 @@ from epsilonPhi.core.env.Env import DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DR
 from sqlalchemy import create_engine, exists, distinct
 from epsilonPhi.core.lib.Decorators import SingletonDecorator
 from sqlalchemy.orm import sessionmaker, scoped_session
+from typing import Optional, Union, List
 from epsilonPhi.core.dataModel.alchemist.DataModel import *
 from epsilonPhi.core.dataModel.alchemist.Configs import *
 from contextlib import contextmanager
@@ -63,6 +64,7 @@ class SessionMgr(object):
             Session = scoped_session(session_factory)
             self._sessionCache[database_name] = (session_factory, Session)
             return self.getSessionFactory(database_name)
+
     def getEngine(self, database_name=None):
 
         if database_name is None:
@@ -123,10 +125,16 @@ class SessionMgr(object):
     def is_table_in_database(self, table_name):
         return table_name in self.get_all_tables_in_database()
 
-    def fetch_model_class_from_table_name(self, table_name):
+    @staticmethod
+    def fetch_model_class_from_table_name(table_name):
+        table_name = table_name.lower()
+
         for mapper in Base.registry.mappers:
-            if hasattr(mapper, 'class_') and mapper.class_.__tablename__ == table_name.lower():
-                return mapper.class_
+            model_class = getattr(mapper, 'class_', None)
+            if model_class and getattr(model_class, '__tablename__', '').lower() == table_name:
+                return model_class
+
+        return None
 
     def get_ticker_table_mapping(self, tickers: list):
         from epsilonPhi.core.dataModel.alchemist.DataModel import TimeSeriesSpec, CategoryTableMapping
@@ -211,7 +219,6 @@ class SessionMgr(object):
         else:
            return q.first()
 
-
     def get_time_series_currency(self, ticker_uid):
 
         if isinstance(ticker_uid, str):
@@ -250,9 +257,6 @@ class SessionMgr(object):
         from sqlalchemy import func
         return self.getSessionFactory().query(func.max(TimeSeriesSpec.uid)).scalar()
 
-    def get_inflation_rates_for_region(self, region):
-        pass
-
     def get_yield_curve_tickers_for_region(self, region):
 
         q = self.getSessionFactory().query(YieldCurveSpec.uid,
@@ -285,17 +289,26 @@ class SessionMgr(object):
 
     def get_consumer_price_index_tickers_from_region(self, region):
 
-        q = self.getSessionFactory().query(EconomicSpec.uid,
-                                           EconomicSpec.ticker).filter(EconomicSpec.region.in_([region]),
-                                                                       EconomicSpec.indicator == 'CPI',
-                                                                       EconomicSpec.seasonal_adjustment == 1)
+        session = self.getSessionFactory()
+        query = (
+            session.query(EconomicSpec.uid, EconomicSpec.ticker)
+            .filter(
+                EconomicSpec.region == region,
+                EconomicSpec.indicator == 'CPI',
+                EconomicSpec.seasonal_adjustment == 1
+            )
+        )
 
-        return self.query_format_df(q)
+        return self.query_format_df(query)
 
     def get_interest_rate_maturities_for_region(self, region):
-        q = self.getSessionFactory().query(distinct(InterestRateSpec.maturity)).filter(InterestRateSpec.region.in_([region])).all()
-        if len(q) > 0:
-            return [x[0] for x in q]
+        session = self.getSessionFactory()
+        results = (
+            session.query(distinct(InterestRateSpec.maturity))
+            .filter(InterestRateSpec.region == region)
+            .all()
+        )
+        return [row[0] for row in results] if results else []
 
     def get_interest_rate_tickers_from_region(self, region, maturity=None, type=None):
 
@@ -424,6 +437,32 @@ class SessionMgr(object):
               filter(ImpliedVolatilitySpec.security == underlier))
         return self.query_format_df(_q).T.to_dict().get(0)
 
+    def get_asset_reporting_name(self, tickers: Union[str, List[str]]):
+
+        if tickers is None:
+            return []
+
+        if isinstance(tickers, str):
+            tickers = [tickers]
+
+        session = self.getSessionFactory()
+
+        results = (
+            session.query(TimeSeriesSpec.category, TimeSeriesSpec.name)
+            .filter(TimeSeriesSpec.ticker.in_(tickers))
+            .all()
+        )
+
+        if not results:
+            return [], []
+
+        categories, names = zip(*results)
+
+        if len(results) == 1:
+            return names[0], categories[0]  # single ticker → single name + category
+        else:
+            return list(names), list(categories)
+
 
 @contextmanager
 def session_scope():
@@ -443,10 +482,4 @@ if __name__ == "__main__":
     sessionMgr = SessionMgr()
     session = sessionMgr.getSessionFactory()
 
-    pickle_ids = session.query(DatabasePickle.id).all()
-
-    for id in pickle_ids:
-        if 'GS' in id[0]:
-            sessionMgr.delete_pickle_from_database(id[0])
-
-
+    pickle_ids = sessionMgr.get_asset_reporting_name("MSUTDKL")

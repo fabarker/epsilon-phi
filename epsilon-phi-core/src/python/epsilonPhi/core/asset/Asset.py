@@ -45,6 +45,8 @@ class CAsset(CAssetInf, CSlice):
         self._exposure_currency = exposure_currency
         self._schema = schema
         self._assetMgr = CAssetMgr(schema)
+        self._reporting_name = None
+        self._category = None
         self._hedge_ratio = None
         self._alpha = 0
         self._weight = None
@@ -91,6 +93,15 @@ class CAsset(CAssetInf, CSlice):
     @property
     def alpha(self):
         return self._alpha
+    @property
+    def reporting_name(self):
+        return self._reporting_name
+    @property
+    def category(self):
+        return self._category
+    def set_reporting_info(self, reporting_name, category):
+        self._reporting_name = reporting_name
+        self._category = category
 
 
     ###############

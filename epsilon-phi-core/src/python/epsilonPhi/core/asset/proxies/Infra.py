@@ -20,6 +20,9 @@ class CInfra(CAsset):
     _infra = 'MSWDIFL'
     _mlp = 'ACEMLPT'
 
+    _reporting_name = 'Infrastructure Equity'
+    _category = 'Public Equity'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

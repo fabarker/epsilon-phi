@@ -539,42 +539,33 @@ if __name__ == "__main__":
     schema = ContextCreator(
         currency='USD',
         start_date='30-Nov-1983',
-        end_date='31-Dec-2023'
+        end_date='31-Dec-2022'
     ).create_context()
 
     import numpy as np
+    import pandas as pd
 
-    assets = {
-        'LHTRYIN': 40,
-        'LHYIELD_GE20': 6.5,
-        'FRUS1GR': 13.4,
-        'FRUS1VA': 14.9,
-        'FRUSS2L': 4.6,
-        'MSEXUKL': 5.4,
-        'MSUTDKL': 1.6,
-        'MSJPANL': 2.4,
-        'MSPXJPL': 1.2,
-        'MSEMKF$': 1.2,
-        'SBBRGLL': 1.3,
-        'INFRA_EQUITY': 1.3,
-        'CSTEVDH': 1.2,
-        'CSTLNSH': 2.4,
-        'CSFBMTT': 2.4,
-    }
+    # Load weights from excel
+    raw = pd.read_excel(
+        '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx',
+        sheet_name='RAW WEIGHTS',
+        index_col=0
+    )
 
+    last_row = mask = raw.astype(str).apply(lambda row: row.str.contains("total", case=False)).any(axis=1)
+    names = np.setdiff1d(raw.columns, ['Hedge Ratios', 'Name'])
+    for col in names:
+        tmp = raw[col]
+        tmp = tmp[~last_row].replace("-", 0)
+        tmp = tmp / np.sum(tmp.values)
+
+        ptf = SAAPortfolio.create_equal_weighted_portfolio(
+            tmp.index,
+            portfolio_name=col,
+            context=schema,
+        )
+
+        ptf.set_weights(tmp.values)
+        ptf.set_hedging_ratios(raw['Hedge Ratios'].values)
 
     ISG_FACTOR_SHARPES = [0.37, 0.36, 0.58, 0.33, 0.28, 0.12]
-
-    weights = np.array(list(assets.values())) / sum(list(assets.values()))
-    HR = [0, 0, 0, 0, 0, 0.7, 0.7, 0.7, 0.7, 0, 0.7, 0.7, 1, 1, 1, 0, 0, 0, 0, 0]
-
-    self = SAAPortfolio.create_equal_weighted_portfolio(assets.keys(), context=schema)
-    self.set_weights(weights)
-    self.set_hedging_ratios(HR)
-    self.get_realized_excess_return_panel().mean(axis=0) * 12
-    self.get_sigma()
-    risk = self.get_risk()
-
-    import pandas as pd
-    r = pd.DataFrame(self.get_assets_total_risk_premia(), index=self.get_asset_names())
-    r.to_clipboard()

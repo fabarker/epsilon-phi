@@ -14,6 +14,9 @@ class CTacticalTrading(CAsset):
     _MF = 'CSTMNFH'
     _GM = 'CSTGLMH'
 
+    _reporting_name = 'Tactical Trading'
+    _category = 'Hedge Funds'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

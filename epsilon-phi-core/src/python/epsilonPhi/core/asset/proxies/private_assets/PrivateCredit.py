@@ -6,6 +6,9 @@ class CPrivateCredit(CPrivateAsset):
     _asset_name = 'PRIVATE_CREDIT'
     _pme_name = 'LHYIELD_GE20'
 
+    _reporting_name = 'Private Credit'
+    _category = 'Other Private Assets'
+
     def __init__(self, schema):
         CPrivateAsset.__init__(
             self,

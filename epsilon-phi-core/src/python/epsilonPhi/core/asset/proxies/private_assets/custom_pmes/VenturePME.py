@@ -13,6 +13,9 @@ class VenturePME(CAsset):
     _asset_name = 'VENTURE_PME'
     _underlier = 'NASCOMP' # Event Driven
 
+    _reporting_name = 'Venture PME'
+    _category = 'Public Equity'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

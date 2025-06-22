@@ -5,7 +5,7 @@ from epsilonPhi.core.dataModel.enums.Asset import CustomAssets
 import pandas as pd
 
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
-
+gds = GlobalDataSource()
 
 class CAssetMgrInf(ABC):
     def __init__(self):
@@ -37,7 +37,10 @@ class CAssetMgr(CAssetMgrInf):
         pass
 
     def get_time_series_currency_info(self, asset_name):
-        return GlobalDataSource()._session_mgr.get_time_series_currency(asset_name)
+        return gds._session_mgr.get_time_series_currency(asset_name)
+
+    def get_asset_reporting_name(self, asset_name):
+        return gds._session_mgr.get_asset_reporting_name(asset_name)
 
     def get_asset_key(self, asset_name):
         return (asset_name,
@@ -80,11 +83,26 @@ class CAssetMgr(CAssetMgrInf):
         pass
 
     def load_custom_proxy(self, asset_name):
+
+        """
+        Load a custom proxy asset by name, set its reporting metadata,
+        and cache a deep copy for future access.
+        """
+
         from epsilonPhi.core.asset.proxies import get_proxy_object_from_name
-        klass = get_proxy_object_from_name(asset_name)
-        asset =  klass(self._schema)
-        key = self.get_asset_key(asset_name)
-        CAssetMgr._cache[key] = asset.deepcopy()
+
+        proxy_class = get_proxy_object_from_name(asset_name)
+        asset = proxy_class(self._schema)
+
+        asset.set_reporting_info(
+            proxy_class._reporting_name,
+            proxy_class._category
+        )
+
+        asset_key = self.get_asset_key(asset_name)
+        CAssetMgr._cache[asset_key] = asset.deepcopy()
+
+
 
     def load_asset_by_name(self, asset_name):
         if CustomAssets.is_custom_asset(asset_name):
@@ -93,21 +111,33 @@ class CAssetMgr(CAssetMgrInf):
            self.load_standard_asset(asset_name)
 
     def load_standard_asset(self, asset_name):
-
         from epsilonPhi.core.asset.Asset import CAsset
-        df_ = self.get_dataframe_for_asset(asset_name)
-        denominated_currency, exposure_currency, hedge_ratio = self.get_time_series_currency_info(asset_name)
 
-        asset = CAsset(schema=self._schema,
-                       data=df_,
-                       denominated_currency=denominated_currency,
-                       exposure_currency=exposure_currency,
-                       ts_hedge_ratio=hedge_ratio,
-                       returns_type=ReturnsType.SIMPLE,
-                       ts_type=TimeSeriesType.RETURNS)
+        # Load data and metadata for the asset
+        df = self.get_dataframe_for_asset(asset_name)
+        denom_currency, exposure_currency, hedge_ratio = self.get_time_series_currency_info(asset_name)
+        reporting_name, category = self.get_asset_reporting_name(asset_name)
 
-        key = self.get_asset_key(asset_name)
-        CAssetMgr._cache[key] = asset.deepcopy()
+        # Construct the asset
+        asset = CAsset(
+            schema=self._schema,
+            data=df,
+            denominated_currency=denom_currency,
+            exposure_currency=exposure_currency,
+            ts_hedge_ratio=hedge_ratio,
+            returns_type=ReturnsType.SIMPLE,
+            ts_type=TimeSeriesType.RETURNS,
+        )
+
+        # add the reporting meta data
+        asset.set_reporting_info(
+            reporting_name=reporting_name,
+            category=category,
+        )
+
+        # Cache the asset using a unique key
+        asset_key = self.get_asset_key(asset_name)
+        CAssetMgr._cache[asset_key] = asset.deepcopy()
 
     # Function returns SAA asset
     def get_asset_by_name(self, asset_name):

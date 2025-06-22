@@ -16,6 +16,9 @@ class CUSHighYield(CAsset):
     _asset_name = 'LHYIELD_GE20'
     _underlier = 'LHYIELD'
 
+    _reporting_name = 'US High Yield'
+    _category = 'Other Fixed Income'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

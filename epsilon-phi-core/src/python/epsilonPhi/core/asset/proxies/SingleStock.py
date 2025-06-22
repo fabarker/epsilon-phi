@@ -6,6 +6,8 @@ __all__ = ['CSingleStock']
 
 class CSingleStock(CAsset):
 
+    _category = 'Concentrated Equity Position'
+
     def __init__(
             self,
             schema: Optional[CContext] = None,
