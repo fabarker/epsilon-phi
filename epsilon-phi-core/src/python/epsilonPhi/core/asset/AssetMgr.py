@@ -147,17 +147,20 @@ class CAssetMgr(CAssetMgrInf):
         return self._cache.get(key).deepcopy()
 
     def add_asset_to_cache(self, asset):
-        CAssetMgr._cache[(asset.getName(),
-                          asset._schema.currency,
-                          asset._schema.frequency)] = asset.deepcopy()
+        key = self.get_asset_key(asset.name)
+        if key not in CAssetMgr._cache.keys():
+            CAssetMgr._cache[key] = asset.deepcopy()
+        else:
+            raise ValueError("Error, key {} already exists in cache".format(key))
 
     def remove_asset_from_cache(self, asset_name):
-        del CAssetMgr._cache[asset_name]
+        key = self.get_asset_key(asset.getName())
+        if key in CAssetMgr._cache.keys():
+            del CAssetMgr._cache[asset_name]
 
     def get_dataframe_for_asset(self, asset_name):
         return GlobalDataSource().get_total_return_series_from_ticker(asset_name,
                                                                       TimeSeriesType.RETURNS)
-
     def get_inflation_asset(self, currency):
 
         key = self.get_asset_key(currency + '_CPI')

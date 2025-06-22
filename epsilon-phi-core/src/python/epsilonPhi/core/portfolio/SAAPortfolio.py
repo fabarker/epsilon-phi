@@ -547,25 +547,103 @@ if __name__ == "__main__":
 
     # Load weights from excel
     raw = pd.read_excel(
-        '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx',
+        '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx',
         sheet_name='RAW WEIGHTS',
         index_col=0
     )
 
     last_row = mask = raw.astype(str).apply(lambda row: row.str.contains("total", case=False)).any(axis=1)
-    names = np.setdiff1d(raw.columns, ['Hedge Ratios', 'Name'])
+    names = np.setdiff1d(raw.columns, ['Hedge Ratios', 'Name', 'Category', 'Reporting Name'])
+
+    ptfs = []
+
+    hedge_ratios = raw['Hedge Ratios'][~last_row].astype(float)
+    categories = raw['Category'][~last_row].astype(str)
+    reporting_names = raw['Reporting Name'][~last_row].astype(str)
+
     for col in names:
-        tmp = raw[col]
-        tmp = tmp[~last_row].replace("-", 0)
-        tmp = tmp / np.sum(tmp.values)
+        weights = raw[col][~last_row].replace("-", 0).astype(float)
+        weights /= weights.sum()
 
         ptf = SAAPortfolio.create_equal_weighted_portfolio(
-            tmp.index,
+            weights.index,
             portfolio_name=col,
             context=schema,
         )
 
-        ptf.set_weights(tmp.values)
-        ptf.set_hedging_ratios(raw['Hedge Ratios'].values)
+        ptf.set_weights(weights.values)
+        ptf.set_hedging_ratios(hedge_ratios.values)
+
+        for asset in ptf.get_assets():
+            asset.set_reporting_info(
+                reporting_names.loc[asset.name[0]],
+                categories.loc[asset.name[0]]
+            )
+
+        ptfs.append(ptf)
+
+
+    # 1. Create the portfolio allocations page
+
+    all_ptfs = []
+    for p in ptfs:
+
+        asset_categories = np.array([x.category for x in p.get_assets()])
+        reporting_names = np.array([x.reporting_name for x in p.get_assets()])
+        unique_categories = np.unique(asset_categories)
+
+        dfs = []
+        for cat in unique_categories:
+            idx = asset_categories == cat
+
+            wts = p.get_flattened_weights()[idx]
+            wts = np.concatenate(([np.sum(wts)], wts * 100))
+            names = [cat] + ["  " + x for x in reporting_names[idx]]
+            tmp = pd.DataFrame(
+                wts, columns=[p.name], index=names
+            )
+
+            dfs.extend([tmp])
+
+        res = pd.concat(dfs)
+        res = pd.concat((res, pd.DataFrame(1, columns=[p.name], index=["Total"])), axis=0)
+        all_ptfs.extend([res])
+    output = pd.concat(all_ptfs, axis=1)
+
+    # 2. Create the assumptions page
+    assets = []
+    unique_cats = set([x.category for y in ptfs for x in y.get_assets()])
+    for cat in unique_cats:
+
+        cat_list = []
+        for p in ptfs:
+            for a in p.get_assets():
+
+                if a.category == cat:
+
+                    asmpt = {('','reporting_name'): "    " + a.reporting_name,
+                             ('Long-Term Estimates', 'Lower Range'): a.get_risk_premia() - a.get_uncertainty(),
+                             ('Long-Term Estimates', 'Risk Premia\nwith Estimated Range'): a.get_risk_premia(),
+                             ('Long-Term Estimates', 'Upper Range'): a.get_risk_premia() + a.get_uncertainty(),
+                             ('Long-Term Estimates', 'Volatility'): a.get_volatility(),
+                             ('Long-Term Estimates', 'Sharpe Ratio'): a.get_sharpe_ratio(),
+                             ('Long-Term Estimates', 'Estimated Mean Return\n(2.5% Risk Free Rate)'): a.get_total_return(),
+                             ('', 'Hedging Ratio'): a.hedging_ratio,
+                             ('Modelling Dates', 'From'): a.index.min(),
+                             ('Modelling Dates', 'To'): a.index.max()
+                             }
+
+                    tmp = pd.DataFrame(asmpt.values(), index=pd.MultiIndex.from_tuples(asmpt.keys())).T
+                    cat_list.extend([tmp])
+
+        cat_list = pd.concat(cat_list, axis=0)
+        tmp = pd.DataFrame([cat] + list(np.full(cat_list.shape[1] - 1, np.nan)), index=cat_list.columns).T
+        assets.extend([pd.concat((tmp, cat_list), axis=0)])
+
+    assets = pd.concat(assets, axis=0)
+    assets = assets[~assets.duplicated(keep='first')].set_index(("", "reporting_name"), drop=True)
+    assets.index.names = [None]
+
+
 
     ISG_FACTOR_SHARPES = [0.37, 0.36, 0.58, 0.33, 0.28, 0.12]

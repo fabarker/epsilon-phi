@@ -12,8 +12,8 @@ import warnings
 
 warnings.filterwarnings('ignore', category=UserWarning)
 
-class CSlice(pd.Series):
 
+class CSlice(pd.Series):
     __pandas_priority__ = 5000
     _metadata = slice_metadata
 
@@ -25,14 +25,17 @@ class CSlice(pd.Series):
         some cases, `__finalize__` is not called and `my_attr` is
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finlaize__` every time."""
+
         def _c(*args, **kwargs):
             return CSlice(*args, **kwargs).__finalize__(self)
+
         return _c
 
     @property
     def _constructor_expanddim(self):
         def _cs(*args, **kwargs):
             return CTimeSeries(*args, **kwargs).__finalize__(self)
+
         return _cs
 
     def __init__(self,
@@ -46,8 +49,6 @@ class CSlice(pd.Series):
         # Set attributes in object
         self.__setattr__('_type', ts_type)
         self.__setattr__('_returns_type', returns_type)
-
-
 
     #############
 
@@ -148,12 +149,11 @@ class CSlice(pd.Series):
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
         if return_type is None:
-           return_type = self.returns_type
+            return_type = self.returns_type
 
         if (self.is_returns and
                 self.returns_type == return_type):
             return self.deepcopy()
-
 
         copyobject = self.remove_empty_leading_trailing_rows().get_levels()
         nan_locs = copyobject.isna().values
@@ -220,7 +220,6 @@ class CSlice(pd.Series):
         common_dates = np.intersect1d(self.index, pd.to_datetime(df.index))
         return self[np.min(common_dates):np.max(common_dates)].deepcopy(), \
             df[np.min(common_dates):np.max(common_dates)].deepcopy()
-
 
     ############
     def get_period_ends(self, frequency):
@@ -319,7 +318,8 @@ class CSlice(pd.Series):
         backfilled_rtns = self_rtns.backfill_returns(backfill_rtns)
         backfilled_lvls = backfilled_rtns.get_levels()
 
-        rescaled = backfilled_lvls * (self.loc[self.first_valid_index()] / backfilled_lvls.loc[self.first_valid_index()])
+        rescaled = backfilled_lvls * (
+                    self.loc[self.first_valid_index()] / backfilled_lvls.loc[self.first_valid_index()])
         rescaled.name = self.name
         return self._create_new_levels_object(rescaled, returns_type=self.returns_type)
 
@@ -327,11 +327,11 @@ class CSlice(pd.Series):
 
         backfill_type = backfill.to_time_series_type(self.type)
         if self.type == TimeSeriesType.LEVELS:
-           return self.backfill_levels(backfill_type)
+            return self.backfill_levels(backfill_type)
         elif self.type in [TimeSeriesType.GROWTH, TimeSeriesType.RETURNS]:
-           return self.backfill_returns(backfill_type)
+            return self.backfill_returns(backfill_type)
         else:
-           raise ValueError('Error - type {} not supported'.format(self.type))
+            raise ValueError('Error - type {} not supported'.format(self.type))
 
     def remove_empty_leading_rows(self):
         return self.loc[:self.last_valid_index()].deepcopy()
@@ -361,17 +361,16 @@ class CSlice(pd.Series):
     def to_time_series_type(self, ts_type):
 
         if ts_type == TimeSeriesType.LEVELS:
-           return self.get_levels()
+            return self.get_levels()
         elif ts_type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
-           return self.get_returns(self.returns_type)
+            return self.get_returns(self.returns_type)
         else:
             raise ValueError('Error - type {} not supported'.format(ts_type))
 
-class CTimeSeries(pd.DataFrame):
 
+class CTimeSeries(pd.DataFrame):
     __pandas_priority__ = 5000
     _metadata = metadata
-
 
     @property
     def _constructor(self):
@@ -381,14 +380,17 @@ class CTimeSeries(pd.DataFrame):
         some cases, `__finalize__` is not called and `my_attr` is
         not carried over.  We can fix that by constructing a callable
         that makes sure to call `__finlaize__` every time."""
+
         def _c(*args, **kwargs):
             return CTimeSeries(*args, **kwargs).__finalize__(self)
+
         return _c
 
     @property
     def _constructor_sliced(self):
         def _cs(*args, **kwargs):
             return CSlice(*args, **kwargs).__finalize__(self)
+
         return _cs
 
     def __init__(self,
@@ -425,11 +427,11 @@ class CTimeSeries(pd.DataFrame):
         return self.create_new_object(data=data, ts_type=self.type, returns_type=returns_type)
 
     def _create_new_levels_object(self, data=None, returns_type=None, attributes=None):
-        return self.create_new_object(data=data, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type, attributes=attributes)
+        return self.create_new_object(data=data, ts_type=TimeSeriesType.LEVELS, returns_type=returns_type,
+                                      attributes=attributes)
 
     def _create_new_returns_object(self, returns_type=None, data=None):
         return self.create_new_object(data=data, ts_type=TimeSeriesType.RETURNS, returns_type=returns_type)
-
 
     ######################
 
@@ -461,7 +463,6 @@ class CTimeSeries(pd.DataFrame):
             return self.index.inferred_freq
         else:
             return DateUtils.get_daterange_frequency(self.index)
-
 
     @property
     def attributes(self):
@@ -502,7 +503,7 @@ class CTimeSeries(pd.DataFrame):
     def get_returns(self, return_type=ReturnsType.SIMPLE):
 
         if return_type is None:
-           return_type = self.returns_type
+            return_type = self.returns_type
 
         rtns = self.apply(lambda x: x.get_returns(return_type))
         return self._create_new_returns_object(return_type, data=rtns)
@@ -544,9 +545,9 @@ class CTimeSeries(pd.DataFrame):
         unique_dates = DateUtils.merge([self.dates, dates])
         df_ = self.reindex(unique_dates)
         if self.is_levels:
-           self._cast_derived_class(df_.ffill())
+            self._cast_derived_class(df_.ffill())
         else:
-           self._cast_derived_class(df_.fillna(0))
+            self._cast_derived_class(df_.fillna(0))
 
     def intersect_over_dates(self, df):
         common_dates = np.intersect1d(self.index, df.index)
@@ -635,7 +636,7 @@ class CTimeSeries(pd.DataFrame):
 
     def get_attribute(self, attribute_name):
         if attribute_name in self.attributes.names:
-           return list(self.attributes.get_level_values(attribute_name))
+            return list(self.attributes.get_level_values(attribute_name))
 
     def drop_attributes(self, attribute_names):
         for att in attribute_names:
@@ -666,7 +667,7 @@ class CTimeSeries(pd.DataFrame):
     def ind(self, ind_value):
         if self.is_levels:
             self._cast_derived_class(
-               self.apply(lambda x: ind_value*(x/x.loc[x.first_valid_index()])))
+                self.apply(lambda x: ind_value * (x / x.loc[x.first_valid_index()])))
 
     def backfill_returns(self, backfill):
         """Method to backfill two time series objects based on returns.
@@ -674,10 +675,10 @@ class CTimeSeries(pd.DataFrame):
        """
         # Make sure both objects are returns objects
         if self.is_levels:
-           raise ValueError('Error - _backfill_returns only supports returns objects')
+            raise ValueError('Error - _backfill_returns only supports returns objects')
 
         if self.size == 0 and backfill.size > 0:
-           return backfill.deepcopy()
+            return backfill.deepcopy()
 
         backfill_rtns = backfill.get_returns(self.returns_type)
         common_labels = np.intersect1d(self.columns, backfill_rtns.columns)
@@ -695,11 +696,11 @@ class CTimeSeries(pd.DataFrame):
     def backfill_levels(self, backfill):
 
         if self.size == 0 and backfill.size > 0:
-           return backfill.deepcopy()
+            return backfill.deepcopy()
 
         # Make sure both objects are returns objects
         if self.is_returns:
-           raise ValueError('Error - _backfill_levels only supports levels objects')
+            raise ValueError('Error - _backfill_levels only supports levels objects')
 
         self_rtns = self.get_returns(self.returns_type)
         backfill_rtns = backfill.get_returns(self.returns_type)
@@ -709,7 +710,7 @@ class CTimeSeries(pd.DataFrame):
 
         # Rescaled the backfilled time series
         if self.returns_type in [ReturnsType.DIFFERENCE,
-                                   ReturnsType.DIFFERENCE.value]:
+                                 ReturnsType.DIFFERENCE.value]:
             rescaled = backfilled_lvls.apply(lambda x: x + (self.get(x.name).loc[self.get(x.name).first_valid_index()] -
                                                             x.loc[self.get(x.name).first_valid_index()]))
         else:
@@ -723,20 +724,20 @@ class CTimeSeries(pd.DataFrame):
 
         backfill_type = backfill.to_time_series_type(self.type)
         if self.type == TimeSeriesType.LEVELS:
-           return self.backfill_levels(backfill_type)
+            return self.backfill_levels(backfill_type)
         elif self.type in [TimeSeriesType.GROWTH, TimeSeriesType.RETURNS]:
-           return self.backfill_returns(backfill_type)
+            return self.backfill_returns(backfill_type)
         else:
-           raise ValueError('Error - type {} not supported'.format(self.type))
+            raise ValueError('Error - type {} not supported'.format(self.type))
 
     def remove_empty_leading_rows(self, keep_any_nans=True):
 
         first_valid_indicies = self.apply(lambda x: x.last_valid_index())
 
         if keep_any_nans:
-           return self.loc[:max(first_valid_indicies)].deepcopy()
+            return self.loc[:max(first_valid_indicies)].deepcopy()
         else:
-           return self.loc[:min(first_valid_indicies):].deepcopy()
+            return self.loc[:min(first_valid_indicies):].deepcopy()
 
     def remove_empty_trailing_rows(self, keep_any_nans=True):
 
@@ -748,12 +749,13 @@ class CTimeSeries(pd.DataFrame):
             return self.loc[max(first_valid_indicies):]
 
     def remove_empty_leading_trailing_rows(self, keep_any_nans=True):
-        return self.remove_empty_trailing_rows(keep_any_nans).\
-                    remove_empty_leading_rows(keep_any_nans)
+        return self.remove_empty_trailing_rows(keep_any_nans). \
+            remove_empty_leading_rows(keep_any_nans)
 
     def subtract_over_common_dates(self, df):
         A_prime, B_prime = self.intersect_over_dates(df)
         return A_prime - B_prime.values
+
     def addition_over_common_dates(self, df):
         A_prime, B_prime = self.intersect_over_dates(df)
         return A_prime + B_prime.values
@@ -773,9 +775,9 @@ class CTimeSeries(pd.DataFrame):
     def to_time_series_type(self, ts_type):
 
         if ts_type == TimeSeriesType.LEVELS:
-           return self.get_levels()
+            return self.get_levels()
         elif ts_type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
-           return self.get_returns(self.returns_type)
+            return self.get_returns(self.returns_type)
         else:
             raise ValueError('Error - type {} not supported'.format(ts_type))
 
@@ -793,22 +795,11 @@ class CTimeSeries(pd.DataFrame):
 
 
 if __name__ == "__main__":
-
-
     ds1 = CTimeSeries.get_timeseries_from_ticker('MSSPANL', fields='PI', ts_type=TimeSeriesType.LEVELS)
     ds2 = CTimeSeries.get_timeseries_from_ticker('USESPON', fields='ER', ts_type=TimeSeriesType.LEVELS)
     ds3 = CTimeSeries.get_timeseries_from_ticker('SPANPES', fields='ER', ts_type=TimeSeriesType.LEVELS)
 
     ds = ds1.concat(ds2.concat(ds3))
 
-    ds.set_attribute_single('location',['Europe'])
-    ds1_prime = ds.iloc[:,0]
-
-
-
-
-
-
-
-
-
+    ds.set_attribute_single('location', ['Europe'])
+    ds1_prime = ds.iloc[:, 0]

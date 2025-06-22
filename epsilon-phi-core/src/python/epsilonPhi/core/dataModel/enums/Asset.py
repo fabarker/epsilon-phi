@@ -1,6 +1,7 @@
 from enum import Enum, auto
 
 class CustomAssets(Enum):
+
     LHYIELD_GE20 = auto()
     CSFBMTT = auto()
     INFRA_EQUITY = auto()
@@ -12,6 +13,7 @@ class CustomAssets(Enum):
     PRIVATE_CREDIT = auto()
     PA_REAL_ESTATE = auto()
     PE_VENTURE = auto()
+    PA_INFRA = auto()
 
     @classmethod
     def is_custom_asset(cls, asset_name):

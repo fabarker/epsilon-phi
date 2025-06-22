@@ -13,14 +13,16 @@ import math
 import copy
 
 ts_type: TimeSeriesType = TimeSeriesType.LEVELS
-class CAsset(CAssetInf, CSlice):
 
+
+class CAsset(CAssetInf, CSlice):
     _metadata = _assetmeta
 
     @property
     def _constructor(self):
         def _c(*args, **kwargs):
             return CAsset(*args, **kwargs).__finalize__(self)
+
         return _c
 
     def __init__(self,
@@ -66,45 +68,59 @@ class CAsset(CAssetInf, CSlice):
     @property
     def denominated_currency(self):
         return self._denominated_currency
+
     @property
     def exposure_currency(self):
         return self._exposure_currency
+
     @property
     def obs_per_year(self):
         return self.frequency.obs_per_year()
+
     @property
     def frequency(self):
         return self.schema.frequency
+
     @property
     def schema(self):
         return self._schema
+
     @property
     def assetMgr(self):
         return self._assetMgr
+
     @property
     def hedging_ratio(self):
         return self._hedge_ratio
+
     @property
     def is_time_series_in_local_terms(self):
         return self.denominated_currency == self.exposure_currency
+
     @property
     def weight(self):
         return self._weight if isinstance(self._weight, float) else None
+
     @property
     def alpha(self):
         return self._alpha
+
     @property
     def reporting_name(self):
         return self._reporting_name
+
     @property
     def category(self):
         return self._category
+
     def set_reporting_info(self, reporting_name, category):
         self._reporting_name = reporting_name
         self._category = category
 
-
     ###############
+
+    def copy_params(self, params):
+        self.__dict__.update(params)
 
     def set_currency_hedge_ratio(self, hedge_ratio: Optional[Union[float, int]]):
         if hedge_ratio is not None:
@@ -126,7 +142,6 @@ class CAsset(CAssetInf, CSlice):
             'returns_type': self._returns_type,
             'ts_type': self._type,
         }
-
 
     ##################### Asset risk free rate ###########################
 
@@ -160,10 +175,12 @@ class CAsset(CAssetInf, CSlice):
         return EstimationMgr.get_excess_return_timeseries(self[from_date:to_date])
 
     def get_historical_value_at_risk(self, horizon=1, confidence=0.99, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_value_at_risk(self[from_date:to_date], horizon=horizon, confidence=confidence)
+        return EstimationMgr.get_historical_value_at_risk(self[from_date:to_date], horizon=horizon,
+                                                          confidence=confidence)
 
     def get_historical_conditional_value_at_risk(self, horizon=1, confidence=0.99, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_conditional_value_at_risk(self[from_date:to_date], horizon=horizon, confidence=confidence)
+        return EstimationMgr.get_historical_conditional_value_at_risk(self[from_date:to_date], horizon=horizon,
+                                                                      confidence=confidence)
 
     def get_historical_probability_of_loss(self, horizon=1, from_date=None, to_date=None):
         return EstimationMgr.get_historical_probability_of_loss(self[from_date:to_date], horizon=horizon)
@@ -185,7 +202,6 @@ class CAsset(CAssetInf, CSlice):
 
     def get_historical_best_period_return(self, period=1, from_date=None, to_date=None):
         return EstimationMgr.get_historical_best_period_return(self[from_date:to_date], period=period)
-
 
     ################### Factor Model Asset Metrics ###################
 
@@ -215,7 +231,6 @@ class CAsset(CAssetInf, CSlice):
                           factor_sharpes_uncapped.values.flatten())
         rp = (renorm_factors * returns_panel.stress_coeff_panels) @ returns_panel.betas
         return pd.Series(rp, name=self.name, index=returns_panel.dates)
-
 
     def get_stressed_factor_based_returns(self):
         risk_premium = self.get_stressed_factor_based_risk_premium()
@@ -275,7 +290,8 @@ class CAsset(CAssetInf, CSlice):
         return self.get_rolling_return_betas(hedging_ratio, normalized).mean(axis=0)
 
     def get_rolling_return_betas(self, hedging_ratio=None, normalized=True):
-        return EstimationMgr.get_return_betas(self, hedging_ratio or self.hedging_ratio, normalized=normalized)
+        return EstimationMgr.get_return_betas(self, hedging_ratio if hedging_ratio is not None else self.hedging_ratio,
+                                              normalized=normalized)
 
     def get_return_betas_not_normalized(self, hedging_ratio=None):
         return self.get_return_betas(hedging_ratio, normalized=False)
@@ -293,25 +309,29 @@ class CAsset(CAssetInf, CSlice):
         pass
 
     def get_beta_and_idio_risk(self, hedging_ratio=None):
-        return EstimationMgr.get_beta_and_idio_variance(self, hedging_ratio or self.hedging_ratio)
+        return EstimationMgr.get_beta_and_idio_variance(self,
+                                                        hedging_ratio if hedging_ratio is not None else self.hedging_ratio)
 
     def get_variance(self, hedging_ratio=None):
         return self.get_systematic_variance(hedging_ratio) + self.get_idiosyncratic_variance(hedging_ratio)
 
     def get_systematic_variance(self, hedging_ratio=None):
-        return EstimationMgr.get_systematic_variance(self, hedging_ratio or self.hedging_ratio)
+        return EstimationMgr.get_systematic_variance(self,
+                                                     hedging_ratio if hedging_ratio is not None else self.hedging_ratio)
 
     def get_idiosyncratic_variance(self, hedging_ratio=None):
-        return EstimationMgr.get_idiosyncratic_variance(self, hedging_ratio or self.hedging_ratio)
+        return EstimationMgr.get_idiosyncratic_variance(self,
+                                                        hedging_ratio if hedging_ratio is not None else self.hedging_ratio)
 
     def get_volatility(self, hedging_ratio=None):
-        return EstimationMgr.get_risk_factor_stdev(self, hedging_ratio or self.hedging_ratio)
+        return EstimationMgr.get_risk_factor_stdev(self,
+                                                   hedging_ratio if hedging_ratio is not None else self.hedging_ratio)
 
     def get_data_length(self):
         return EstimationMgr.get_estimation_length(self)
 
     def get_residuals(self, hedging_ratio=None):
-        return EstimationMgr.get_residuals(self, hedging_ratio or self.hedging_ratio)
+        return EstimationMgr.get_residuals(self, hedging_ratio if hedging_ratio is not None else self.hedging_ratio)
 
     def get_uncertainty(self):
         return self.get_volatility() / np.sqrt(self.get_data_length())
@@ -319,10 +339,12 @@ class CAsset(CAssetInf, CSlice):
     ##############
 
     def get_realized_return_time_series(self, hedging_ratio=None):
-        return self.convert_asset_to_currency(self.schema.currency, hedging_ratio or self.hedging_ratio)
+        return self.convert_asset_to_currency(self.schema.currency,
+                                              hedging_ratio if hedging_ratio is not None else self.hedging_ratio)
 
     def get_realized_excess_return_time_series(self, hedging_ratio=None):
-        return self.get_realized_return_time_series(hedging_ratio or self.hedging_ratio).get_excess_return_df()
+        return self.get_realized_return_time_series(
+            hedging_ratio if hedging_ratio is not None else self.hedging_ratio).get_excess_return_df()
 
     def convert_asset_to_currency(self, currency, hedging_ratio):
         return self.assetMgr.convert_asset_to_currency(self, currency, hedging_ratio)
@@ -344,18 +366,31 @@ class CAsset(CAssetInf, CSlice):
     def brownian_bridge(self):
         pass
 
+    def get_assumptions(self):
+        return {
+            'category': self._category,
+            'reporting_name': self.reporting_name,
+            'risk_premia': self.get_risk_premia(),
+            'uncertainty': self.get_uncertainty(),
+            'volatility': self.get_volatility(),
+            'Sharpe ratio': self.get_sharpe_ratio(),
+            'return': self.get_total_return(),
+            'hedging ratio': self.hedging_ratio,
+            'start date': self.index.min(),
+            'end date': self.index.max()
+        }
 
 
 if __name__ == "__main__":
-
     import pandas as pd
 
     gds = GlobalDataSource()
 
-    df = gds.get_time_series_data_from_ticker('MSWRLDL','RI')
+    df = gds.get_time_series_data_from_ticker('MSWRLDL', 'RI')
     rtns = df.get_returns()
 
     from epsilonPhi.core.schema.Schema import ContextCreator
+
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
@@ -364,12 +399,3 @@ if __name__ == "__main__":
     asset.set_currency_hedge_ratio(0.5)
 
     asset.get_risk_premia()
-
-
-
-
-
-
-
-
-

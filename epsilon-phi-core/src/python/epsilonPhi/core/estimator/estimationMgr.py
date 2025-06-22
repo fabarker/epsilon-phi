@@ -77,7 +77,7 @@ class EstimationMgr(CEStimationMgrInf):
     @staticmethod
     def get_historical_volatility(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_volatility()
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).volatility().item()
 
 
     @staticmethod
