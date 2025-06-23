@@ -1,3 +1,45 @@
+from typing import Union
+from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+
+class Reporting(object):
+
+    def __init__(self,
+                 report_directory: str,
+                 report_name: str
+                 ):
+
+        self._report_dir = report_directory
+        self._name = report_name
+        self._portfolios = []
+
+    def add_portfolios(self, portfolios: Union[SAAPortfolio, Iterable[SAAPortfolio]]) -> None:
+        if not isinstance(portfolios, Iterable) or isinstance(portfolios, (str, bytes)):
+            portfolios = [portfolios]
+
+        self._portfolios.extend(portfolios)
+
+    def generate_report(self):
+        pass
+
+    def get_assumptions(self):
+        pass
+
+    def get_portfolio_table(self):
+        pass
+
+    def get_single_stock_analysis(self):
+        pass
+
+    def get_risk_metrics(self):
+        pass
+
+    def get_wealth_simulation(self):
+        pass
+
+    def get_private_assets_commitments(self):
+        pass
+
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, NamedStyle
 

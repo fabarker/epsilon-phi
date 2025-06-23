@@ -1,10 +1,82 @@
 import pandas as pd
 import numpy as np
 import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl import load_workbook
 import os, sys
 
 class ExcelUtils(object):
     pass
+
+    @staticmethod
+    def extract_formatting(fullfile_path, sheet_name):
+
+        # Load the uploaded workbook
+        wb = load_workbook("/mnt/data/Book2.xlsx")
+        ws = wb.active
+
+        # We'll extract formatting from a few representative cells in the range B5:H5 as a sample
+        sample_range = ws["B5:H5"][0]
+
+        # Get the range of active cells
+        min_row = ws.min_row
+        max_row = ws.max_row
+        min_col = ws.min_column
+        max_col = ws.max_column
+
+        # Convert column numbers to letters
+        start_col_letter = get_column_letter(min_col)
+        end_col_letter = get_column_letter(max_col)
+
+        # Build the A1-style range string
+        cell_range = f"{start_col_letter}{min_row}:{end_col_letter}{max_row}"
+
+        # Extract styles from these cells
+        style_summary = []
+        for cell in sample_range:
+            style_summary.append({
+                "cell": cell.coordinate,
+                "font": {
+                    "name": cell.font.name,
+                    "size": cell.font.size,
+                    "bold": cell.font.bold,
+                    "italic": cell.font.italic,
+                    "color": cell.font.color.rgb if cell.font.color else None
+                },
+                "fill": {
+                    "type": cell.fill.fill_type,
+                    "fgColor": cell.fill.fgColor.rgb if cell.fill.fgColor else None
+                },
+                "alignment": {
+                    "horizontal": cell.alignment.horizontal,
+                    "vertical": cell.alignment.vertical,
+                    "wrap_text": cell.alignment.wrap_text
+                },
+                "number_format": cell.number_format,
+                "border": {
+                    "top": cell.border.top.style,
+                    "bottom": cell.border.bottom.style,
+                    "left": cell.border.left.style,
+                    "right": cell.border.right.style
+                }
+            })
+
+        # Extract column widths
+        column_widths_all = {}
+        for col in range(min_col, max_col + 1):
+            col_letter = get_column_letter(col)
+            width = ws.column_dimensions[col_letter].width
+            column_widths_all[col_letter] = width
+
+        # Extract row heights
+        row_heights_all = {}
+        for row in range(min_row, max_row + 1):
+            height = ws.row_dimensions[row].height
+            row_heights_all[row] = height
+
+        # Convert to DataFrames for viewing
+        col_df_all = pd.DataFrame(list(column_widths_all.items()), columns=['Column', 'Width'])
+        row_df_all = pd.DataFrame(list(row_heights_all.items()), columns=['Row', 'Height'])
 
 
     # Method to load all sheets in a workbook

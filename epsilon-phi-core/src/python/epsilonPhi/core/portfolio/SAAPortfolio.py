@@ -547,7 +547,7 @@ if __name__ == "__main__":
 
     # Load weights from excel
     raw = pd.read_excel(
-        '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx',
+        '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx',
         sheet_name='RAW WEIGHTS',
         index_col=0
     )
@@ -644,6 +644,141 @@ if __name__ == "__main__":
     assets = assets[~assets.duplicated(keep='first')].set_index(("", "reporting_name"), drop=True)
     assets.index.names = [None]
 
+    import xlwings as xw
 
+    # Open Excel (if not already running) and create a new workbook
+    wb = xw.Book()  # This opens a new Excel workbook
+    sheet = wb.sheets[0]
+
+    # Write to Excel live
+    sheet.range("A1").value = "Hello from Python!"
+    sheet.range("B1:B5").value = [[i ** 2] for i in range(1, 6)]
+
+    # Optional: keep Excel visible and interactive
+    wb.app.visible = True
+
+    wb = xw.Book()
+    sheet = wb.sheets[0]
+    sheet.name = "Estimates"
+
+    # Clear previous content (optional)
+    sheet.clear()
+
+    # === WRITE DATAFRAME ===
+    start_row = 2
+    sheet.range((start_row, 1)).value = assets
+
+    # === HEADERS ===
+    # Write the merged header "Risk Premium with Estimated Range"
+    sheet.range("B2:G2").merge()
+    sheet.range("I2:J2").merge()
+    sheet.range("B2").color = (255, 255, 255)
+
+    # === WRITE DATAFRAME ===
+    start_row = 2
+    sheet.range((start_row, 1)).value = assets
+
+    # === SECTION HEADERS FORMATTING ===
+    for row_idx, (index_label, row_data) in enumerate(df.iterrows()):
+        if pd.isna(row_data).all():
+            cell = sheet.range((start_row + row_idx, 1))
+            cell.value = index_label
+            cell.api.Font.Bold = True
+            cell.color = (242, 242, 242)
+
+    # === CONDITIONAL FORMATTING ===
+    # Highlight positive (green) and negative (red) in column B (Risk Premium Low End)
+    n_rows = len(df)
+
+    for i in range(n_rows):
+        cell = sheet.range((start_row + i, 2))  # column B
+        value = cell.value
+        if isinstance(value, (float, int)):
+            if value < 0:
+                cell.color = (192, 0, 0)  # red
+            elif value > 0:
+                cell.color = (0, 112, 0)  # green
+
+    # === COLUMN WIDTHS ===
+    sheet.range("A:A").column_width = 35
+    for col in range(2, 9):
+        sheet.range((1, col)).column_width = 12
+
+    # === OPTIONAL: Freeze header row ===
+    sheet.api.Application.ActiveWindow.SplitRow = start_row - 1
+    sheet.api.Application.ActiveWindow.FreezePanes = True
+
+    for col in range(2, 9):  # B to H → column numbers 2 to 8
+        rng = sheet.range((1, col), (1000, col))  # rows 1–1000 (adjust as needed)
+        rng.number_format = '0.0%'  # or '0.00%' for two decimal places
+
+    from openpyxl import load_workbook
+    from openpyxl.styles import Alignment
+
+    wb = load_workbook("your_file.xlsx")
+    ws = wb.active
+
+    # Center align B5 to H50
+    for row in ws.iter_rows(min_row=5, max_row=50, min_col=2, max_col=8):
+        for cell in row:
+            cell.alignment = Alignment(horizontal="center")
 
     ISG_FACTOR_SHARPES = [0.37, 0.36, 0.58, 0.33, 0.28, 0.12]
+
+    # Load the uploaded workbook
+    wb = load_workbook("/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/Book2.xlsx")
+    ws = wb.active
+
+    # We'll extract formatting from a few representative cells in the range B5:H5 as a sample
+    sample_range = ws["B5:H5"][0]
+
+    # Extract styles from these cells
+    style_summary = []
+    for cell in sample_range:
+        style_summary.append({
+            "cell": cell.coordinate,
+            "font": {
+                "name": cell.font.name,
+                "size": cell.font.size,
+                "bold": cell.font.bold,
+                "italic": cell.font.italic,
+                "color": cell.font.color.rgb if cell.font.color else None
+            },
+            "fill": {
+                "type": cell.fill.fill_type,
+                "fgColor": cell.fill.fgColor.rgb if cell.fill.fgColor else None
+            },
+            "alignment": {
+                "horizontal": cell.alignment.horizontal,
+                "vertical": cell.alignment.vertical,
+                "wrap_text": cell.alignment.wrap_text
+            },
+            "number_format": cell.number_format,
+            "border": {
+                "top": cell.border.top.style,
+                "bottom": cell.border.bottom.style,
+                "left": cell.border.left.style,
+                "right": cell.border.right.style
+            }
+        })
+
+    column_widths = {}
+    for col_letter in ['B', 'C', 'D', 'E', 'F', 'G', 'H']:
+        width = ws.column_dimensions[col_letter].width
+        column_widths[col_letter] = width
+
+    # Extract row heights for relevant rows (let's check rows 1 to 10)
+    row_heights = {}
+    for row in range(1, 11):
+        height = ws.row_dimensions[row].height
+        row_heights[row] = height
+
+    # Combine both into a single DataFrame for display
+    col_df = pd.DataFrame(list(column_widths.items()), columns=['Column', 'Width'])
+    row_df = pd.DataFrame(list(row_heights.items()), columns=['Row', 'Height'])
+
+    # Merge for viewing
+    combined_info = {
+        'Column Widths': col_df,
+        'Row Heights': row_df
+    }
