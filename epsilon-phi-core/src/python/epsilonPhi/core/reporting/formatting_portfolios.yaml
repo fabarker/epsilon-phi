@@ -1,0 +1,350 @@
+styles:
+  A1:
+    cell: A1
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: "FFFFFF"
+    alignment:
+      horizontal: null
+      vertical: center
+      wrap_text: null
+    number_format: General
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: dotted
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 37.0
+  P1:
+    cell: B1
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: "FFFFFF"
+    alignment:
+      horizontal: center
+      vertical: center
+      wrap_text: null
+    number_format: General
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: dotted
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 37.0
+  AC:
+    cell: A2
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: FFD3DDEA
+    alignment:
+      horizontal: left
+      vertical: center
+      wrap_text: null
+    number_format: General
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 17.0
+  PC:
+    cell: B2
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: FFD3DDEA
+    alignment:
+      horizontal: right
+      vertical: center
+      wrap_text: null
+      indent: 4
+    number_format: 0.0%
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 17.0
+  AS:
+    cell: A3
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: "FFFFFF"
+    alignment:
+      horizontal: left
+      vertical: center
+      wrap_text: null
+    number_format: General
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 17.0
+  PS:
+    cell: B3
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: "FFFFFF"
+    alignment:
+      horizontal: right
+      vertical: center
+      wrap_text: null
+      indent: 4
+    number_format: "0.0"
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 17.0
+  AT:
+    cell: A4
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: "FFFFFF"
+    alignment:
+      horizontal: null
+      vertical: null
+      wrap_text: null
+    number_format: General
+    border:
+      top:
+        style: dotted
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 23.0
+  PT:
+    cell: B4
+    font:
+      name: Calibri Light
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: "FFFFFF"
+    alignment:
+      horizontal: right
+      vertical: null
+      wrap_text: null
+      indent: 4
+    number_format: 0.0%
+    border:
+      top:
+        style: dotted
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 23.0
+  E:
+    cell: A5
+    font:
+      name: Arial
+      size: 12.5
+      bold: false
+      italic: false
+      color: null
+    fill:
+      type: solid
+      fgColor: "FFFFFF"
+    alignment:
+      horizontal: null
+      vertical: null
+      wrap_text: null
+    number_format: General
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 3.0
+  O:
+    cell: A6
+    font:
+      name: Calibri
+      size: 12.5
+      bold: false
+      italic: false
+      color: "FFFFFF"
+    fill:
+      type: solid
+      fgColor: "0F243E"
+    alignment:
+      horizontal: null
+      vertical: center
+      wrap_text: null
+    number_format: 0.0%
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 23.0
+  O1:
+    cell: A6
+    font:
+      name: Calibri
+      size: 12.5
+      bold: false
+      italic: false
+      color: "FFFFFF"
+    fill:
+      type: solid
+      fgColor: "0F243E"
+    alignment:
+      horizontal: right
+      vertical: center
+      wrap_text: null
+      indent: 4
+    number_format: 0.0%
+    border:
+      top:
+        style: null
+        color: null
+      bottom:
+        style: null
+        color: null
+      left:
+        style: null
+        color: null
+      right:
+        style: null
+        color: null
+    height: 23.0
+column_widths:
+  A: 40
+  B: 18
+row_heights:
+  1: 37.0
+  2: 18.0
+  3: 18.0
+  4: 23.0
+  5: 3.0
+  6: 22.0
+  7: 22.0
+  8: 2.0
+  9: 22.0
+  10: 2.0
+  11: 22.0

@@ -598,14 +598,14 @@ class SAABootstrapper(AbstractBootstrapper):
         mu_vals, dmu_dt_vals = SimulationHelper.get_mu_path(
             fwd_curve.values,
             eq_R * SAABootstrapper.NUM_MONTHS,
-            schema.dt,
+            self._schema.dt,
             long_horizon,
             rate_type
         )
 
         current_indicator = self.get_current_environment_indicator()
         shocks_panels = SimulationHelper.extract_shocks(
-            asset, mu_vals, dmu_dt_vals * schema.dt, current_indicator)
+            asset, mu_vals, dmu_dt_vals * self._schema.dt, current_indicator)
 
         paths_panel = self.prepare_boostrap_blocks(
             bs_indices,
@@ -621,7 +621,7 @@ class SAABootstrapper(AbstractBootstrapper):
 
         paths = SimulationHelper.simulate_paths(
             mu_vals,
-            dmu_dt_vals * schema.dt,
+            dmu_dt_vals * self._schema.dt,
             shocks_panel,
             mean_rev,
             rate_floor

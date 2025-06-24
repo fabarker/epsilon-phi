@@ -1,8 +1,11 @@
 from epsilonPhi.core.portfolio.Portfolio import CPortfolio
 from epsilonPhi.core.config.configUtil import CAppConfig
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.schema.Schema import ContextCreator
 from epsilonPhi.logging import *
 import copy
+import pandas as pd
+
 
 class TaxInfo:
     def __init__(self, is_taxable, tax_region, is_amt):
@@ -532,253 +535,70 @@ class SAAPortfolio(CPortfolio):
             if isinstance(tax_info, type_to_verify) is False:
                 raise TypeError("Expected type of tax_info is {} got {}".format(type_to_verify, type(tax_info)))
 
-if __name__ == "__main__":
 
-    from epsilonPhi.core.asset.AssetMgr import CAssetMgr
-    from epsilonPhi.core.schema.Schema import ContextCreator
-    schema = ContextCreator(
-        currency='USD',
-        start_date='30-Nov-1983',
-        end_date='31-Dec-2022'
-    ).create_context()
+    @staticmethod
+    def get_portfolios_from_template(
+            currency,
+            template_path
+    ):
 
-    import numpy as np
-    import pandas as pd
+        schema = ContextCreator(
+            currency=currency,
+            start_date='30-Nov-1983',
+            end_date='31-Dec-2022'
+        ).create_context()
 
-    # Load weights from excel
-    raw = pd.read_excel(
-        '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx',
-        sheet_name='RAW WEIGHTS',
-        index_col=0
-    )
-
-    last_row = mask = raw.astype(str).apply(lambda row: row.str.contains("total", case=False)).any(axis=1)
-    names = np.setdiff1d(raw.columns, ['Hedge Ratios', 'Name', 'Category', 'Reporting Name'])
-
-    ptfs = []
-
-    hedge_ratios = raw['Hedge Ratios'][~last_row].astype(float)
-    categories = raw['Category'][~last_row].astype(str)
-    reporting_names = raw['Reporting Name'][~last_row].astype(str)
-
-    for col in names:
-        weights = raw[col][~last_row].replace("-", 0).astype(float)
-        weights /= weights.sum()
-
-        ptf = SAAPortfolio.create_equal_weighted_portfolio(
-            weights.index,
-            portfolio_name=col,
-            context=schema,
+        raw = pd.read_excel(
+            template_path,
+            sheet_name='RAW WEIGHTS',
+            index_col=0
         )
 
-        ptf.set_weights(weights.values)
-        ptf.set_hedging_ratios(hedge_ratios.values)
+        is_total_row = raw.astype(str).apply(lambda row: row.str.contains("total", case=False)).any(axis=1)
 
-        for asset in ptf.get_assets():
-            asset.set_reporting_info(
-                reporting_names.loc[asset.name[0]],
-                categories.loc[asset.name[0]]
+        # Extract metadata columns, excluding non-asset columns
+        metadata_cols = ['Hedge Ratios', 'Name', 'Category', 'Reporting Name']
+        asset_cols = [col for col in raw.columns if col not in metadata_cols]
+
+        # Prepare metadata series
+        hedge_ratios = raw.loc[~is_total_row, 'Hedge Ratios'].astype(float)
+        categories = raw.loc[~is_total_row, 'Category'].astype(str)
+        reporting_names = raw.loc[~is_total_row, 'Reporting Name'].astype(str)
+
+        portfolios = []
+
+        for col in asset_cols:
+            # Load and clean weights
+            weights = raw.loc[~is_total_row, col].replace("-", 0).astype(float)
+            weights /= weights.sum()  # normalize
+
+            # Create portfolio object
+            portfolio = SAAPortfolio.create_equal_weighted_portfolio(
+                weights.index,
+                portfolio_name=col,
+                context=schema
             )
 
-        ptfs.append(ptf)
+            portfolio.set_weights(weights.values)
+            portfolio.set_hedging_ratios(hedge_ratios.values)
 
+            # Set reporting info
+            for asset in portfolio.get_assets():
+                asset_name = asset.name[0] if isinstance(asset.name, tuple) else asset.name
+                asset.set_reporting_info(
+                    reporting_name=reporting_names.loc[asset_name],
+                    category=categories.loc[asset_name]
+                )
 
-    # 1. Create the portfolio allocations page
+            portfolios.append(portfolio)
 
-    all_ptfs = []
-    for p in ptfs:
+        return portfolios
 
-        asset_categories = np.array([x.category for x in p.get_assets()])
-        reporting_names = np.array([x.reporting_name for x in p.get_assets()])
-        unique_categories = np.unique(asset_categories)
+if __name__ == "__main__":
 
-        dfs = []
-        for cat in unique_categories:
-            idx = asset_categories == cat
+    path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
 
-            wts = p.get_flattened_weights()[idx]
-            wts = np.concatenate(([np.sum(wts)], wts * 100))
-            names = [cat] + ["  " + x for x in reporting_names[idx]]
-            tmp = pd.DataFrame(
-                wts, columns=[p.name], index=names
-            )
-
-            dfs.extend([tmp])
-
-        res = pd.concat(dfs)
-        res = pd.concat((res, pd.DataFrame(1, columns=[p.name], index=["Total"])), axis=0)
-        all_ptfs.extend([res])
-    output = pd.concat(all_ptfs, axis=1)
-
-    # 2. Create the assumptions page
-    assets = []
-    unique_cats = set([x.category for y in ptfs for x in y.get_assets()])
-    for cat in unique_cats:
-
-        cat_list = []
-        for p in ptfs:
-            for a in p.get_assets():
-
-                if a.category == cat:
-
-                    asmpt = {('','reporting_name'): "    " + a.reporting_name,
-                             ('Long-Term Estimates', 'Lower Range'): a.get_risk_premia() - a.get_uncertainty(),
-                             ('Long-Term Estimates', 'Risk Premia\nwith Estimated Range'): a.get_risk_premia(),
-                             ('Long-Term Estimates', 'Upper Range'): a.get_risk_premia() + a.get_uncertainty(),
-                             ('Long-Term Estimates', 'Volatility'): a.get_volatility(),
-                             ('Long-Term Estimates', 'Sharpe Ratio'): a.get_sharpe_ratio(),
-                             ('Long-Term Estimates', 'Estimated Mean Return\n(2.5% Risk Free Rate)'): a.get_total_return(),
-                             ('', 'Hedging Ratio'): a.hedging_ratio,
-                             ('Modelling Dates', 'From'): a.index.min(),
-                             ('Modelling Dates', 'To'): a.index.max()
-                             }
-
-                    tmp = pd.DataFrame(asmpt.values(), index=pd.MultiIndex.from_tuples(asmpt.keys())).T
-                    cat_list.extend([tmp])
-
-        cat_list = pd.concat(cat_list, axis=0)
-        tmp = pd.DataFrame([cat] + list(np.full(cat_list.shape[1] - 1, np.nan)), index=cat_list.columns).T
-        assets.extend([pd.concat((tmp, cat_list), axis=0)])
-
-    assets = pd.concat(assets, axis=0)
-    assets = assets[~assets.duplicated(keep='first')].set_index(("", "reporting_name"), drop=True)
-    assets.index.names = [None]
-
-    import xlwings as xw
-
-    # Open Excel (if not already running) and create a new workbook
-    wb = xw.Book()  # This opens a new Excel workbook
-    sheet = wb.sheets[0]
-
-    # Write to Excel live
-    sheet.range("A1").value = "Hello from Python!"
-    sheet.range("B1:B5").value = [[i ** 2] for i in range(1, 6)]
-
-    # Optional: keep Excel visible and interactive
-    wb.app.visible = True
-
-    wb = xw.Book()
-    sheet = wb.sheets[0]
-    sheet.name = "Estimates"
-
-    # Clear previous content (optional)
-    sheet.clear()
-
-    # === WRITE DATAFRAME ===
-    start_row = 2
-    sheet.range((start_row, 1)).value = assets
-
-    # === HEADERS ===
-    # Write the merged header "Risk Premium with Estimated Range"
-    sheet.range("B2:G2").merge()
-    sheet.range("I2:J2").merge()
-    sheet.range("B2").color = (255, 255, 255)
-
-    # === WRITE DATAFRAME ===
-    start_row = 2
-    sheet.range((start_row, 1)).value = assets
-
-    # === SECTION HEADERS FORMATTING ===
-    for row_idx, (index_label, row_data) in enumerate(df.iterrows()):
-        if pd.isna(row_data).all():
-            cell = sheet.range((start_row + row_idx, 1))
-            cell.value = index_label
-            cell.api.Font.Bold = True
-            cell.color = (242, 242, 242)
-
-    # === CONDITIONAL FORMATTING ===
-    # Highlight positive (green) and negative (red) in column B (Risk Premium Low End)
-    n_rows = len(df)
-
-    for i in range(n_rows):
-        cell = sheet.range((start_row + i, 2))  # column B
-        value = cell.value
-        if isinstance(value, (float, int)):
-            if value < 0:
-                cell.color = (192, 0, 0)  # red
-            elif value > 0:
-                cell.color = (0, 112, 0)  # green
-
-    # === COLUMN WIDTHS ===
-    sheet.range("A:A").column_width = 35
-    for col in range(2, 9):
-        sheet.range((1, col)).column_width = 12
-
-    # === OPTIONAL: Freeze header row ===
-    sheet.api.Application.ActiveWindow.SplitRow = start_row - 1
-    sheet.api.Application.ActiveWindow.FreezePanes = True
-
-    for col in range(2, 9):  # B to H → column numbers 2 to 8
-        rng = sheet.range((1, col), (1000, col))  # rows 1–1000 (adjust as needed)
-        rng.number_format = '0.0%'  # or '0.00%' for two decimal places
-
-    from openpyxl import load_workbook
-    from openpyxl.styles import Alignment
-
-    wb = load_workbook("your_file.xlsx")
-    ws = wb.active
-
-    # Center align B5 to H50
-    for row in ws.iter_rows(min_row=5, max_row=50, min_col=2, max_col=8):
-        for cell in row:
-            cell.alignment = Alignment(horizontal="center")
-
-    ISG_FACTOR_SHARPES = [0.37, 0.36, 0.58, 0.33, 0.28, 0.12]
-
-    # Load the uploaded workbook
-    wb = load_workbook("/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/Book2.xlsx")
-    ws = wb.active
-
-    # We'll extract formatting from a few representative cells in the range B5:H5 as a sample
-    sample_range = ws["B5:H5"][0]
-
-    # Extract styles from these cells
-    style_summary = []
-    for cell in sample_range:
-        style_summary.append({
-            "cell": cell.coordinate,
-            "font": {
-                "name": cell.font.name,
-                "size": cell.font.size,
-                "bold": cell.font.bold,
-                "italic": cell.font.italic,
-                "color": cell.font.color.rgb if cell.font.color else None
-            },
-            "fill": {
-                "type": cell.fill.fill_type,
-                "fgColor": cell.fill.fgColor.rgb if cell.fill.fgColor else None
-            },
-            "alignment": {
-                "horizontal": cell.alignment.horizontal,
-                "vertical": cell.alignment.vertical,
-                "wrap_text": cell.alignment.wrap_text
-            },
-            "number_format": cell.number_format,
-            "border": {
-                "top": cell.border.top.style,
-                "bottom": cell.border.bottom.style,
-                "left": cell.border.left.style,
-                "right": cell.border.right.style
-            }
-        })
-
-    column_widths = {}
-    for col_letter in ['B', 'C', 'D', 'E', 'F', 'G', 'H']:
-        width = ws.column_dimensions[col_letter].width
-        column_widths[col_letter] = width
-
-    # Extract row heights for relevant rows (let's check rows 1 to 10)
-    row_heights = {}
-    for row in range(1, 11):
-        height = ws.row_dimensions[row].height
-        row_heights[row] = height
-
-    # Combine both into a single DataFrame for display
-    col_df = pd.DataFrame(list(column_widths.items()), columns=['Column', 'Width'])
-    row_df = pd.DataFrame(list(row_heights.items()), columns=['Row', 'Height'])
-
-    # Merge for viewing
-    combined_info = {
-        'Column Widths': col_df,
-        'Row Heights': row_df
-    }
+    ptfs = SAAPortfolio.get_portfolios_from_template(
+        "USD",
+        path
+    )
