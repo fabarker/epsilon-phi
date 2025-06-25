@@ -203,8 +203,16 @@ if __name__ == "__main__":
     import os
     import re
 
-    fullfile_path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
-    yaml_assumptions = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml'
+    path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+
+    #res = ExcelUtils.extract_formatting_grouped_by_row(path, "Sheet4 (2)")
+
+    #with open('formatting_assumptions.yaml', 'w') as f:
+    #    yaml.dump(res, f)
+
+
+    fullfile_path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+    yaml_assumptions = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml'
     df = pd.read_excel(fullfile_path, "Sheet4", index_col=0, header=[0, 1])
 
     # get the workbook
@@ -221,69 +229,81 @@ if __name__ == "__main__":
 
     for r_idx, row in enumerate(dataframe_to_rows(df, index=True, header=True), 1):
 
-        if r_idx in [1, 2] or row[0] in ["Factor Based Risk Analytics", "Portfolio Risk Premia"]:
-            row_style = style_dict.get(1)
-        elif isinstance(row[0], str) and row[0].startswith("  "):
+        if r_idx in [1, 2, 3, 4]:
+            row_style = style_dict.get(r_idx)
+        elif isinstance(row[0], str) and row[0].startswith("    "):
             row_style = style_dict.get(4)
-        elif all_nan:
+        else:
             row_style = style_dict.get(5)
-        elif all_floats_no_nans:
-            row_style = style_dict.get(2)
-        elif all_none_nan_or_str:
-            row_style = style_dict.get(3)
 
 
         for c_idx, value in enumerate(row, 1):
             cell = ws.cell(row=r_idx, column=c_idx, value=value)
             coord = cell.coordinate
 
-            if coord not in style_dict:
+            style = row_style.get(
+                get_column_letter(
+                    cell.column
+                )
+            )
 
-                # it is either, standard, category or last
-                s = row[0]
-                if r_idx == max_rows:
-                    coord = coord[0] + "L"
-                elif row[0].startswith(" "):
-                    coord = coord[0]
-                else:
-                    coord = coord[0] + "C"
-
-            style = style_dict[coord]
+            # row height
+            ws.row_dimensions[int(r_idx)].height = style.get("height", {})
 
             # Font
             font_cfg = style.get("font", {})
             cell.font = Font(
-                    name=font_cfg.get("name"),
-                    size=font_cfg.get("size"),
-                    bold=font_cfg.get("bold"),
-                    italic=font_cfg.get("italic"),
-                    color=font_cfg.get("color")
-                )
+                name=font_cfg.get("name"),
+                size=font_cfg.get("size"),
+                bold=font_cfg.get("bold"),
+                italic=font_cfg.get("italic"),
+                color=font_cfg.get("color")
+            )
 
             # Fill
             fill_cfg = style.get("fill", {})
             if fill_cfg.get("type") and fill_cfg.get("fgColor"):
-                    cell.fill = PatternFill(
-                        fill_type=fill_cfg["type"],
-                        fgColor=fill_cfg["fgColor"]
-                    )
+                cell.fill = PatternFill(
+                    fill_type=fill_cfg["type"],
+                    fgColor=fill_cfg["fgColor"]
+                )
 
             # Alignment
             align_cfg = style.get("alignment", {})
             cell.alignment = Alignment(
-                    horizontal=align_cfg.get("horizontal"),
-                    vertical=align_cfg.get("vertical"),
-                    wrap_text=align_cfg.get("wrap_text")
-                )
+                horizontal=align_cfg.get("horizontal"),
+                vertical=align_cfg.get("vertical"),
+                wrap_text=align_cfg.get("wrap_text"),
+                indent=align_cfg.get("indent", 0)
+            )
 
             # Number format
             if style.get("number_format"):
-                    cell.number_format = style["number_format"]
+                cell.number_format = style["number_format"]
 
             # Borders
             border_cfg = style.get("border", {})
-            sides = {side: Side(style=border_cfg.get(side)) for side in ["top", "bottom", "left", "right"]}
+            sides = {}
+            for side in ["top", "bottom", "left", "right"]:
+                side_def = border_cfg.get(side, {})
+                sides[side] = Side(
+                    style=side_def.get("style"),
+                    color=side_def.get("color")
+                )
             cell.border = Border(**sides)
+
+    # Apply column widths
+    col_widths = fmt.get("column_widths", {})
+    for col in ws.iter_cols(min_row=1, max_row=ws.max_row):
+        if any(cell.value is not None for cell in col):
+            col_letter = get_column_letter(col[0].column)
+            ws.column_dimensions[col_letter].width = col_widths.get(col_letter)
+
+    # Post Processing of SR
+    for row in ws.iter_rows(min_row=1, min_col=6, max_col=6):
+        for cell in row:
+            if isinstance(cell.value, (int, float)):  # Only format numeric cells
+                cell.number_format = '0.00'
 
     ws.merge_cells("B1:G1")
     ws.merge_cells("I1:J1")
@@ -296,15 +316,25 @@ if __name__ == "__main__":
             wrap_text=True
         )
 
-    # Apply column widths
-    for col_letter, width in fmt.get("column_widths", {}).items():
-            if width is not None:
-                ws.column_dimensions[col_letter].width = width
+    # Define a bottom border style
+    bottom_border = Border(bottom=Side(style='thin'))
 
-    # Apply row heights
-    for row_num, height in fmt.get("row_heights", {}).items():
-            if height is not None:
-                ws.row_dimensions[int(row_num)].height = height
+    # Find the last active row (non-empty)
+    last_row = ws.max_row
+
+    # Get the max number of columns used
+    max_col = ws.max_column
+
+    # Apply bottom border to each cell in the last active row
+    for col in range(1, max_col + 1):
+        cell = ws.cell(row=last_row, column=col)
+        cell.border = Border(
+            top=cell.border.top,
+            left=cell.border.left,
+            right=cell.border.right,
+            bottom=Side(style='thin')  # Add bottom border
+        )
 
     # Save Edits in the workbook
-    self.save_workbook()
+    wb.save("assumps.xlsx")
+    wb.close()

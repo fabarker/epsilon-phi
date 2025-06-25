@@ -41,11 +41,12 @@ class CPrivateAsset(CAsset):
 
     @property
     def liq_adjustment(self):
-        return (1 / (1 - self.premium_liq_to_total) -1)
+        return 1 / (1 - self.premium_liq_to_total) -1
 
     @property
     def beta_priv_to_pub(self):
         return 0.8
+        #return 1.08
 
     def load_public_market_equivalent(self):
         if self._pme is None:

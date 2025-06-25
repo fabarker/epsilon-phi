@@ -602,3 +602,5 @@ if __name__ == "__main__":
         "USD",
         path
     )
+
+    pc = ptfs[0]

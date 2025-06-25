@@ -4,7 +4,7 @@ __all__ = ['CInfrastructure']
 
 class CInfrastructure(CPrivateAsset):
     _asset_name = 'PA_INFRA'
-    _pme_name = 'VENTURE_PME'
+    _pme_name = 'INFRA_EQUITY'
 
     _reporting_name = 'Infrastructure'
     _category = 'Other Private Assets'

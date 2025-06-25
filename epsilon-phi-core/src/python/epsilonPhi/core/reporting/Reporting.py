@@ -13,9 +13,14 @@ import os
 import re
 import math
 
-yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+#yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+#yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+#yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+
+
+yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
 class Reporting(object):
@@ -153,38 +158,36 @@ class Reporting(object):
         with open(yaml_assumptions, "r") as f:
             fmt = yaml.safe_load(f)
 
-        style_dict = fmt.get("styles", {})
+        style_dict = fmt.get("row_styles", {})
 
-        max_rows = df.shape[0] + len(df.columns[0])
-        for r_idx, row in enumerate(dataframe_to_rows(df, index=True, header=True), 1):
+        df.reset_index(inplace=True)
+        for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
 
             if r_idx == 1:
-                row = [None] + list(df.columns.get_level_values(r_idx - 1))
+               row = list(df.columns.get_level_values(0))
+               row = [ x if x != "index" else None for x in row ]
 
             if r_idx == 2:
-                row = [None] + list(df.columns.get_level_values(r_idx - 1))
+               row = list(df.columns.get_level_values(1))
 
-            if r_idx == 3:
-                continue
-
-            if r_idx > 3:
-                r_idx = r_idx - 1
+            if r_idx in [1, 2, 3, 4]:
+                row_style = style_dict.get(r_idx)
+            elif isinstance(row[0], str) and row[0].startswith("    "):
+                row_style = style_dict.get(4)
+            else:
+                row_style = style_dict.get(5)
 
             for c_idx, value in enumerate(row, 1):
                 cell = ws.cell(row=r_idx, column=c_idx, value=value)
-                coord = cell.coordinate
 
-                if coord not in style_dict:
-                    # it is either, standard, category or last
-                    s = row[0]
-                    if r_idx == max_rows:
-                        coord = coord[0] + "L"
-                    elif row[0].startswith(" "):
-                        coord = coord[0]
-                    else:
-                        coord = coord[0] + "C"
+                style = row_style.get(
+                    get_column_letter(
+                        cell.column
+                    )
+                )
 
-                style = style_dict[coord]
+                # row height
+                ws.row_dimensions[int(r_idx)].height = style.get("height", {})
 
                 # Font
                 font_cfg = style.get("font", {})
@@ -209,7 +212,8 @@ class Reporting(object):
                 cell.alignment = Alignment(
                     horizontal=align_cfg.get("horizontal"),
                     vertical=align_cfg.get("vertical"),
-                    wrap_text=align_cfg.get("wrap_text")
+                    wrap_text=align_cfg.get("wrap_text"),
+                    indent=align_cfg.get("indent", 0)
                 )
 
                 # Number format
@@ -218,8 +222,27 @@ class Reporting(object):
 
                 # Borders
                 border_cfg = style.get("border", {})
-                sides = {side: Side(style=border_cfg.get(side)) for side in ["top", "bottom", "left", "right"]}
+                sides = {}
+                for side in ["top", "bottom", "left", "right"]:
+                    side_def = border_cfg.get(side, {})
+                    sides[side] = Side(
+                        style=side_def.get("style"),
+                        color=side_def.get("color")
+                    )
                 cell.border = Border(**sides)
+
+        # Apply column widths
+        col_widths = fmt.get("column_widths", {})
+        for col in ws.iter_cols(min_row=1, max_row=ws.max_row):
+            if any(cell.value is not None for cell in col):
+                col_letter = get_column_letter(col[0].column)
+                ws.column_dimensions[col_letter].width = col_widths.get(col_letter)
+
+        # Post Processing of SR
+        for row in ws.iter_rows(min_row=1, min_col=6, max_col=6):
+            for cell in row:
+                if isinstance(cell.value, (int, float)):  # Only format numeric cells
+                    cell.number_format = '0.00'
 
         ws.merge_cells("B1:G1")
         ws.merge_cells("I1:J1")
@@ -232,15 +255,21 @@ class Reporting(object):
             wrap_text=True
         )
 
-        # Apply column widths
-        for col_letter, width in fmt.get("column_widths", {}).items():
-            if width is not None:
-                ws.column_dimensions[col_letter].width = width
+        # Find the last active row (non-empty)
+        last_row = ws.max_row
 
-        # Apply row heights
-        for row_num, height in fmt.get("row_heights", {}).items():
-            if height is not None:
-                ws.row_dimensions[int(row_num)].height = height
+        # Get the max number of columns used
+        max_col = ws.max_column
+
+        # Apply bottom border to each cell in the last active row
+        for col in range(1, max_col + 1):
+            cell = ws.cell(row=last_row, column=col)
+            cell.border = Border(
+                top=cell.border.top,
+                left=cell.border.left,
+                right=cell.border.right,
+                bottom=Side(style='thin')  # Add bottom border
+            )
 
         # Save Edits in the workbook
         self.save_workbook()
@@ -671,7 +700,8 @@ class Reporting(object):
 if __name__ == "__main__":
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
-    path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+    #path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+    path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
 
     ptfs = SAAPortfolio.get_portfolios_from_template(
         "USD",
@@ -684,8 +714,6 @@ if __name__ == "__main__":
     )
 
     report.add_portfolios(ptfs)
-    report.get_unique_categories()
-
+    report.write_assumptions()
     report.write_portfolios()
     report.write_risk_dashboard()
-    report.write_assumptions()
