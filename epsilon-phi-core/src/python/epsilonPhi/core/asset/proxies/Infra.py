@@ -26,7 +26,6 @@ class CInfra(CAsset):
     def __init__(
             self,
             schema: Optional[CContext] = None,
-            **kwargs
     ) -> None:
 
         data = self.get_time_series(schema)
@@ -66,10 +65,11 @@ class CInfra(CAsset):
     @staticmethod
     def get_time_series_params():
         return {
-            'denominated_currency':'USD',
-            'exposure_currency':'USD',
+            'denominated_currency': 'USD',
+            'exposure_currency': 'USD',
             'ts_hedge_ratio': 0.0,
-            'returns_type': ReturnsType.SIMPLE
+            'returns_type': ReturnsType.SIMPLE,
+            'ts_type': TimeSeriesType.RETURNS
         }
 
 if __name__ == "__main__":

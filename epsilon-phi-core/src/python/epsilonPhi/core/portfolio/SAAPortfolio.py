@@ -1,11 +1,10 @@
 from epsilonPhi.core.portfolio.Portfolio import CPortfolio
-from epsilonPhi.core.config.configUtil import CAppConfig
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.schema.Schema import ContextCreator
 from epsilonPhi.logging import *
-import copy
 import pandas as pd
-
+from epsilonPhi.core.simulation.SimStructs import WealthFlows
+from typing import Optional, List
 
 class TaxInfo:
     def __init__(self, is_taxable, tax_region, is_amt):
@@ -74,6 +73,10 @@ class SAAPortfolio(CPortfolio):
         # Set up the portfolio manager
         self._hedgingOption = hedging_option if hedging_option else self.get_default_hedging_option()
         self.setup()
+
+        # wealth flows
+        self._ws_inflows = None
+        self._ws_outflows = None
 
     def reset_properties(self):
         super().reset_properties()
@@ -151,6 +154,26 @@ class SAAPortfolio(CPortfolio):
 
     def set_tax_rates(self, **kwargs):
         pass
+
+    def set_ws_inflows(self, ws_inflows: List[float], type: str, reset=False) -> None:
+        if type not in {'nominal', 'real', 'percent'}:
+            raise ValueError(f"Invalid type: {type}")
+
+        if self._ws_inflows is None or reset:
+            self._ws_inflows = [WealthFlows() for _ in range(len(ws_inflows))]
+
+        for wf, val in zip(self._ws_inflows, ws_inflows):
+            setattr(wf, f'_{type}', val)
+
+    def set_ws_outflows(self, ws_outflows: List[float], type: str, reset=False) -> None:
+        if type not in {'nominal', 'real', 'percent'}:
+            raise ValueError(f"Invalid type: {type}")
+
+        if self._ws_outflows is None or reset:
+            self._ws_outflows = [WealthFlows() for _ in range(len(ws_outflows))]
+
+        for wf, val in zip(self._ws_outflows, ws_outflows):
+            setattr(wf, f'_{type}', val)
 
 
     ################### Hedging Related ###################
@@ -416,16 +439,23 @@ class SAAPortfolio(CPortfolio):
         return self.get_portfolio_mgr().get_stressed_risk_panel()
 
     def get_portfolio_wealth_projection(self,
-                                        ws_inflows=None,
-                                        ws_outflows=None,
-                                        ptf_sim_order=None,
-                                        quantiles=None,
-                                        ptf_list=None,
+                                        ws_inflows: Optional[List[WealthFlows]] = None,
+                                        ws_outflows: Optional[List[WealthFlows]] = None,
+                                        ptf_sim_order: Optional[List[int]] = None,
+                                        quantiles: Optional[List[float]] = None,
+                                        ptf_list: Optional[List[CPortfolio]] = None,
                                         frequency=Frequency.YEARLY
                                         ):
+
+        if ws_inflows is not None:
+            self._ws_inflows = ws_inflows
+
+        if ws_outflows is not None:
+            self._ws_outflows = ws_outflows
+
         return self.get_portfolio_mgr().get_portfolio_wealth_projection(
-            ws_inflows=ws_inflows,
-            ws_outflows=ws_outflows,
+            ws_inflows=self._ws_inflows,
+            ws_outflows=self._ws_outflows,
             ptf_sim_order=ptf_sim_order,
             quantiles=quantiles,
             ptf_list=ptf_list,
@@ -603,4 +633,113 @@ if __name__ == "__main__":
         path
     )
 
-    pc = ptfs[0]
+    ptf = ptfs[2]
+
+    ws_out = [0.01] * 20
+    ptf.set_ws_outflows(ws_out, 'nominal')
+    sim = ptf.get_portfolio_wealth_projection()
+
+    metrics = ["nominal", "real", "net_flows", "real_net_flows"]
+    df = pd.concat(
+        [sim.get_quantile_dataframe(metric) for metric in metrics],
+        axis=1,
+        verify_integrity=True  # raise error if duplicate columns
+    )
+
+    df = sim.get_quantile_dataframe('nominal')
+
+    import pandas as pd
+    from openpyxl import Workbook
+    from openpyxl.utils.dataframe import dataframe_to_rows
+    from openpyxl.chart import LineChart, Reference
+    from openpyxl.chart.layout import Layout, ManualLayout
+    from openpyxl.drawing.line import LineProperties
+    from openpyxl.chart.shapes import GraphicalProperties
+    from openpyxl.drawing.text import CharacterProperties
+    from openpyxl.drawing.text import Font, CharacterProperties
+
+    # ---- Step 1: Flatten column MultiIndex ----
+    df_flat = df.copy()
+    df_flat.columns = ["1st %ile", "10th %ile", "50th %ile", "90th %ile"]
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Chart Data"
+
+    # Write data to worksheet
+    for row in dataframe_to_rows(df_flat.reset_index(), index=False, header=True):
+        ws.append(row)
+
+    # Create chart
+    chart = LineChart()
+
+    # Chart data and categories
+    n_rows = df_flat.shape[0] + 1
+    n_cols = df_flat.shape[1] + 1
+    data = Reference(ws, min_col=2, max_col=n_cols, min_row=1, max_row=n_rows)
+    cats = Reference(ws, min_col=1, min_row=2, max_row=n_rows)
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(cats)
+
+    # set the chart height
+    chart.height = 3 * 2.65
+    chart.width = 3 * 4
+
+    from openpyxl.chart.text import RichText
+    from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties, Font
+
+    chart.y_axis.title = 'nominal'.capitalize() + " Portfolio Values (" + ptf.schema.currency + ")"
+    chart.x_axis.title = sim.frequency.name.capitalize().replace("ly", "")
+    chart.y_axis.majorTickMark = 'cross'
+    chart.title = None
+
+    # Define chart and font
+    font_test = Font(typeface='Aptos')
+    cp = CharacterProperties(latin=font_test, sz=900, b=False)
+    chart.x_axis.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+    chart.y_axis.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+
+    # Add this for the axis titles
+    chart.x_axis.title.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+    chart.y_axis.title.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+    chart.y_axis.title.tx.rich.p[0].r[0].rPr = cp
+    chart.x_axis.title.tx.rich.p[0].r[0].rPr = cp
+
+    chart.graphical_properties = GraphicalProperties()
+    chart.graphical_properties.line.noFill = True
+    chart.graphical_properties.line.prstDash = None
+    chart.y_axis.minorGridlines = None  # Disable minor gridlines
+    chart.y_axis.majorGridlines = None  # Disable major gridlines
+    chart.x_axis.tickMarkSkip = 5
+    chart.x_axis.tickLblSkip = 5
+    chart.x_axis.crosses = "autoZero"
+    chart.x_axis.tickLblPos = "nextTo"  # ✅ Ensures labels are on the tick marks
+
+    # --- Legend: top, horizontal layout ---
+    chart.legend.position = "t"
+    chart.legend.layout = Layout(
+        manualLayout=ManualLayout(
+            x=0.25, y=0.0, w=1, h=0.1,
+            xMode="factor", yMode="factor", wMode="factor", hMode="factor"
+        )
+    )
+
+    chart.legend.txPr = RichText(p=[
+        Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)
+    ])
+
+    # Define colors similar to screenshot
+    colors = ["C00000", "8064A2", "376092", "77933C"]  # red, purple, blue, olive green
+
+    for i, ser in enumerate(chart.series):
+        line = LineProperties()
+        line.solidFill = colors[i % len(colors)]
+        line.width = 12700
+        ser.graphicalProperties.line = line
+
+        if hasattr(ser, 'dLbls') and ser.dLbls:
+            ser.dLbls.textProperties = CharacterProperties(typeface="Aptos")
+
+    # Add chart to worksheet
+    ws.add_chart(chart, "B24")
+    wb.save("styled_chart.xlsx")

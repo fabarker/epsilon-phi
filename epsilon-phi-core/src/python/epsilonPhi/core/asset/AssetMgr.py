@@ -5,7 +5,9 @@ from epsilonPhi.core.dataModel.enums.Asset import CustomAssets
 import pandas as pd
 
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
+
 gds = GlobalDataSource()
+
 
 class CAssetMgrInf(ABC):
     def __init__(self):
@@ -19,6 +21,7 @@ class CAssetMgrInf(ABC):
     def get_time_series_currency_info(self, asset_name):
         pass
 
+
 class CAssetMgr(CAssetMgrInf):
     _cache = {}
 
@@ -29,6 +32,7 @@ class CAssetMgr(CAssetMgrInf):
     @property
     def schema(self):
         return self._schema
+
     @property
     def context(self):
         return self.schema
@@ -54,13 +58,14 @@ class CAssetMgr(CAssetMgrInf):
     ):
 
         if df_ is None:
-           return None
+            return None
 
         if schema is None:
-           return df_
+            return df_
 
         from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
-        assert isinstance(df_, CTimeSeries) or isinstance(df_, CSlice), 'Error - data must be dataframe or timeseries object'
+        assert isinstance(df_, CTimeSeries) or isinstance(df_,
+                                                          CSlice), 'Error - data must be dataframe or timeseries object'
 
         if isinstance(df_, CTimeSeries):
             assert len(df_.columns) == 1, 'Error - dataframe must be single return time series'
@@ -70,9 +75,9 @@ class CAssetMgr(CAssetMgrInf):
 
         # Comment this out due to issues casting assets ts_.insert_dates(schema.dates)
         if df_.type == TimeSeriesType.LEVELS:
-           return ts_.get_periodic_levels(schema.frequency)
+            return ts_.get_periodic_levels(schema.frequency)
         elif df_.type in [TimeSeriesType.RETURNS, TimeSeriesType.GROWTH]:
-           return ts_.get_periodic_returns(schema.frequency)
+            return ts_.get_periodic_returns(schema.frequency)
         else:
             raise ValueError('Error - unknown time series type')
 
@@ -100,15 +105,13 @@ class CAssetMgr(CAssetMgrInf):
         )
 
         asset_key = self.get_asset_key(asset_name)
-        CAssetMgr._cache[asset_key] = asset.deepcopy()
-
-
+        CAssetMgr._cache[asset_key] = asset
 
     def load_asset_by_name(self, asset_name):
         if CustomAssets.is_custom_asset(asset_name):
-           self.load_custom_proxy(asset_name)
+            self.load_custom_proxy(asset_name)
         else:
-           self.load_standard_asset(asset_name)
+            self.load_standard_asset(asset_name)
 
     def load_standard_asset(self, asset_name):
         from epsilonPhi.core.asset.Asset import CAsset
@@ -161,11 +164,11 @@ class CAssetMgr(CAssetMgrInf):
     def get_dataframe_for_asset(self, asset_name):
         return GlobalDataSource().get_total_return_series_from_ticker(asset_name,
                                                                       TimeSeriesType.RETURNS)
+
     def get_inflation_asset(self, currency):
 
         key = self.get_asset_key(currency + '_CPI')
         if key not in self._cache.keys():
-
             from epsilonPhi.core.asset.Asset import CAsset
             cpi = GlobalDataSource().get_consumer_price_index_for_currency(currency)
             cpi.columns = [currency + '_CPI']
@@ -190,7 +193,6 @@ class CAssetMgr(CAssetMgrInf):
 
         key = self.get_asset_key(currency + '_RFR')
         if key not in self._cache.keys():
-
             from epsilonPhi.core.asset.Asset import CAsset
             risk_free = GlobalDataSource().get_risk_free_rate_for_currency_region(currency)
             risk_free.columns = [currency + '_RFR']
@@ -209,8 +211,6 @@ class CAssetMgr(CAssetMgrInf):
             CAssetMgr._cache[key] = asset
         return self._cache.get(key).deepcopy()
 
-
-
     @staticmethod
     def convert_asset_to_currency(asset, target_currency, hedging_ratio):
         asset_fx = GlobalDataSource().fx_convert_timeseries_to_currency_hedged(asset.deepcopy(),
@@ -223,7 +223,6 @@ class CAssetMgr(CAssetMgrInf):
         asset_fx._denominated_currency = target_currency
         return asset_fx
 
-
     @staticmethod
     def asset_to_currency_hedged(self, asset, currency):
         pass
@@ -233,10 +232,7 @@ class CAssetMgr(CAssetMgrInf):
         pass
 
 
-
-
 if __name__ == "__main__":
-
     from epsilonPhi.core.schema.Schema import ContextCreator
 
     schema = ContextCreator(

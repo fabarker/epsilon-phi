@@ -1,10 +1,6 @@
 import pandas as pd
-import numpy as np
-import openpyxl
-from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
-import os, sys
-import math
+import re
 
 
 class ExcelUtils(object):
@@ -113,6 +109,20 @@ class ExcelUtils(object):
         for sheet_name in sheet_names:
             res[sheet_name] = excel_data.get(sheet_name, pd.DataFrame())
         return res
+
+    @staticmethod
+    def sanitize_sheet_name(name: str, max_length: int = 31) -> str:
+
+        name = re.sub(r'[\\/*?:\[\]]', '', name)
+
+        # Trim whitespace
+        name = name.strip().replace(" ", "_")
+
+        # Truncate to max allowed length
+        name = name[:max_length] if len(name) > max_length else name
+
+        # Provide fallback if name is empty
+        return name if name else "Sheet"
 
     @staticmethod
     def dict_to_excel(dataframes_dict, filename, include_index=False):

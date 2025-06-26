@@ -382,20 +382,16 @@ class CAsset(CAssetInf, CSlice):
 
 
 if __name__ == "__main__":
+
     import pandas as pd
-
-    gds = GlobalDataSource()
-
-    df = gds.get_time_series_data_from_ticker('MSWRLDL', 'RI')
-    rtns = df.get_returns()
-
     from epsilonPhi.core.schema.Schema import ContextCreator
 
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
-    asset = schema.get_asset_from_name('MSEXUKL')
-    asset.set_currency_hedge_ratio(0.5)
+    asset = schema.get_asset_from_name('LHYIELD_GE20')
+    asset.set_currency_hedge_ratio(1)
 
-    asset.get_risk_premia()
+    rp  = asset.get_risk_premia()
+    asset.get_historical_risk_premium()

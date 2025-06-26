@@ -4,7 +4,8 @@ from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
 from epsilonPhi.core.simulation.Bootstrap import SAABootstrapper
 from epsilonPhi.core.asset.proxies.LendingRate import CLendingRate
-from epsilonPhi.core.simulation.SimStructs import ReturnsPanel, FactorStressTestLosses, HistoricalStressTestLosses, PerformanceVaRMetrics, WealthFlows, WealthProjections
+from epsilonPhi.core.simulation.SimStructs import ReturnsPanel, FactorStressTestLosses, HistoricalStressTestLosses, \
+    PerformanceVaRMetrics, WealthFlows, WealthProjections
 from epsilonPhi.core.config.appConfig import CAppConfig
 from collections import OrderedDict
 from scipy.stats import zscore
@@ -17,6 +18,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 config_util = CAppConfig.get_config_util()
 
+
 class StressMultiplier:
     def __init__(self, beta_mult_ts):
         self._stress_mult_ts = beta_mult_ts
@@ -26,7 +28,6 @@ class StressMultiplier:
 
 
 class SAASimulation:
-
     """
     SAASimulation manages the setup and execution of stress testing, scenario analysis,
     and portfolio simulation for asset allocation studies.
@@ -87,7 +88,7 @@ class SAASimulation:
 
     @property
     def end_date(self):
-        return self.config.simEndDate if self.config.simEndDate else  self.schema.end_date
+        return self.config.simEndDate if self.config.simEndDate else self.schema.end_date
 
     @property
     def config(self):
@@ -99,8 +100,8 @@ class SAASimulation:
             return
 
         if self._bootstrap is None:
-           self._bootstrap = SAABootstrapper(self.schema)
-           self._is_setup = True
+            self._bootstrap = SAABootstrapper(self.schema)
+            self._is_setup = True
 
     def get_stress_coeff_ts(self):
         if SAASimulation._beta_mult_ts is None:
@@ -153,7 +154,6 @@ class SAASimulation:
             stress_losses[crisis_name] = losses
         return stress_losses
 
-
     def get_factor_stress_tests(self):
 
         # Get stressed returns panel
@@ -190,17 +190,16 @@ class SAASimulation:
     def get_factor_panel_normalized(self):
         return self.get_stressed_returns_panel().factor_panel_normalized
 
-
     def get_stressed_returns_panel(self,
                                    start_date=None,
                                    end_date=None
                                    ):
 
         if start_date is None:
-           start_date = self.start_date
+            start_date = self.start_date
 
         if end_date is None:
-           end_date = self.end_date
+            end_date = self.end_date
 
         # Get the risk free rate asset
         rfr = self.schema.get_risk_free_rate_asset()
@@ -230,7 +229,7 @@ class SAASimulation:
         beta_mult = self.get_stress_coeff_ts().loc[start_date:end_date]
         assert np.all(beta_mult.index == return_factors_panel.index), 'Error - panels dont match'
 
-        factor_to_stress = 'EQUITY_GLOBAL_ISG' #self.schema.get_factor_names_to_stress()
+        factor_to_stress = 'EQUITY_GLOBAL_ISG'  # self.schema.get_factor_names_to_stress()
         stress_factor_index = return_factors_panel.columns.get_loc(factor_to_stress)
         stress_coef_panel = np.ones(return_factors_panel.shape)
         stress_coef_panel[:, stress_factor_index] = beta_mult[beta_mult.columns[0]].values
@@ -243,11 +242,11 @@ class SAASimulation:
         LB = 0.12
         RB = 0.16
         if ptf_vol > LB:
-           if ptf_vol > RB:
-               stress_coef_panel = np.ones(return_factors_panel.shape)
-           else:
-               stress_coef_panel = (RB - ptf_vol) / (RB - LB) * stress_coef_panel + \
-                                   (ptf_vol - LB) / (RB - LB) * np.ones(return_factors_panel.shape)
+            if ptf_vol > RB:
+                stress_coef_panel = np.ones(return_factors_panel.shape)
+            else:
+                stress_coef_panel = (RB - ptf_vol) / (RB - LB) * stress_coef_panel + \
+                                    (ptf_vol - LB) / (RB - LB) * np.ones(return_factors_panel.shape)
 
         # Demean the panel and add the correct returns
         z_score = np.asarray(zscore(return_factors_panel, ddof=1))
@@ -311,8 +310,8 @@ class SAASimulation:
         equity_bmk = 'MSUSAML'
         bond_bmk = 'LHAGGBD'
 
-        #equity_bmk = self.schema.get_currency_config().equity_stress_ticker
-        #bond_bmk   = self.schema.get_currency_config().bond_stress_ticker
+        # equity_bmk = self.schema.get_currency_config().equity_stress_ticker
+        # bond_bmk   = self.schema.get_currency_config().bond_stress_ticker
 
         from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
         ptf = SAAPortfolio('Calibration', self.schema)
@@ -329,7 +328,7 @@ class SAASimulation:
         error_arr = np.full((len(stress_rng), len(crisis_map.keys()), len(bonds_rng)), np.nan)
         for i, wt in enumerate(bonds_rng):
             # set weight in the portfolio
-            ptf.set_weights([wt, 1-wt])
+            ptf.set_weights([wt, 1 - wt])
             # calculate the historical stressed performance
             historical_stressed = sim.get_historical_stress_tests()
 
@@ -338,14 +337,17 @@ class SAASimulation:
 
                 # Iterate through each candidate stress coefficient
                 for k, stress in enumerate(stress_rng):
-                    logger.info("Computing factor stress losses for portfolio {}, crisis {} and stress mult {}".format(wt, crisis_name, stress))
+                    logger.info(
+                        "Computing factor stress losses for portfolio {}, crisis {} and stress mult {}".format(wt,
+                                                                                                               crisis_name,
+                                                                                                               stress))
                     crisis_map[crisis_name].set_stress_coefficient(stress)
 
                     # Compute the factor based stress tests
                     factor_stressed = sim.get_factor_stress_tests()
                     # set the error in the error array
-                    error_arr[k, j, i] = np.power(factor_stressed[crisis_name].total - historical_stressed[crisis_name].total, 2)
-
+                    error_arr[k, j, i] = np.power(
+                        factor_stressed[crisis_name].total - historical_stressed[crisis_name].total, 2)
 
     def set_beta_multipliers(self):
 
@@ -370,7 +372,7 @@ class SAASimulation:
         for i, wt in enumerate(bonds_rng):
 
             # Construct a portfolio with the benchmark assets
-            ptf.set_weights([wt, 1-wt])
+            ptf.set_weights([wt, 1 - wt])
 
             # Get Historical Crisis Performance
             historical_stressed = ptf.get_historical_stress_tests()
@@ -450,7 +452,6 @@ class SAASimulation:
         # Compute cumulative inflation over time
         return inflation_levels
 
-
     def get_simulated_portfolio_returns(self, long_term_shocks=0, frequency=Frequency.MONTHLY):
 
         lending_wt = 0  # This seems to be hardcoded. Should this be dynamically retrieved?
@@ -511,20 +512,20 @@ class SAASimulation:
 
     def get_portfolio_var_pol_exc_ss(self, confidence=0.99, loss=0):
 
-        _, lvls_panel = self.get_simulated_portfolio_returns(long_term_shocks=0)
+        _, lvls_panel = self.get_simulated_portfolio_returns(long_term_shocks=1)
         real_panel = lvls_panel / self.get_inflation_panels()
 
         # Value At Risk
-        var_n = np.clip(-(np.quantile(lvls_panel, 1-confidence, axis=1) - 1), 0, np.inf)
-        var_r = np.clip(-(np.quantile(real_panel, 1-confidence, axis=1) - 1), 0, np.inf)
+        var_n = np.clip(-(np.quantile(lvls_panel, 1 - confidence, axis=1) - 1), 0, np.inf)
+        var_r = np.clip(-(np.quantile(real_panel, 1 - confidence, axis=1) - 1), 0, np.inf)
 
         # PoL
-        pol_n = np.mean(lvls_panel < (1-loss), axis=1)
-        pol_r = np.mean(real_panel < (1-loss), axis=1)
+        pol_n = np.mean(lvls_panel < (1 - loss), axis=1)
+        pol_r = np.mean(real_panel < (1 - loss), axis=1)
 
         # Conditional Value at Risk
-        lvls_panel[lvls_panel > np.quantile(lvls_panel, 1-confidence, axis=1).reshape(-1, 1)] = np.nan
-        real_panel[real_panel > np.quantile(real_panel, 1-confidence, axis=1).reshape(-1, 1)] = np.nan
+        lvls_panel[lvls_panel > np.quantile(lvls_panel, 1 - confidence, axis=1).reshape(-1, 1)] = np.nan
+        real_panel[real_panel > np.quantile(real_panel, 1 - confidence, axis=1).reshape(-1, 1)] = np.nan
         cvar_n = np.clip(-(np.nanmean(lvls_panel, axis=1) - 1), 0, np.inf)
         cvar_r = np.clip(-(np.nanmean(real_panel, axis=1) - 1), 0, np.inf)
 
@@ -536,18 +537,16 @@ class SAASimulation:
             loss,
         )
 
-
     def get_portfolio_var_pol(self, confidence=0.99, loss=0):
 
         if self.portfolio_mgr.has_single_stock():
-           ptf_x_ss, ss_wt = self.portfolio_mgr.get_portfolio_excl_single_stock()
-           risk = ptf_x_ss.get_portfolio_var_pol_exc_ss(confidence=confidence, loss=loss)
+            ptf_x_ss, ss_wt = self.portfolio_mgr.get_portfolio_excl_single_stock()
+            risk = ptf_x_ss.get_portfolio_var_pol_exc_ss(confidence=confidence, loss=loss)
 
-           # Compute the single stock losses
-           ss_loss = risk * (1-ss_wt) + confidence * ss_wt
-           return ss_loss
+            # Compute the single stock losses
+            ss_loss = risk * (1 - ss_wt) + confidence * ss_wt
+            return ss_loss
         return self.get_portfolio_var_pol_exc_ss(confidence=confidence, loss=loss)
-
 
     def get_portfolio_wealth_projection(self,
                                         ws_inflows=None,
@@ -569,19 +568,19 @@ class SAASimulation:
         long_horizon = self.long_horizon * freq_mult
 
         if not ws_inflows:
-            ws_inflows = [WealthFlows() for i in range(long_horizon)]
+            ws_inflows = [WealthFlows() for _ in range(long_horizon)]
 
         if not ws_outflows:
-            ws_outflows = [WealthFlows() for i in range(long_horizon)]
+            ws_outflows = [WealthFlows() for _ in range(long_horizon)]
 
         if ptf_sim_order is None:
-           ptf_sim_order = np.zeros(long_horizon, dtype=int)
+            ptf_sim_order = np.zeros(long_horizon, dtype=int)
         elif len(ptf_sim_order) != long_horizon:
             raise ValueError('Error - number of points to simulate is inconsistent')
 
         # If we only have a single ptf
         if ptf_list is None:
-           ptf_list = [self.portfolio_mgr.portfolio]
+            ptf_list = [self.portfolio_mgr.portfolio]
 
         # tax bill panel
         tax_bill = [None] * len(ptf_list)
@@ -591,10 +590,10 @@ class SAASimulation:
             rtns, _ = self.get_simulated_portfolio_returns(long_term_shocks=0, frequency=frequency)
 
             if ptf.is_taxable:
-               effective_tax_rate = 1 - (ptf.get_return() / ptf.get_return_pre_tax())
-               rtns = rtns - effective_tax_rate * np.mean(rtns, axis=1, keepdims=True)
+                effective_tax_rate = 1 - (ptf.get_return() / ptf.get_return_pre_tax())
+                rtns = rtns - effective_tax_rate * np.mean(rtns, axis=1, keepdims=True)
             else:
-               effective_tax_rate = 0
+                effective_tax_rate = 0
 
             ptf_panel[..., i] = rtns
             if frequency == Frequency.YEARLY:
@@ -606,8 +605,8 @@ class SAASimulation:
             rtns_panel[i, :] = ptf_panel[i, :, ptf_sim_order[i]]
 
             if i % 12 == 0 and frequency == Frequency.MONTHLY:
-               tax = tax_bill[ptf_sim_order[i]]
-               tax_panel.append(tax[i // 12])
+                tax = tax_bill[ptf_sim_order[i]]
+                tax_panel.append(tax[i // 12])
 
         # Inflation index
         ip = self.get_inflation_panels(frequency=frequency)
@@ -619,11 +618,11 @@ class SAASimulation:
         # Prepare flows - convert real to nominal
         for i in range(self.long_horizon):
             if i == 0:
-               nominal_value_of_real_inflows[0] = ws_inflows[0].real
-               nominal_value_of_real_outflows[0] = ws_outflows[0].real
+                nominal_value_of_real_inflows[0] = ws_inflows[0].real
+                nominal_value_of_real_outflows[0] = ws_outflows[0].real
             else:
-               nominal_value_of_real_inflows[i] = ws_inflows[i].real * ip[i-1]
-               nominal_value_of_real_outflows[i] = ws_outflows[i].real * ip[i-1]
+                nominal_value_of_real_inflows[i] = ws_inflows[i].real * ip[i - 1]
+                nominal_value_of_real_outflows[i] = ws_outflows[i].real * ip[i - 1]
 
         nominal_inflow_panel = np.full((self.long_horizon, self.nbstraps), np.nan)
         nominal_outflow_panel = np.full((self.long_horizon, self.nbstraps), np.nan)
@@ -638,26 +637,29 @@ class SAASimulation:
                                            self.portfolio_mgr.get_current_value() * ws_inflows[i].percent)
 
                 nominal_outflow_panel[i] = (nominal_value_of_real_outflows[i] +
-                                           ws_outflows[i].nominal +
-                                           self.portfolio_mgr.get_current_value() * ws_outflows[i].percent)
+                                            ws_outflows[i].nominal +
+                                            self.portfolio_mgr.get_current_value() * ws_outflows[i].percent)
 
                 value_pre_flows = self.portfolio_mgr.get_current_value() * (1 + rtns_panel[i])
             else:
                 nominal_inflow_panel[i] = (nominal_value_of_real_inflows[i] +
                                            ws_inflows[i].nominal +
-                                           value_paths[i-1] * ws_inflows[i].percent)
+                                           value_paths[i - 1] * ws_inflows[i].percent)
 
                 nominal_outflow_panel[i] = (nominal_value_of_real_outflows[i] +
                                             ws_outflows[i].nominal +
-                                            value_paths[i-1] * ws_outflows[i].percent)
-                value_pre_flows = value_paths[i-1] * (1 + rtns_panel[i])
+                                            value_paths[i - 1] * ws_outflows[i].percent)
+                value_pre_flows = value_paths[i - 1] * (1 + rtns_panel[i])
 
             value_paths[i] = np.maximum(value_pre_flows + nominal_inflow_panel[i] - nominal_outflow_panel[i], 0)
 
-                # Tax-Accounting to add here
+            # Tax-Accounting to add here
 
         # Compute real value of simullated paths
-        value_paths_with_current_value = np.vstack((self.portfolio_mgr.get_current_value() * np.ones((1, self.nbstraps)), value_paths))
+        value_paths_with_current_value = np.vstack(
+            (self.portfolio_mgr.get_current_value() * np.ones((1, self.nbstraps)), value_paths))
+
+        ip = np.vstack((np.ones((1, self.nbstraps)), ip))
         ws = WealthProjections(
             value_paths_with_current_value,
             rtns_panel,
@@ -670,38 +672,15 @@ class SAASimulation:
 
         return ws
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     def get_private_assets_distributions(self):
         pass
 
 
-
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
-
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
     from epsilonPhi.core.schema.Schema import ContextCreator
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+
     schema = ContextCreator(currency='USD',
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
@@ -716,14 +695,3 @@ if __name__ == "__main__":
 
     self = SAASimulation(mgr)
     ws = self.get_portfolio_wealth_projection()
-
-
-
-
-
-
-
-
-
-
-

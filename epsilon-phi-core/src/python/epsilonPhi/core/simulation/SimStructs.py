@@ -2,6 +2,8 @@ import datetime
 from dataclasses import dataclass
 from typing import Optional, Any, List
 import numpy as np
+import pandas as pd
+
 
 class Crisis:
     def __init__(
@@ -10,7 +12,6 @@ class Crisis:
             start_date,
             end_date,
             stress_coefficient=0):
-
         self._name = name
         self._start_date = start_date
         self._end_date = end_date
@@ -32,8 +33,8 @@ class Crisis:
     def set_stress_coefficient(self, stress_coefficient):
         self._stress_coefficient = stress_coefficient
 
-class BootstrapIndicies(object):
 
+class BootstrapIndicies(object):
     _short_term = None
     _medium_term = None
     _long_term = None
@@ -67,6 +68,7 @@ class PathsPanel:
     def get_panel(self):
         return self._panel
 
+
 class PathsShortBlockPanel:
     def __init__(self, paths, short_block_indicator):
         self._paths = paths
@@ -77,6 +79,7 @@ class PathsShortBlockPanel:
 
     def get_short_block_indicator(self):
         return self._short_block_indicator
+
 
 @dataclass
 class ReturnsPanel:
@@ -118,6 +121,7 @@ class FactorStressTestLosses:
     factors: Optional[List[float]] = None
     cash_other: Optional[float] = None
 
+
 @dataclass
 class HistoricalStressTestLosses:
     total: float
@@ -129,7 +133,8 @@ class HistoricalStressTestLosses:
 
 @dataclass
 class FactorStressTestReal:
-        total: float
+    total: float
+
 
 @dataclass
 class PerformanceVaRMetrics(object):
@@ -192,14 +197,13 @@ class PerformanceVaRMetrics(object):
         )
 
 
-
-
 class PerformanceVaRData:
     def __init__(self):
         self._one_month = None
         self._one_year = None
         self._three_year = None
         self._five_year = None
+
 
 class PortfolioPaths:
     def __init__(
@@ -208,7 +212,6 @@ class PortfolioPaths:
             idio_panel=None,
             alpha_total_monthly=None
     ):
-
         self._systematic_panel = systematic_panel
         self._idio_panel = idio_panel
         self._alpha_total_monthly = alpha_total_monthly
@@ -249,13 +252,13 @@ class PortfolioPaths:
     def get_returns_panel(self):
         return self._returns_panel
 
+
 class WealthFlows:
 
     def __init__(self, nominal=0, real=0, percent=0):
         self._nominal = nominal
         self._real = real
         self._percent = percent
-
 
     @property
     def nominal(self):
@@ -272,15 +275,14 @@ class WealthFlows:
 
 class WealthProjections:
     def __init__(self,
-            nominal_values,
-            total_returns_panel,
-            inflation_paths,
-            inflows,
-            outflows,
-            quantiles,
-            frequency
-    ):
-
+                 nominal_values,
+                 total_returns_panel,
+                 inflation_paths,
+                 inflows,
+                 outflows,
+                 quantiles,
+                 frequency
+                 ):
         self._nominal_values = nominal_values
         self._total_returns_panel = total_returns_panel
         self._inflation_paths = inflation_paths
@@ -311,15 +313,15 @@ class WealthProjections:
 
     @property
     def inflows(self):
-        return self._inflows
+        return np.vstack((np.zeros(self._inflows.shape[1],), self._inflows))
 
     @property
     def outflows(self):
-        return self._outflows
+        return np.vstack((np.zeros(self._outflows.shape[1],), self._outflows))
 
     @property
     def net_flows(self):
-        return -self._outflows + self._inflows
+        return -self.outflows + self.inflows
 
     @property
     def quantiles(self):
@@ -341,21 +343,32 @@ class WealthProjections:
         return self.__calculate_quantiles(self.inflows)
 
     def get_real_inflow_quantiles(self):
-        return self.__calculate_quantiles(self.inflows/self.inflation_paths)
+        return self.__calculate_quantiles(self.inflows / self.inflation_paths)
 
     def get_nominal_outflow_quantiles(self):
         return self.__calculate_quantiles(self.outflows)
 
     def get_real_outflow_quantiles(self):
-        return self.__calculate_quantiles(self.outflows/self.inflation_paths)
+        return self.__calculate_quantiles(self.outflows / self.inflation_paths)
 
     def get_net_flow_quantiles(self):
         return self.__calculate_quantiles(self.net_flows)
 
     def get_real_net_flow_quantiles(self):
-        return self.__calculate_quantiles(self.net_flows/self.inflation_paths)
+        return self.__calculate_quantiles(self.net_flows / self.inflation_paths)
 
+    def get_quantile_dataframe(self, func: str):
+        calls = {
+            "nominal": self.get_nominal_quantiles,
+            "real": self.get_real_quantiles,
+            "inflation": self.get_inflation_quantiles,
+            "net_flows": self.get_net_flow_quantiles,
+            "real_net_flows": self.get_real_net_flow_quantiles,
+        }
 
+        if func not in calls:
+            raise ValueError(f"Invalid function name '{func}'. Must be one of {list(calls.keys())}.")
 
-
-
+        return pd.DataFrame(
+            calls[func](),
+            columns=pd.MultiIndex.from_tuples([(func, v) for v in self.quantiles]))

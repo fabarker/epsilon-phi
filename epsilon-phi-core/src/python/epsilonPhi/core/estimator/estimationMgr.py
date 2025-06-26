@@ -62,17 +62,17 @@ class EstimationMgr(CEStimationMgrInf):
     @staticmethod
     def get_historical_total_return(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_total_return()
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).cagr()
 
     @staticmethod
     def get_historical_excess_return_df(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_excess_return_df(asset.denominated_currency)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).excess_return_series(asset.denominated_currency)
 
     @staticmethod
     def get_historical_risk_premium(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_risk_premium(asset.denominated_currency)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).risk_premium(asset.denominated_currency).item()
 
     @staticmethod
     def get_historical_volatility(asset):
@@ -83,33 +83,37 @@ class EstimationMgr(CEStimationMgrInf):
     @staticmethod
     def get_historical_sharpe_ratio(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_sharpe_ratio(asset.denominated_currency)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).sharpe_ratio(asset.denominated_currency)
 
 
     @staticmethod
     def get_historical_value_at_risk(asset, confidence=0.99, horizon=1):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_value_at_risk(confidence_level=confidence,
-                                                                                                        horizon=horizon)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).var(
+            confidence_level=confidence,
+            horizon=horizon
+        )
 
 
     @staticmethod
     def get_historical_conditional_value_at_risk(asset, confidence=0.99, horizon=1):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_conditional_value_at_risk(confidence_level=confidence,
-                                                                                                                       horizon=horizon)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).cvar(
+            confidence_level=confidence,
+            horizon=horizon
+        ).item()
 
 
     @staticmethod
     def get_historical_probability_of_loss(asset, horizon=1):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_probability_of_loss(horizon=horizon)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).frequency_of_loss(horizon=horizon).item()
 
 
     @staticmethod
     def get_historical_worst_peak_to_trough(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_worst_peak_to_trough()
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).worst_peak_to_trough().item()
 
 
     @staticmethod

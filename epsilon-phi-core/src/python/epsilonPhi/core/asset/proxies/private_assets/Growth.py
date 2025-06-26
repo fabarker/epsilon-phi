@@ -1,19 +1,19 @@
 from epsilonPhi.core.asset.proxies.private_assets.PrivateAssets import CPrivateAsset
 
-__all__ = ['CVenture']
+__all__ = ['CGrowth']
 
 
-class CVenture(CPrivateAsset):
-    _asset_name = 'PE_VENTURE'
-    _pme_name = 'VENTURE_PME'
+class CGrowth(CPrivateAsset):
+    _asset_name = 'PE_GROWTH'
+    _pme_name = 'GROWTH_PME'
 
-    _reporting_name = 'Venture'
+    _reporting_name = 'Growth'
     _category = 'Private Equity'
 
     def __init__(self, schema, **kwargs):
-        pme = kwargs.pop('data', schema.get_asset_from_name(CVenture._pme_name))
-        CPrivateAsset.__init__(self, pme, schema, CVenture._asset_name)
-        self.set_reporting_info(CVenture._reporting_name, CVenture._category)
+        pme = kwargs.pop('data', schema.get_asset_from_name(CGrowth._pme_name))
+        CPrivateAsset.__init__(self, pme, schema, CGrowth._asset_name)
+        self.set_reporting_info(CGrowth._reporting_name, CGrowth._category)
 
 
 if __name__ == "__main__":
@@ -26,5 +26,5 @@ if __name__ == "__main__":
         end_date='31-Dec-2022'
     ).create_context()
 
-    tt = CVenture(schema)
+    tt = CGrowth(schema)
     rp_pme = tt.get_risk_premias()

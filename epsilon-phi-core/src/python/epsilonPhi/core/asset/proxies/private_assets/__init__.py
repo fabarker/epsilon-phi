@@ -5,6 +5,7 @@ from .Venture import *
 from .custom_pmes import *
 from .RealEstate import *
 from .Infrastructure import *
+from .Growth import *
 
 from .Buyout import __all__ as buyout_all
 from .Venture import __all__ as venture_all
@@ -13,5 +14,6 @@ from .PrivateCredit import __all__ as credit_all
 from .custom_pmes import __all__ as custom_pmes_all  # ✅ explicitly get __all__
 from .RealEstate import __all__ as real_estate_all
 from .Infrastructure import __all__ as infrastructure_all
+from .Growth import __all__ as growth_all
 
-__all__ = buyout_all + distressed_all + credit_all + custom_pmes_all + venture_all + real_estate_all + infrastructure_all
+__all__ = buyout_all + distressed_all + credit_all + custom_pmes_all + venture_all + real_estate_all + infrastructure_all + growth_all

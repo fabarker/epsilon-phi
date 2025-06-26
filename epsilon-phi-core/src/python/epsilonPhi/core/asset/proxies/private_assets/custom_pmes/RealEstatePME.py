@@ -9,6 +9,7 @@ gds = GlobalDataSource()
 
 __all__ = ['RealEstatePME']
 
+
 class RealEstatePME(CAsset):
     _asset_name = 'REAL_ESTATE_PME'
 
@@ -19,7 +20,6 @@ class RealEstatePME(CAsset):
             self,
             schema: Optional[CContext] = None,
     ) -> None:
-
         self._schema = schema
         data = self.get_time_series()
         super(RealEstatePME, self).__init__(
@@ -59,8 +59,8 @@ class RealEstatePME(CAsset):
     @staticmethod
     def get_time_series_params():
         return {
-            'denominated_currency':'USD',
-            'exposure_currency':'USD',
+            'denominated_currency': 'USD',
+            'exposure_currency': 'USD',
             'ts_hedge_ratio': 0.0,
             'returns_type': ReturnsType.SIMPLE,
             'ts_type': TimeSeriesType.RETURNS
@@ -68,9 +68,9 @@ class RealEstatePME(CAsset):
 
 
 if __name__ == "__main__":
-
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
     from epsilonPhi.core.schema.Schema import ContextCreator
+
     schema = ContextCreator(
         currency='USD',
         start_date='30-Nov-1983',
@@ -78,4 +78,3 @@ if __name__ == "__main__":
     ).create_context()
 
     tt = RealEstatePME(schema)
-

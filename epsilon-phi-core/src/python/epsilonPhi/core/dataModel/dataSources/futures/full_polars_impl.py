@@ -571,6 +571,40 @@ if __name__ == "__main__":
 
     res = strat.get_results()
 
+    out = {}
+    for i in instrument_list:
+        path = os.path.join('futures_info/', i + "_.xlsx")
+        tmp = pd.read_excel(path, index_col=0)
+
+        tmp_list = res.select(["f0", "f1", "symbol"]).filter(pl.col("symbol") == i)
+
+        unique_values = pl.concat([
+            tmp_list["f0"],
+            tmp_list["f1"]
+        ]).unique().to_pandas()
+
+        tmp_out = tmp.loc[unique_values.values][['Name', 'Code']]
+        tmp_out['Code'] = tmp["Code"].apply(lambda x: x[1:])
+        tmp_out['Month'] = [x[3:5] for x in tmp_out.index]
+        tmp_out['Year'] = [x[5:] for x in tmp_out.index]
+        tmp_out["Month"] = tmp_out["Month"].astype(str)
+        tmp_out["Year"] = tmp_out["Year"].astype(str)
+        out[i] = tmp_out.copy()
+
+        from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
+        ExcelUtils.dict_to_excel(
+            out,
+            'futures.xlsx',
+            True
+        )
+
+
+
+
+
+
+    ####### Simple Backtest ######
+
     df = res.with_columns(
         (pl.col("f1_ret_t")).alias("signed_spread_t")
     ).sort(by="period")

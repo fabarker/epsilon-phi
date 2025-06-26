@@ -33,6 +33,7 @@ def logicalValues(vec: np.ndarray):
     """
     return np.ones_like(vec, dtype=bool)
 
+
 def nans(vec: np.ndarray):
     """
     Returns an array of the same shape as `vec`, filled with np.nan.
@@ -225,7 +226,7 @@ class AbstractBootstrapper(object):
                     b_star_cb = b_max
 
                 # b_star = (b_star_sb, b_star_cb)
-                return b_star_sb,b_star_cb
+                return b_star_sb, b_star_cb
             else:
                 return 1, 1
         return None
@@ -234,7 +235,7 @@ class AbstractBootstrapper(object):
     def stationary_block_bootstrap(T, N, q):
 
         if q > 1:
-           q = 1/q
+            q = 1 / q
 
         nRands = T * N
         R = np.random.RandomState(AbstractBootstrapper._state)
@@ -312,30 +313,30 @@ class AbstractBootstrapper(object):
         """
 
         if q > 1:
-           q = 1/q
+            q = 1 / q
 
         theta = np.zeros((T, N), dtype=int)
         for strap in range(N):
             t = 0
-            theta[t, strap] = AbstractBootstrapper.random_generator(1, 1, range(0, T-1)).item()
-            while t < T-1:
+            theta[t, strap] = AbstractBootstrapper.random_generator(1, 1, range(0, T - 1)).item()
+            while t < T - 1:
                 t = t + 1
                 U = AbstractBootstrapper._R.random()
                 if U < q:
-                    theta[t, strap] = AbstractBootstrapper.random_generator(1, 1, range(0, T-1)).item()
+                    theta[t, strap] = AbstractBootstrapper.random_generator(1, 1, range(0, T - 1)).item()
                 else:
-                    if theta[t-1, strap] + 1 > T-1:
+                    if theta[t - 1, strap] + 1 > T - 1:
                         theta[t, strap] = 0
                     else:
-                        theta[t, strap] = theta[t-1, strap] + 1
+                        theta[t, strap] = theta[t - 1, strap] + 1
         return theta
-
 
     def circular_bootstrap(self):
         pass
 
     def bootstrap(self):
         pass
+
 
 class TimeSeriesBootstrapper(AbstractBootstrapper):
     def __init__(self, df, N, q):
@@ -363,9 +364,7 @@ class _Bootstrapper(AbstractBootstrapper):
         self._sample = sample
 
 
-
 class SAABootstrapper(AbstractBootstrapper):
-
     NUM_MONTHS = 12
     RANDOM_SEED = 5489
     R1 = np.random.RandomState(RANDOM_SEED)
@@ -452,8 +451,8 @@ class SAABootstrapper(AbstractBootstrapper):
 
         # Check that we have enough data
         if SAABootstrapper.NUM_MONTHS * medium_horizon > data_length_curr or \
-           SAABootstrapper.NUM_MONTHS * long_horizon > data_length or \
-           SAABootstrapper.NUM_MONTHS * medium_horizon > data_length_blend:
+                SAABootstrapper.NUM_MONTHS * long_horizon > data_length or \
+                SAABootstrapper.NUM_MONTHS * medium_horizon > data_length_blend:
             raise Exception("Increase horizon multiplier in schema pars")
 
         block_length = self.simulation_config.simBlockLen
@@ -471,7 +470,6 @@ class SAABootstrapper(AbstractBootstrapper):
         if self._bootstrap_indicies is None:
             self.load_bootstrap_indicies()
         return self._bootstrap_indicies
-
 
     def generate_bootstrap_indicies(
             self,
@@ -543,20 +541,19 @@ class SAABootstrapper(AbstractBootstrapper):
         return self.prepare_cash_and_inflation_paths(
             asset, bs_indicies, long_term_shocks, RateType.CASH, rfr_floor)
 
-    #def prepare_lending_paths(
+    # def prepare_lending_paths(
     #        self,
     #        lending_rate,
     #        bs_indicies,
     #        long_term_shocks,
     #        risk_free_floor=None,
-    #):
-    #return self.prepare_cash_and_inflation_paths(
+    # ):
+    # return self.prepare_cash_and_inflation_paths(
     #    lending_rate,
     #    bs_indices,
     #    long_term_shocks,
     #    RateType.Lending,
     #    risk_free_floor)
-
 
     def get_forward_rates(self, rate_type):
 
@@ -570,7 +567,6 @@ class SAABootstrapper(AbstractBootstrapper):
             )
         else:
             raise ValueError("Unsupported rate type")
-
 
     def prepare_cash_and_inflation_paths(
             self,
@@ -629,8 +625,6 @@ class SAABootstrapper(AbstractBootstrapper):
 
         return PathsPanel(paths)
 
-
-
     def prepare_cash_and_inflation_paths_old(
             self,
             asset,
@@ -642,7 +636,6 @@ class SAABootstrapper(AbstractBootstrapper):
 
         frequency = self._schema.frequency
         fwd_curve = self.get_forward_rates(rate_type)
-
 
         alpha, beta, shocks = self.extract_shocks(asset)
 
@@ -678,7 +671,6 @@ class SAABootstrapper(AbstractBootstrapper):
                 new_beta=beta.item()
             )
 
-
         current_indicator = self.get_current_environment_indicator()
         demeaned_shocks = self.demean_values_in_blocks(
             shocks,
@@ -708,10 +700,10 @@ class SAABootstrapper(AbstractBootstrapper):
         for t in range(T):
 
             if rate_type == RateType.INFLATION:
-               if t == 0:
-                   paths[t] = rates[t]
-               elif t < round(SAABootstrapper.NUM_MONTHS * long_horizon):
-                   paths[t] = rates[t] * (1-beta) + beta * paths[t-1] + shocks_panel[t]
+                if t == 0:
+                    paths[t] = rates[t]
+                elif t < round(SAABootstrapper.NUM_MONTHS * long_horizon):
+                    paths[t] = rates[t] * (1 - beta) + beta * paths[t - 1] + shocks_panel[t]
             else:
                 if t == 0:
                     paths[t] = rates[t]
@@ -726,7 +718,8 @@ class SAABootstrapper(AbstractBootstrapper):
                 if AR1_process == 'old' and not RateType.INFLATION == rate_type:
                     paths[t] = np.maximum(risk_free_floor / SAABootstrapper.NUM_MONTHS, paths[t])
                 elif AR1_process == 'trend' and not RateType.INFLATION == rate_type:
-                    excess_level = np.mean(np.maximum(risk_free_floor / SAABootstrapper.NUM_MONTHS, paths[t])) - trend[t]
+                    excess_level = np.mean(np.maximum(risk_free_floor / SAABootstrapper.NUM_MONTHS, paths[t])) - trend[
+                        t]
                     paths[t] = np.maximum(risk_free_floor / SAABootstrapper.NUM_MONTHS, paths[t] - excess_level)
 
         return PathsPanel(paths)
@@ -738,17 +731,17 @@ class SAABootstrapper(AbstractBootstrapper):
     def get_current_environment_indicator(self):
         if self._curr_env_ind is None:
 
-           try:
-              path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
-              cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
-           except:
-              path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
-              cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
-           #curr_env_ind = GlobalDataSource().get_time_series_data_from_ticker(self._schema.risk_free_rate_ticker)
-           #curr_env_ind = curr_env_ind[self._schema.start_date: self._schema.end_date] / 100
-           #self._curr_env_ind = curr_env_ind[self.sim_start_date:self.sim_end_date]
-           #self._curr_env_ind = (self._curr_env_ind > self._curr_env_ind.quantile(0.75)).astype(int)
-           self._curr_env_ind = cei.reindex(self._schema.dates).ffill()
+            try:
+                path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
+                cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
+            except:
+                path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/templates/CurrEnvIndicator.xlsx'
+                cei = pd.read_excel(path, sheet_name='CurEnvInd', index_col=0)
+            # curr_env_ind = GlobalDataSource().get_time_series_data_from_ticker(self._schema.risk_free_rate_ticker)
+            # curr_env_ind = curr_env_ind[self._schema.start_date: self._schema.end_date] / 100
+            # self._curr_env_ind = curr_env_ind[self.sim_start_date:self.sim_end_date]
+            # self._curr_env_ind = (self._curr_env_ind > self._curr_env_ind.quantile(0.75)).astype(int)
+            self._curr_env_ind = cei.reindex(self._schema.dates).ffill()
         return self._curr_env_ind
 
     @staticmethod
@@ -793,7 +786,6 @@ class SAABootstrapper(AbstractBootstrapper):
         statistical properties of the shocks, potentially undermining the realism and stationarity
         of the resulting simulated paths.
         """
-
 
         if not len(shocks) == len(current_indicator):
             raise Exception('Shocks dataframe does not match current indicator')
@@ -843,9 +835,9 @@ class SAABootstrapper(AbstractBootstrapper):
         return PathsPanel(df.values[blocks])
 
     def prepare_boostrap_blocks(self,
-            bs_indicies: BootstrapIndicies,
-            long_term_shocks: bool,
-    ):
+                                bs_indicies: BootstrapIndicies,
+                                long_term_shocks: bool,
+                                ):
 
         T = SAABootstrapper.NUM_MONTHS * max(self.medium_horizon, self.long_horizon)
 
@@ -897,10 +889,10 @@ class SAABootstrapper(AbstractBootstrapper):
         return PathsShortBlockPanel(paths.astype(int), short_block_indicator)
 
     def prepare_portfolio_paths(self,
-            ptf,
-            bs_indicies,
-            long_term_shocks
-    ):
+                                ptf,
+                                bs_indicies,
+                                long_term_shocks
+                                ):
 
         long_horizon = 20
         num_bstraps = self.nbstraps
@@ -908,7 +900,7 @@ class SAABootstrapper(AbstractBootstrapper):
 
         curr_env_ind = self.get_current_environment_indicator()
 
-        if long_term_shocks:
+        if bool(long_term_shocks):
             # This is used for risk analysis, such as VaR and PoL
             returns_panel = ptf.get_stressed_returns_panel()
             betas = returns_panel.betas
@@ -922,31 +914,30 @@ class SAABootstrapper(AbstractBootstrapper):
             returns_panel.stress_coeff_panel_MT = returns_panel.stress_coeff_panels[curr_inds[:, 0]]
 
             ########  If any factors are normalized to LT (i.e. we dont use the MT Sharpes), do it now
-            #idxs = [CAppConfig.get_config_util().get_factor_config(x).normalize_to_LT
+            # idxs = [CAppConfig.get_config_util().get_factor_config(x).normalize_to_LT
             #        if hasattr(CAppConfig.get_config_util().get_factor_config(x), 'normalize_to_LT') else False
             #        for x in CAppConfig.get_config_util().get_return_factors().keys()]
 
-
-            #returns_panel._factor_panel_MT_normalized[:, idxs] = (returns_panel._factor_panel_MT_normalized[:, idxs] -
+            # returns_panel._factor_panel_MT_normalized[:, idxs] = (returns_panel._factor_panel_MT_normalized[:, idxs] -
             #                                                      np.mean(returns_panel._factor_panel_MT_normalized[:,
             #                                                              idxs], axis=0))
-            #returns_panel._factor_panel_MT_normalized[:, idxs] = (returns_panel._factor_panel_MT_normalized[:, idxs] /
+            # returns_panel._factor_panel_MT_normalized[:, idxs] = (returns_panel._factor_panel_MT_normalized[:, idxs] /
             #                                                      np.std(returns_panel._factor_panel_MT_normalized[:,
             #                                                              idxs], axis=0, ddof=1))
-            #returns_panel._factor_panel_MT_normalized[:, idxs] = (returns_panel._factor_panel_MT_normalized[:, idxs] +
+            # returns_panel._factor_panel_MT_normalized[:, idxs] = (returns_panel._factor_panel_MT_normalized[:, idxs] +
             #                                                      np.mean(returns_panel._factor_panel_normalized[:,
             #                                                              idxs], axis=0))
 
             ####### Cut any Sharpe Ratios ######
-            #return_factors = CAppConfig.get_config_util().get_return_factors().values()
+            # return_factors = CAppConfig.get_config_util().get_return_factors().values()
 
-            #cap_factors = [
+            # cap_factors = [
             #    factor for factor in return_factors
             #    if factor.factorType == FactorType.Return
             #       and factor.factorConfig.cap_medium_sharpe not in (None, 0.0)
-            #]
+            # ]
 
-            #if cap_factors:
+            # if cap_factors:
             #    for cap_factor in cap_factors:
             #        loc = [(idx, factor_name) for idx, factor_name in enumerate(context.get_return_factors_panel().factor_names) \
             #               if factor_name == cap_factor.factorName]
@@ -977,8 +968,8 @@ class SAABootstrapper(AbstractBootstrapper):
             returns_panel.factor_contributions_panel_MT = normalized_factors * stress_weights
             returns_panel.medium_term_risk_premia = sharpe_ratios * betas * scaling_factor
 
-            #returns_panel._factor_contributions_panel_MT = returns_panel._factor_panel_MT_normalized * (returns_panel._stress_coeff_panel_MT * np.tile((returns_panel._betas).conj().T, (returns_panel._factor_panel_MT_normalized.shape[0], 1)))
-            #returns_panel._medium_term_risk_premia = returns_panel._factor_sharpe_MT.conj().T * returns_panel._betas * np.math.sqrt(SAABootstrapper.NUM_MONTHS)
+            # returns_panel._factor_contributions_panel_MT = returns_panel._factor_panel_MT_normalized * (returns_panel._stress_coeff_panel_MT * np.tile((returns_panel._betas).conj().T, (returns_panel._factor_panel_MT_normalized.shape[0], 1)))
+            # returns_panel._medium_term_risk_premia = returns_panel._factor_sharpe_MT.conj().T * returns_panel._betas * np.math.sqrt(SAABootstrapper.NUM_MONTHS)
 
         # Take the average over the first 60 months for a 5 year average return estimate
         returns_panel.medium_term_risk_premia_5Y = np.mean(
@@ -997,8 +988,7 @@ class SAABootstrapper(AbstractBootstrapper):
         portfolio_paths = PortfolioPaths(systematic_panel)
 
         # If we are not using LT shocks, replace LT shocks with ST/MT Shocks
-        if not long_term_shocks:
-
+        if not bool(long_term_shocks):
             curr_env_ind = paths_panels.get_short_block_indicator().astype(bool)
 
             mt_ptf_returns = np.sum(
@@ -1007,8 +997,8 @@ class SAABootstrapper(AbstractBootstrapper):
             current_env_map = np.cumsum(curr_inds, 0) * curr_inds
             current_env_map[np.flatnonzero(current_env_map)] -= 1
             portfolio_paths.get_systematic_panel()[curr_env_ind] = mt_ptf_returns[
-                current_env_map[blocks[curr_env_ind]]
-            ][:, 0, 0]
+                                                                       current_env_map[blocks[curr_env_ind]]
+                                                                   ][:, 0, 0]
 
         # Get the factor covariance matrix
         cov = np.cov(
@@ -1058,7 +1048,7 @@ class SAABootstrapper(AbstractBootstrapper):
     ):
 
         if isinstance(frequency, Frequency):
-           frequency = frequency.obs_per_year()
+            frequency = frequency.obs_per_year()
 
         temp_rate = rate_ts.loc[self.sim_start_date:self.sim_end_date]
         temp_vals = temp_rate.values.reshape(-1, 1)
@@ -1104,7 +1094,7 @@ class SAABootstrapper(AbstractBootstrapper):
         else:
             raise ValueError('Unknown Beta')
 
-        #idx = rate_ts.index.get_loc(self.sim_start_date)
+        # idx = rate_ts.index.get_loc(self.sim_start_date)
         shocks_ann = ts_values[1:] - beta_M * ts_values[:-1]
         shocks_ann = np.insert(shocks_ann, 0, 0)
         shocks_ann = shocks_ann - np.mean(shocks_ann)
@@ -1153,13 +1143,13 @@ def warmup():
     b = bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)  # ⏱ Focus line
     return schema, ptf, bootstrap, bs_indicies
 
+
 def profiled_run(ptf, bootstrap, bs_indicies):
     # 🔽 This is what PyCharm will profile
     return bootstrap.prepare_portfolio_paths(ptf, bs_indicies, 0)
 
 
 if __name__ == "__main__":
-
     from epsilonPhi.core.schema.Schema import ContextCreator
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
@@ -1184,18 +1174,4 @@ if __name__ == "__main__":
 
     curr_vol = inf.iloc[idx.values.flatten().astype(bool)].std(ddof=1) * np.sqrt(12)
     unco_vol = inf.std(ddof=1) * np.sqrt(12)
-    print(unco_vol/curr_vol)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    print(unco_vol / curr_vol)

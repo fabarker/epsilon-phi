@@ -2,6 +2,7 @@ from epsilonPhi.core.asset.proxies.private_assets.PrivateAssets import CPrivateA
 
 __all__ = ['CDistressed']
 
+
 class CDistressed(CPrivateAsset):
     _asset_name = 'PE_DISTRESSED'
     _pme_name = 'DISTRESSED_PME'
@@ -9,18 +10,16 @@ class CDistressed(CPrivateAsset):
     _reporting_name = 'Distressed'
     _category = 'Private Equity'
 
-    def __init__(self, schema):
-        CPrivateAsset.__init__(
-            self,
-            schema,
-            CDistressed._pme_name,
-            CDistressed._asset_name)
+    def __init__(self, schema, **kwargs):
+        pme = kwargs.pop('data', schema.get_asset_from_name(CDistressed._pme_name))
+        CPrivateAsset.__init__(self, pme, schema, CDistressed._asset_name)
+        self.set_reporting_info(CDistressed._reporting_name, CDistressed._category)
 
 
 if __name__ == "__main__":
-
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
     from epsilonPhi.core.schema.Schema import ContextCreator
+
     schema = ContextCreator(
         currency='USD',
         start_date='30-Nov-1983',

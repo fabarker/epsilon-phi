@@ -6,15 +6,17 @@ from typing import Optional
 
 gds = GlobalDataSource()
 
-__all__ = ['DistressedPME']
+__all__ = ['GrowthPME']
 
 
-class DistressedPME(CAsset):
-    _asset_name = 'DISTRESSED_PME'
-    _hf = 'CSTEVDH'  # Event Driven
-    _eq = 'MSWRLD$'  # MSCI World
+class GrowthPME(CAsset):
+    _asset_name = 'GROWTH_PME'
+    _US_SCG = 'FRUS2GR'
+    _GL_ACG = 'MSGWLD$'
 
-    _reporting_name = 'Distressed PME'
+    WT = 0.4
+
+    _reporting_name = 'Growth PME'
     _category = 'Public Equity'
 
     def __init__(
@@ -23,16 +25,16 @@ class DistressedPME(CAsset):
     ) -> None:
         self._schema = schema
         data = self.get_time_series()
-        super(DistressedPME, self).__init__(
+        super(GrowthPME, self).__init__(
             data,
             schema,
-            **DistressedPME.get_time_series_params())
+            **GrowthPME.get_time_series_params())
 
     def get_time_series(self):
-        hf = self.get_asset_from_name(self._hf)
-        eq = self.get_asset_from_name(self._eq)
-        res = 0.5 * hf.addition_over_common_dates(eq)
-        res.name = (DistressedPME._asset_name, 'RI')
+        US_G = self.WT * self.get_asset_from_name(self._US_SCG)
+        WL_G = (1-self.WT) * self.get_asset_from_name(self._GL_ACG)
+        res = US_G.addition_over_common_dates(WL_G)
+        res.name = (GrowthPME._asset_name, 'RI')
         return res
 
     def get_asset_from_name(self, name):
@@ -59,4 +61,4 @@ if __name__ == "__main__":
         end_date='31-Dec-2022'
     ).create_context()
 
-    tt = DistressedPME(schema)
+    tt = GrowthPME(schema)

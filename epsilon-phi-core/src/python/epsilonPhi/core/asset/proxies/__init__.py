@@ -12,6 +12,7 @@ from .private_assets.custom_pmes import *
 from functools import lru_cache
 import inspect
 
+
 @lru_cache(maxsize=None)
 def get_proxy_object_from_name(target_name: str):
     for obj in globals().values():
@@ -21,7 +22,7 @@ def get_proxy_object_from_name(target_name: str):
                 return obj
     raise ValueError(f"No matching class found with _ASSET_NAME = '{target_name}'")
 
+
 __all__ = (
     'get_class_object_from_name'
 )
-

@@ -298,14 +298,12 @@ class CVXOptimizer(object):
         # Sigma is the covariance matrix
         sig = sqrtm(sigma)
 
-        # T is the uncertainty vector (standard errors of the means
-        T12 = np.diag(T)
 
         # Variable of insterest
         w = cp.Variable(n)
 
         # Objective Function
-        objfun = cp.Maximize(mu @ w - 0.5 * kappa * cp.norm2(T12 @ w))
+        objfun = cp.Maximize(mu @ w - 0.5 * kappa * cp.norm2(T @ w))
 
         # === Core constraints ===
         constraints_list = []

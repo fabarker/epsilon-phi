@@ -2,25 +2,33 @@ from typing import Union, Iterable
 from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 import pandas as pd
 import numpy as np
-from openpyxl import Workbook
-from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.chart import LineChart, Reference
+from openpyxl.chart.layout import Layout, ManualLayout
+from openpyxl.drawing.line import LineProperties
+from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.chart.text import RichText
+from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties
+from openpyxl.drawing.text import Font as ChartingFont
+from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
 
 import yaml
 import os
 import re
 import math
 
-#yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-#yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-#yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
-yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+#yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+#yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+#yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
 class Reporting(object):
@@ -35,7 +43,7 @@ class Reporting(object):
         self._name = report_name
         self._portfolios = []
         self._wb = None
-        self._sort_by_vol=sort_by_vol
+        self._sort_by_vol = sort_by_vol
 
     @property
     def output_path(self):
@@ -82,6 +90,19 @@ class Reporting(object):
         wb = self.get_workbook()
         if sheet_name in wb.sheetnames:  # safety check
             wb.remove(wb[sheet_name])
+
+    def generate_report(self, include_wealth_simulations=True):
+
+        # Generate portfolio analytics
+        self.write_portfolios()
+        # Generate risk dashboard
+        self.write_risk_dashboard()
+        # Generate Assumtpions
+        self.write_assumptions()
+        # Generate Wealth Simulations
+        self.write_wealth_simulations()
+        # Close Workbook
+        self.close_workbook()
 
     def add_portfolios(self, portfolios: Union[SAAPortfolio, Iterable[SAAPortfolio]]) -> None:
         if not isinstance(portfolios, Iterable) or isinstance(portfolios, (str, bytes)):
@@ -165,7 +186,7 @@ class Reporting(object):
 
             if r_idx == 1:
                row = list(df.columns.get_level_values(0))
-               row = [ x if x != "index" else None for x in row ]
+               row = [x if x != "index" else None for x in row]
 
             if r_idx == 2:
                row = list(df.columns.get_level_values(1))
@@ -650,12 +671,27 @@ class Reporting(object):
             ws.cell(row=row_num, column=col).border = light_bottom
 
         ws.delete_rows(3)
+        ws.delete_rows(1)
+        ws.row_dimensions[1].height = 35
 
         def find_row(val):
             for row in ws.iter_rows(min_col=1, max_col=1):  # Only column A
                 cell = row[0]
                 if cell.value == val:
                     return cell.row
+
+        # Loop through each row from 2 to 12
+        for row in range(1, find_row("Factor Based Risk Analytics")):
+            col = 2
+            while col <= ws.max_column:
+                col_letter_1 = get_column_letter(col)
+                col_letter_2 = get_column_letter(col + 1)
+
+                # Merge col1 and col2 in this row
+                cell_range = f"{col_letter_1}{row}:{col_letter_2}{row}"
+                ws.merge_cells(cell_range)
+
+                col += 2  # Move to next pair
 
         red_font = Font(color="9C0006")  # Dark red
         green_font = Font(color="006100")  # Dark green
@@ -679,29 +715,142 @@ class Reporting(object):
             CellIsRule(operator='greaterThan', formula=['0'], font=green_font)
         )
 
-        # Loop through each row from 2 to 12
-        for row in range(2, find_row("Factor Based Risk Analytics") + 1):
-            col = 2
-            while col <= ws.max_column:
-                col_letter_1 = get_column_letter(col)
-                col_letter_2 = get_column_letter(col + 1)
-
-                # Merge col1 and col2 in this row
-                cell_range = f"{col_letter_1}{row}:{col_letter_2}{row}"
-                ws.merge_cells(cell_range)
-
-                col += 2  # Move to next pair
-
-        ws.delete_rows(3)
-        ws.row_dimensions[1].height = 35
         self.save_workbook()
+
+    def write_wealth_simulations(self):
+
+        for p in self._portfolios:
+
+            # Get wealth simulations
+            wsim = p.get_portfolio_wealth_projection()
+
+            # Get the metrics from the wsim structs
+            metrics = ["nominal", "real", "net_flows", "real_net_flows"]
+            df = pd.concat(
+                [wsim.get_quantile_dataframe(metric) for metric in metrics],
+                axis=1,
+                verify_integrity=True  # raise error if duplicate columns
+            )
+
+            # Create new sheet for this portfolio
+            sheet_name = ExcelUtils.sanitize_sheet_name('ws_' + p.name)
+            ws = self.get_worksheet(sheet_name)
+
+            # Write data to worksheet
+            for r_idx, row in enumerate(dataframe_to_rows(df, index=True, header=True), 1):
+
+                if r_idx == 1:
+                    row = [None] + list(df.columns.get_level_values(0))
+
+                if r_idx == 2:
+                    row = [None] + [str(int(x * 100)) + "st %ile" if x == 0.01 else str(int(x * 100)) + "th %ile" for x in df.columns.get_level_values(1)]
+
+                for c_idx, value in enumerate(row, 1):
+                    cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+
+            # Remove the empty
+            ws.delete_rows(3)
+
+            # build charts across the worksheet
+            data_types = np.unique(df.columns.get_level_values(0))
+            for id, col_type in enumerate(data_types):
+
+                nominal_cols = []
+                for col in range(1, ws.max_column + 1):
+                    cell_value = ws.cell(row=1, column=col).value
+                    if isinstance(cell_value, str) and col_type == cell_value.lower():
+                        nominal_cols.append(col)
+
+                s_col = min(nominal_cols)
+                e_col = max(nominal_cols)
+                e_row = ws.max_row
+
+                start_col_letter = get_column_letter(s_col+1)
+                cell_range = f"{start_col_letter}{e_row + 5}"
+
+                # Create chart
+                chart = LineChart()
+
+                data = Reference(ws, min_col=s_col, max_col=e_col, min_row=2, max_row=e_row)
+                cats = Reference(ws, min_col=1, min_row=3, max_row=e_row)
+                chart.add_data(data, titles_from_data=True)
+                chart.set_categories(cats)
+
+                # set the chart height
+                chart.height = 3 * 2.65
+                chart.width = 3 * 4
+
+                ccy = {
+                    "USD": "$",
+                    "EUR": "¢",
+                    "GBP": "£"
+                }
+
+                fmt_title = col_type.replace("_", " ").title()
+                currency = " (" + ccy.get(p.schema.currency) + ")"
+                chart.y_axis.title = fmt_title + currency if "Flows" in fmt_title else fmt_title + " Portfolio Values" + currency
+                chart.x_axis.title = wsim.frequency.name.capitalize().replace("ly", "")
+                chart.y_axis.majorTickMark = 'cross'
+                chart.title = None
+
+                # Define chart and font
+                font_test = ChartingFont(typeface='Aptos')
+                cp = CharacterProperties(latin=font_test, sz=900, b=False)
+                chart.x_axis.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+                chart.y_axis.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+
+                # Add this for the axis titles
+                chart.x_axis.title.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+                chart.y_axis.title.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
+                chart.y_axis.title.tx.rich.p[0].r[0].rPr = cp
+                chart.x_axis.title.tx.rich.p[0].r[0].rPr = cp
+
+                chart.graphical_properties = GraphicalProperties()
+                chart.graphical_properties.line.noFill = True
+                chart.graphical_properties.line.prstDash = None
+                chart.y_axis.minorGridlines = None  # Disable minor gridlines
+                chart.y_axis.majorGridlines = None  # Disable major gridlines
+                chart.x_axis.tickMarkSkip = 5
+                chart.x_axis.tickLblSkip = 5
+                chart.x_axis.crosses = "autoZero"
+                chart.x_axis.tickLblPos = "nextTo"  # ✅ Ensures labels are on the tick marks
+
+                # --- Legend: top, horizontal layout ---
+                chart.legend.position = "t"
+                chart.legend.layout = Layout(
+                    manualLayout=ManualLayout(
+                        x=0.25, y=0.0, w=1, h=0.1,
+                        xMode="factor", yMode="factor", wMode="factor", hMode="factor"
+                    )
+                )
+
+                chart.legend.txPr = RichText(p=[
+                    Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)
+                ])
+
+                # Define colors similar to screenshot
+                colors = ["C00000", "8064A2", "376092", "77933C"]  # red, purple, blue, olive green
+
+                for i, ser in enumerate(chart.series):
+                    line = LineProperties()
+                    line.solidFill = colors[i % len(colors)]
+                    line.width = 12700
+                    ser.graphicalProperties.line = line
+
+                    if hasattr(ser, 'dLbls') and ser.dLbls:
+                        ser.dLbls.textProperties = CharacterProperties(typeface="Aptos")
+
+                # Add chart to worksheet
+                ws.add_chart(chart, cell_range)
+                self.save_workbook()
 
 
 if __name__ == "__main__":
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
-    #path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
-    path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+    path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+    #path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
 
     ptfs = SAAPortfolio.get_portfolios_from_template(
         "USD",
@@ -710,10 +859,8 @@ if __name__ == "__main__":
 
     report = Reporting(
         os.getcwd(),
-        'risk_report'
+        'risk_report_1'
     )
 
     report.add_portfolios(ptfs)
-    report.write_assumptions()
-    report.write_portfolios()
-    report.write_risk_dashboard()
+    report.generate_report(True)

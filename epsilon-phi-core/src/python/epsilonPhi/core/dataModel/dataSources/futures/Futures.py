@@ -495,7 +495,7 @@ class Futures(object):
 
 if __name__ == "__main__":
 
-    files = glob.glob(os.path.join('futures_info/', "*.pkl"))
+    files = glob.glob(os.path.join('futures_info/', "*.xlsx"))
     codes = [os.path.basename(f).replace('.pkl', '') for f in files]
 
     frames = pd.DataFrame()
@@ -506,83 +506,3 @@ if __name__ == "__main__":
         print("num of unique symbols {} for code {}".format(len(df['symbol'].unique()), code))
         frames = pd.concat((frames, df), axis=0)
 
-    frames.reset_index().to_parquet('futures_info/Parquet/futures_data.parquet', index=False)
-
-    results = {}
-    for code in codes:
-
-        # Load for instrument
-        df = Futures().load_futures_prices_from_pickle(code).get(['PS']).reset_index()
-
-        df['rets'] = df.sort_values(['symbol', 'date']).groupby('symbol')['PS'].pct_change()
-        df['week'] = pd.Categorical(pd.to_datetime(df.get('date').values).to_period('W')).codes
-
-        weekly_returns = (df.groupby(['week', 'symbol'], group_keys=False)
-                       .agg({
-                           'rets': lambda x: -1 + (x + 1).prod(),  # Weekly return
-                           'date': 'last',        # Preserve max date
-                           'days': 'last'
-                       })
-                       .rename(columns={'rets': 'weekly_return'})
-                       ).reset_index().set_index('week')
-
-        output = pd.DataFrame()
-        for i in range(1, max(weekly_returns.index.get_level_values(0))):
-
-            # Find the contracts we want
-            candidates = weekly_returns.query(
-                f'days > {30} and week == {i} and symbol in '
-                f'{list(weekly_returns.query(f"week == {i - 1}")["symbol"].unique())}'
-            ).drop_duplicates('days').nsmallest(2, 'days')
-
-            if candidates.shape[0] > 1:
-
-                tmp = weekly_returns.query(
-                        f'symbol in {list(candidates.symbol)} and week in {[i, i-1]}'
-                    ).sort_index()
-
-                spd = pd.concat(
-                    [
-                        tmp.loc[x].sort_values('date').get('weekly_return').diff().dropna().to_frame()
-                        for x in np.unique(tmp.index)
-                    ]
-                )
-
-                spd.index = ['t0', 't']
-                spd.columns = [i]
-                spd = spd.T
-                spd['short_symbol'] = candidates.sort_values('days').symbol.iloc[0]
-                spd['long_symbol'] =  candidates.sort_values('days').symbol.iloc[1]
-                spd['short_days'] = candidates.sort_values('days').days.iloc[0]
-                spd['long_days'] = candidates.sort_values('days').days.iloc[1]
-                spd['date'] = candidates.sort_values('days').date.iloc[0]
-                output = pd.concat((output, spd), axis=0)
-        results[code] = output.copy()
-
-    #from epsilonPhi.core.utils.ExcelUtils import ExcelUtils
-    #ExcelUtils.dict_to_excel(
-    #    results,
-    #    os.path.join('futures_info/results_old.xlsx'),
-    #    include_index=True,
-    #)
-
-    res = pd.concat(results.values(), axis=0)
-
-    res['quartile'] = pd.qcut(res['t0'], q=5, labels=['Q1', 'Q2', 'Q3', 'Q4', 'Q5'])
-    # Compute means and standard errors per bucket
-    grouped = res.groupby('quartile')[['t0', 't']]
-
-    # Mean * 52 as in your original
-    mean_annualised = grouped.mean() * 52
-
-    # Standard error = std / sqrt(n) → also annualised
-    standard_errors = grouped.std() / np.sqrt(grouped.count()) * 52
-
-    # Combine results
-    quartile_stats = mean_annualised.rename(columns=lambda c: f'{c}_mean')
-    quartile_stats[[f'{col}_se' for col in standard_errors.columns]] = standard_errors.values
-
-    # Optional: include confidence intervals
-    for col in ['t0', 't']:
-        quartile_stats[f'{col}_ci_lower'] = quartile_stats[f'{col}_mean'] - 1.96 * quartile_stats[f'{col}_se']
-        quartile_stats[f'{col}_ci_upper'] = quartile_stats[f'{col}_mean'] + 1.96 * quartile_stats[f'{col}_se']
