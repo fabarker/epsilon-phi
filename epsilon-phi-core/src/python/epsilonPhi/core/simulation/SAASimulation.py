@@ -154,10 +154,29 @@ class SAASimulation:
             stress_losses[crisis_name] = losses
         return stress_losses
 
+    def get_extended_returns_panel(self):
+
+        # get the portfolio manager set with extended schema
+        ptf = self._portfolio_mgr.set_schema(
+            self.schema.get_extended_schema()
+        )
+
+        # get the stressed returns panel under extended model
+        return ptf.get_stressed_returns_panels()
+
+
     def get_factor_stress_tests(self):
 
         # Get stressed returns panel
+
+        # Get the stressed returns panel
         rtns_panel = self.get_stressed_returns_panel()
+
+        # Get the extended stressed returns panel
+        rtns_panel_ext = self.get_extended_returns_panel()
+
+        # concat the two otgether
+
         nominal_index = rtns_panel.get_ptf_systematic_index()
         real_index = rtns_panel.get_real_ptf_systematic_index()
         factor_index = rtns_panel.cumulative_factor_panel()

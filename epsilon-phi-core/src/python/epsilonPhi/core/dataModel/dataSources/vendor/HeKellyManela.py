@@ -8,20 +8,26 @@ CAPITAL_RATIO_FACTOR_URL = "https://zhiguohe.net/wp-content/uploads/2024/07/He_K
 class Intermediary(object):
     _df = None
 
-    @staticmethod
-    def get_liquidity_factor():
-        df = Liquidity.get_df()
-        return df[df.get('factor') > -99].get('factor').to_frame('PSLIQ')
-
-    @staticmethod
-    def get_aggregate_liquidity():
-        df = Liquidity.get_df()
-        return df.get('agg_liquidity').to_frame('AGGLIQ')
 
     @staticmethod
     def get_capital_risk_factor():
         df = Intermediary.get_df()
-        return df.get('liquidity_innovations').to_frame('LIQINO')
+        return df.get('intermediary_capital_risk_factor').to_frame('CAPITAL_RISK_FACTOR')
+
+    @staticmethod
+    def get_intermediary_capital_ratio():
+        df = Intermediary.get_df()
+        return df.get('intermediary_capital_ratio').to_frame('CAPITAL_RATIO')
+
+    @staticmethod
+    def get_intermediary_value_weighted_investment_return():
+        df = Intermediary.get_df()
+        return df.get('intermediary_value_weighted_investment_return').to_frame('LEVFAC')
+
+    @staticmethod
+    def get_intermediary_leverage_ratio_squared():
+        df = Intermediary.get_df()
+        return df.get('intermediary_leverage_ratio_squared').to_frame('LEV_RATIO_SQ')
 
     @staticmethod
     def get_df():
@@ -35,11 +41,9 @@ class Intermediary(object):
         if Intermediary._df is None:
             df = pd.read_csv(CAPITAL_RATIO_FACTOR_URL, index_col=0)
             df.index = pd.to_datetime(df.index, format="%Y%m") + pd.tseries.offsets.BMonthEnd(0)
+            df.index.names = ["date"]
             Intermediary._df = df.copy()
 
-
-def replicate_factor(self):
-        pass
 
 if __name__ == "__main__":
 

@@ -21,14 +21,14 @@ import os
 import re
 import math
 
-yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+#yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+#yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+#yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
-#yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-#yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-#yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
 class Reporting(object):
@@ -849,8 +849,8 @@ class Reporting(object):
 if __name__ == "__main__":
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
-    path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
-    #path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+    #path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+    path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
 
     ptfs = SAAPortfolio.get_portfolios_from_template(
         "USD",
@@ -859,8 +859,9 @@ if __name__ == "__main__":
 
     report = Reporting(
         os.getcwd(),
-        'risk_report_1'
+        'risk_report_new_lev'
     )
 
+    res = pd.DataFrame(ptfs[-1].get_assets_risk_premias(), index=ptfs[-1].get_asset_names())
     report.add_portfolios(ptfs)
     report.generate_report(True)

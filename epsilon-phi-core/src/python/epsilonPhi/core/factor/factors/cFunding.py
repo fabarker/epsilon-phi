@@ -192,26 +192,6 @@ if __name__ == "__main__":
 
     df = cFunding.construct_factor(Frequency.BUSINESS_MONTHLY)
 
-    import pandas as pd
-
-    # Download and read directly into a DataFrame
-    url = "https://zhiguohe.net/wp-content/uploads/2024/07/He_Kelly_Manela_Factors_monthly_240723.csv"
-    df = pd.read_csv(url, index_col=0)
-    df.index = pd.to_datetime(df.index, format="%Y%m") + pd.tseries.offsets.BMonthEnd(0)
-
-
-
-    # Explore the data
-    print(df.head())  # see first rows
-    print(df.columns.tolist())  # list column names (e.g. "Date", "Mkt-RF", "SMB", "HML", ...)
-
-    # Convert 'Date' to datetime
-    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-
-    # Extract a subset: e.g. Mkt-RF series
-    mkt_rf = df[['Date', 'Mkt-RF']].copy()
-    print(mkt_rf.tail())
-
 
 
 

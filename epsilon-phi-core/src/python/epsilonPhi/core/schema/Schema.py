@@ -35,6 +35,7 @@ class CContext(object):
         self.__dates = None
         self.__asset_manager = None
         self.__crisis_map = None
+        self.__model = None
 
         self.start_date = start_date
         self.end_date = end_date
@@ -113,15 +114,21 @@ class CContext(object):
                                                           frequency,
                                                           dataversion).risk_free_ticker
 
-    @staticmethod
-    def risk_free_floor(currency, frequency, dataversion):
-        return 0
 
     @property
     def inflation_rate_ticker(self):
         return CContext.get_inflation_rate_ticker(self.currency,
                                                   self.frequency,
                                                   self.dataversion)
+
+
+    @property
+    def BaseModel(self):
+        return self.__model
+
+    def set_model(self, model):
+        self.__model = model
+
     def get_inflation_rate_asset(self):
         from epsilonPhi.core.asset.AssetMgr import CAssetMgr
         return CAssetMgr(self).get_inflation_asset(self.currency).reindex(self.dates)
@@ -139,11 +146,6 @@ class CContext(object):
         return CAppConfig._configUtil.get_currency_config(currency,
                                                           frequency,
                                                           dataversion).inflation_ticker
-
-    @property
-    def BaseModel(self):
-        return CAppConfig.get_BaseModel()
-
 
     def get_risk_factor_covariance(self):
         return self.BaseModel.get_risk_factor_covariance(
@@ -240,6 +242,23 @@ class CContext(object):
         from epsilonPhi.core.asset.AssetMgr import CAssetMgr
         return CAssetMgr(self).get_asset_by_name(name)
 
+    def get_extended_schema(self):
+
+        schema = CContext(self.currency,
+                 self.frequency,
+                 self.dataversion,
+                 '27-Feb-1970',
+                 self.end_date.strftime("%d-%m-%Y"))
+
+        schema._setup()
+        mdl = CAppConfig.get_BaseModel().setup_extended_model(
+            schema.frequency,
+            schema.end_date
+        )
+        schema.set_model(mdl)
+        return schema
+
+
 
 
 class ContextCreator:
@@ -271,6 +290,8 @@ class ContextCreator:
         CAppConfig.get_BaseModel().setup_default_model(self._frequency,
                                                        self._end_date,
                                                        cache_model=True)
+        self._schema.set_model(CAppConfig.get_BaseModel())
+
 
 
 if __name__ == "__main__":
@@ -278,7 +299,8 @@ if __name__ == "__main__":
     schema = ContextCreator(currency='GBP',
                             start_date='31-Dec-1999',
                             end_date='31-Dec-2022').create_context()
-    cov = schema.get_factor_crisis_map()
+
+    ex_schema = schema.get_extended_schema()
 
 
 

@@ -8,6 +8,7 @@ class CAppConfig(object):
     _configUtil = None
     _asOfDate = InfinityTime
     _BaseModel = None
+    _ExtendedModel = None
 
     @staticmethod
     def reset():
@@ -30,12 +31,20 @@ class CAppConfig(object):
         from epsilonPhi.core.modelFactory.modelFactory import BaseModel
         CAppConfig._BaseModel = BaseModel.setup_default_model()
 
+        from epsilonPhi.core.modelFactory.modelFactory import BaseModel
+        CAppConfig._BaseModel = BaseModel.setup_default_model()
+
         CAppConfig._setup = True
 
     @staticmethod
     def get_BaseModel():
         CAppConfig.check_for_setup()
         return CAppConfig._BaseModel
+
+    @staticmethod
+    def get_ExtendedModel():
+        CAppConfig.check_for_setup()
+        return CAppConfig._ExtendedModel
 
     @staticmethod
     def check_for_setup():

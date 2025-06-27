@@ -9,6 +9,7 @@ class FACTOR(Enum):
     EQUITY_GLOBAL_ISG = 'cEquity'
     TERM_GLOBAL_ISG = 'cTerm'
     FUNDING_US_ISG = 'cFunding'
+    LEVERAGE_US_HKM = 'CLeverage'
     LIQUIDITY_US_PASTOR_STAMBAUGH = 'cLiquidity'
     CARRY_GLOBAL_ISG = 'cFX'
     EQUITY_EMERGING_ISG = 'cEmerging'
@@ -85,4 +86,23 @@ class FACTOR(Enum):
                 FACTOR.SIZE_US_ISG,
                 FACTOR.VALUE_US_ISG,
                 FACTOR.COMMODITY_GLOBAL_ISG]
+
+    @staticmethod
+    def get_extended_return_factor_list():
+        return [FACTOR.EQUITY_GLOBAL_ISG,
+                FACTOR.TERM_GLOBAL_ISG,
+                FACTOR.FUNDING_US_ISG,
+                FACTOR.LIQUIDITY_US_PASTOR_STAMBAUGH,
+                FACTOR.EQUITY_EMERGING_ISG]
+
+    @staticmethod
+    def get_extended_risk_factor_list():
+        return [FACTOR.EQUITY_GLOBAL_ISG,
+                FACTOR.TERM_GLOBAL_ISG,
+                FACTOR.FUNDING_US_ISG,
+                FACTOR.LIQUIDITY_US_PASTOR_STAMBAUGH,
+                FACTOR.EQUITY_EMERGING_ISG,
+                FACTOR.MOMENTUM_US_ISG,
+                FACTOR.SIZE_US_ISG,
+                FACTOR.VALUE_US_ISG]
 

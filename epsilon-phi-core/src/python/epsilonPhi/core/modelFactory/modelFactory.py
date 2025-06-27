@@ -55,12 +55,33 @@ class BaseModel(object):
         self.__factorPanels.load_factors()
 
     @staticmethod
+    def setup_extended_model(frequency=None, end_date=None, cache_model=False):
+
+        mdl = BaseModel(frequency, end_date)
+        mdl.set_risk_factor_list(FACTOR.get_extended_risk_factor_list())
+        mdl.set_return_factor_list(FACTOR.get_extended_return_factor_list())
+        mdl.set_orthogonalize([FACTOR.FUNDING_US_ISG.name, FACTOR.EQUITY_EMERGING_ISG.name])
+        mdl.set_regression_type(
+            Regression.REGRESSION_TYPES.OLS,
+            Regression.SAMPLING_TYPE.ROLLING(60),
+            Regression.WEIGHTING_SCHEME.EQUAL
+        )
+        mdl.set_factor_Sharpe_cap(FACTOR.EQUITY_EMERGING_ISG.name, 0.2)
+        mdl.create_model()
+
+        if cache_model:
+            CAppConfig._BaseModel = mdl
+        else:
+            return mdl
+
+
+    @staticmethod
     def setup_default_model(frequency=None, end_date=None, cache_model=False):
 
         mdl = BaseModel(frequency, end_date)
         mdl.set_risk_factor_list(mdl.__DEFAULT_RISK_FACTORS)
         mdl.set_return_factor_list(mdl.__DEFAULT_RETURN_FACTORS)
-        mdl.set_orthogonalize([FACTOR.EQUITY_EMERGING_ISG.name, FACTOR.FUNDING_US_ISG.name])
+        mdl.set_orthogonalize([FACTOR.FUNDING_US_ISG.name, FACTOR.EQUITY_EMERGING_ISG.name])
         mdl.set_regression_type(Regression.REGRESSION_TYPES.OLS, Regression.SAMPLING_TYPE.ROLLING(60), Regression.WEIGHTING_SCHEME.EQUAL)
         mdl.set_factor_Sharpe_cap(FACTOR.EQUITY_EMERGING_ISG.name, 0.2)
         mdl.create_model()
@@ -69,6 +90,7 @@ class BaseModel(object):
            CAppConfig._BaseModel = mdl
         else:
            return mdl
+
 
     # Public Properties
     @property
