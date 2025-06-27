@@ -19,7 +19,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         schema_currency = asset.schema.currency
         asset_in_schema_currency = asset.convert_asset_to_currency(schema_currency, hedging_ratio)
 
-        model = CAppConfig.get_BaseModel()
+        model = asset.schema.BaseModel
         factor_df = asset_in_schema_currency.schema.get_return_factors_panel()
 
         rx = asset.get_excess_return_df()
@@ -30,7 +30,7 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         start = 60
         end = y.shape[0] + 1
 
-        betas = np.full((end - win, 6), np.nan)
+        betas = np.full((end - win, factor_df.shape[1]), np.nan)
         for i in range(start, end):
 
             X_prime = X.iloc[i - win:i].copy()
@@ -61,12 +61,12 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         return pd.DataFrame(
             betas,
             index=factor_df.index[-betas.shape[0]:],
-            columns=model.return_factor_list
+            columns=factor_df.columns
         )
 
     @staticmethod
     def get_risk_premium(asset):
-        hist_sharpe = CAppConfig.get_BaseModel().get_return_factor_Sharpe_ratios()
+        hist_sharpe = asset.schema.BaseModel.get_return_factor_Sharpe_ratios()
         betas = asset.get_return_betas().values
         return betas * hist_sharpe.values.T * math.sqrt(asset.schema.obs_per_year)
 
@@ -157,14 +157,15 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
     @staticmethod
     def get_return_betas(asset, hedging_ratio, normalized=True):
-        if (asset.name, hedging_ratio, normalized) not in AssetReturnEstimator._cache:
-            AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized)] = (
+
+        if (asset.name, hedging_ratio, normalized, asset.schema.BaseModel.__hash__()) not in AssetReturnEstimator._cache:
+            AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized, asset.schema.BaseModel.__hash__())] = (
                 AssetReturnEstimator.calc_return_betas(
                 asset,
                 hedging_ratio,
                 normalized)
             )
-        return AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized)]
+        return AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized, asset.schema.BaseModel.__hash__())]
 
 
 

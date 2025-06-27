@@ -1,4 +1,5 @@
 import scipy.stats.mstats
+import setuptools.command.install
 
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.timeSeries.timeSeriesMain import CTimeSeries
@@ -157,17 +158,36 @@ class SAASimulation:
     def get_extended_returns_panel(self):
 
         # get the portfolio manager set with extended schema
-        ptf = self._portfolio_mgr.set_schema(
-            self.schema.get_extended_schema()
+        ptf_copy = self._portfolio_mgr.portfolio.deepcopy(
+            context=self.schema.get_extended_schema()
         )
 
         # get the stressed returns panel under extended model
-        return ptf.get_stressed_returns_panels()
-
+        return ptf_copy.get_stressed_returns_panel()
 
     def get_factor_stress_tests(self):
 
-        # Get stressed returns panel
+        def extract_factor_stress_loss(start_date, end_date, panel):
+
+            dates = panel.dates
+            nominal_index = panel.get_ptf_systematic_index()
+            real_index = panel.get_real_ptf_systematic_index()
+            factor_index = panel.cumulative_factor_panel()
+
+            idx_start = dates.get_loc(start_date)
+            idx_end = dates.get_loc(end_date)
+
+            loss_n = -1 + (nominal_index[idx_end] / nominal_index[idx_start])
+            loss_r = -1 + (real_index[idx_end] / real_index[idx_start])
+            loss_f = -1 + (factor_index[idx_end, :] / factor_index[idx_start, :])
+
+            return FactorStressTestLosses(
+                total=loss_n,
+                factors=loss_f,
+                cash_other=loss_n - np.sum(loss_f),
+                real=loss_r
+            )
+
 
         # Get the stressed returns panel
         rtns_panel = self.get_stressed_returns_panel()
@@ -175,34 +195,21 @@ class SAASimulation:
         # Get the extended stressed returns panel
         rtns_panel_ext = self.get_extended_returns_panel()
 
-        # concat the two otgether
+        # crises
+        crises = self.schema.get_extended_schema().get_factor_crisis_map()
 
-        nominal_index = rtns_panel.get_ptf_systematic_index()
-        real_index = rtns_panel.get_real_ptf_systematic_index()
-        factor_index = rtns_panel.cumulative_factor_panel()
-
-        crises = self.get_factor_crisis_map()
-        dates = rtns_panel.dates
         stress_losses = {}
         for crisis_name, crisis in crises.items():
-            if crisis.start_date not in dates or crisis.end_date not in dates:
+            if crisis.start_date in rtns_panel.dates and crisis.end_date in rtns_panel.dates:
+               panel = rtns_panel
+            elif crisis.start_date in rtns_panel_ext.dates and crisis.end_date in rtns_panel_ext.dates:
+               panel = rtns_panel_ext
+            else:
                 continue
 
-            idx_start = dates.get_loc(crisis.start_date)
-            idx_end = dates.get_loc(crisis.end_date)
-
-            loss_n = -1 + (nominal_index[idx_end] / nominal_index[idx_start])
-            loss_r = -1 + (real_index[idx_end] / real_index[idx_start])
-            loss_f = -1 + (factor_index[idx_end, :] / factor_index[idx_start, :])
-
-            losses = FactorStressTestLosses(
-                total=loss_n,
-                factors=loss_f,
-                cash_other=loss_n - np.sum(loss_f),
-                real=loss_r
+            stress_losses[crisis_name] = extract_factor_stress_loss(
+                crisis.start_date, crisis.end_date, panel
             )
-
-            stress_losses[crisis_name] = losses
 
         return stress_losses
 
@@ -245,7 +252,7 @@ class SAASimulation:
         betas = np.array(self.portfolio_mgr.get_return_betas())
 
         # get the beta multiplier
-        beta_mult = self.get_stress_coeff_ts().loc[start_date:end_date]
+        beta_mult = self.schema.get_stress_coeff_ts().loc[start_date:end_date]
         assert np.all(beta_mult.index == return_factors_panel.index), 'Error - panels dont match'
 
         factor_to_stress = 'EQUITY_GLOBAL_ISG'  # self.schema.get_factor_names_to_stress()
@@ -368,25 +375,26 @@ class SAASimulation:
                     error_arr[k, j, i] = np.power(
                         factor_stressed[crisis_name].total - historical_stressed[crisis_name].total, 2)
 
-    def set_beta_multipliers(self):
+    @staticmethod
+    def set_beta_multipliers(schema):
 
         # Get the factor metrics
-        return_factors_panel = self.schema.get_return_factors_panel()
+        return_factors_panel = schema.get_return_factors_panel()
         dates = return_factors_panel.index
-        factor_sharpes = np.array(self.schema.get_return_factors_sharpe_ratios())
+        factor_sharpes = np.array(schema.get_return_factors_sharpe_ratios())
         normalized_return_factor_panel = np.asarray(zscore(return_factors_panel, ddof=1))
-        rfr_values = self.schema.get_risk_free_rate_asset().reindex(dates).values
+        rfr_values = schema.get_risk_free_rate_asset().reindex(dates).values
 
         from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
-        ptf = SAAPortfolio('Calibration', self.schema)
-        ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
+        ptf = SAAPortfolio('Calibration', schema)
+        ptf.add_asset_by_name('LHTRYIN', 0.5, 0)
         ptf.add_asset_by_name('MSUSAML', 0.5, 0)
         ptf.setup()
 
         # Look through portfolios
         bonds_rng = [0.2, 0.3, 0.5, 0.7, 0.8]
         stress_coefs = np.linspace(1.0, 3.0, num=1000)
-        crises = self.get_factor_crisis_map()
+        crises = schema.get_factor_crisis_map()
         error_arr = np.full((len(stress_coefs), len(crises.keys()), len(bonds_rng)), np.nan)
         for i, wt in enumerate(bonds_rng):
 
@@ -397,7 +405,7 @@ class SAASimulation:
             historical_stressed = ptf.get_historical_stress_tests()
 
             # Get betas and stressing panel
-            sqrt_t = math.sqrt(self.schema.frequency.obs_per_year())
+            sqrt_t = math.sqrt(schema.frequency.obs_per_year())
             betas = np.array(ptf._portfolio_mgr.get_return_betas())
 
             # 2. Build normalized factor panel (shape: [T, F])
@@ -418,6 +426,9 @@ class SAASimulation:
 
             for j, crisis_name in enumerate(crises.keys()):
                 logger.info("Computing factor stress losses for portfolio {}, crisis {}".format(wt, crisis_name))
+
+                if crisis_name not in historical_stressed:
+                    continue
 
                 if (crises[crisis_name].start_date not in return_factors_panel.dates
                         or crises[crisis_name].end_date not in return_factors_panel.dates):
@@ -713,4 +724,4 @@ if __name__ == "__main__":
     mgr = ptf.get_portfolio_mgr()
 
     self = SAASimulation(mgr)
-    ws = self.get_portfolio_wealth_projection()
+    ws = self.get_factor_stress_tests()

@@ -10,8 +10,34 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import datetime as dt
 import numpy as np
+import hashlib
+import json
 
-class BaseModel(object):
+class HashableModel(object):
+
+    def _hashable_state(self):
+        raise NotImplementedError("Subclasses must implement _hashable_state()")
+
+    def __hash__(self):
+        try:
+            state = self._hashable_state()
+            state_str = json.dumps(state, sort_keys=True, default=str)
+            return hashlib.sha256(state_str.encode("utf-8")).hexdigest()
+        except Exception as e:
+            raise TypeError(f"{self.__class__.__name__} instance is not hashable: {e}")
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self._hashable_state() == other._hashable_state()
+
+    def __repr__(self):
+        return f"<BaseModel hash={self.__hash__()}>"
+
+
+
+
+class BaseModel(HashableModel):
 
     __DEFAULT_RISK_FACTORS = FACTOR.get_default_risk_factor_list()
     __DEFAULT_RETURN_FACTORS = FACTOR.get_default_return_factor_list()
@@ -47,6 +73,23 @@ class BaseModel(object):
         self.__factor_Sharpe_cap = {}
         self._factorPanels = None
         self.__regression = None
+
+    def _hashable_state(self):
+
+        """
+        Return a dict of the key internal attributes to be used for hashing.
+        """
+
+        return {
+            "frequency": str(self.frequency),
+            "end_date": str(self.end_date),
+            "risk_factors": self.risk_factor_list,
+            "return_factors": self.return_factor_list,
+            "regression_type": str(self.regression_type),
+            "orthogonalize": self.orthogonal_list,
+            "use_statistical_model": self.is_statistical_model,
+            "factor_Sharpe_caps": self.factor_Sharpe_caps,
+        }
 
     def create_model(self):
         self.__factorPanels = CFactorPanels(self.factor_list,
@@ -161,6 +204,10 @@ class BaseModel(object):
                                        sampling,
                                        **kwargs)
 
+        self.__regression_type = regression_type
+        self.__sampling_type = sampling
+
+
     def set_orthogonalize(self, orthogonalize_list):
         self.__orthogonalize_list = orthogonalize_list
 
@@ -266,7 +313,9 @@ if __name__ == "__main__":
     return_factors = FACTOR.get_default_return_factor_list()
 
     model = BaseModel.setup_default_model()
-    factors = model.get_principle_component_factors()
+    model.__hash__()
+    ext = BaseModel.setup_extended_model()
+    ext.__hash__()
 
     model.set_return_factor_list(FACTOR.get_default_return_factor_list())
     model.set_risk_factor_list(FACTOR.get_default_risk_factor_list())

@@ -1,4 +1,5 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
 from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.estimator.estimationMgr import EstimationMgr
 from epsilonPhi.core.factor.factorPanel import CFactorPanels
@@ -11,6 +12,7 @@ from dateutil import parser
 from datetime import datetime as dt
 from scipy.stats import zscore
 import datetime
+import numpy as np
 import pandas as pd
 
 __author__ = 'Francis Barker'
@@ -21,7 +23,31 @@ _START_DATE = None
 _END_DATE = None
 _FACTOR_SHARPE_END_DATE = datetime.datetime(2018, 12, 31)
 
-class CContext(object):
+import hashlib
+import json
+
+class Hashable(object):
+
+    def _hashable_state(self):
+        raise NotImplementedError("Subclasses must implement _hashable_state()")
+
+    def __hash__(self):
+        try:
+            state = self._hashable_state()
+            state_str = json.dumps(state, sort_keys=True, default=str)
+            return hashlib.sha256(state_str.encode("utf-8")).hexdigest()
+        except Exception as e:
+            raise TypeError(f"{self.__class__.__name__} instance is not hashable: {e}")
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self._hashable_state() == other._hashable_state()
+
+    def __repr__(self):
+        return f"<CContext hash={self.__hash__()}>"
+
+class CContext(Hashable):
 
     def __init__(self, currency: str,
                        frequency: Frequency.BUSINESS_MONTHLY,
@@ -36,9 +62,26 @@ class CContext(object):
         self.__asset_manager = None
         self.__crisis_map = None
         self.__model = None
+        self.__beta_mult_ts = None
 
         self.start_date = start_date
         self.end_date = end_date
+
+    def _hashable_state(self):
+
+        """
+        Return a dict of the key internal attributes to be used for hashing.
+        """
+
+        return {
+            "currency": str(self.__currency),
+            "data_version": str(self.__data_version),
+            "frequency": str(self.__frequency),
+            "start_date": str(self.start_date),
+            "end_date": str(self.end_date),
+            "model": self.__model.__hash__(),
+        }
+
 
     @property
     def dataversion(self):
@@ -221,6 +264,24 @@ class CContext(object):
 
             self.__crisis_map = map
         return self.__crisis_map
+
+    def get_stress_coeff_ts(self):
+        if self.__beta_mult_ts is None:
+            from epsilonPhi.core.simulation.SAASimulation import SAASimulation
+            SAASimulation.set_beta_multipliers(self)
+
+            dates = self.dates
+            crises = self.get_factor_crisis_map()
+
+            arr = np.zeros((len(dates), 1))
+            for crisis in crises:
+                mask = ((dates > crises[crisis]._start_date) &
+                        (dates <= crises[crisis]._end_date))
+                arr[mask] = crises[crisis]._stress_coefficient
+            self.__beta_mult_ts = CTimeSeries(arr, index=dates, columns=['stress_coeff'])
+
+        return self.__beta_mult_ts
+
 
     def get_factor_crises(self):
         return CAppConfig._configUtil.get_factor_crises(

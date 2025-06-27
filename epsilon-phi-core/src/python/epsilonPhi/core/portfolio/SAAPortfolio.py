@@ -100,7 +100,7 @@ class SAAPortfolio(CPortfolio):
 
     def setup(self):
         from epsilonPhi.core.portfolio.SAAPortfolioMgr import SAAPortfolioMgr
-        if not self._is_setup and self._portfolio_mgr is None:
+        if not self._is_setup or self._portfolio_mgr is None:
             self._portfolio_mgr = SAAPortfolioMgr(self._context)
             self._portfolio_mgr.set_portfolio(self)
             self._is_setup = True
@@ -542,7 +542,7 @@ class SAAPortfolio(CPortfolio):
         return ptf
 
     #TODO - Fix this function so it works
-    def deepcopy(self, name: str = None):
+    def deepcopy(self, name: str = None, context = None):
 
         """
             Create a deep copy of the object. Optionally assign a new name.
@@ -554,7 +554,7 @@ class SAAPortfolio(CPortfolio):
                 A fully independent deep copy of the object.
         """
 
-        copyobj = super().deepcopy()
+        copyobj = super().deepcopy(name, context)
         if name is not None:
             copyobj.reporting_name = name
         return copyobj
@@ -633,113 +633,13 @@ if __name__ == "__main__":
         path
     )
 
-    ptf = ptfs[2]
+    ptf = ptfs[-2]
 
-    ws_out = [0.01] * 20
-    ptf.set_ws_outflows(ws_out, 'nominal')
-    sim = ptf.get_portfolio_wealth_projection()
+    ext_scehma = ptf.schema.get_extended_schema()
+    ptf_copy = ptf.deepcopy(context=ext_scehma)
 
-    metrics = ["nominal", "real", "net_flows", "real_net_flows"]
-    df = pd.concat(
-        [sim.get_quantile_dataframe(metric) for metric in metrics],
-        axis=1,
-        verify_integrity=True  # raise error if duplicate columns
-    )
+    panel_1 = ptf.get_stressed_returns_panel()
+    panel_2 = ptf_copy.get_stressed_returns_panel()
 
-    df = sim.get_quantile_dataframe('nominal')
-
-    import pandas as pd
-    from openpyxl import Workbook
-    from openpyxl.utils.dataframe import dataframe_to_rows
-    from openpyxl.chart import LineChart, Reference
-    from openpyxl.chart.layout import Layout, ManualLayout
-    from openpyxl.drawing.line import LineProperties
-    from openpyxl.chart.shapes import GraphicalProperties
-    from openpyxl.drawing.text import CharacterProperties
-    from openpyxl.drawing.text import Font, CharacterProperties
-
-    # ---- Step 1: Flatten column MultiIndex ----
-    df_flat = df.copy()
-    df_flat.columns = ["1st %ile", "10th %ile", "50th %ile", "90th %ile"]
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Chart Data"
-
-    # Write data to worksheet
-    for row in dataframe_to_rows(df_flat.reset_index(), index=False, header=True):
-        ws.append(row)
-
-    # Create chart
-    chart = LineChart()
-
-    # Chart data and categories
-    n_rows = df_flat.shape[0] + 1
-    n_cols = df_flat.shape[1] + 1
-    data = Reference(ws, min_col=2, max_col=n_cols, min_row=1, max_row=n_rows)
-    cats = Reference(ws, min_col=1, min_row=2, max_row=n_rows)
-    chart.add_data(data, titles_from_data=True)
-    chart.set_categories(cats)
-
-    # set the chart height
-    chart.height = 3 * 2.65
-    chart.width = 3 * 4
-
-    from openpyxl.chart.text import RichText
-    from openpyxl.drawing.text import Paragraph, ParagraphProperties, CharacterProperties, Font
-
-    chart.y_axis.title = 'nominal'.capitalize() + " Portfolio Values (" + ptf.schema.currency + ")"
-    chart.x_axis.title = sim.frequency.name.capitalize().replace("ly", "")
-    chart.y_axis.majorTickMark = 'cross'
-    chart.title = None
-
-    # Define chart and font
-    font_test = Font(typeface='Aptos')
-    cp = CharacterProperties(latin=font_test, sz=900, b=False)
-    chart.x_axis.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
-    chart.y_axis.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
-
-    # Add this for the axis titles
-    chart.x_axis.title.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
-    chart.y_axis.title.txPr = RichText(p=[Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)])
-    chart.y_axis.title.tx.rich.p[0].r[0].rPr = cp
-    chart.x_axis.title.tx.rich.p[0].r[0].rPr = cp
-
-    chart.graphical_properties = GraphicalProperties()
-    chart.graphical_properties.line.noFill = True
-    chart.graphical_properties.line.prstDash = None
-    chart.y_axis.minorGridlines = None  # Disable minor gridlines
-    chart.y_axis.majorGridlines = None  # Disable major gridlines
-    chart.x_axis.tickMarkSkip = 5
-    chart.x_axis.tickLblSkip = 5
-    chart.x_axis.crosses = "autoZero"
-    chart.x_axis.tickLblPos = "nextTo"  # ✅ Ensures labels are on the tick marks
-
-    # --- Legend: top, horizontal layout ---
-    chart.legend.position = "t"
-    chart.legend.layout = Layout(
-        manualLayout=ManualLayout(
-            x=0.25, y=0.0, w=1, h=0.1,
-            xMode="factor", yMode="factor", wMode="factor", hMode="factor"
-        )
-    )
-
-    chart.legend.txPr = RichText(p=[
-        Paragraph(pPr=ParagraphProperties(defRPr=cp), endParaRPr=cp)
-    ])
-
-    # Define colors similar to screenshot
-    colors = ["C00000", "8064A2", "376092", "77933C"]  # red, purple, blue, olive green
-
-    for i, ser in enumerate(chart.series):
-        line = LineProperties()
-        line.solidFill = colors[i % len(colors)]
-        line.width = 12700
-        ser.graphicalProperties.line = line
-
-        if hasattr(ser, 'dLbls') and ser.dLbls:
-            ser.dLbls.textProperties = CharacterProperties(typeface="Aptos")
-
-    # Add chart to worksheet
-    ws.add_chart(chart, "B24")
-    wb.save("styled_chart.xlsx")
+    df1 = pd.DataFrame(panel_1.get_ptf_systematic_index(), index=panel_1.dates, columns=['short'])
+    df2 = pd.DataFrame(panel_2.get_ptf_systematic_index(), index=panel_2.dates, columns=['long'])

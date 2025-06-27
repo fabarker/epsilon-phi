@@ -122,6 +122,11 @@ class CAsset(CAssetInf, CSlice):
     def copy_params(self, params):
         self.__dict__.update(params)
 
+    def set_schema(self, schema):
+        self._schema = schema
+        self._assetMgr = CAssetMgr(self._schema)
+        self._risk_premias_in_curr_env = None
+
     def set_currency_hedge_ratio(self, hedge_ratio: Optional[Union[float, int]]):
         if hedge_ratio is not None:
             assert 0 <= hedge_ratio <= 1, 'Error - Currency hedge ratio must be in interval [0,1]'

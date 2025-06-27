@@ -49,7 +49,8 @@ class CAssetMgr(CAssetMgrInf):
     def get_asset_key(self, asset_name):
         return (asset_name,
                 self._schema.currency,
-                self._schema.frequency)
+                self._schema.frequency,
+                self._schema.__hash__())
 
     @staticmethod
     def _prepare_dataframe_for_asset(

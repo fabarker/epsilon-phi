@@ -23,6 +23,10 @@ class GlobalDataSource(object):
     def __init__(self):
         self.initialize()
 
+    def __deepcopy__(self, memo):
+        # Prevents deepcopy from violating singleton pattern
+        return self
+
     def initialize(self):
         self._fx_curve = FXCurve()
 

@@ -48,16 +48,16 @@ class AssetRiskEstimator(CAssetRiskEstimatorInf):
 
     @staticmethod
     def get_beta_and_idio_variance(asset, hedging_ratio):
-        if (asset.name, hedging_ratio) not in AssetRiskEstimator._cache:
-            AssetRiskEstimator._cache[(asset.name, hedging_ratio)] = AssetRiskEstimator.calc_betas_and_idio_variance(asset, hedging_ratio)
-        betas, idio, _ = AssetRiskEstimator._cache[(asset.name, hedging_ratio)]
+        if (asset.name, hedging_ratio, asset.schema.__hash__()) not in AssetRiskEstimator._cache:
+            AssetRiskEstimator._cache[(asset.name, hedging_ratio, asset.schema.__hash__())] = AssetRiskEstimator.calc_betas_and_idio_variance(asset, hedging_ratio)
+        betas, idio, _ = AssetRiskEstimator._cache[(asset.name, hedging_ratio, asset.schema.__hash__())]
         return betas, idio
 
     @staticmethod
     def get_residuals(asset, hedging_ratio):
-        if (asset.name, hedging_ratio) not in AssetRiskEstimator._cache:
-            AssetRiskEstimator._cache[(asset.name, hedging_ratio)] = AssetRiskEstimator.calc_betas_and_idio_variance(asset, hedging_ratio)
-        _, _, residuals = AssetRiskEstimator._cache[(asset.name, hedging_ratio)]
+        if (asset.name, hedging_ratio, asset.schema.__hash__()) not in AssetRiskEstimator._cache:
+            AssetRiskEstimator._cache[(asset.name, hedging_ratio, asset.schema.__hash__())] = AssetRiskEstimator.calc_betas_and_idio_variance(asset, hedging_ratio)
+        _, _, residuals = AssetRiskEstimator._cache[(asset.name, hedging_ratio, asset.schema.__hash__())]
         return residuals
 
     @staticmethod

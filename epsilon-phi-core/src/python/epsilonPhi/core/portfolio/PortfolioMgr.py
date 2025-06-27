@@ -637,8 +637,9 @@ class CPortfolioMgr(object):
         return self.get_historical_return_time_series().add(1).cumprod()
 
     def get_historical_real_cuml_return_series(self):
-        return self.get_historical_cuml_return_series() / self._context.get_price_deflator().values
-
+        nominal_return = self.get_historical_cuml_return_series()
+        deflator = self._context.get_price_deflator().loc[nominal_return.index]
+        return nominal_return / deflator.div(deflator.values[0])
 
     def get_historical_worst_peak_to_trough_loss(self):
         lvls = self.get_historical_cuml_return_series()

@@ -96,6 +96,16 @@ class CPortfolio(object):
 
     ########## Setter Methods ############
 
+    def set_schema(self, schema):
+
+        self._context = schema
+        if self.num_assets > 0:
+            for asset_name in self.get_asset_names():
+                self.get_asset(asset_name).set_schema(self._context)
+        self._is_setup = False
+        self.setup()
+
+
     def setup(self):
         from epsilonPhi.core.portfolio.PortfolioMgr import CPortfolioMgr
         if not self._is_setup and self._portfolio_mgr is None:
@@ -289,7 +299,7 @@ class CPortfolio(object):
     def get_historical_beta(self):
         return self.get_portfolio_mgr().get_historical_beta()
 
-    def deepcopy(self, name: str = None):
+    def deepcopy(self, name: str = None, context = None):
 
         """
             Create a deep copy of the object. Optionally assign a new name.
@@ -304,6 +314,8 @@ class CPortfolio(object):
         copy_obj = copy.deepcopy(self)
         if name is not None:
             copy_obj.name = name
+        if context is not None:
+            copy_obj.set_schema(context)
         return copy_obj
 
 
