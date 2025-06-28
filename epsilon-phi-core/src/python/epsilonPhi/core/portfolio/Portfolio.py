@@ -207,8 +207,7 @@ class CPortfolio(object):
     def add_asset_by_name(self,
                           asset_name,
                           weight,
-                          hedging_ratio=0.0,
-                          asset_time_series=None) -> None:
+                          hedging_ratio=0.0) -> None:
 
         from epsilonPhi.core.asset.AssetMgr import CAssetMgr
         asset = CAssetMgr(self.schema).get_asset_by_name(asset_name)
