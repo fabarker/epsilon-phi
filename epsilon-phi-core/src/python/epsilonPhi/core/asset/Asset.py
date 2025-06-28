@@ -179,25 +179,28 @@ class CAsset(CAssetInf, CSlice):
     def get_excess_return_df(self, from_date=None, to_date=None):
         return EstimationMgr.get_excess_return_timeseries(self[from_date:to_date])
 
+    def get_historical_excess_return_df(self, from_date=None, to_date=None):
+        return EstimationMgr.get_historical_excess_return_df(self[from_date:to_date])
+
     def get_historical_value_at_risk(self, horizon=1, confidence=0.99, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_value_at_risk(self[from_date:to_date], horizon=horizon,
-                                                          confidence=confidence)
+        return EstimationMgr.get_historical_value_at_risk(
+            self[from_date:to_date],
+            horizon=horizon,
+            confidence=confidence
+        )
 
     def get_historical_conditional_value_at_risk(self, horizon=1, confidence=0.99, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_conditional_value_at_risk(self[from_date:to_date], horizon=horizon,
-                                                                      confidence=confidence)
+        return EstimationMgr.get_historical_conditional_value_at_risk(
+            self[from_date:to_date],
+            horizon=horizon,
+            confidence=confidence
+        )
 
     def get_historical_probability_of_loss(self, horizon=1, from_date=None, to_date=None):
         return EstimationMgr.get_historical_probability_of_loss(self[from_date:to_date], horizon=horizon)
 
     def get_historical_worst_peak_to_trough(self, from_date=None, to_date=None):
         return EstimationMgr.get_historical_worst_peak_to_trough(self[from_date:to_date])
-
-    def get_historical_equity_beta(self, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_equity_beta(self[from_date:to_date])
-
-    def get_historical_alpha_over_equity(self, from_date=None, to_date=None):
-        return EstimationMgr.get_historical_alpha_over_equity(self[from_date:to_date])
 
     def get_historical_skewness(self, from_date=None, to_date=None):
         return EstimationMgr.get_historical_skewness(self[from_date:to_date])

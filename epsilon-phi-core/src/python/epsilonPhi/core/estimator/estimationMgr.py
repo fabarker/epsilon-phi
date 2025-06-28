@@ -62,7 +62,7 @@ class EstimationMgr(CEStimationMgrInf):
     @staticmethod
     def get_historical_total_return(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).cagr()
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).item()
 
     @staticmethod
     def get_historical_excess_return_df(asset):
@@ -83,7 +83,7 @@ class EstimationMgr(CEStimationMgrInf):
     @staticmethod
     def get_historical_sharpe_ratio(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).sharpe_ratio(asset.denominated_currency)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).sharpe_ratio(asset.denominated_currency).item()
 
 
     @staticmethod
@@ -92,7 +92,7 @@ class EstimationMgr(CEStimationMgrInf):
         return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).var(
             confidence_level=confidence,
             horizon=horizon
-        )
+        ).item()
 
 
     @staticmethod
@@ -115,38 +115,17 @@ class EstimationMgr(CEStimationMgrInf):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
         return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).worst_peak_to_trough().item()
 
-
-    @staticmethod
-    def get_historical_equity_beta(asset):
-        from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_equity_beta(currency=asset.denominated_currency)
-
-    @staticmethod
-    def get_historical_alpha_over_equity(asset):
-        from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_alpha_over_equity(currency=asset.denominated_currency)
-
     @staticmethod
     def get_historical_skewness(asset):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_skewness()
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).skew().item()
 
     @staticmethod
     def get_historical_worst_period_return(asset, period=1):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_worst_period_return(period=period)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).worst(period=period).item()
 
     @staticmethod
     def get_historical_best_period_return(asset, period=1):
         from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_best_period_return(period=period)
-
-    @staticmethod
-    def get_historical_real_return(asset):
-        from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_real_return(asset.schema.currency)
-
-    @staticmethod
-    def get_historical_inflation_out_performance_frequency(asset, period):
-        from epsilonPhi.core.estimator.tseriesEstimator import CTimeSeriesEstimator
-        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).get_historical_inflation_out_performance_frequency(period=period)
+        return CTimeSeriesEstimator(asset, asset.returns_type, asset.type).best(period=period).item()

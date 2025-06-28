@@ -67,7 +67,7 @@ class BaseModel(HashableModel):
         # Associated with factor model spec
         self.__regression_type = None
         self.__sampling_type = None
-        self.__orthogonalize_list = None
+        self.__orthogonalize_list = []
         self.__weighting_scheme = None
         self.__use_statistical_model = False
         self.__factor_Sharpe_cap = {}
@@ -309,6 +309,28 @@ class BaseModel(HashableModel):
 
 
 if __name__ == "__main__":
+
+    frequency = Frequency.BUSINESS_MONTHLY
+    end_date = dt.date(year=2022, month=12, day=31)
+
+    FACTOR_LIST = [
+        FACTOR.EQUITY_MARKET_US_AQR,
+        FACTOR.EQUITY_QUALITY_US_AQR,
+        FACTOR.EQUITY_LOW_BETA_US_AQR,
+        FACTOR.EQUITY_SIZE_US_AQR,
+        FACTOR.EQUITY_VALUE_US_AQR,
+        FACTOR.EQUITY_MOMENTUM_US_AQR,
+    ]
+
+    mdl = BaseModel(frequency, end_date)
+    mdl.set_risk_factor_list(FACTOR_LIST)
+    mdl.set_return_factor_list(FACTOR_LIST)
+    mdl.set_regression_type(
+        Regression.REGRESSION_TYPES.OLS,
+        Regression.SAMPLING_TYPE.ROLLING(60),
+        Regression.WEIGHTING_SCHEME.EQUAL
+    )
+    mdl.create_model()
 
     return_factors = FACTOR.get_default_return_factor_list()
 

@@ -626,6 +626,31 @@ class SAAPortfolio(CPortfolio):
 
 if __name__ == "__main__":
 
+
+    schema = ContextCreator(
+        currency='USD',
+        start_date='30-Nov-1983',
+        end_date='31-Dec-2022'
+    ).create_context()
+
+    ptf = SAAPortfolio('Calibration', schema)
+    ptf.add_asset_by_name('LHTRYIN', 0.5, 0)
+    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
+    ptf.setup()
+
+    ext_schema = ptf.schema.get_extended_schema()
+    ptf_copy = ptf.deepcopy(context=ext_schema)
+
+    panel_1 = ptf.get_stressed_returns_panel()
+    panel_2 = ptf_copy.get_stressed_returns_panel()
+
+    df1 = pd.DataFrame(panel_1.get_ptf_systematic_index(), index=panel_1.dates, columns=['short'])
+    df2 = pd.DataFrame(panel_2.get_ptf_systematic_index(), index=panel_2.dates, columns=['long'])
+
+    cum_rtn = ptf_copy.get_historical_cuml_return_series()
+
+
+
     path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
 
     ptfs = SAAPortfolio.get_portfolios_from_template(
@@ -635,8 +660,8 @@ if __name__ == "__main__":
 
     ptf = ptfs[-2]
 
-    ext_scehma = ptf.schema.get_extended_schema()
-    ptf_copy = ptf.deepcopy(context=ext_scehma)
+    ext_schema = ptf.schema.get_extended_schema()
+    ptf_copy = ptf.deepcopy(context=ext_schema)
 
     panel_1 = ptf.get_stressed_returns_panel()
     panel_2 = ptf_copy.get_stressed_returns_panel()

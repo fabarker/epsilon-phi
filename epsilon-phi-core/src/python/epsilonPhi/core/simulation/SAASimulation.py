@@ -715,13 +715,12 @@ if __name__ == "__main__":
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
-    assetMgr = CAssetMgr(schema)
-    asset = assetMgr.get_asset_by_name('MSUSAML')
+    from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
-    ptf = SAAPortfolio('portfolio', schema)
-    ptf.add_asset_by_name('MSUSAML', 1.0, 0)
-    ptf.add_asset_by_name('LHAGGBD', 0.0, 0)
-    mgr = ptf.get_portfolio_mgr()
+    ptf = SAAPortfolio('Calibration', schema)
+    ptf.add_asset_by_name('LHTRYIN', 0.5, 0)
+    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
+    ptf.setup()
 
     self = SAASimulation(mgr)
     ws = self.get_factor_stress_tests()
