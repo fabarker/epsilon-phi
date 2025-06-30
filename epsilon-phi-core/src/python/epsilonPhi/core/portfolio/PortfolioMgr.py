@@ -480,25 +480,27 @@ class CPortfolioMgr(object):
 
     def get_fx_risk_decomposition(self):
 
-        factor_cov = self._context.get_risk_factor_covariance()
+        factor_cov = self._context.get_risk_factor_covariance().values
         wts = self.get_weights()
 
         # Get the current risk parameters
-        betas = self.get_risk_betas()
-        idio = self.get_idio_variance()
+        betas = self.get_assets_risk_betas()
+        idio = self.get_assets_idio_variances()
 
         # Get the asset (Hedged) risk parameters
-        betas_H = self.get_risk_betas()
-        idio_H = self.get_idio_variance()
+        ptfHdg = self._portfolio.deepcopy(name="hdgptf")
+        ptfHdg.set_hedging_ratios(np.ones_like(ptfHdg.get_hedging_ratios()))
+        betas_H = ptfHdg.get_assets_risk_betas()
+        idio_H = ptfHdg.get_assets_idio_variance()
 
-        ccy_betas = betas - betas
+        ccy_betas = betas - betas_H
         ccy_idio = idio - idio_H
 
         asset_cov = betas_H @ factor_cov @ betas_H.T + np.diag(idio_H)
-        ccy_cov = ccy_betas @ factor_cov @ ccy_betas.T + 2 * ccy_betas @ factor_cov @ betas_H + np.diag(ccy_idio)
+        ccy_cov = ccy_betas @ factor_cov @ ccy_betas.T + 2 * ccy_betas @ factor_cov @ betas_H.T + np.diag(ccy_idio)
 
-        asset_risk = wts * (asset_cov @ wts) / self.get_risk()
-        fx_risk = wts * (ccy_cov @ wts) / self.get_risk()
+        asset_risk = wts * (asset_cov @ wts) / self.get_total_variance()
+        fx_risk = wts * (ccy_cov @ wts) / self.get_total_variance()
         return asset_risk, fx_risk
 
     def get_marginal_asset_risk_contribution(self):

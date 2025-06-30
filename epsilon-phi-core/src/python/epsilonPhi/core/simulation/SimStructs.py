@@ -292,6 +292,10 @@ class WealthProjections:
         self._frequency = frequency
 
     @property
+    def t(self):
+        return np.array(range(1, self.total_returns_panel.shape[0] + 1)).reshape(-1, 1) / self._frequency.obs_per_year()
+
+    @property
     def total_returns_panel(self):
         return self._total_returns_panel
 
@@ -372,3 +376,23 @@ class WealthProjections:
         return pd.DataFrame(
             calls[func](),
             columns=pd.MultiIndex.from_tuples([(func, v) for v in self.quantiles]))
+
+    def get_nominal_cum_rtn_since_inception(self):
+        return -1 + np.power(self.nominal_values[1:] / self.nominal_values[0], 1/self.t)
+
+    def get_real_cum_rtn_since_inception(self):
+        return -1 + np.power(self.real_values[1:] / self.real_values[0], 1 / self.t)
+
+    def get_prob_of_nominal_capital_preservation(self):
+        return np.mean(self.nominal_values >= self.nominal_values[0], axis=1)
+
+    def get_prob_of_real_capital_preservation(self):
+        return np.mean(self.real_values >= self.nominal_values[0], axis=1)
+
+    def get_prob_of_capital_exhaustion(self):
+        return 1 - np.mean(self.nominal_values > 0, axis=1)
+
+    def get_prob_of_beating_inflation_plus(self, plus=0.04):
+        return np.mean(self.get_real_cum_rtn_since_inception() >= plus, axis=1)
+
+
