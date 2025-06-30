@@ -8,6 +8,7 @@ from .SingleStock import *
 from .TIPs import *
 from .hedge_funds import *
 from .private_assets.custom_pmes import *
+from .REITS import *
 
 from functools import lru_cache
 import inspect

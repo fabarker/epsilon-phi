@@ -5,7 +5,7 @@ __all__ = ['CRealEstate']
 
 class CRealEstate(CPrivateAsset):
     _asset_name = 'PA_REAL_ESTATE'
-    _pme_name = 'REAL_ESTATE_PME'
+    _pme_name = 'GLOBAL_REITS'
 
     _reporting_name = 'Private Real Estate'
     _category = 'Other Private Assets'

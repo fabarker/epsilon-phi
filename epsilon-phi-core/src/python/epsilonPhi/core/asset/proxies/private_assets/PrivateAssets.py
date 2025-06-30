@@ -11,10 +11,11 @@ import math
 __all__ = ['CPrivateAsset']
 
 beta_pri_to_pub = {
-    ("PE_BUYOUT ", "RI  "): 1.08,
-    ("PE_DISTRESSED ", "RI  "): 1.08,
-    ("PE_VENTURE ", "RI  "): 1.08,
-    ("PE_GROWTH ", "RI  "): 1.08
+    ("PE_BUYOUT", "RI"): 1.0,
+    ("PE_DISTRESSED", "RI"): 1.0,
+    ("PE_VENTURE", "RI"): 1.0,
+    ("PE_GROWTH", "RI"): 1.0,
+    ("PA_INFRA", "RI"): 0.9,
 }
 
 class CPrivateAsset(CAsset):
@@ -181,18 +182,28 @@ class CPrivateAsset(CAsset):
     def get_idiosyncratic_variance(self, hedging_ratio=0):
 
         risk_betas = self.get_risk_betas()
+        risk_betas_target = risk_betas*(self.beta_priv_to_pub / 0.8)
 
-        std_pme = self.get_public_market_equivalent().get_volatility()
+        fac_cov = self._schema.get_risk_factor_covariance()
+        pme_idio = self.get_public_market_equivalent().get_idiosyncratic_variance(hedging_ratio)
+
+        curr_var = (risk_betas @ fac_cov) @ risk_betas
+        targ_var = (risk_betas_target @ fac_cov) @ risk_betas_target
+
+        #std_pme = self.get_public_market_equivalent().get_volatility(hedging_ratio)
 
         # factor covariance - stop at factor sharpe end date
-        fac_cov = self._schema.get_risk_factor_covariance()
+        #fac_cov = self._schema.get_risk_factor_covariance()
 
-        adj_var = (risk_betas @ fac_cov) @ risk_betas
-        if adj_var > np.power(std_pme, 2):
-            idio = 0
-        else:
-            idio = np.power(std_pme, 2) - adj_var
-        return idio
+        #adj_var = (risk_betas @ fac_cov) @ risk_betas
+        #if adj_var > np.power(std_pme, 2):
+        #    idio = 0
+        #else:
+        #    idio = np.power(std_pme, 2) - adj_var
+        #return idio
+
+        return targ_var - curr_var + pme_idio
+
 
     def get_risk_betas_new(self):
 
@@ -225,8 +236,8 @@ class CPrivateAsset(CAsset):
 
         beta_adj_betas = np.copy(betas)
         beta_adj_betas[liq_idx] = beta_adj_betas[liq_idx] + self.liq_adjustment * np.sum(rp_pme) / liq_prem
-        beta_adj_betas = beta_adj_betas * self.beta_priv_to_pub
-        return beta_adj_betas
+        #beta_adj_betas = beta_adj_betas * self.beta_priv_to_pub
+        return beta_adj_betas * 0.8
 
     def get_data_length(self):
 
@@ -250,5 +261,5 @@ if __name__ == "__main__":
     pme = schema.get_asset_from_name('MSWRLD$')
 
     tt = CPrivateAsset(pme=pme, schema=schema, asset_name='PE_BUYOUT')
-    betas = tt.get_risk_premias_new()
+    betas = tt.get_idiosyncratic_variance()
     beta_orig = tt.get_risk_premias()

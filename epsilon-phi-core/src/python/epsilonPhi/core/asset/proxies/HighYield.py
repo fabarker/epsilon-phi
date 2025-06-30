@@ -38,7 +38,7 @@ class CUSHighYield(CAsset):
             schema
         )
 
-        res = Geltner.unsmooth_returns(asset, 0.0)
+        res = Geltner.unsmooth_returns(asset, 0.15)
         res.index = asset.index[1:]
         res.name = (CUSHighYield._asset_name, 'IN')
         return CTimeSeries(res.to_frame(res.name))

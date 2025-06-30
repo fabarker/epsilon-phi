@@ -254,7 +254,7 @@ class CAsset(CAssetInf, CSlice):
         return EstimationMgr.get_risk_premium(self)
 
     def get_risk_premia(self):
-        return self.get_risk_premias().sum()
+        return self.get_risk_premias().sum() + self.get_alpha()
 
     def get_risk_premias_in_current_environment(self):
         if self._risk_premias_in_curr_env is None:
@@ -271,16 +271,16 @@ class CAsset(CAssetInf, CSlice):
 
             # Get the current environment risk premia from simulation module
             self._risk_premias_in_curr_env = ptf.get_current_env_risk_premias()
-        return self._risk_premias_in_curr_env
+        return self._risk_premias_in_curr_env + self.get_alpha()
 
     def get_risk_premia_in_current_environment(self):
         return self.get_risk_premias_in_current_environment().sum()
 
     def get_total_return(self):
-        return self.get_risk_premia() + self.get_risk_free_rate() + self.get_alpha()
+        return self.get_risk_premia() + self.get_risk_free_rate()
 
     def get_return_in_current_environment(self):
-        return self.get_risk_premia_in_current_environment() + self.get_current_risk_free_rate() + self.get_alpha()
+        return self.get_risk_premia_in_current_environment() + self.get_current_risk_free_rate()
 
     def get_medium_term_return(self):
         return self.get_risk_premia() + self.get_medium_risk_free_rate()
@@ -289,10 +289,10 @@ class CAsset(CAssetInf, CSlice):
         return self._alpha
 
     def get_sharpe_ratio(self):
-        return (self.get_risk_premia() + self.get_alpha()) / self.get_volatility()
+        return (self.get_risk_premia()) / self.get_volatility()
 
     def get_sharpe_ratio_in_current_environment(self):
-        return (self.get_risk_premia_in_current_environment() + self.get_alpha()) / self.get_volatility()
+        return (self.get_risk_premia_in_current_environment()) / self.get_volatility()
 
     def get_return_betas(self, hedging_ratio=None, normalized=True):
         return self.get_rolling_return_betas(hedging_ratio, normalized).mean(axis=0)

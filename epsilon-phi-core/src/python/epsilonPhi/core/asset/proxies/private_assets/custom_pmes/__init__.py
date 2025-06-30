@@ -6,5 +6,7 @@ from .RealEstatePME import *
 from .RealEstatePME import __all__ as real_estate_pme_all
 from .GrowthPME import *
 from .GrowthPME import __all__ as growth_pme_all
+from .PrivateCreditPME import *
+from .PrivateCreditPME import __all__ as private_credit_pme_all
 
-__all__ = distressed_pme_all + venture_pme_all + real_estate_pme_all + growth_pme_all
+__all__ = distressed_pme_all + venture_pme_all + real_estate_pme_all + growth_pme_all + private_credit_pme_all

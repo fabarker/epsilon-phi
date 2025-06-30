@@ -314,12 +314,7 @@ if __name__ == "__main__":
     end_date = dt.date(year=2022, month=12, day=31)
 
     FACTOR_LIST = [
-        FACTOR.EQUITY_MARKET_US_AQR,
-        FACTOR.EQUITY_QUALITY_US_AQR,
-        FACTOR.EQUITY_LOW_BETA_US_AQR,
-        FACTOR.EQUITY_SIZE_US_AQR,
-        FACTOR.EQUITY_VALUE_US_AQR,
-        FACTOR.EQUITY_MOMENTUM_US_AQR,
+        FACTOR.CAPM_BONDS_EQUITY,
     ]
 
     mdl = BaseModel(frequency, end_date)

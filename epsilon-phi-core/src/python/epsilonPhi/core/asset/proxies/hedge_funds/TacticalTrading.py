@@ -29,13 +29,15 @@ class CTacticalTrading(CAsset):
             schema,
             **pars)
 
+        self.set_alpha(0.006)
+
     @staticmethod
     def get_time_series(schema):
         mf = CTacticalTrading.get_managed_futures_time_series(schema)
         gm = CTacticalTrading.get_global_macro_time_series(schema)
         res = 0.5 * mf.addition_over_common_dates(gm)
         res.name = (CTacticalTrading._asset_name, 'RI')
-        return res
+        return res[res.index.year > 2004]
 
     @staticmethod
     def get_asset_from_name(name, schema):

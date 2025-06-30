@@ -569,14 +569,16 @@ class SAAPortfolio(CPortfolio):
     @staticmethod
     def get_portfolios_from_template(
             currency,
-            template_path
+            template_path,
+            schema=None,
     ):
 
-        schema = ContextCreator(
-            currency=currency,
-            start_date='30-Nov-1983',
-            end_date='31-Dec-2022'
-        ).create_context()
+        if schema is None:
+            schema = ContextCreator(
+                currency=currency,
+                start_date='30-Nov-1983',
+                end_date='31-Dec-2022'
+            ).create_context()
 
         raw = pd.read_excel(
             template_path,

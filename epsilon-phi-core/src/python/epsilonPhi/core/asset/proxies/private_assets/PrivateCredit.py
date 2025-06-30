@@ -5,7 +5,7 @@ __all__ = ['CPrivateCredit']
 
 class CPrivateCredit(CPrivateAsset):
     _asset_name = 'PRIVATE_CREDIT'
-    _pme_name = 'LHYIELD_GE20'
+    _pme_name = 'PRIVATE_CREDIT_PME'
 
     _reporting_name = 'Private Credit'
     _category = 'Other Private Assets'

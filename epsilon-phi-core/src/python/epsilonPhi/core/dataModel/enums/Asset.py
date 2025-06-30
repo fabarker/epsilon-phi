@@ -8,6 +8,8 @@ class CustomAssets(Enum):
     DISTRESSED_PME = auto()
     VENTURE_PME = auto()
     REAL_ESTATE_PME = auto()
+    PRIVATE_CREDIT_PME = auto()
+    GLOBAL_REITS = auto()
     GROWTH_PME = auto()
     PE_BUYOUT = auto()
     PE_DISTRESSED = auto()

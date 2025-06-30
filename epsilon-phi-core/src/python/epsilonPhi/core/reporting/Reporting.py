@@ -21,14 +21,14 @@ import os
 import re
 import math
 
-yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+#yaml_assumptions = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+#yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+#yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
-#yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-#yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-#yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
 class Reporting(object):
@@ -93,6 +93,9 @@ class Reporting(object):
 
     def generate_report(self, include_wealth_simulations=True):
 
+        if len(self._portfolios) == 0:
+            return
+
         # Generate portfolio analytics
         self.write_portfolios()
         # Generate risk dashboard
@@ -100,7 +103,10 @@ class Reporting(object):
         # Generate Assumtpions
         self.write_assumptions()
         # Generate Wealth Simulations
-        self.write_wealth_simulations()
+
+        if include_wealth_simulations:
+            self.write_wealth_simulations()
+
         # Close Workbook
         self.close_workbook()
 
@@ -332,7 +338,7 @@ class Reporting(object):
             # Combine all category blocks and add a "Total" row
             portfolio_df = pd.concat(category_blocks)
             total_row = pd.DataFrame([1], index=["TOTAL"], columns=[portfolio_name])
-            risk_and_return = [None, portfolio.get_total_return(), portfolio.get_sharpe_ratio(), None,
+            risk_and_return = [np.nan, portfolio.get_total_return(), portfolio.get_sharpe_ratio(), None,
                                portfolio.get_risk()]
             df_rr = pd.DataFrame(risk_and_return, index=["", "Estimated Mean Return", "Sharpe Ratio", "", "Volatility"],
                                  columns=[portfolio.name])

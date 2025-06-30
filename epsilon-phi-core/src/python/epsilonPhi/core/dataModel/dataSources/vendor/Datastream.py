@@ -60,10 +60,12 @@ class pyDatastream(object):
     def pyds(raise_on_error=False):
 
         if pyDatastream._cache is None:
-            pyDatastream._cache = pyds(username=DS_USERNAME,
-                        password=DS_PASSWORD,
-                        proxy=None,
-                        raise_on_error=raise_on_error)
+            pyDatastream._cache = pyds(
+                username=DS_USERNAME,
+                password=DS_PASSWORD,
+                proxy=None,
+                raise_on_error=raise_on_error
+            )
         return pyDatastream._cache
 
     @staticmethod
@@ -104,27 +106,33 @@ class pyDatastream(object):
 
         frames = pd.DataFrame()
         for chunk in chunks:
-            res = pyDatastream.pyds(raise_on_error=False).fetch(chunk,
-                                                                fields=fields,
-                                                                date_from=from_date,
-                                                                date_to=to_date,
-                                                                freq=frequency,
-                                                                always_multiindex=True)
+            res = pyDatastream.pyds(raise_on_error=False).fetch(
+                chunk,
+                fields=fields,
+                date_from=from_date,
+                date_to=to_date,
+                freq=frequency,
+                always_multiindex=True
+            )
             frames = pd.concat((frames, res))
         return frames
 
     @staticmethod
-    def fetch_static(tickers: Optional[Union[list, np.array, str]] = None,
-                     fields: Optional[Union[list, np.array, str]] = None) -> pd.DataFrame:
+    def fetch_static(
+            tickers: Optional[Union[list, np.array, str]] = None,
+            fields: Optional[Union[list, np.array, str]] = None
+    ) -> pd.DataFrame:
 
         N = pyDatastream.get_max_instruments_per_call(fields)
         chunks = lutils._nest_list([tickers] if isinstance(tickers, str) else list(tickers), N)
 
         frames = pd.DataFrame()
         for chunk in chunks:
-            res = pyDatastream.pyds(raise_on_error=False).fetch(chunk,
-                                                                fields=fields,
-                                                                static=True)
+            res = pyDatastream.pyds(raise_on_error=False).fetch(
+                chunk,
+                fields=fields,
+                static=True
+            )
             frames = pd.concat((frames, res))
         return frames
 
@@ -229,6 +237,7 @@ class pyDatastream(object):
         pass
 
 class closeExcel:
+
     @staticmethod
     def kill_all_excel_instances():
         subprocess.call(["taskkill", "/f", "/im", "EXCEL.EXE"])
@@ -347,6 +356,16 @@ class pyDatastreamFO(object):
 if __name__ == "__main__":
 
     import os
+
+    t = "CSTMNFH"
+    flds = ["NAV", "TOTR"]
+    frame = pyDatastream.fetch(
+        t,
+        flds,
+        from_date='31-Dec-1990',
+        frequency='M'
+    ).dropna(axis=0, how='all')
+
 
     fields = ['FLOT', 'FEX', 'EXCODE', 'ISOCUR', 'DS.EXPNAME', 'NAME',
        'FUTBDATE', 'TICKS', 'TICKV', 'TCYCLE', 'TYPE', 'UNITS', 'FUI', 'GEOG', 'LTDT']

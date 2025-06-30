@@ -5,6 +5,9 @@ class FactorType(Enum):
 
 class FACTOR(Enum):
 
+    # CAPM FACTORS
+    CAPM_BONDS_EQUITY = "CCapm"
+
     # ISG Type Factors
     EQUITY_GLOBAL_ISG = 'cEquity'
     TERM_GLOBAL_ISG = 'cTerm'

@@ -20,20 +20,18 @@ US_FINANCIAL_ASSETS = 'US66XXXAA'
 US_FINANCIAL_LIABILITES = 'US66XXXLA'
 _CUTOFF = 1968
 
-_REGRESSORS = ['FFS1B1', 'FFS1B2', 'FFS1B3', 'FFS2B1', 'FFS2B2',
-               'FFS2B3', 'MOM_US_FF', 'XRUKG10DS', 'XRDEG10DS']
+_REGRESSORS = ['BL', 'BM', 'BH', 'SL', 'SM',
+               'SH', 'MOM_US_FF', 'XRUKG10DS', 'XRDEG10DS']
 
 FFFactors = FFDataReader.get_funding_related_factors(Frequency.MONTHLY)
 
 filepath_1 = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/resources/templates/LEV.xlsx'
 filepath_2 = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/resources/templates/LEV.xlsx'
-
+sheet_name = 'Lev2'
 try:
-    AEM = pd.read_excel(filepath_1, index_col=0)
+    AEM = pd.read_excel(filepath_1, index_col=0, sheet_name=sheet_name)
 except:
-    AEM = pd.read_excel(filepath_2, index_col=0)
-
-
+    AEM = pd.read_excel(filepath_2, index_col=0, sheet_name=sheet_name)
 
 
 
@@ -169,7 +167,8 @@ class cFunding(CFactor):
         lev = cFunding.get_leverage_factor()
 
         # Regression end dates
-        date_range = pd.date_range('29-12-2000', '31-12-2022', freq='BY')
+        #last_date = lev.index[np.max(np.where(lev.index.month == 12))]
+        date_range = pd.date_range('29-12-2000', '31-12-2013', freq='BY')
 
         factor = pd.DataFrame()
         for i, date in enumerate(date_range[:-1]):
@@ -181,9 +180,17 @@ class cFunding(CFactor):
             proj = proj_panel[:date_range[i+1]].dot(reg[1:])
             factor = pd.concat((factor, proj.loc[np.setdiff1d(proj.index, factor.index)]), axis=0)
 
+        # Project forward any remaining months
+        proj = proj_panel.dot(reg[1:])
+        factor = pd.concat((factor, proj.loc[np.setdiff1d(proj.index, factor.index)]), axis=0)
+
         factor.columns = [FACTOR.FUNDING_US_ISG.name]
-        df = CSlice(data=factor.values.flatten(), index=factor.index, name=FACTOR.FUNDING_US_ISG.name,
-               ts_type=TimeSeriesType.RETURNS, returns_type=ReturnsType.SIMPLE)
+        df = CSlice(
+            data=factor.get(FACTOR.FUNDING_US_ISG.name),
+            index=factor.index,
+            name=FACTOR.FUNDING_US_ISG.name,
+            ts_type=TimeSeriesType.RETURNS,
+            returns_type=ReturnsType.SIMPLE)
         return df.get_periodic_returns(frequency)
 
 
