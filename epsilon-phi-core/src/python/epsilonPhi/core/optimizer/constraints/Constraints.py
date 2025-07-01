@@ -53,7 +53,7 @@ class Constraints:
         f = interp1d(x, y, kind='linear', fill_value='extrapolate')  # can extrapolate outside range
 
         sw = f(vol * 100).item() / 100
-        return np.clip(round(sw / 0.005) * 0.005, 0.1, 1)
+        return np.clip(round(sw / 0.005) * 0.005, 0.1, 1) * 100
 
     @staticmethod
     def get_fixed_income_category(currency, target_vol):
@@ -77,8 +77,8 @@ class Constraints:
     @staticmethod
     def get_equity_category():
 
-        US_CONSTRAINTS = "(-45)*FRUS1GR+40*FRUS1VA;(-40)*FRUSS2L+15*FRUS1VA=0"
-        EAFE_CONSTRAINTS = "MSEXUKL+(-3.42)*MSUTDKL=0;MSEXUKL+(-2.17)*MSJPANL=0;MSEXUKL+(-4.32)*MSPXJPL=0"
+        US_CONSTRAINTS = "(-45)*FRUS1GR+40*FRUS1VA=0;(-45)*FRUSS2L+15*FRUS1VA=0;"
+        EAFE_CONSTRAINTS = "MSEXUKL+(-3.42)*MSUTDKL=0;MSEXUKL+(-2.17)*MSJPANL=0;MSEXUKL+(-4.32)*MSPXJPL=0;"
         INCOME_CONSTRAINTS = "(-1)*GLOBAL_REITS+INFRA_EQUITY=0"
 
         ret = {}

@@ -146,3 +146,19 @@ class FrameUtils(object):
     def multiindex(*args):
         return pd.MultiIndex.from_tuples(list(zip(*args)))
 
+    @staticmethod
+    def flatten_columns_or_name(df):
+        if isinstance(df, pd.DataFrame):
+            if isinstance(df.columns, pd.MultiIndex):
+                # Take first level of multi-level columns
+                df.columns = df.columns.get_level_values(0)
+            elif isinstance(df.columns[0], tuple):
+                # Flatten tuple columns by taking the first element
+                df.columns = [col[0] for col in df.columns]
+
+        elif isinstance(df, pd.Series):
+            if isinstance(df.name, tuple):
+                df.name = df.name[0]
+
+        return df
+

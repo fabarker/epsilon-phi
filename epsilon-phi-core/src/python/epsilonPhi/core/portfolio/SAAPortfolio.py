@@ -423,6 +423,23 @@ class SAAPortfolio(CPortfolio):
             upper_bounds
         )
 
+    def optimize_target_return(self):
+        pass
+
+    def optimize_target_income(self):
+        pass
+
+    def optimze_risk_parity(self):
+        pass
+
+    def optimize_tracking_error(self):
+        pass
+
+    def optimize_max_diversification(self):
+        pass
+
+
+
 
     ################### Simulation Related ###################
 

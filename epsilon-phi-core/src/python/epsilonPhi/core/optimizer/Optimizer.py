@@ -172,13 +172,16 @@ class CVXOptimizer(object):
 
         if constraint_str and constraint_str != '':
             if LB is None:
-               res = parser.generate_constraints_UB(constraint_str, asset_list)
+               res, const, LB_, UB_, error = parser.generate_constraints_UB(constraint_str, asset_list)
             else:
-               res = parser.generate_constraints_UB_LB(constraint_str, asset_list)
+               res, const, LB_, UB_, error = parser.generate_constraints_UB_LB(constraint_str, asset_list)
 
-            if res.error != 0:
+            if error != 0:
                 raise Exception('Error - constraint error in constraint {}'.format(res.error))
 
+            res.UB = UB_
+            res.LB = LB_
+            res.constraints = const
             res.UB_box = UB if UB is not None else [1] * len(asset_list)
             res.LB_box = LB if LB is not None else [0] * len(asset_list)
         else:
@@ -316,7 +319,7 @@ class CVXOptimizer(object):
 
         # Box constraints
         constraints_list.append(w >= constraints.LB_box)
-        constraints_list.append(w <= constraints.UB_box)
+        constraints_list.append(w <= constraints.UB_box) # UB_box is incorrect
 
         # Equality/Inequality Constraints
         if constraints.LB is not None:

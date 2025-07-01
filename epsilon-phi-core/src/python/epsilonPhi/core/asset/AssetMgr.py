@@ -61,6 +61,15 @@ class CAssetMgr(CAssetMgrInf):
         if df_ is None:
             return None
 
+        if isinstance(df_, pd.DataFrame) and isinstance(df_.columns, pd.MultiIndex):
+           df_.columns = [df_.columns.get_level_values(0).item()]
+
+        if isinstance(df_, pd.DataFrame) and isinstance(df_.columns, tuple):
+            df_.columns = [df_.columns[0][0]]
+
+        if isinstance(df_, pd.Series) and isinstance(df_.name, tuple):
+            df_.name = df_.name[0]
+
         if schema is None:
             return df_
 

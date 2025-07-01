@@ -233,14 +233,15 @@ class ConstraintsParser:
                    asset_list
                )
                # inequality
-               result.UB[i] = float(s[lt_idx+1:])
+               result.UB[i] = float(s[lt_idx+1:]) / (100)
 
             if gt_idx != -1:
                 result.mat[i, :], error = self.break_down_constraint_single(
                     s[0:gt_idx],
                     asset_list
                 )
-                result.UB[i] = float(s[gt_idx + 1:]) / (1-0) * (-1)
+                result.UB[i] = float(s[gt_idx + 1:]) / (-100)
+                result.mat[i, :] = -1 * result.mat[i, :]
 
             if eq_idx != -1:
                 result.mat[i, :], error = self.break_down_constraint_single(
@@ -250,8 +251,8 @@ class ConstraintsParser:
                 result.UB[i] = float(s[eq_idx + 1:]) / (1 - 0)
                 eq_constraint_idx.append(i)
 
-                if error != 0:
-                    logger.error("Error in constraints parser... error code = {}".format(error))
+            if error != 0:
+                logger.error("Error in constraints parser... error code = {}".format(error))
 
         final_result = Constraints(constraints)
         final_result.mat = np.zeros((num_const + len(eq_constraint_idx), len(asset_list)))
@@ -264,7 +265,7 @@ class ConstraintsParser:
         i = num_const
         for j in range(len(eq_constraint_idx)):
             final_result.mat[i+j] = result.mat[eq_constraint_idx[j]] * (-1)
-            final_result.UB[i+j] = result.UB[eq_constraint_idx[j]]
+            final_result.UB[i+j] = result.UB[eq_constraint_idx[j]] * (-1)
 
 
         const, LB, UB = self.format_result(
@@ -272,7 +273,7 @@ class ConstraintsParser:
             asset_list,
         )
 
-        return result, const, LB, UB, error
+        return final_result, const, LB, UB, error
 
 if __name__ == '__main__':
 
@@ -301,8 +302,14 @@ if __name__ == '__main__':
         'PE_adj_MSWDIF',
         'RETBI']
 
-    p = ConstraintsParser(constr_str)
-    p.generate_constraints_UB(constr_str, assetList)
+    from epsilonPhi.core.optimizer.constraints.Constraints import Constraints as strints
+    constraints = strints.get("USD", 0.078)
+
+    p = ConstraintsParser(constraints.get("proportional"))
+    result, const, LB, UB, error = p.generate_constraints_UB(
+        "MSEMKF$<4;" + constraints.get("proportional"),
+        constraints.get("assets") + ['RETBI']
+    )
 
 
 
