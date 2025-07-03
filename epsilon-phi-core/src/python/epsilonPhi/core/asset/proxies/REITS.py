@@ -21,6 +21,7 @@ class CREITs(CAsset):
     _reporting_name = 'Global REITs'
     _category = 'Public Equity'
 
+
     def __init__(
             self,
             schema: Optional[CContext] = None,

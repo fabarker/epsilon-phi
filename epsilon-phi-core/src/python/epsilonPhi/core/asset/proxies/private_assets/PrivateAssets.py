@@ -248,6 +248,9 @@ class CPrivateAsset(CAsset):
 
         return DateUtils.get_date_delta(SD, self._schema.end_date, False).item() / 252
 
+    def get_uncertainty(self):
+        return super(CPrivateAsset, self).get_uncertainty() * 2
+
 
 if __name__ == "__main__":
     from epsilonPhi.core.schema.Schema import ContextCreator

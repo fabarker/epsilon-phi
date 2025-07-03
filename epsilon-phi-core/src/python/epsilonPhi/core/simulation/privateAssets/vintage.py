@@ -3,8 +3,9 @@ from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 import pandas as pd
 import numpy as np
 
+# VintageYear(commitment: float, initial_value, start_age, calls, distributions, returns, shocks)
 
-class vintage(object):
+class Vintage(object):
 
     def __init__(self,
                  strategy_type,
@@ -21,10 +22,16 @@ class vintage(object):
         self._commitment_year = fund_age
         self._strategy_type = strategy_type
         self._cash_flow_frequency = cash_flow_frequency
+        self._fund_age = fund_age
 
         self._REALIZED_NAV = realized_NAV
         self._REALIZED_CONTRIBUTIONS = cumltv_realized_contributions
         self._REALIZED_DISTRIBUTIONS = cumltv_realized_distributions
+
+        self._BOY_NAV = np.full((20,), np.nan)
+        self._EOY_NAV = np.full((20,), np.nan)
+        self._BOY_NAV[0] = realized_NAV
+
 
         self.set_default_properties()
         self._estimate_cash_flows()
@@ -79,6 +86,34 @@ class vintage(object):
     def estimate_cash_flows_PME(self):
         pass
 
+    def BOY_NAV(self, year):
+
+        if year <= 0:
+            return self._REALIZED_NAV
+        elif not np.nan(self._BOY_NAV[year]):
+            return self._BOY_NAV[year]
+        else:
+            self._BOY_NAV[year] = self.EOY_NAV[year] * self.capital_calls[year]
+            return self._BOY_NAV[year]
+
+    def distribution_amount(self, year):
+        if year + self._fund_age - 1< 0 or year + self._fund_age - 1 >= len(self.distributions):
+            return 0
+        else:
+            return self.distributions[year + self._fund_age - 1] * self.MV_after_growth[year]
+
+    def call_amount(self, year):
+        if year + self._fund_age >= len(self.capital_calls):
+            return 0
+        else:
+            return self.capital_call_assumptions.values[year+self._fund_age] * self._commitments_size
+
+    def EOY_NAV(self, year):
+        return self.MV_after_growth(year) * self.distribution_assumptions.values[year]
+
+    def MV_after_growth(self, year):
+        return self.BOY_NAV[year] * (1 + self.return_df.values[year])
+
     def _estimate_cash_flows(self):
 
         VALS = np.zeros((self.T+1, 4))
@@ -131,7 +166,7 @@ class vintage(object):
 
 if __name__ == "__main__":
 
-    vy = vintage(strategy_type=PrivateAsset.BUYOUT,
+    vy = Vintage(strategy_type=PrivateAsset.BUYOUT,
                  commitment_size=100,
                  fund_age=0,
                  cash_flow_frequency=1)

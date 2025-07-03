@@ -177,7 +177,7 @@ class CVXOptimizer(object):
                res, const, LB_, UB_, error = parser.generate_constraints_UB_LB(constraint_str, asset_list)
 
             if error != 0:
-                raise Exception('Error - constraint error in constraint {}'.format(res.error))
+                raise Exception('Error - constraint error in constraint {}'.format(error))
 
             res.UB = UB_
             res.LB = LB_

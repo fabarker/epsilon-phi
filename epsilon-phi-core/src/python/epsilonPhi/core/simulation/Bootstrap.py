@@ -1015,9 +1015,10 @@ class SAABootstrapper(AbstractBootstrapper):
         )
 
         # Add the idio noise at the end to preserve total vol
+        R1 = np.random.RandomState(5489)
         idio_panel = np.full((SAABootstrapper.NUM_MONTHS * long_horizon, num_bstraps), np.nan)
         for t in range(0, long_horizon * SAABootstrapper.NUM_MONTHS):
-            idio_panel[t] = SC.sqrt(idio_var) * SAABootstrapper.R1.randn(1, num_bstraps)
+            idio_panel[t] = SC.sqrt(idio_var) * R1.randn(1, num_bstraps)
 
         # set variables in portfolio paths struct
         portfolio_paths.set_idio_panel(idio_panel)

@@ -183,10 +183,10 @@ class CPortfolioMgr(object):
     def get_portfolio_excl_single_stock(self):
 
         wt = 0
-        copy_obj = self._portfolio.copy()
+        copy_obj = self._portfolio.deepcopy()
         for asset_name in copy_obj.get_asset_names():
             if self.is_single_stock_asset(asset_name):
-                wt += self.get_asset(asset_name).get_weight()
+                wt += self.get_asset(asset_name).weight
                 copy_obj.remove_asset_by_name(asset_name, rebalance=True)
         return copy_obj, wt
 
@@ -290,7 +290,7 @@ class CPortfolioMgr(object):
         return (self.get_weights().T @ self.get_assets_risk_premias()).flatten()
 
     def get_risk_premia(self):
-        return sum(self.get_risk_premias())
+        return self.get_total_return() - self.get_risk_free_rate()
 
     def get_asset_current_env_total_return(self, asset_name):
         return self.get_asset(asset_name).get_risk_premia_in_current_environment() + self.get_current_risk_free_rate()
@@ -381,6 +381,14 @@ class CPortfolioMgr(object):
             alphas.append(self.get_asset(asset_name).get_alpha())
         return np.array(alphas)
 
+    def get_implied_risk_aversion(self):
+        return self.get_risk_premia() / self.get_total_variance()
+
+    def get_mean_variance_implied_returns(self, risk_aversion=None):
+        if risk_aversion is None:
+            risk_aversion = self.get_implied_risk_aversion()
+        return risk_aversion * self.get_sigma() @ self.get_weights()
+
     ################### Factor Model Risk Metrics ###################
 
     def get_asset_risk(self, asset_name):
@@ -440,6 +448,13 @@ class CPortfolioMgr(object):
                 ),
                 self.get_weights())
         )
+
+    def get_correlation_matrix(self):
+        cov = self.get_sigma()
+        stddev = np.sqrt(np.diag(cov))
+        corr = cov / np.outer(stddev, stddev)
+        corr[cov == 0] = 0
+        return corr
 
     def get_asset_risk_betas(self, asset_name):
         return self.get_asset(asset_name).get_risk_betas()
@@ -576,8 +591,8 @@ class CPortfolioMgr(object):
     def get_factor_panels(self):
         return self._context.get_factor_panels()
 
-    def get_portfolio_simulated_returns_panel(self, frequency=Frequency.MONTHLY):
-        return self.get_simulator().get_simulated_portfolio_returns(0, frequency)
+    def get_portfolio_simulated_returns_panel(self, frequency=Frequency.MONTHLY, long_term_shocks=0):
+        return self.get_simulator().get_simulated_portfolio_returns(long_term_shocks, frequency)
 
     def get_stressed_returns_panel(self):
         return self.get_simulator().get_stressed_returns_panel()
@@ -710,8 +725,8 @@ class CPortfolioMgr(object):
     def check_for_unhedged_put_writing(self):
         pass
 
-    def get_asset_reporting_names(self, weights=False, category_dict_flag=False):
-        pass
+    def get_asset_reporting_names(self):
+        return [ self.get_asset(x).reporting_name for x in self.get_asset_names() ]
 
     def get_reference_vol(self, risk_level):
         pass

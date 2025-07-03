@@ -575,6 +575,8 @@ class SAASimulation:
 
             # Compute the single stock losses
             ss_loss = risk * (1 - ss_wt) + confidence * ss_wt
+            proxy = self.portfolio_mgr.get_portfolio_var_pol_exc_ss(confidence, loss)
+            ss_loss._PoL = proxy.PoL
             return ss_loss
         return self.get_portfolio_var_pol_exc_ss(confidence=confidence, loss=loss)
 
@@ -617,7 +619,7 @@ class SAASimulation:
 
         ptf_panel = np.full((self.long_horizon, self.nbstraps, len(ptf_list)), np.nan)
         for i, ptf in enumerate(ptf_list):
-            rtns, _ = self.get_simulated_portfolio_returns(long_term_shocks=0, frequency=frequency)
+            rtns, _ = ptf.get_portfolio_simulated_returns_panel(frequency)
 
             if ptf.is_taxable:
                 effective_tax_rate = 1 - (ptf.get_return() / ptf.get_return_pre_tax())

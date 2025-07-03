@@ -53,6 +53,7 @@ class CAsset(CAssetInf, CSlice):
         self._alpha = 0
         self._weight = None
         self._risk_premias_in_curr_env = None
+        self._uncertainty = None
 
         if ((ts_hedge_ratio is not None) and
                 (self.denominated_currency != self.exposure_currency)):
@@ -147,6 +148,9 @@ class CAsset(CAssetInf, CSlice):
             'returns_type': self._returns_type,
             'ts_type': self._type,
         }
+
+    def set_uncertainty(self, uncertainty):
+        self._uncertainty = uncertainty
 
     ##################### Asset risk free rate ###########################
 
@@ -342,7 +346,10 @@ class CAsset(CAssetInf, CSlice):
         return EstimationMgr.get_residuals(self, hedging_ratio if hedging_ratio is not None else self.hedging_ratio)
 
     def get_uncertainty(self):
-        return self.get_volatility() / np.sqrt(self.get_data_length())
+        if self._uncertainty is None:
+            return self.get_volatility() / np.sqrt(self.get_data_length())
+        else:
+            return self._uncertainty
 
     ##############
 
@@ -357,7 +364,7 @@ class CAsset(CAssetInf, CSlice):
     def convert_asset_to_currency(self, currency, hedging_ratio):
         return self.assetMgr.convert_asset_to_currency(self, currency, hedging_ratio)
 
-    def simulate(self):
+    def simulate(self, long_term_shocks=False):
 
         from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
@@ -369,7 +376,7 @@ class CAsset(CAssetInf, CSlice):
 
         # Add the asset we want the current environ risk premia for
         ptf.add_asset(self.deepcopy(), 1, self._hedge_ratio)
-        return ptf.get_portfolio_simulated_returns_panel()
+        return ptf.get_portfolio_simulated_returns_panel(long_term_shocks=long_term_shocks)
 
     def brownian_bridge(self):
         pass

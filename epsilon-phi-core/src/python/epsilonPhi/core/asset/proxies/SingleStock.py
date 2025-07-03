@@ -1,4 +1,5 @@
 from epsilonPhi.core.asset.Asset import CAsset
+from epsilonPhi.core.asset.AssetMgr import CAssetMgr
 from epsilonPhi.core.schema.Schema import CContext
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
@@ -14,15 +15,24 @@ __all__ = ['CSingleStock']
 
 class CSingleStock(CAsset):
     _category = 'Concentrated Equity Position'
+    _metadata = (CAsset._metadata + ['_mkt', '_idio_var'])
+
+
+    @property
+    def _constructor(self):
+        def _c(*args, **kwargs):
+            return CSingleStock(*args, **kwargs).__finalize__(self)
+
+        return _c
 
     def __init__(
             self,
-            schema,
             single_stock_time_series: Union[CTimeSeries, CSlice],
-            denominated_currency: str,
-            exposure_currency: str,
-            ts_hedge_ratio: Union[float, int],
-            market_equivalent: str,
+            schema = None,
+            denominated_currency: str = None,
+            exposure_currency: str = None,
+            ts_hedge_ratio: Union[float, int] = None,
+            **kwargs
     ) -> None:
         super(CSingleStock, self).__init__(
             single_stock_time_series,
@@ -30,26 +40,40 @@ class CSingleStock(CAsset):
             denominated_currency,
             exposure_currency,
             ts_hedge_ratio,
-            single_stock_time_series.returns_type,
-            single_stock_time_series.type
+            **kwargs
         )
 
         # single stocks are unhedged
         super(CSingleStock, self).set_currency_hedge_ratio(0)
+        self._mkt = None
+        self._idio_var = None
 
         # set the market equivalent
-        self._mkt = schema.get_asset_from_name(market_equivalent)
+        if hasattr(single_stock_time_series, "_returns_type"):
+            self._returns_type = single_stock_time_series.returns_type
+        if hasattr(single_stock_time_series, "_type"):
+            self._ts_type = single_stock_time_series.type
+
+    def set_market_equivalent(self, mkt_equivalent_ticker: str):
+        self._mkt = self.schema.get_asset_from_name(mkt_equivalent_ticker)
         self._mkt.set_currency_hedge_ratio(0)
 
-        # idio var is the total vol
-        self._idio_var = None
-        self._cache_asset()
+    def cache_asset(self):
+        if not CAssetMgr(self.schema).is_cached(self.name):
+            CAssetMgr(self.schema).add_asset_to_cache(self)
 
-    def _cache_asset(self):
-        CAssetMgr(self.schema).add_asset_to_cache(self)
+    def set_schema(self, schema):
+        super(CSingleStock, self).set_schema(schema)
+        if isinstance(self._mkt, CAsset):
+            self._mkt = self._mkt.deepcopy()
+            self._mkt.set_schema(schema)
+
+    def create_new_object(self, *args, **kwargs):
+        kwargs["single_stock_time_series"] = kwargs.pop("data")
+        return self.__class__(*args, **kwargs)
 
     def set_currency_hedge_ratio(self, hedge_ratio: Optional[Union[float, int]]):
-        raise ValueError("Method not supported for single stocks")
+        pass
 
     def set_idio_vol(self, idio_vol):
         self._idio_var = np.power(idio_vol, 2)
@@ -69,7 +93,7 @@ class CSingleStock(CAsset):
         return betas, idio
 
     def get_data_length(self):
-        return self._ss.get_data_length()
+        return self._mkt.get_data_length()
 
     def get_risk_premia(self):
         return self._mkt.get_risk_premia()
@@ -118,6 +142,19 @@ class CSingleStock(CAsset):
     def get_single_stock_risk_premia(self):
         return self.get_single_stock_risk_premias().sum()
 
+    def get_single_stock_risk_betas(self):
+        return EstimationMgr.get_risk_betas(self, self.hedging_ratio)
+
+    def get_single_stock_volatility(self):
+        return EstimationMgr.get_risk_factor_stdev(self, self.hedging_ratio)
+
+    def get_risk_decomposition_factor(self):
+
+        fac_cov = self.schema.get_risk_factor_covariance().values
+        factor_contributions = self.get_single_stock_risk_betas() @ fac_cov
+        fac_decomp = np.multiply(self.get_single_stock_risk_betas(), factor_contributions)
+        return fac_decomp / np.power(self.get_single_stock_volatility(), 2)
+
     def simulate(self):
         raise ValueError('Method not supported for single stocks')
 
@@ -139,15 +176,15 @@ if __name__ == "__main__":
         end_date='31-Dec-2022'
     ).create_context()
 
-    mkt_equi = "MSEXUKL"
-
     tt = CSingleStock(
-        schema,
         ts,
+        schema,
         'USD',
         'USD',
         0,
-        mkt_equi
     )
+
+    tt.set_market_equivalent("SP5EINT")
+    tt.cache_asset()
 
     risk = tt.get_single_stock_risk_premia()

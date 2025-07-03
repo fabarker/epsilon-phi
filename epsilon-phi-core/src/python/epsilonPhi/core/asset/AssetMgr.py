@@ -37,6 +37,10 @@ class CAssetMgr(CAssetMgrInf):
     def context(self):
         return self.schema
 
+    def is_cached(self, asset_name):
+        key = self.get_asset_key(asset_name)
+        return key in self._cache
+
     def get_asset_config(self, asset_name):
         pass
 

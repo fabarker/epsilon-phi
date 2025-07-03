@@ -177,6 +177,18 @@ class PerformanceVaRMetrics(object):
     def __mul__(self, factor: float) -> "PerformanceVaRMetrics":
         return self.multiply(factor)
 
+    def __add__(self, factor: float) -> "PerformanceVaRMetrics":
+        return self.add(factor)
+
+    def add(self, factor: float) -> "PerformanceVaRMetrics":
+        return PerformanceVaRMetrics(
+            VaR=self.VaR + factor,
+            CVaR=self.CVaR + factor,
+            PoL=self.PoL + factor,
+            confidence=self.confidence,
+            loss=self.loss
+        )
+
     def multiply(self, factor: float) -> "PerformanceVaRMetrics":
         """
         Returns a new PerformanceVaRMetrics object with VaR, CVaR, PoL, and loss

@@ -311,6 +311,14 @@ class SAAPortfolio(CPortfolio):
     def get_asset_alphas(self):
         return self.get_portfolio_mgr().get_asset_alphas()
 
+    def get_implied_risk_aversion(self):
+        return self.get_portfolio_mgr().get_implied_risk_aversion()
+        ##return self.get_risk_premia() / self.get_total_variance()
+
+    def get_mean_variance_implied_returns(self, risk_aversion=None):
+        return self.get_portfolio_mgr().get_mean_variance_implied_returns(risk_aversion)
+
+
     ################### Factor Model Risk Metrics ###################
 
     def get_asset_risk(self):
@@ -400,6 +408,8 @@ class SAAPortfolio(CPortfolio):
     def get_single_stock_risk_decomposition(self):
         return self.get_portfolio_mgr().get_single_stock_risk_decomposition()
 
+    def get_correlation_matrix(self):
+        return self.get_portfolio_mgr().get_correlation_matrix()
 
     ################### Optimization Related ###################
 
@@ -446,8 +456,8 @@ class SAAPortfolio(CPortfolio):
     def get_factor_panels(self):
         return self.get_portfolio_mgr().get_factor_panels()
 
-    def get_portfolio_simulated_returns_panel(self):
-        return self.get_portfolio_mgr().get_portfolio_simulated_returns_panel()
+    def get_portfolio_simulated_returns_panel(self, frequency=Frequency.MONTHLY, long_term_shocks=False):
+        return self.get_portfolio_mgr().get_portfolio_simulated_returns_panel(frequency, long_term_shocks=long_term_shocks)
 
     def get_stressed_returns_panel(self):
         return self._portfolio_mgr.get_stressed_returns_panel()
@@ -494,9 +504,8 @@ class SAAPortfolio(CPortfolio):
     def check_for_unhedged_put_writing(self):
         self.get_portfolio_mgr().check_for_unhedged_put_writing()
 
-    def get_asset_reporting_names(self, weights=False, category_dict_flag=False):
-        pass
-
+    def get_asset_reporting_names(self):
+        return self.get_portfolio_mgr().get_asset_reporting_names()
 
     def get_private_equity_distribution(
             self,
