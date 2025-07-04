@@ -3,19 +3,24 @@ from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 import pandas as pd
 import numpy as np
 
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+
+
 # VintageYear(commitment: float, initial_value, start_age, calls, distributions, returns, shocks)
 
 class Vintage(object):
 
     def __init__(self,
                  strategy_type,
+                 schema,
                  commitment_size,
-                 fund_age,
-                 realized_NAV=None,
+                 fund_age=0,
+                 realized_nav=0.0,
                  cumltv_realized_contributions=None,
                  cumltv_realized_distributions=None,
                  cash_flow_frequency=1):
 
+        self._schema = schema
         self._commitments_size = commitment_size
         assert fund_age >= 0, 'Error - commitment year must be neutral-positive'
 
@@ -24,17 +29,17 @@ class Vintage(object):
         self._cash_flow_frequency = cash_flow_frequency
         self._fund_age = fund_age
 
-        self._REALIZED_NAV = realized_NAV
-        self._REALIZED_CONTRIBUTIONS = cumltv_realized_contributions
-        self._REALIZED_DISTRIBUTIONS = cumltv_realized_distributions
+        self._realized_nav = realized_nav
+        self._realized_contributions = cumltv_realized_contributions
+        self._realized_distributions = cumltv_realized_distributions
 
-        self._BOY_NAV = np.full((20,), np.nan)
-        self._EOY_NAV = np.full((20,), np.nan)
-        self._BOY_NAV[0] = realized_NAV
-
+        self._BOY_NAV = np.full((21,), np.nan)
+        self._EOY_NAV = np.full((21,), np.nan)
+        self._BOY_NAV[0] = self._realized_nav
 
         self.set_default_properties()
         self._estimate_cash_flows()
+
 
     @property
     def T(self):
@@ -51,8 +56,14 @@ class Vintage(object):
         self.capital_call_assumptions = capital_calls.reindex(idxs).bfill() / self._cash_flow_frequency
 
     def _load_strategy_returns(self):
+        #rtns, _ = self.simulate_returns()
         rtns = [-1 + np.power((1 + 0.11480), 1 / self._cash_flow_frequency)] * self.T
         self.return_df = pd.DataFrame(rtns, index=self.capital_call_assumptions.index, columns=[self._strategy_type])
+
+    def simulate_returns(self):
+        return self._schema.get_asset_from_name(
+            self._strategy_type.asset_name
+        ).simulate(frequency=Frequency.YEARLY)
 
     def set_default_properties(self):
         self._load_distribution_assumptions()
@@ -61,7 +72,7 @@ class Vintage(object):
 
     @property
     def capital_calls(self):
-        return self._df.get('CALLS')
+        return self.capital_call_assumptions.values * self._commitments_size
 
     @property
     def distributions(self):
@@ -86,47 +97,52 @@ class Vintage(object):
     def estimate_cash_flows_PME(self):
         pass
 
-    def BOY_NAV(self, year):
+    def get_return(self, year):
+        return self.return_df.values[year-1]
+
+    def get_MV_after_growth(self, year):
+        return self.get_BOY_NAV(year) * (1 + self.get_return(year)).item()
+
+    def get_BOY_NAV(self, year):
 
         if year <= 0:
-            return self._REALIZED_NAV
-        elif not np.nan(self._BOY_NAV[year]):
+            return self._realized_nav
+        elif np.isnan(self._BOY_NAV[year]):
+            self._BOY_NAV[year] = self.get_EOY_NAV(year-1) + self.get_capital_call(year-1)
             return self._BOY_NAV[year]
         else:
-            self._BOY_NAV[year] = self.EOY_NAV[year] * self.capital_calls[year]
             return self._BOY_NAV[year]
 
-    def distribution_amount(self, year):
-        if year + self._fund_age - 1< 0 or year + self._fund_age - 1 >= len(self.distributions):
+    def get_EOY_NAV(self, year):
+        return self.get_MV_after_growth(year) - self.get_distribution(year)
+
+    # This is the distribution flow at end of year
+    def get_distribution(self, year):
+        if year + self._fund_age - 1 < 0 or year + self._fund_age - 1 >= self.T:
             return 0
         else:
-            return self.distributions[year + self._fund_age - 1] * self.MV_after_growth[year]
+            return self.distribution_assumptions.values[year + self._fund_age - 1] * self.get_MV_after_growth(year)
 
-    def call_amount(self, year):
+    def get_capital_call(self, year):
         if year + self._fund_age >= len(self.capital_calls):
             return 0
         else:
-            return self.capital_call_assumptions.values[year+self._fund_age] * self._commitments_size
-
-    def EOY_NAV(self, year):
-        return self.MV_after_growth(year) * self.distribution_assumptions.values[year]
-
-    def MV_after_growth(self, year):
-        return self.BOY_NAV[year] * (1 + self.return_df.values[year])
+            return self.capital_calls[year + self._fund_age]
 
     def _estimate_cash_flows(self):
 
-        VALS = np.zeros((self.T+1, 4))
-        for t in range(1, self.T):
+        VALS = np.zeros((self.T+1, 6))
+        for t in range(0, self.T+1):
 
-            VALS[t, 0] = VALS[t-1, -1]
-            EOY_NAV_t = VALS[t, 0] * (1 + self.return_df.values[t])
-            VALS[t, 1] = self.capital_call_assumptions.values[t] * self._commitments_size
-            VALS[t, 2] = EOY_NAV_t * self.distribution_assumptions.values[t]
-            VALS[t, 3] = EOY_NAV_t * (1-self.distribution_assumptions.values[t]) + self.capital_call_assumptions.values[t] * self._commitments_size
-        self._df = pd.DataFrame(VALS, columns=['BOY_NAV', 'CALLS', 'DISTR', 'EOY_NAV'], index=range(0, self.T+1))
+            VALS[t, 0] = self.get_BOY_NAV(t)
+            VALS[t, 1] = self.get_MV_after_growth(t)
+            VALS[t, 2] = self.get_capital_call(t)
+            VALS[t, 3] = self.get_distribution(t)
+            VALS[t, 4] = self.get_EOY_NAV(t)
+            VALS[t, 5] = self.get_return(t)
+        self._df = pd.DataFrame(VALS, columns=['BOY_NAV', "MV_AFTER_GROWTH", 'CALLS', 'DISTR', 'EOY_NAV', "RETURN"], index=range(0, self.T+1))
 
-    def _calc_irr(self, start_year=2000):
+    def  _calc_irr(self, start_year=2000):
         """
         Calculate the IRR for a private equity fund vintage from a dataframe.
 
@@ -166,11 +182,23 @@ class Vintage(object):
 
 if __name__ == "__main__":
 
+
+    from epsilonPhi.core.schema.Schema import ContextCreator
+    from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
+
+    schema = ContextCreator(currency='USD',
+                            start_date='30-Nov-1983',
+                            end_date='31-Dec-2022').create_context()
+
+
     vy = Vintage(strategy_type=PrivateAsset.BUYOUT,
+                 schema=schema,
                  commitment_size=100,
-                 fund_age=0,
+                 fund_age=3,
+                 realized_nav=46,
                  cash_flow_frequency=1)
-    vy._calc_irr()
+
+    self= vy
 
 
 

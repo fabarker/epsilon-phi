@@ -1,5 +1,6 @@
 from epsilonPhi.core.simulation.privateAssets.vintage import Vintage
 import numpy as np
+from epsilonPhi.core.dataModel.enums.Asset import PrivateAsset
 
 class CPrivateProgram(object):
     pass
@@ -7,28 +8,28 @@ class CPrivateProgram(object):
 
 class CPrivateUtils(object):
 
-    def __init__(self):
+    def __init__(self, schema):
 
+        self._schema = schema
         self._capital_calls_and_distr_assumptions = {}
         self._cash_flow_defaults = {}
 
     # GeneratePECashFlowSub
     def get_cash_flows(self,
-                       returns,
-                       cash_flows,
                        current_total_liquid_assets,
-                       inital_vintages: list[Vintage],
+                       inital_vintages,
                        annual_commitments: np.array,
-                       inflation_paths,
+                       inflation_paths=None,
                        ann_commitments_in_dollars=False,
                        wealth_flows=None,
                        num_years=20,
                        use_total_mv=False,
                        ):
 
+        # VintageYear(commitment: float = 0, initial_value = 0, start_age= 0, calls, distributions, returns, shocks)
+        # new_vintages = np.tile(Vintage(0, 0, 0), [len(inital_vintages), num_years])
 
-        num_classes = len(inital_vintages)
-        new_vintages = np.tile(Vintage(0, 0, 0), [len(inital_vintages), num_years])
+        num_classes = annual_commitments.shape[0]
         distributions = np.zeros([num_classes, num_years])
         capital_calls = np.zeros([num_classes, num_years])
         pe_alloc = np.zeros([num_classes, num_years])
@@ -43,7 +44,7 @@ class CPrivateUtils(object):
             for i, asset in enumerate(inital_vintages):
 
                 # for the vintages we have, get the distributions in year
-                distributions[i, year] = sum([vy.distribution(year) for vy in asset])
+                distributions[i, year] = asset.get_distribution(year)
 
                 for fund_start_year in range(year + 1):
                     distributions[i, year] += new_vintages[i, fund_start_year].distribution(year - fund_start_year)
@@ -108,4 +109,24 @@ if __name__ == "__main__":
         end_date='31-Dec-2022'
     ).create_context()
 
+    current_total_liquid_assets = 100
+    annual_commitments = np.ones((1, 20)) * 10
+    initial_vintages = [
+        Vintage(PrivateAsset.BUYOUT, schema=schema, commitment_size=20, fund_age=1),
+        Vintage(PrivateAsset.BUYOUT, schema=schema, commitment_size=4, fund_age=2),
+        Vintage(PrivateAsset.BUYOUT, schema=schema, commitment_size=10, fund_age=6)
+    ]
+
+    utils = CPrivateUtils(schema)
+
+    utils.get_cash_flows(
+        current_total_liquid_assets,
+        initial_vintages,
+        annual_commitments,
+        inflation_paths = None,
+        ann_commitments_in_dollars = True,
+        wealth_flows = None,
+        num_years = 20,
+        use_total_mv = False,
+    )
 

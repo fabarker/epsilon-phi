@@ -39,6 +39,39 @@ class PrivateAsset(Enum):
     INFRASTRUCTURE = 'Infrastructure'
     ENERGY = 'Energy'
 
+    @property
+    def asset_name(self):
+        if self == PrivateAsset.BUYOUT:
+            return "PE_BUYOUT"
+        elif self == PrivateAsset.GROWTH:
+            return "PE_GROWTH"
+        elif self == PrivateAsset.VENTURE:
+            return "PE_VENTURE"
+        elif self == PrivateAsset.SECONDARIES:
+            return "PE_SECONDARIES"
+        elif self == PrivateAsset.MULTI_STRATEGY:
+            return "PE_MULTI_STRATEGY"
+        elif self == PrivateAsset.DIVERSIFIED:
+            return "PE_DIVERSIFIED"
+        elif self == PrivateAsset.EMERGING:
+            return "PE_EMERGING"
+        elif self == PrivateAsset.PRIVATE_CREDIT:
+            return "PRIVATE_CREDIT"
+        elif self == PrivateAsset.DISTRESSED:
+            return "PE_DISTRESSED"
+        elif self == PrivateAsset.REAL_ESTATE:
+            return "REAL_ESTATE"
+        elif self == PrivateAsset.OPPORTUNISTIC_REAL_ESTATE:
+            return "OPPORTUNISTIC_REAL_ESTATE"
+        elif self == PrivateAsset.INFRASTRUCTURE:
+            return "INFRASTRUCTURE"
+        elif self == PrivateAsset.ENERGY:
+            return "ENERGY"
+        else:
+            raise ValueError("Error - stype not supported")
+
+
+
 
 class RiskFreeMap(Enum):
     pass

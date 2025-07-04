@@ -1,4 +1,5 @@
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 from epsilonPhi.core.dataModel.enums.TimeSeries import TimeSeriesType, ReturnsType
 from epsilonPhi.core.timeSeries.timeSeriesMain import CSlice, CTimeSeries
 from epsilonPhi.core.asset.CAssetInf import CAssetInf, _assetmeta
@@ -364,7 +365,7 @@ class CAsset(CAssetInf, CSlice):
     def convert_asset_to_currency(self, currency, hedging_ratio):
         return self.assetMgr.convert_asset_to_currency(self, currency, hedging_ratio)
 
-    def simulate(self, long_term_shocks=False):
+    def simulate(self, long_term_shocks=False, frequency=Frequency.BUSINESS_MONTHLY):
 
         from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
@@ -376,7 +377,7 @@ class CAsset(CAssetInf, CSlice):
 
         # Add the asset we want the current environ risk premia for
         ptf.add_asset(self.deepcopy(), 1, self._hedge_ratio)
-        return ptf.get_portfolio_simulated_returns_panel(long_term_shocks=long_term_shocks)
+        return ptf.get_portfolio_simulated_returns_panel(frequency=frequency, long_term_shocks=long_term_shocks)
 
     def brownian_bridge(self):
         pass
