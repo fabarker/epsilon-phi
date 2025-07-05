@@ -10,6 +10,8 @@ from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 
 class Vintage(object):
 
+    _returns = {}
+
     def __init__(self,
                  strategy_type,
                  schema,
@@ -45,6 +47,14 @@ class Vintage(object):
     def T(self):
         return self.distribution_assumptions.shape[0]
 
+    def reset_vintage(self):
+        self._commitment_year = 0
+        self._commitments_size = 0
+        self._realized_nav = 0
+        self._BOY_NAV = np.full((21,), np.nan)
+        self._EOY_NAV = np.full((21,), np.nan)
+        self._BOY_NAV[0] = self._realized_nav
+
     def _load_distribution_assumptions(self):
         distributions = GlobalDataSource().get_private_asset_distribution_assumptions(self._strategy_type)
         idxs = np.arange(1/self._cash_flow_frequency, distributions.index.max() + 1/self._cash_flow_frequency, 1/self._cash_flow_frequency)
@@ -56,9 +66,13 @@ class Vintage(object):
         self.capital_call_assumptions = capital_calls.reindex(idxs).bfill() / self._cash_flow_frequency
 
     def _load_strategy_returns(self):
-        #rtns, _ = self.simulate_returns()
-        rtns = [-1 + np.power((1 + 0.11480), 1 / self._cash_flow_frequency)] * self.T
-        self.return_df = pd.DataFrame(rtns, index=self.capital_call_assumptions.index, columns=[self._strategy_type])
+
+        if self.type not in Vintage._returns:
+            #rtns, _ = self.simulate_returns()
+            rtns = [-1 + np.power((1 + 0.11480), 1 / self._cash_flow_frequency)] * self.T
+            Vintage._returns[self.type] = pd.DataFrame(rtns, index=self.capital_call_assumptions.index, columns=[self.type])
+        self.return_df = Vintage._returns[self.type]
+
 
     def simulate_returns(self):
         return self._schema.get_asset_from_name(
@@ -69,6 +83,10 @@ class Vintage(object):
         self._load_distribution_assumptions()
         self._load_capital_call_assumptions()
         self._load_strategy_returns()
+
+    @property
+    def type(self):
+        return self._strategy_type
 
     @property
     def capital_calls(self):
@@ -98,10 +116,10 @@ class Vintage(object):
         pass
 
     def get_return(self, year):
-        return self.return_df.values[year-1]
+        return self.return_df.values[year-1].item()
 
     def get_MV_after_growth(self, year):
-        return self.get_BOY_NAV(year) * (1 + self.get_return(year)).item()
+        return self.get_BOY_NAV(year) * (1 + self.get_return(year))
 
     def get_BOY_NAV(self, year):
 
@@ -194,8 +212,8 @@ if __name__ == "__main__":
     vy = Vintage(strategy_type=PrivateAsset.BUYOUT,
                  schema=schema,
                  commitment_size=100,
-                 fund_age=3,
-                 realized_nav=46,
+                 fund_age=0,
+                 realized_nav=0,
                  cash_flow_frequency=1)
 
     self= vy

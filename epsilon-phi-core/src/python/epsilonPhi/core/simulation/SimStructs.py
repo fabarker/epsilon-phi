@@ -408,3 +408,103 @@ class WealthProjections:
         return np.mean(self.get_real_cum_rtn_since_inception() >= plus, axis=1)
 
 
+@dataclass(frozen=True)
+class Commitments:
+    strategy: str
+    commitment_size: float
+    fund_age: float = 0.0
+    realized_nav: float = 0.0
+    cumltv_realized_contributions: float = 0.0
+    cumltv_realized_distributions: float = 0.0
+
+    def estimate_fund_age(self):
+        pass
+
+    def estimate_realized_nav(self):
+        pass
+
+    def estimate_commitment(self):
+        pass
+
+
+
+class PrivateAssetProjections:
+    def __init__(self,
+                 capital_calls,
+                 distributions,
+                 strategies,
+                 total_MV,
+                 pe_MV,
+                 commitments,
+                 vintage_exposures
+                 ):
+
+        self._capital_calls = capital_calls
+        self._distributions = distributions
+        self._strategies = list(strategies)
+        self._total_MV = total_MV
+        self._pe_MV = pe_MV
+        self._commitments = commitments
+        self._vintage_exposures = vintage_exposures
+
+    @property
+    def asset_list(self):
+        return [ x.asset_name for x in self.strategies ]
+
+    @property
+    def private_markets_alloc(self):
+        return self.pe_MV / self.total_MV
+
+    @property
+    def capital_calls(self):
+        return self._capital_calls
+
+    @property
+    def distributions(self):
+        return self._distributions
+
+    @property
+    def strategies(self):
+        return self._strategies
+
+    @property
+    def total_MV(self):
+        return self._total_MV
+
+    @property
+    def pe_MV(self):
+        return self._pe_MV
+
+    @property
+    def commitments(self):
+        return self._commitments
+
+    @property
+    def vintage_exposures(self):
+        return self._vintage_exposures
+
+    @property
+    def liquid_MV(self):
+        return self.total_MV - np.sum(self.pe_MV, axis=0)
+
+    @property
+    def net_cash_flow(self):
+        return self.distributions - self.capital_calls
+
+    @property
+    def priv_mkts_percent(self):
+        return self.pe_MV/self.total_MV
+
+    def get_market_values(self):
+        arr = np.concatenate(([self.liquid_MV], self.pe_MV, [self.total_MV]))
+        return pd.DataFrame(arr.T, columns=['Liquid'] + self.asset_list + ['Total'])
+
+    def get_weights(self):
+        arr = np.concatenate(([self.liquid_MV], self.pe_MV)).T / self.total_MV.reshape(-1, 1)
+        return pd.DataFrame(arr, columns=['Liquid'] + self.asset_list)
+
+    def get_J_curves(self):
+        return pd.DataFrame(np.cumsum(self.net_cash_flow, axis=1).T, columns=self.asset_list)
+
+
+

@@ -213,6 +213,19 @@ class CPortfolio(object):
         asset = CAssetMgr(self.schema).get_asset_by_name(asset_name)
         self.add_asset(asset, weight, hedging_ratio)
 
+    def remove_assets_and_rebalance(self, asset_list: list[str]):
+        copy_ptf = self.deepcopy()
+        for asset in asset_list:
+            copy_ptf.remove_asset_by_name(asset, True)
+        return copy_ptf
+
+    def remove_assets(self, asset_list: list[str], rebalance=False):
+        copy_ptf = self.deepcopy()
+        for asset in asset_list:
+            copy_ptf.remove_asset_by_name(asset, rebalance)
+        return copy_ptf
+
+
     def remove_asset_by_name(self, asset_name, rebalance=False) -> None:
 
         if asset_name not in self.asset_names:

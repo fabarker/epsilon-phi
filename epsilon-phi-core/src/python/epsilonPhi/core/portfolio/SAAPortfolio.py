@@ -507,16 +507,17 @@ class SAAPortfolio(CPortfolio):
     def get_asset_reporting_names(self):
         return self.get_portfolio_mgr().get_asset_reporting_names()
 
-    def get_private_equity_distribution(
-            self,
-            liquid_current_asset_total,
-            pe_target_weight,
-            pe_annual_commitment,
-            pe_current_asset,
-            wealth_flows=None,
-            num_years=20
-    ):
-        pass
+    def get_total_liquid_asset_value(self):
+        return self.get_portfolio_mgr().get_total_liquid_asset_value()
+
+    def get_total_liquid_assets_weight(self):
+        return self.get_portfolio_mgr().get_total_liquid_assets_weight()
+
+    def get_total_private_assets_weight(self):
+        return self.get_portfolio_mgr().get_total_private_assets_weight()
+
+    def get_asset_categories(self):
+        return self.get_portfolio_mgr().get_asset_categories()
 
     def get_private_equity_distribution_sub(
             self,
@@ -661,22 +662,6 @@ if __name__ == "__main__":
         end_date='31-Dec-2022'
     ).create_context()
 
-    ptf = SAAPortfolio('Calibration', schema)
-    ptf.add_asset_by_name('LHTRYIN', 0.5, 0)
-    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
-    ptf.setup()
-
-    ext_schema = ptf.schema.get_extended_schema()
-    ptf_copy = ptf.deepcopy(context=ext_schema)
-
-    panel_1 = ptf.get_stressed_returns_panel()
-    panel_2 = ptf_copy.get_stressed_returns_panel()
-
-    df1 = pd.DataFrame(panel_1.get_ptf_systematic_index(), index=panel_1.dates, columns=['short'])
-    df2 = pd.DataFrame(panel_2.get_ptf_systematic_index(), index=panel_2.dates, columns=['long'])
-
-    cum_rtn = ptf_copy.get_historical_cuml_return_series()
-
 
 
     path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
@@ -687,6 +672,11 @@ if __name__ == "__main__":
     )
 
     ptf = ptfs[-2]
+
+    from epsilonPhi.core.simulation.privateAssets.PrivateUtils import CPrivateUtils
+
+    liq, pri = CPrivateUtils.split_portfolio_into_liquid_and_private_assets(ptf)
+
 
     ext_schema = ptf.schema.get_extended_schema()
     ptf_copy = ptf.deepcopy(context=ext_schema)

@@ -7,6 +7,7 @@ from epsilonPhi.core.simulation.Bootstrap import SAABootstrapper
 from epsilonPhi.core.asset.proxies.LendingRate import CLendingRate
 from epsilonPhi.core.simulation.SimStructs import ReturnsPanel, FactorStressTestLosses, HistoricalStressTestLosses, \
     PerformanceVaRMetrics, WealthFlows, WealthProjections
+from epsilonPhi.core.simulation.privateAssets.PrivateUtils import CPrivateUtils
 from epsilonPhi.core.config.appConfig import CAppConfig
 from collections import OrderedDict
 from scipy.stats import zscore
@@ -704,25 +705,361 @@ class SAASimulation:
 
         return ws
 
-    def get_private_assets_distributions(self):
-        pass
+    def get_private_markets_projections_fixed_dollar_commitment(
+            self,
+            private_assets_list,
+            dollar_yearly_commit=10.0,
+            pe_current_assets = None,
+            num_years = 20
+    ):
+
+        if pe_current_assets is None:
+            pe_current_assets = {}
+
+        # add the strategies we want to commit to
+        for asset in private_assets_list:
+            pe_current_assets.setdefault(asset, [])
+
+        # get the weight in private markets porfolio
+        priv_wt = self._portfolio_mgr.get_total_private_assets_weight()
+        liq_ptf_yearly_returns = CPrivateUtils.get_liquid_portfolio_yearly_returns(self._portfolio_mgr)
+
+        # Build Initial Vintages - Includes vintages from dict plus vintages of futures allocations
+        prv_util = CPrivateUtils(self.schema)
+        initial_vintages = prv_util.vintage_dicts_to_objects(
+            existing_vintages=pe_current_assets,
+        )
+
+        # we are letting current assets run down so no additonal commitments
+        asset_names = [x.asset_name for x in initial_vintages.keys()]
+        commitment_years = np.ones((len(asset_names), num_years)) * dollar_yearly_commit
+
+        # Create a boolean mask: True if asset should stay
+        mask = np.isin(asset_names, private_assets_list)
+        commitment_years[~mask, :] = 0
+
+        prv_util = CPrivateUtils(self.schema)
+        return prv_util.generate_cash_flows_liquid_private(
+            self.portfolio_mgr.get_current_value() * (1 - priv_wt),
+            initial_vintages,
+            commitment_years,
+            liq_ptf_yearly_returns,
+            inflation_paths=None,
+            num_years=num_years,
+            ann_commitments_in_dollars=True
+        )
+
+
+    def get_current_private_markets_portfolio_projection(self, pe_current_assets = None, num_years = 20):
+
+        if pe_current_assets is None:
+            return None
+
+        # get the weight in private markets porfolio
+        priv_wt = self._portfolio_mgr.get_total_private_assets_weight()
+        liq_ptf_yearly_returns = CPrivateUtils.get_liquid_portfolio_yearly_returns(self._portfolio_mgr)
+
+        # Build Initial Vintages - Includes vintages from dict plus vintages of futures allocations
+        prv_util = CPrivateUtils(self.schema)
+        initial_vintages = prv_util.vintage_dicts_to_objects(
+            existing_vintages=pe_current_assets,
+        )
+
+        # we are letting current assets run down so no additonal commitments
+        commitment_years = np.zeros((len(initial_vintages.keys()), num_years))
+
+        prv_util = CPrivateUtils(self.schema)
+        return prv_util.generate_cash_flows_liquid_private(
+            self.portfolio_mgr.get_current_value() * (1-priv_wt),
+            initial_vintages,
+            commitment_years,
+            liq_ptf_yearly_returns,
+            inflation_paths=None,
+            num_years=num_years,
+        )
+
+    def get_private_markets_projections(
+            self,
+            private_assets_list,
+            annual_commitments,
+            pe_current_assets=None,
+            num_years=20
+    ):
+
+        if pe_current_assets is None:
+            pe_current_assets = {}
+
+        # add the strategies we want to commit to
+        for asset in private_assets_list:
+            pe_current_assets.setdefault(asset, [])
+
+        # get the current total nav of private assets in private markets porfolio
+        priv_nav = sum(
+            fund['realized_nav']
+            for strategy_funds in pe_current_assets.values()
+            for fund in strategy_funds
+        )
+
+        # get the private markets weight in the portfolio
+        priv_wt = priv_nav / self._portfolio_mgr.get_current_value()
+
+        # get the luiquid portfolio returns
+        liq_ptf_yearly_returns = CPrivateUtils.get_liquid_portfolio_yearly_returns(self._portfolio_mgr)
+
+        # Build Initial Vintages - Includes vintages from dict plus vintages of futures allocations
+        prv_util = CPrivateUtils(self.schema)
+        initial_vintages = prv_util.vintage_dicts_to_objects(
+            existing_vintages=pe_current_assets,
+        )
+
+        prv_util = CPrivateUtils(self.schema)
+        return prv_util.generate_cash_flows_liquid_private(
+            self.portfolio_mgr.get_current_value() * (1 - priv_wt),
+            initial_vintages,
+            annual_commitments,
+            liq_ptf_yearly_returns,
+            inflation_paths=None,
+            num_years=num_years,
+            ann_commitments_in_dollars=True
+        )
+
+
+    def get_private_assets_distributions(self,
+                                         annual_commitments=None,
+                                         pe_current_assets=None,
+                                         wealth_flows=None,
+                                         num_years=20,
+                                         commitments_in_dollars=False,
+                                         multiplier=2,
+                                         use_total_mv=False):
+
+        if pe_current_assets is None:
+            pe_current_assets = {}
+
+        # 0. We need to make sure that if there are any current pe exposures, that
+        # they at least show up in the target portfolio but with the weight zeroed out
+
+        # 1. Get the set differ between current privates and future privates
+
+        ptf = self._portfolio_mgr.portfolio
+        set_diff = np.setdiff1d(list(pe_current_assets.keys()), ptf.get_asset_names())
+
+        for asset in set_diff:
+            ptf.add_asset_by_name(asset, 0, 0)
+
+        prv_tgt = CPrivateUtils.get_private_asset_weights(ptf)
+        priv_wts_tgt = prv_tgt.get_weights()
+
+        # add the strategies we want to commit to
+        for asset in prv_tgt.get_asset_names():
+            pe_current_assets.setdefault(asset, [])
+
+        # get the current total nav of private assets in private markets porfolio
+        priv_nav = sum(
+            fund['realized_nav']
+            for strategy_funds in pe_current_assets.values()
+            for fund in strategy_funds
+        )
+
+        # get the private markets weight in the portfolio
+        current_total_liquid_assets = self._portfolio_mgr.get_current_value() - priv_nav
+
+        # get the liquid portfolio returns
+        liq_ptf_yearly_returns = CPrivateUtils.get_liquid_portfolio_yearly_returns(self._portfolio_mgr)
+
+        # Build Initial Vintages - Includes vintages from dict plus vintages of futures allocations
+        prv_util = CPrivateUtils(self.schema)
+        initial_vintages = prv_util.vintage_dicts_to_objects(
+            existing_vintages=pe_current_assets,
+        )
+
+
+        asset_names_list = [x.asset_name for x in initial_vintages.keys()]
+        name_to_index = {name: idx for idx, name in enumerate(asset_names_list)}
+        indices = [name_to_index[name] for name in prv_tgt.get_asset_names()]
+        priv_wts_tgt = priv_wts_tgt[indices]
+
+        # Generate the commitment frequency schedule per asset class, assume yearly commitments
+        commitment_years = prv_util.generate_commitments(priv_wts_tgt, num_years)
+        # if any target weights are zero, dont make any commitments
+        mask = (priv_wts_tgt.flatten() == 0)
+        commitment_years[mask, :] = 0
+
+        if annual_commitments is None:
+            res = self.solve_private_asset_commitments(
+                    current_total_liquid_assets,
+                    initial_vintages,
+                    commitment_years,
+                    priv_wts_tgt,
+                    liq_ptf_yearly_returns,
+                    inflation_paths=None,
+                    wealth_flows=wealth_flows,
+                    num_years=num_years,
+                    multiplier=multiplier,
+                    use_total_mv=use_total_mv
+            )
+        else:
+            raise ValueError("Not Supported")
+        return res
+
+
+
+    def solve_private_asset_commitments(self,
+                                        current_total_liquid_assets,
+                                        initial_vintages,
+                                        commitment_years,
+                                        pa_target_weights,
+                                        liquid_portfolio_yearly_returns,
+                                        inflation_paths=None,
+                                        wealth_flows=None,
+                                        num_years=20,
+                                        multiplier=2,
+                                        use_total_mv=False):
+
+
+
+        num_classes = len(pa_target_weights)
+        # Uniform commitment per class
+        asset_annual_commitments = np.full(num_classes, pa_target_weights.sum() / num_classes)
+        # Scale commitment matrix using broadcasting
+        annual_commitments = commitment_years * asset_annual_commitments[:, np.newaxis]
+        max_commitments = np.ones(num_classes)
+        min_commitments = np.zeros(num_classes)
+
+        last_max = max_commitments.copy()
+        last_min = min_commitments.copy()
+
+        lim = 500
+        eps = 0.001
+        attempt = 0
+
+        # Instantiate Private Utils Class
+        util = CPrivateUtils(self.schema)
+
+        while attempt < lim:
+            res = util.generate_cash_flows_liquid_private(
+                current_total_liquid_assets,
+                initial_vintages,
+                annual_commitments,
+                liquid_portfolio_yearly_returns,
+                inflation_paths,
+                False,
+                wealth_flows,
+                num_years,
+                use_total_mv)
+
+
+            terminal_pa = np.mean(res.priv_mkts_percent[:, 16:20], 1, keepdims=True) * (pa_target_weights > 0)
+
+            if sum(abs(terminal_pa - pa_target_weights)) < eps:
+                break
+
+            for asset in range(num_classes):
+                if abs(terminal_pa[asset] - pa_target_weights[asset]) < eps / num_classes:
+                    continue
+                elif terminal_pa[asset] < pa_target_weights[asset]:
+                    min_commitments[asset] = asset_annual_commitments[asset]
+                    asset_annual_commitments[asset] = (asset_annual_commitments[asset] + max_commitments[asset]) / 2
+                else:
+                    max_commitments[asset] = asset_annual_commitments[asset]
+                    asset_annual_commitments[asset] = (asset_annual_commitments[asset] + min_commitments[asset]) / 2
+
+                annual_commitments[asset] = np.multiply(asset_annual_commitments[asset], commitment_years[asset])
+
+            if sum(abs(last_min - min_commitments) + abs(last_max - max_commitments)) < eps / num_classes:
+                min_commitments = min_commitments / 2
+                max_commitments = max_commitments / 2
+
+            last_max = max_commitments.copy()
+            last_min = min_commitments.copy()
+
+            logger.info("Solving PE Commitment, attempt {}, min {}, max {}".format(attempt, min_commitments, max_commitments))
+            attempt += 1
+
+        if attempt == lim:
+            raise ValueError("Error - PA Solver could not solve within attempts {}".format(attempt))
+
+        # Apply multiplier at the end
+        eq_ann_commitments = annual_commitments[:]
+
+        if multiplier > 0:
+            mult = np.ones((len(pa_target_weights), num_years))
+            for i in range(num_years):
+                mult[:, i] = util.multiplier(pa_target_weights, res.priv_mkts_percent, multiplier, i)
+                ann_commits = np.multiply(eq_ann_commitments, mult)
+                res = util.generate_cash_flows_liquid_private(
+                    current_total_liquid_assets,
+                    initial_vintages,
+                    ann_commits,
+                    liquid_portfolio_yearly_returns,
+                    inflation_paths,
+                    False,
+                    wealth_flows,
+                    num_years,
+                    use_total_mv)
+        return res
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
+
     from epsilonPhi.core.asset.AssetMgr import CAssetMgr
     from epsilonPhi.core.schema.Schema import ContextCreator
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
-    schema = ContextCreator(currency='USD',
-                            start_date='30-Nov-1983',
-                            end_date='31-Dec-2022').create_context()
+    schema = ContextCreator(
+        currency='USD',
+        start_date='30-Nov-1983',
+        end_date='31-Dec-2022'
+    ).create_context()
 
-    from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
-
-    ptf = SAAPortfolio('Calibration', schema)
-    ptf.add_asset_by_name('LHTRYIN', 0.5, 0)
-    ptf.add_asset_by_name('MSUSAML', 0.5, 0)
+    ptf = SAAPortfolio('portfolio', schema)
+    ptf.add_asset_by_name('MSEXUKL', 0.5, 0)
+    ptf.add_asset_by_name('LHAGGBD', 0.3, 0)
+    ptf.add_asset_by_name('PE_BUYOUT', 0.1, 0)
+    ptf.add_asset_by_name('PRIVATE_CREDIT', 0.1, 0)
     ptf.setup()
 
-    self = SAASimulation(mgr)
-    ws = self.get_factor_stress_tests()
+    ptf.set_current_value(500)
+
+    initial_vintage = {
+        "PE_BUYOUT" : [
+            {
+            'fund_age': 3,
+            'strategy': "PE_BUYOUT",
+            'commitment_size': 100,
+            'realized_nav': 60.3323436720054,
+            'cumltv_realized_contributions': 54,
+            'cumltv_realized_distributions': 0.103
+            },
+            {
+            'fund_age': 0,
+            'strategy': "PE_BUYOUT",
+            'commitment_size': 100,
+            'realized_nav': 0,
+            'cumltv_realized_contributions': 0,
+            'cumltv_realized_distributions': 0
+            }
+        ],
+        "PE_GROWTH": [
+            {
+                'fund_age': 0,
+                'strategy': "PE_GROWTH",
+                'commitment_size': 100,
+                'realized_nav': 0,
+                'cumltv_realized_contributions': 0,
+                'cumltv_realized_distributions': 0
+            }
+        ],
+    }
+
+    sim = SAASimulation(ptf.get_portfolio_mgr())
+    self = sim.get_private_assets_distributions(
+        pe_current_assets=initial_vintage,
+    )

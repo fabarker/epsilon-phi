@@ -731,6 +731,20 @@ class CPortfolioMgr(object):
     def get_reference_vol(self, risk_level):
         pass
 
+    def get_total_liquid_asset_value(self):
+        return self.get_current_value() * self.get_total_private_assets_weight()
+
+    def get_total_liquid_assets_weight(self):
+        return 1 - self.get_total_private_assets_weight()
+
+    def get_total_private_assets_weight(self):
+        return np.sum([ self.get_asset(x).weight
+               for x in self.get_asset_names()
+               if "pri" in self.get_asset(x).category.lower() ])
+
+    def get_asset_categories(self):
+        return [ self.get_asset(x).category for x in self.get_asset_names() ]
+
 
 
 
@@ -752,6 +766,7 @@ if __name__ == "__main__":
     ptf = SAAPortfolio('portfolio', schema)
     ptf.add_asset_by_name('MSEXUKL', 0.5, 0)
     ptf.add_asset_by_name('LHAGGBD', 0.5, 0)
+    ptf.setup()
     ptf.get_weights()
     ptf.get_risk()
     self = ptf.get_portfolio_mgr()

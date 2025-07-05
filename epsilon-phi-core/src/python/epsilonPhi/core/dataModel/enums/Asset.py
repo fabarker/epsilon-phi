@@ -70,6 +70,33 @@ class PrivateAsset(Enum):
         else:
             raise ValueError("Error - stype not supported")
 
+    @staticmethod
+    def get(asset_name):
+
+        if asset_name == PrivateAsset.BUYOUT.asset_name:
+            return PrivateAsset.BUYOUT
+        elif asset_name == PrivateAsset.GROWTH.asset_name:
+            return PrivateAsset.GROWTH
+        elif asset_name == PrivateAsset.VENTURE.asset_name:
+            return PrivateAsset.VENTURE
+        elif asset_name == PrivateAsset.SECONDARIES.asset_name:
+            return PrivateAsset.SECONDARIES
+        elif asset_name == PrivateAsset.MULTI_STRATEGY.asset_name:
+            return PrivateAsset.MULTI_STRATEGY
+        elif asset_name == PrivateAsset.DIVERSIFIED.asset_name:
+            return PrivateAsset.DIVERSIFIED
+        elif asset_name == PrivateAsset.EMERGING.asset_name:
+            return PrivateAsset.EMERGING
+        elif asset_name == PrivateAsset.PRIVATE_CREDIT.asset_name:
+            return PrivateAsset.PRIVATE_CREDIT
+        elif asset_name == PrivateAsset.DISTRESSED.asset_name:
+            return PrivateAsset.DISTRESSED
+        elif asset_name == PrivateAsset.REAL_ESTATE.asset_name:
+            return PrivateAsset.REAL_ESTATE
+        else:
+            raise ValueError("Error - stype not supported")
+
+
 
 
 
