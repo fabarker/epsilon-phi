@@ -446,6 +446,7 @@ class PrivateAssetProjections:
         self._pe_MV = pe_MV
         self._commitments = commitments
         self._vintage_exposures = vintage_exposures
+        self._liquid_weights = None
 
     @property
     def asset_list(self):
@@ -495,6 +496,15 @@ class PrivateAssetProjections:
     def priv_mkts_percent(self):
         return self.pe_MV/self.total_MV
 
+    def set_liquid_weights(self, wts):
+        self._liquid_weights = wts.flatten()
+
+    def get_liquid_market_values(self):
+        if self._liquid_weights is not None:
+            return self.liquid_MV * self._liquid_weights.reshape(-1, 1)
+        else:
+            return self.liquid_MV
+
     def get_market_values(self):
         arr = np.concatenate(([self.liquid_MV], self.pe_MV, [self.total_MV]))
         return pd.DataFrame(arr.T, columns=['Liquid'] + self.asset_list + ['Total'])
@@ -506,5 +516,25 @@ class PrivateAssetProjections:
     def get_J_curves(self):
         return pd.DataFrame(np.cumsum(self.net_cash_flow, axis=1).T, columns=self.asset_list)
 
+    def get_captial_calls(self):
+        return pd.DataFrame(self.capital_calls.T, columns=self.asset_list)
+
+    def get_distributions(self):
+        return pd.DataFrame(self.distributions.T, columns=self.asset_list)
+
+    def get_commitments(self):
+        return pd.DataFrame(self.commitments.T, columns=self.asset_list)
+
+    def get_yearly_flows(self):
+
+        # Capital Calls
+        calls = self.get_captial_calls()
+        calls.columns = pd.MultiIndex.from_tuples([ (x, 'calls') for x in self.asset_list ])
+
+        # Distributions
+        distributions = self.get_distributions()
+        distributions.columns = pd.MultiIndex.from_tuples([ (x, 'distributions') for x in self.asset_list ])
+
+        return pd.concat((calls, distributions), axis=1)
 
 

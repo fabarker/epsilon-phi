@@ -26,9 +26,9 @@ yaml_portfolios = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-
 yaml_risk = "/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
-#yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
-#yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
-#yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
+yaml_assumptions = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_assumptions.yaml"
+yaml_portfolios = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_portfolios.yaml"
+yaml_risk = "/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatting_risk.yaml"
 
 
 class Reporting(object):

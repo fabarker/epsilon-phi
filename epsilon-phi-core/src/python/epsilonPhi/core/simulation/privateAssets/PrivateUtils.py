@@ -67,7 +67,7 @@ class CPrivateUtils(object):
 
     def generate_private_markets_cash_flows(
             self,
-            initial_vintages: dict[str, list[Vintage]],
+            initial_vintages,
             annual_commitments: np.ndarray,
             num_years: int = 20
     ) -> PrivateAssetProjections:
@@ -320,25 +320,31 @@ if __name__ == "__main__":
     ).create_context()
 
     initial_vintage = {
-        "PE_BUYOUT": [{
-            'fund_age': 3,
-            'commitment_size': 100,
-            'realized_nav': 60.3323436720054,
-            'cumltv_realized_contributions': 54,
-            'cumltv_realized_distributions': 0.103
-        },
-            {
-                'fund_age': 0,
-                'commitment_size': 100,
-                'realized_nav': 0,
-                'cumltv_realized_contributions': 0,
-                'cumltv_realized_distributions': 0
-            }],
+        "PE_BUYOUT":
+            [
+                {
+                    'fund_age': 0,
+                    'commitment_size': 100,
+                    'realized_nav': 0,
+                    'cumltv_realized_contributions': 0,
+                    'cumltv_realized_distributions': 0
+                }
+            ],
+        "PRIVATE_CREDIT":
+            [
+                {
+                    'fund_age': 0,
+                    'commitment_size': 100,
+                    'realized_nav': 0,
+                    'cumltv_realized_contributions': 0,
+                    'cumltv_realized_distributions': 0
+                }
+            ],
     }
 
     utils = CPrivateUtils(schema)
 
-    annual_commitments = np.ones((1, 20)) * 10
+    annual_commitments = np.ones((2, 20)) * 0
 
     init_vint = utils.vintage_dicts_to_objects(initial_vintage)
     res = utils.generate_private_markets_cash_flows(init_vint, annual_commitments)

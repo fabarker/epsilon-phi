@@ -830,7 +830,7 @@ class SAASimulation:
                                          wealth_flows=None,
                                          num_years=20,
                                          commitments_in_dollars=False,
-                                         multiplier=2,
+                                         multiplier=0,
                                          use_total_mv=False):
 
         if pe_current_assets is None:

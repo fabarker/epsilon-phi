@@ -68,9 +68,9 @@ class Vintage(object):
     def _load_strategy_returns(self):
 
         if self.type not in Vintage._returns:
-            #rtns, _ = self.simulate_returns()
-            rtns = [-1 + np.power((1 + 0.11480), 1 / self._cash_flow_frequency)] * self.T
-            Vintage._returns[self.type] = pd.DataFrame(rtns, index=self.capital_call_assumptions.index, columns=[self.type])
+            rtns, _ = self.simulate_returns()
+            #rtns = [-1 + np.power((1 + 0.11480), 1 / self._cash_flow_frequency)] * self.T
+            Vintage._returns[self.type] = pd.DataFrame(np.mean(rtns, axis=1), index=self.capital_call_assumptions.index, columns=[self.type])
         self.return_df = Vintage._returns[self.type]
 
 
