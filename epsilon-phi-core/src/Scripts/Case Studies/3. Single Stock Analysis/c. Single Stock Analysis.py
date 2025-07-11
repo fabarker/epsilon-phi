@@ -71,7 +71,7 @@ ptf_betas = ptfs[3].get_risk_betas()
 ptf_idio  = ptfs[3].get_idio_variance()
 
 betas = np.concatenate((asset_betas, ptf_betas))
-idios = np.concatenate((asset_idio, [ptf_idio]))
+idios = np.concatenate((asset_idio, [ptf_idio * 2]))
 
 betas_mult_cov = np.matmul(betas, schema.get_risk_factor_covariance().values)
 sig = np.matmul(betas_mult_cov, betas.transpose()) + np.diag(idios)

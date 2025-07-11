@@ -10,7 +10,7 @@ from scipy.optimize import root_scalar
 
 
 # path to portfolio weights
-path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/Scripts/Case Studies/2. Optimizations/Simple Analysis.xlsx'
+path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/Scripts/Case Studies/2. Optimizations/Simple Analysis.xlsx'
 
 # Set the schema currency
 currency = "USD"
@@ -37,17 +37,18 @@ ptf.get_asset("JPMGCOC").set_uncertainty(ptf.get_asset("JPMGCOC").get_uncertaint
 ptf.get_asset("MLG5QIL").set_uncertainty(ptf.get_asset("JPMGCOC").get_uncertainty() * 1.2)
 
 report = Reporting(os.getcwd(),"Manager Alpha")
+report.add_portfolios(ptf.deepcopy())
 
 # Set the constraints string
 constraints_str = 'PA_REAL_ESTATE+(-3)*PA_INFRA=0;LHTRYIN>16.5;(-45)*FRUS1GR+40*FRUS1VA=0;(-45)*FRUSS2L+15*FRUS1VA=0;(-1)*GLOBAL_REITS+INFRA_EQUITY=0' + ';MSACWFL=0;HFRIFFD=0;'
 
-alpha_levels = [0, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05]
+alpha_levels = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06]
 assets = ['PE_BUYOUT', 'PE_GROWTH', 'PE_VENTURE']
 
 for a in alpha_levels:
     print(str(round(a * 100, 1)))
 
-    ptf_name = str(round(a * 100, 1)).split(".")[0] + "% Alpha"
+    ptf_name = str(round(a * 100, 1)) + "% Alpha"
     tmp = ptf.deepcopy(name=ptf_name)
 
     for asset_name in assets:

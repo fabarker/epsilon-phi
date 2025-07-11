@@ -742,7 +742,7 @@ class SAABootstrapper(AbstractBootstrapper):
             # self._curr_env_ind = curr_env_ind[self.sim_start_date:self.sim_end_date]
             # self._curr_env_ind = (self._curr_env_ind > self._curr_env_ind.quantile(0.75)).astype(int)
             self._curr_env_ind = cei.reindex(self._schema.dates).ffill()
-        return self._curr_env_ind
+        return self._curr_env_ind.fillna(1)
 
     @staticmethod
     def demean_values_in_blocks(

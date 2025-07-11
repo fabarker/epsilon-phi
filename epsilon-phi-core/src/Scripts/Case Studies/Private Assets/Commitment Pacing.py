@@ -3,7 +3,7 @@ from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 from epsilonPhi.core.simulation.privateAssets.PrivateUtils import CPrivateUtils
 from epsilonPhi.core.simulation.SAASimulation import SAASimulation
 
-path = '/Users/francisbarker/repo/epsilon-psi/epsilon-phi-core/src/Scripts/Case Studies/Private Assets/Commitment Pacing.xlsx'
+path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/Scripts/Case Studies/Private Assets/Commitment Pacing.xlsx'
 
 schema = ContextCreator(
     currency='USD',
@@ -11,9 +11,6 @@ schema = ContextCreator(
     end_date='31-Dec-2022'
 ).create_context()
 
-
-ed = schema.get_asset_from_name("CSFBMTT")
-ed.get_risk_betas()
 
 ptfs = SAAPortfolio.get_portfolios_from_template(
         currency="USD",
@@ -41,16 +38,10 @@ for idx, row in wts_df.iterrows():
     tmp.set_weights(row.values.flatten())
     all_ptfs.extend([tmp.deepcopy()])
 
+ws = ptfs[0].get_portfolio_wealth_projection(ptf_list=all_ptfs, ptf_sim_order=list(np.array(range(20))))
+ws_1 = ptfs[0].get_portfolio_wealth_projection()
+ws_2 = ptfs[-1].get_portfolio_wealth_projection()
 
-import os
-from epsilonPhi.core.reporting.Reporting import Reporting
-reporting = Reporting(
-    os.getcwd(),
-    "Comittment Pacing Portfolios"
-)
-
-reporting.add_portfolios(all_ptfs)
-reporting.generate_report()
 
 
 

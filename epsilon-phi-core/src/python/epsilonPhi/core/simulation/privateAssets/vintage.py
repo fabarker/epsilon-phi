@@ -9,7 +9,6 @@ from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
 # VintageYear(commitment: float, initial_value, start_age, calls, distributions, returns, shocks)
 
 class Vintage(object):
-
     _returns = {}
 
     def __init__(self,
@@ -42,7 +41,6 @@ class Vintage(object):
         self.set_default_properties()
         self._estimate_cash_flows()
 
-
     @property
     def T(self):
         return self.distribution_assumptions.shape[0]
@@ -57,22 +55,24 @@ class Vintage(object):
 
     def _load_distribution_assumptions(self):
         distributions = GlobalDataSource().get_private_asset_distribution_assumptions(self._strategy_type)
-        idxs = np.arange(1/self._cash_flow_frequency, distributions.index.max() + 1/self._cash_flow_frequency, 1/self._cash_flow_frequency)
+        idxs = np.arange(1 / self._cash_flow_frequency, distributions.index.max() + 1 / self._cash_flow_frequency,
+                         1 / self._cash_flow_frequency)
         self.distribution_assumptions = distributions.reindex(idxs).interpolate().fillna(0)
 
     def _load_capital_call_assumptions(self):
         capital_calls = GlobalDataSource().get_private_asset_capital_call_assumptions(self._strategy_type)
-        idxs = np.arange(1/self._cash_flow_frequency, capital_calls.index.max() + 1/self._cash_flow_frequency, 1/self._cash_flow_frequency)
+        idxs = np.arange(1 / self._cash_flow_frequency, capital_calls.index.max() + 1 / self._cash_flow_frequency,
+                         1 / self._cash_flow_frequency)
         self.capital_call_assumptions = capital_calls.reindex(idxs).bfill() / self._cash_flow_frequency
 
     def _load_strategy_returns(self):
 
         if self.type not in Vintage._returns:
             rtns, _ = self.simulate_returns()
-            #rtns = [-1 + np.power((1 + 0.11480), 1 / self._cash_flow_frequency)] * self.T
-            Vintage._returns[self.type] = pd.DataFrame(np.mean(rtns, axis=1), index=self.capital_call_assumptions.index, columns=[self.type])
+            # rtns = [-1 + np.power((1 + 0.11480), 1 / self._cash_flow_frequency)] * self.T
+            Vintage._returns[self.type] = pd.DataFrame(np.mean(rtns, axis=1), index=self.capital_call_assumptions.index,
+                                                       columns=[self.type])
         self.return_df = Vintage._returns[self.type]
-
 
     def simulate_returns(self):
         return self._schema.get_asset_from_name(
@@ -116,7 +116,7 @@ class Vintage(object):
         pass
 
     def get_return(self, year):
-        return self.return_df.values[year-1].item()
+        return self.return_df.values[year - 1].item()
 
     def get_MV_after_growth(self, year):
         return self.get_BOY_NAV(year) * (1 + self.get_return(year))
@@ -126,7 +126,7 @@ class Vintage(object):
         if year <= 0:
             return self._realized_nav
         elif np.isnan(self._BOY_NAV[year]):
-            self._BOY_NAV[year] = self.get_EOY_NAV(year-1) + self.get_capital_call(year-1)
+            self._BOY_NAV[year] = self.get_EOY_NAV(year - 1) + self.get_capital_call(year - 1)
             return self._BOY_NAV[year]
         else:
             return self._BOY_NAV[year]
@@ -149,18 +149,18 @@ class Vintage(object):
 
     def _estimate_cash_flows(self):
 
-        VALS = np.zeros((self.T+1, 6))
-        for t in range(0, self.T+1):
-
+        VALS = np.zeros((self.T + 1, 6))
+        for t in range(0, self.T + 1):
             VALS[t, 0] = self.get_BOY_NAV(t)
             VALS[t, 1] = self.get_MV_after_growth(t)
             VALS[t, 2] = self.get_capital_call(t)
             VALS[t, 3] = self.get_distribution(t)
             VALS[t, 4] = self.get_EOY_NAV(t)
             VALS[t, 5] = self.get_return(t)
-        self._df = pd.DataFrame(VALS, columns=['BOY_NAV', "MV_AFTER_GROWTH", 'CALLS', 'DISTR', 'EOY_NAV', "RETURN"], index=range(0, self.T+1))
+        self._df = pd.DataFrame(VALS, columns=['BOY_NAV', "MV_AFTER_GROWTH", 'CALLS', 'DISTR', 'EOY_NAV', "RETURN"],
+                                index=range(0, self.T + 1))
 
-    def  _calc_irr(self, start_year=2000):
+    def _calc_irr(self, start_year=2000):
         """
         Calculate the IRR for a private equity fund vintage from a dataframe.
 
@@ -198,9 +198,8 @@ class Vintage(object):
 
         return xirr(cash_flows, year_fractions)
 
+
 if __name__ == "__main__":
-
-
     from epsilonPhi.core.schema.Schema import ContextCreator
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
@@ -208,16 +207,11 @@ if __name__ == "__main__":
                             start_date='30-Nov-1983',
                             end_date='31-Dec-2022').create_context()
 
-
-    vy = Vintage(strategy_type=PrivateAsset.BUYOUT,
+    vy = Vintage(strategy_type=PrivateAsset.PRIVATE_CREDIT,
                  schema=schema,
                  commitment_size=100,
                  fund_age=0,
                  realized_nav=0,
                  cash_flow_frequency=1)
 
-    self= vy
-
-
-
-
+    self = vy

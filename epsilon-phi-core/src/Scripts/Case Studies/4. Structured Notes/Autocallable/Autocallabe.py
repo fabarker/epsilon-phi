@@ -238,4 +238,5 @@ rtns_df['std_bucket'] = rtns_df.apply(bucket, axis=1)
 rtns_df['out'] = rtns_df["U"] < rtns_df["N"]
 
 # Step 3: Group by the bucket and compute mean and std
-grouped_stats = rtns_df.groupby('std_bucket').agg(['mean', 'std'])
+grouped_stats = rtns_df.groupby('std_bucket').agg(['mean', 'std', 'count'])
+grouped_stats['p_obs'] = grouped_stats['count'] / 20000
