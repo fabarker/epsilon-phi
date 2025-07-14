@@ -17,7 +17,6 @@ class OptimizerPars:
                  T12: np.array,
                  asset_list: list,
                  ):
-
         self._mu = mu
         self._sigma = sigma
         self._T12 = T12
@@ -56,7 +55,7 @@ class CVXOptimizer(object):
         kappa = kappa_init
         kappa_l = prec
 
-        kappa_r = math.ceil(skew_kappa_r/100) * 100
+        kappa_r = math.ceil(skew_kappa_r / 100) * 100
         if kappa < kappa_lim:
             loop = 0
 
@@ -99,7 +98,6 @@ class CVXOptimizer(object):
 
         logger.info('find_kappa_old() done with kappa {}'.format(f_kappa))
         return f_kappa, error
-
 
     def find_kappa(self,
                    constraints,
@@ -153,7 +151,7 @@ class CVXOptimizer(object):
             else:
                 raise Exception('find_kappa, sigma is none')
 
-            skew = max(1, np.log10((kappa_r-kappa_l)))
+            skew = max(1, np.log10((kappa_r - kappa_l)))
             kappa = (skew * kappa_l + kappa_r) / (skew + 1)
             logger.info('kappa = [{}] and skew = [{}]'.format(kappa, skew))
         logger.info('find_kappa done with kappa [{}]'.format(kappa))
@@ -172,9 +170,9 @@ class CVXOptimizer(object):
 
         if constraint_str and constraint_str != '':
             if LB is None:
-               res, const, LB_, UB_, error = parser.generate_constraints_UB(constraint_str, asset_list)
+                res, const, LB_, UB_, error = parser.generate_constraints_UB(constraint_str, asset_list)
             else:
-               res, const, LB_, UB_, error = parser.generate_constraints_UB_LB(constraint_str, asset_list)
+                res, const, LB_, UB_, error = parser.generate_constraints_UB_LB(constraint_str, asset_list)
 
             if error != 0:
                 raise Exception('Error - constraint error in constraint {}'.format(error))
@@ -224,7 +222,6 @@ class CVXOptimizer(object):
 
         return wts, kappa
 
-
     def find_max_kappa(
             self,
             target_vol,
@@ -256,8 +253,8 @@ class CVXOptimizer(object):
 
             # Track the kappa that gets closest to target_vol
             if np.abs(best_vol - target_vol) > np.abs(realized_vol - target_vol):
-               best_vol = realized_vol
-               best_kappa = mid_kappa
+                best_vol = realized_vol
+                best_kappa = mid_kappa
 
             # Early stopping if very close
             if np.abs(best_vol - target_vol) < 0.0001:
@@ -275,10 +272,9 @@ class CVXOptimizer(object):
                 break
 
         if np.abs(best_vol - target_vol) > tol:
-           raise ValueError('Error - target vol not obtainable')
+            raise ValueError('Error - target vol not obtainable')
 
         return best_kappa
-
 
     def run_cvx_robust(
             self,
@@ -301,7 +297,6 @@ class CVXOptimizer(object):
         # Sigma is the covariance matrix
         sig = sqrtm(sigma)
 
-
         # Variable of insterest
         w = cp.Variable(n)
 
@@ -319,22 +314,20 @@ class CVXOptimizer(object):
 
         # Box constraints
         constraints_list.append(w >= constraints.LB_box)
-        constraints_list.append(w <= constraints.UB_box) # UB_box is incorrect
+        constraints_list.append(w <= constraints.UB_box)  # UB_box is incorrect
 
         # Equality/Inequality Constraints
         if constraints.LB is not None:
             constraints_list.append(constraints.LB <= constraints.mat @ w)
         if constraints.UB is not None:
-            constraints_list.append(constraints.mat @ w <= constraints.UB)
+            constraints_list.append(constraints.mat @ w <=  )
 
         problem = cp.Problem(objfun, constraints_list)
         problem.solve()
         return w.value, cp.norm2(sig @ w).value
 
 
-
 if __name__ == "__main__":
-
     from epsilonPhi.core.schema.Schema import ContextCreator
     from epsilonPhi.core.portfolio.SAAPortfolio import SAAPortfolio
 
@@ -343,7 +336,6 @@ if __name__ == "__main__":
         start_date='30-Nov-1983',
         end_date='31-Dec-2022'
     ).create_context()
-
 
     ptf = SAAPortfolio('portfolio', schema)
     ptf.add_asset_by_name('MSUSAML', 0.5, 0)
@@ -358,6 +350,3 @@ if __name__ == "__main__":
     )
 
     ptf.optimize(target_vol=0.07)
-
-
-
