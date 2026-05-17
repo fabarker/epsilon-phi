@@ -1,589 +1,590 @@
-'5473','BBUSD1M','IBA United States Dollar Interbank LIBOR 1 Month Delayed','United States','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBUSD1M','B','5473','USD','1m','Interbank'
-'5474','BBUSD3M','IBA United States Dollar Interbank LIBOR 3 Months Delayed','United States','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBUSD3M','B','5474','USD','3m','Interbank'
-'5475','BBGBP3M','IBA Great British Pound Interbank LIBOR 3 Months Delayed','United Kingdom','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBGBP3M','B','5475','GBP','3m','Interbank'
-'5476','BBJPY3M','IBA Japanese Yen Interbank LIBOR 3 Months Delayed','Japan','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBJPY3M','B','5476','JPY','3m','Interbank'
-'5477','BBCHF3M','IBA Swiss Franc Interbank LIBOR 3 Months Delayed','Switzerland','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBCHF3M','B','5477','CHF','3m','Interbank'
-'5478','BBGBP1M','IBA Great British Pound Interbank LIBOR 1 Month Delayed','United Kingdom','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBGBP1M','B','5478','GBP','1m','Interbank'
-'5479','BBUSD6M','IBA United States Dollar Interbank LIBOR 6 Months Delayed','United States','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBUSD6M','B','5479','USD','6m','Interbank'
-'5480','BBUSDON','IBA United States Dollar Interbank LIBOR Overnight Delayed','United States','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBUSDON','B','5480','USD','ON','Interbank'
-'5481','BBCHF12','IBA Swiss Franc Interbank LIBOR 12 Months Delayed','Switzerland','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBCHF12','B','5481','CHF','1y','Interbank'
-'5482','BBCHF1W','IBA Swiss Franc Interbank LIBOR 1 Week Delayed','Switzerland','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBCHF1W','B','5482','CHF','1w','Interbank'
-'5483','BBCHF2M','IBA Swiss Franc Interbank LIBOR 2 Months Delayed','Switzerland','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBCHF2M','B','5483','CHF','2m','Interbank'
-'5484','BBCHF6M','IBA Swiss Franc Interbank LIBOR 6 Months Delayed','Switzerland','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBCHF6M','B','5484','CHF','6m','Interbank'
-'5485','BBCHFSN','IBA Swiss Franc Interbank LIBOR Spot Next Delayed','Switzerland','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBCHFSN','B','5485','CHF','ST','Interbank'
-'5486','BBEUR1Y','IBA Euro Interbank LIBOR 12 Months Delayed','Eurozone','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBEUR1Y','B','5486','EUR','1y','Interbank'
-'5487','BBEUR1M','IBA Euro Interbank LIBOR 1 Month Delayed','Eurozone','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBEUR1M','B','5487','EUR','1m','Interbank'
-'5488','BBEUR1W','IBA Euro Interbank LIBOR 1 Week Delayed','Eurozone','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBEUR1W','B','5488','EUR','1w','Interbank'
-'5489','BBEUR2M','IBA Euro Interbank LIBOR 2 Months Delayed','Eurozone','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBEUR2M','B','5489','EUR','2m','Interbank'
-'5490','BBEUR6M','IBA Euro Interbank LIBOR 6 Months Delayed','Eurozone','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBEUR6M','B','5490','EUR','6m','Interbank'
-'5491','BBEURON','IBA Euro Interbank LIBOR Overnight Delayed','Eurozone','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBEURON','B','5491','EUR','ON','Interbank'
-'5492','BBGBP12','IBA Great British Pound Interbank LIBOR 12 Months Delayed','United Kingdom','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBGBP12','B','5492','GBP','1y','Interbank'
-'5493','BBGBP1W','IBA Great British Pound Interbank LIBOR 1 Week Delayed','United Kingdom','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBGBP1W','B','5493','GBP','1w','Interbank'
-'5494','BBGBP2M','IBA Great British Pound Interbank LIBOR 2 Months Delayed','United Kingdom','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBGBP2M','B','5494','GBP','2m','Interbank'
-'5495','BBGBP6M','IBA Great British Pound Interbank LIBOR 6 Months Delayed','United Kingdom','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBGBP6M','B','5495','GBP','6m','Interbank'
-'5496','BBGBPON','IBA Great British Pound Interbank LIBOR Overnight Delayed','United Kingdom','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBGBPON','B','5496','GBP','ON','Interbank'
-'5497','BBJPY12','IBA Japanese Yen Interbank LIBOR 12 Months Delayed','Japan','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBJPY12','B','5497','JPY','1y','Interbank'
-'5498','BBJPY1M','IBA Japanese Yen Interbank LIBOR 1 Month Delayed','Japan','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBJPY1M','B','5498','JPY','1m','Interbank'
-'5499','BBJPY1W','IBA Japanese Yen Interbank LIBOR 1 Week Delayed','Japan','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBJPY1W','B','5499','JPY','1w','Interbank'
-'5500','BBJPY2M','IBA Japanese Yen Interbank LIBOR 2 Months Delayed','Japan','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBJPY2M','B','5500','JPY','2m','Interbank'
-'5501','BBJPY6M','IBA Japanese Yen Interbank LIBOR 6 Months Delayed','Japan','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBJPY6M','B','5501','JPY','6m','Interbank'
-'5502','BBJPYSN','IBA Japanese Yen Interbank LIBOR Spot Next Delayed','Japan','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBJPYSN','B','5502','JPY','ST','Interbank'
-'5503','BBUSD12','IBA United States Dollar Interbank LIBOR 12 Months Delayed','United States','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBUSD12','B','5503','USD','1y','Interbank'
-'5504','BBUSD1W','IBA United States Dollar Interbank LIBOR 1 Week Delayed','United States','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBUSD1W','B','5504','USD','1w','Interbank'
-'5505','BBUSD2M','IBA United States Dollar Interbank LIBOR 2 Months Delayed','United States','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBUSD2M','B','5505','USD','2m','Interbank'
-'5506','BBDKK10','10 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK10','B','5506','DKK','10m','Interbank'
-'5507','BBSEK10','10 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK10','B','5507','SEK','10m','Interbank'
-'5508','BBSEK11','11 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK11','B','5508','SEK','11m','Interbank'
-'5509','BBDKK11','11 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK11','B','5509','DKK','11m','Interbank'
-'5510','BBSEK12','12 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK12','B','5510','SEK','1y','Interbank'
-'5511','BBDKK12','12 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK12','B','5511','DKK','1y','Interbank'
-'5512','BBAUD1M','Australia Interbank 1 Month (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD1M','B','5512','AUD','1m','Interbank'
-'5513','BBAUD1W','Australia Interbank 1 Week (LD Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD1W','B','5513','AUD','1w','Interbank'
-'5514','BBAUD10','Australia Interbank 10 Months (LD Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD10','B','5514','AUD','10m','Interbank'
-'5515','BBAUD11','Australia Interbank 11 Months (LD Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD11','B','5515','AUD','11m','Interbank'
-'5516','BBAUD12','Australia Interbank 12 Month (LD Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD12','B','5516','AUD','1y','Interbank'
-'5517','BBAUD2M','Australia Interbank 2 Months (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD2M','B','5517','AUD','2m','Interbank'
-'5518','BBAUD2W','Australia Interbank 2 Week (LD Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD2W','B','5518','AUD','2w','Interbank'
-'5519','BBAUD3M','Australia Interbank 3 Month (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD3M','B','5519','AUD','3m','Interbank'
-'5520','BBAUD4M','Australia Interbank 4 Months (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD4M','B','5520','AUD','4m','Interbank'
-'5521','BBAUD5M','Australia Interbank 5 Months (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD5M','B','5521','AUD','5m','Interbank'
-'5522','BBAUD6M','Australia Interbank 6 Months (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD6M','B','5522','AUD','6m','Interbank'
-'5523','BBAUD7M','Australia Interbank 7 Months (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD7M','B','5523','AUD','7m','Interbank'
-'5524','BBAUD8M','Australia Interbank 8 Months (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD8M','B','5524','AUD','8m','Interbank'
-'5525','BBAUD9M','Australia Interbank 9 Months (London Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUD9M','B','5525','AUD','9m','Interbank'
-'5526','BBAUDSN','Australia Interbank Spot Next (London : B Disc','Australia','Interest Rate','BBA - British Bankers\' Association','Datastream','BBAUDSN','B','5526','AUD','ST','Interbank'
-'5527','BBCAD1M','Canada Interbank 1 Month (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD1M','B','5527','CAD','1m','Interbank'
-'5528','BBCAD1W','Canada Interbank 1 Week (LD Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD1W','B','5528','CAD','1w','Interbank'
-'5529','BBCAD10','Canada Interbank 10 Months (LD Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD10','B','5529','CAD','10m','Interbank'
-'5530','BBCAD11','Canada Interbank 11 Months (LD Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD11','B','5530','CAD','11m','Interbank'
-'5531','BBCAD12','Canada Interbank 12 Month (LD Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD12','B','5531','CAD','1y','Interbank'
-'5532','BBCAD2M','Canada Interbank 2 Months (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD2M','B','5532','CAD','2m','Interbank'
-'5533','BBCAD2W','Canada Interbank 2 Week (LD Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD2W','B','5533','CAD','2w','Interbank'
-'5534','BBCAD3M','Canada Interbank 3 Month (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD3M','B','5534','CAD','3m','Interbank'
-'5535','BBCAD4M','Canada Interbank 4 Months (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD4M','B','5535','CAD','4m','Interbank'
-'5536','BBCAD5M','Canada Interbank 5 Months (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD5M','B','5536','CAD','5m','Interbank'
-'5537','BBCAD6M','Canada Interbank 6 Months (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD6M','B','5537','CAD','6m','Interbank'
-'5538','BBCAD7M','Canada Interbank 7 Months (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD7M','B','5538','CAD','7m','Interbank'
-'5539','BBCAD8M','Canada Interbank 8 Months (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD8M','B','5539','CAD','8m','Interbank'
-'5540','BBCAD9M','Canada Interbank 9 Months (London Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCAD9M','B','5540','CAD','9m','Interbank'
-'5541','BBCADON','Canada Interbank Overnight (London : B Disc','Canada','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCADON','B','5541','CAD','ON','Interbank'
-'5542','BBDKK1M','Denmark Interbank 1 Month London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK1M','B','5542','DKK','1m','Interbank'
-'5543','BBDKK1W','Denmark Interbank 1 Week London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK1W','B','5543','DKK','1w','Interbank'
-'5544','BBDKK2M','Denmark Interbank 2 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK2M','B','5544','DKK','2m','Interbank'
-'5545','BBDKK2W','Denmark Interbank 2 Weeks London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK2W','B','5545','DKK','2w','Interbank'
-'5546','BBDKK3M','Denmark Interbank 3 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK3M','B','5546','DKK','3m','Interbank'
-'5547','BBDKK4M','Denmark Interbank 4 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK4M','B','5547','DKK','4m','Interbank'
-'5548','BBDKK5M','Denmark Interbank 5 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK5M','B','5548','DKK','5m','Interbank'
-'5549','BBDKK6M','Denmark Interbank 6 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK6M','B','5549','DKK','6m','Interbank'
-'5550','BBDKK7M','Denmark Interbank 7 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK7M','B','5550','DKK','7m','Interbank'
-'5551','BBDKK8M','Denmark Interbank 8 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK8M','B','5551','DKK','8m','Interbank'
-'5552','BBDKK9M','Denmark Interbank 9 Months London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKK9M','B','5552','DKK','9m','Interbank'
-'5553','BBEUR10','Euro Interbank 10 Months (LD Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR10','B','5553','EUR','10m','Interbank'
-'5554','BBEUR11','Euro Interbank 11 Months (LD Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR11','B','5554','EUR','11m','Interbank'
-'5555','BBEUR2W','Euro Interbank 2 Week (London : Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR2W','B','5555','EUR','2w','Interbank'
-'5556','BBEUR4M','Euro Interbank 4 Months (London Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR4M','B','5556','EUR','4m','Interbank'
-'5557','BBEUR5M','Euro Interbank 5 Months (London Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR5M','B','5557','EUR','5m','Interbank'
-'5558','BBEUR7M','Euro Interbank 7 Months (London Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR7M','B','5558','EUR','7m','Interbank'
-'5559','BBEUR8M','Euro Interbank 8 Months (London Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR8M','B','5559','EUR','8m','Interbank'
-'5560','BBEUR9M','Euro Interbank 9 Months (London Disc','Eurozone','Interest Rate','BBA - British Bankers\' Association','Datastream','BBEUR9M','B','5560','EUR','9m','Interbank'
-'5561','BBCHF1M','IBA Swiss Franc Interbank LIBOR 1 Month Delayed Disc','Switzerland','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBCHF1M','B','5561','CHF','1m','Interbank'
-'5562','BBEUR3M','IBA Euro Interbank LIBOR 3 Months Delayed Disc','Eurozone','Interest Rate','ICE Benchmark Administration Ltd.','Datastream','BBEUR3M','B','5562','EUR','3m','Interbank'
-'5563','BBJPY10','Japan Interbank 10 Months (LD Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY10','B','5563','JPY','10m','Interbank'
-'5564','BBJPY11','Japan Interbank 11 Months (LD Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY11','B','5564','JPY','11m','Interbank'
-'5565','BBJPY2W','Japan Interbank 2 Week (LD Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY2W','B','5565','JPY','2w','Interbank'
-'5566','BBJPY4M','Japan Interbank 4 Months (London Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY4M','B','5566','JPY','4m','Interbank'
-'5567','BBJPY5M','Japan Interbank 5 Months (London Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY5M','B','5567','JPY','5m','Interbank'
-'5568','BBJPY7M','Japan Interbank 7 Months (London Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY7M','B','5568','JPY','7m','Interbank'
-'5569','BBJPY8M','Japan Interbank 8 Months (London Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY8M','B','5569','JPY','8m','Interbank'
-'5570','BBJPY9M','Japan Interbank 9 Months (London Disc','Japan','Interest Rate','BBA - British Bankers\' Association','Datastream','BBJPY9M','B','5570','JPY','9m','Interbank'
-'5571','BBNZD10','New Zealand Interbank 10 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD10','B','5571','NZD','10m','Interbank'
-'5572','BBNZD11','New Zealand Interbank 11 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD11','B','5572','NZD','11m','Interbank'
-'5573','BBNZD12','New Zealand Interbank 12 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD12','B','5573','NZD','1y','Interbank'
-'5574','BBNZD1M','New Zealand Interbank 1 Month (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD1M','B','5574','NZD','1m','Interbank'
-'5575','BBNZD1W','New Zealand Interbank 1 Week (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD1W','B','5575','NZD','1w','Interbank'
-'5576','BBNZD2M','New Zealand Interbank 2 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD2M','B','5576','NZD','2m','Interbank'
-'5577','BBNZD2W','New Zealand Interbank 2 Weeks (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD2W','B','5577','NZD','2w','Interbank'
-'5578','BBNZD3M','New Zealand Interbank 3 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD3M','B','5578','NZD','3m','Interbank'
-'5579','BBNZD4M','New Zealand Interbank 4 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD4M','B','5579','NZD','4m','Interbank'
-'5580','BBNZD5M','New Zealand Interbank 5 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD5M','B','5580','NZD','5m','Interbank'
-'5581','BBNZD6M','New Zealand Interbank 6 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD6M','B','5581','NZD','6m','Interbank'
-'5582','BBNZD7M','New Zealand Interbank 7 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD7M','B','5582','NZD','7m','Interbank'
-'5583','BBNZD8M','New Zealand Interbank 8 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD8M','B','5583','NZD','8m','Interbank'
-'5584','BBNZD9M','New Zealand Interbank 9 Months (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZD9M','B','5584','NZD','9m','Interbank'
-'5585','BBNZDSN','New Zealand Interbank Spot Next (London : British Bankers Association) Disc','New Zealand','Interest Rate','BBA - British Bankers\' Association','Datastream','BBNZDSN','B','5585','NZD','ST','Interbank'
-'5586','BBDKKON','Overnight London : British Bankers Association Disc','Denmark','Interest Rate','BBA - British Bankers\' Association','Datastream','BBDKKON','B','5586','DKK','ON','Interbank'
-'5587','BBSEKSN','Spot Next London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEKSN','B','5587','SEK','ST','Interbank'
-'5588','BBSEK1M','Sweden Interbank 1 Month London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK1M','B','5588','SEK','1m','Interbank'
-'5589','BBSEK1W','Sweden Interbank 1 Week London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK1W','B','5589','SEK','1w','Interbank'
-'5590','BBSEK2M','Sweden Interbank 2 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK2M','B','5590','SEK','2m','Interbank'
-'5591','BBSEK2W','Sweden Interbank 2 Weeks London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK2W','B','5591','SEK','2w','Interbank'
-'5592','BBSEK3M','Sweden Interbank 3 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK3M','B','5592','SEK','3m','Interbank'
-'5593','BBSEK4M','Sweden Interbank 4 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK4M','B','5593','SEK','4m','Interbank'
-'5594','BBSEK5M','Sweden Interbank 5 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK5M','B','5594','SEK','5m','Interbank'
-'5595','BBSEK6M','Sweden Interbank 6 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK6M','B','5595','SEK','6m','Interbank'
-'5596','BBSEK7M','Sweden Interbank 7 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK7M','B','5596','SEK','7m','Interbank'
-'5597','BBSEK8M','Sweden Interbank 8 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK8M','B','5597','SEK','8m','Interbank'
-'5598','BBSEK9M','Sweden Interbank 9 Months London : British Bankers Association Disc','Sweden','Interest Rate','BBA - British Bankers\' Association','Datastream','BBSEK9M','B','5598','SEK','9m','Interbank'
-'5599','BBCHF10','Switzerland Interbank 10 Months (LD Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF10','B','5599','CHF','10m','Interbank'
-'5600','BBCHF11','Switzerland Interbank 11 Months (LD Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF11','B','5600','CHF','11m','Interbank'
-'5601','BBCHF2W','Switzerland Interbank 2 Week (LD Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF2W','B','5601','CHF','2w','Interbank'
-'5602','BBCHF4M','Switzerland Interbank 4 Months (London Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF4M','B','5602','CHF','4m','Interbank'
-'5603','BBCHF5M','Switzerland Interbank 5 Months (London Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF5M','B','5603','CHF','5m','Interbank'
-'5604','BBCHF7M','Switzerland Interbank 7 Months (London Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF7M','B','5604','CHF','7m','Interbank'
-'5605','BBCHF8M','Switzerland Interbank 8 Months (London Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF8M','B','5605','CHF','8m','Interbank'
-'5606','BBCHF9M','Switzerland Interbank 9 Months (London Disc','Switzerland','Interest Rate','BBA - British Bankers\' Association','Datastream','BBCHF9M','B','5606','CHF','9m','Interbank'
-'5607','BBGBP10','United Kingdom Interbank 10 Months (LD Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP10','B','5607','GBP','10m','Interbank'
-'5608','BBGBP11','United Kingdom Interbank 11 Months (LD Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP11','B','5608','GBP','11m','Interbank'
-'5609','BBGBP2W','United Kingdom Interbank 2 Week (LD Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP2W','B','5609','GBP','2w','Interbank'
-'5610','BBGBP4M','United Kingdom Interbank 4 Months (London Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP4M','B','5610','GBP','4m','Interbank'
-'5611','BBGBP5M','United Kingdom Interbank 5 Months (London Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP5M','B','5611','GBP','5m','Interbank'
-'5612','BBGBP7M','United Kingdom Interbank 7 Months (London Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP7M','B','5612','GBP','7m','Interbank'
-'5613','BBGBP8M','United Kingdom Interbank 8 Months (London Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP8M','B','5613','GBP','8m','Interbank'
-'5614','BBGBP9M','United Kingdom Interbank 9 Months (London Disc','United Kingdom','Interest Rate','BBA - British Bankers\' Association','Datastream','BBGBP9M','B','5614','GBP','9m','Interbank'
-'5615','BBUSD10','United States Interbank 10 Months (LD Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD10','B','5615','USD','10m','Interbank'
-'5616','BBUSD11','United States Interbank 11 Months (LD Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD11','B','5616','USD','11m','Interbank'
-'5617','BBUSD2W','United States Interbank 2 Week (LD Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD2W','B','5617','USD','2w','Interbank'
-'5618','BBUSD4M','United States Interbank 4 Months (London Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD4M','B','5618','USD','4m','Interbank'
-'5619','BBUSD5M','United States Interbank 5 Months (London Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD5M','B','5619','USD','5m','Interbank'
-'5620','BBUSD7M','United States Interbank 7 Months (London Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD7M','B','5620','USD','7m','Interbank'
-'5621','BBUSD8M','United States Interbank 8 Months (London Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD8M','B','5621','USD','8m','Interbank'
-'5622','BBUSD9M','United States Interbank 9 Months (London Disc','United States','Interest Rate','BBA - British Bankers\' Association','Datastream','BBUSD9M','B','5622','USD','9m','Interbank'
-'5623','ECAUD1M','Australian Dollar 1 Month Deposit (Financial Times / Refinitiv)','Australia','Interest Rate','Financial Times/Refinitiv','Datastream','ECAUD1M','B','5623','AUD','1m','Deposit'
-'5624','ECAUD1W','Australian Dollar SW Deposit (Financial Times / Refinitiv)','Australia','Interest Rate','Financial Times/Refinitiv','Datastream','ECAUD1W','B','5624','AUD','1w','Deposit'
-'5625','ECAUD1Y','Australian Dollar 1 Year Deposit (Financial Times / Refinitiv)','Australia','Interest Rate','Financial Times/Refinitiv','Datastream','ECAUD1Y','B','5625','AUD','1y','Deposit'
-'5626','ECAUD3M','Australian Dollar 3 Months Deposit (Financial Times / Refinitiv)','Australia','Interest Rate','Financial Times/Refinitiv','Datastream','ECAUD3M','B','5626','AUD','3m','Deposit'
-'5627','ECAUD6M','Australian Dollar 6 Months Deposit (Financial Times / Refinitiv)','Australia','Interest Rate','Financial Times/Refinitiv','Datastream','ECAUD6M','B','5627','AUD','6m','Deposit'
-'5628','ECAUDST','Australian Dollar Short Term Deposit (Financial Times / Refinitiv)','Australia','Interest Rate','Financial Times/Refinitiv','Datastream','ECAUDST','B','5628','AUD','ST','Deposit'
-'5629','ECCAD1M','Canadian Dollar 1 Month Deposit (Financial Times / Refinitiv)','Canada','Interest Rate','Financial Times/Refinitiv','Datastream','ECCAD1M','B','5629','CAD','1m','Deposit'
-'5630','ECCAD1W','Canadian Dollar SW Deposit (Financial Times / Refinitiv)','Canada','Interest Rate','Financial Times/Refinitiv','Datastream','ECCAD1W','B','5630','CAD','1w','Deposit'
-'5631','ECCAD1Y','Canadian Dollar 1 Year Deposit (Financial Times / Refinitiv)','Canada','Interest Rate','Financial Times/Refinitiv','Datastream','ECCAD1Y','B','5631','CAD','1y','Deposit'
-'5632','ECCAD3M','Canadian Dollar 3 Months Deposit (Financial Times / Refinitiv)','Canada','Interest Rate','Financial Times/Refinitiv','Datastream','ECCAD3M','B','5632','CAD','3m','Deposit'
-'5633','ECCAD6M','Canadian Dollar 6 Months Deposit (Financial Times / Refinitiv)','Canada','Interest Rate','Financial Times/Refinitiv','Datastream','ECCAD6M','B','5633','CAD','6m','Deposit'
-'5634','ECCADST','Canadian Dollar Short Term Canadian Dollar','Canada','Interest Rate','Financial Times/Refinitiv','Datastream','ECCADST','B','5634','CAD','ST','Deposit'
-'5635','ECDKN1M','Danish Krone 1 Month Deposit (Financial Times / Refinitiv)','Denmark','Interest Rate','Financial Times/Refinitiv','Datastream','ECDKN1M','B','5635','DKK','1m','Deposit'
-'5636','ECDKN1W','Danish Krone SW Deposit (Financial Times / Refinitiv)','Denmark','Interest Rate','Financial Times/Refinitiv','Datastream','ECDKN1W','B','5636','DKK','1w','Deposit'
-'5637','ECDKN1Y','Danish Krone 1 Year Deposit (Financial Times / Refinitiv)','Denmark','Interest Rate','Financial Times/Refinitiv','Datastream','ECDKN1Y','B','5637','DKK','1y','Deposit'
-'5638','ECDKN3M','Danish Krone 3 Months Deposit (Financial Times / Refinitiv)','Denmark','Interest Rate','Financial Times/Refinitiv','Datastream','ECDKN3M','B','5638','DKK','3m','Deposit'
-'5639','ECDKN6M','Danish Krone 6 Months Deposit (Financial Times / Refinitiv)','Denmark','Interest Rate','Financial Times/Refinitiv','Datastream','ECDKN6M','B','5639','DKK','6m','Deposit'
-'5640','ECDKNST','Danish Krone Short Term Deposit (Financial Times / Refinitiv)','Denmark','Interest Rate','Financial Times/Refinitiv','Datastream','ECDKNST','B','5640','DKK','ST','Deposit'
-'5641','ECEUR1M','Euro 1 Month Deposit (Financial Times / Refinitiv)','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','ECEUR1M','B','5641','EUR','1m','Deposit'
-'5642','ECEUR1W','Euro SW Deposit (Financial Times / Refinitiv)','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','ECEUR1W','B','5642','EUR','1w','Deposit'
-'5643','ECEUR1Y','Euro 1 Year Deposit (Financial Times / Refinitiv)','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','ECEUR1Y','B','5643','EUR','1y','Deposit'
-'5644','ECEUR3M','Euro 3 Months Deposit (Financial Times / Refinitiv)','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','ECEUR3M','B','5644','EUR','3m','Deposit'
-'5645','ECEUR6M','Euro 6 Months Deposit (Financial Times / Refinitiv)','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','ECEUR6M','B','5645','EUR','6m','Deposit'
-'5646','ECEURST','Euro Short Term Deposit (Financial Times / Refinitiv)','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','ECEURST','B','5646','EUR','ST','Deposit'
-'5647','GSEURTN','Refinitiv Euro Tomorrow Next Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEURTN','B','5647','EUR','TN','Deposit'
-'5648','GSEURON','Refinitiv Euro Overnight Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEURON','B','5648','EUR','ON','Deposit'
-'5649','GSEUR1W','Refinitiv Euro SW Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR1W','B','5649','EUR','1w','Deposit'
-'5650','GSEUR2W','Refinitiv Euro 2 Weeks Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR2W','B','5650','EUR','2w','Deposit'
-'5651','GSEUR3W','Refinitiv Euro 3W Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR3W','B','5651','EUR','3w','Deposit'
-'5652','GSEUR1M','Refinitiv Euro 1 Month Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR1M','B','5652','EUR','1m','Deposit'
-'5653','GSEUR2M','Refinitiv Euro 2 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR2M','B','5653','EUR','2m','Deposit'
-'5654','GSEUR3M','Refinitiv Euro 3 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR3M','B','5654','EUR','3m','Deposit'
-'5655','GSEUR4M','Refinitiv Euro 4 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR4M','B','5655','EUR','4m','Deposit'
-'5656','GSEUR5M','Refinitiv Euro 5 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR5M','B','5656','EUR','5m','Deposit'
-'5657','GSEUR6M','Refinitiv Euro 6 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR6M','B','5657','EUR','6m','Deposit'
-'5658','GSEUR7M','Refinitiv Euro 7 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR7M','B','5658','EUR','7m','Deposit'
-'5659','GSEUR8M','Refinitiv Euro 8 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR8M','B','5659','EUR','8m','Deposit'
-'5660','GSEUR9M','Refinitiv Euro 9 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR9M','B','5660','EUR','9m','Deposit'
-'5661','GSEUR10','Refinitiv Euro 10 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR10','B','5661','EUR','10m','Deposit'
-'5662','GSEUR11','Refinitiv Euro 11 Months Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR11','B','5662','EUR','11m','Deposit'
-'5663','GSEUR1Y','Refinitiv Euro 1 Year Deposit','Eurozone','Interest Rate','Financial Times/Refinitiv','Datastream','GSEUR1Y','B','5663','EUR','1y','Deposit'
-'5664','ECHKD1M','Hong Kong Dollar 1 Month Deposit (TP / Refinitiv)','Hong Kong','Interest Rate','Financial Times/Refinitiv','Datastream','ECHKD1M','B','5664','HKD','1m','Deposit'
-'5665','ECHKD1W','Hong Kong Dollar SW Deposit (TP / Refinitiv)','Hong Kong','Interest Rate','Financial Times/Refinitiv','Datastream','ECHKD1W','B','5665','HKD','1w','Deposit'
-'5666','ECHKD1Y','Hong Kong Dollar 1 Year Deposit (TP / Refinitiv)','Hong Kong','Interest Rate','Financial Times/Refinitiv','Datastream','ECHKD1Y','B','5666','HKD','1y','Deposit'
-'5667','ECHKD3M','Hong Kong Dollar 3 Months Deposit (TP / Refinitiv)','Hong Kong','Interest Rate','Financial Times/Refinitiv','Datastream','ECHKD3M','B','5667','HKD','3m','Deposit'
-'5668','ECHKD6M','Hong Kong Dollar 6 Months Deposit (TP / Refinitiv)','Hong Kong','Interest Rate','Financial Times/Refinitiv','Datastream','ECHKD6M','B','5668','HKD','6m','Deposit'
-'5669','ECHKDST','Hong Kong Dollar Short Term Deposit (TP / Refinitiv)','Hong Kong','Interest Rate','Financial Times/Refinitiv','Datastream','ECHKDST','B','5669','HKD','ST','Deposit'
-'5670','ECJAP1M','Japanese Yen 1 Month Deposit (Financial Times / Refinitiv)','Japan','Interest Rate','Financial Times/Refinitiv','Datastream','ECJAP1M','B','5670','JPY','1m','Deposit'
-'5671','ECJAP1W','Japanese Yen SW Deposit (Financial Times / Refinitiv)','Japan','Interest Rate','Financial Times/Refinitiv','Datastream','ECJAP1W','B','5671','JPY','1w','Deposit'
-'5672','ECJAP1Y','Japanese Yen 1 Year Deposit (Financial Times / Refinitiv)','Japan','Interest Rate','Financial Times/Refinitiv','Datastream','ECJAP1Y','B','5672','JPY','1y','Deposit'
-'5673','ECJAP3M','Japanese Yen 3 Months Deposit (Financial Times / Refinitiv)','Japan','Interest Rate','Financial Times/Refinitiv','Datastream','ECJAP3M','B','5673','JPY','3m','Deposit'
-'5674','ECJAP6M','Japanese Yen 6 Months Deposit (Financial Times / Refinitiv)','Japan','Interest Rate','Financial Times/Refinitiv','Datastream','ECJAP6M','B','5674','JPY','6m','Deposit'
-'5675','ECJAPST','Japanese Yen Short Term Deposit (Financial Times / Refinitiv)','Japan','Interest Rate','Financial Times/Refinitiv','Datastream','ECJAPST','B','5675','JPY','ST','Deposit'
-'5676','ECNZD1M','New Zealand Dollar 1 Month Deposit (Financial Times / Refinitiv)','New Zealand','Interest Rate','Financial Times/Refinitiv','Datastream','ECNZD1M','B','5676','NZD','1m','Deposit'
-'5677','ECNZD1W','New Zealand Dollar SW Deposit (Financial Times / Refinitiv)','New Zealand','Interest Rate','Financial Times/Refinitiv','Datastream','ECNZD1W','B','5677','NZD','1w','Deposit'
-'5678','ECNZD1Y','New Zealand Dollar 1 Year Deposit (Financial Times / Refinitiv)','New Zealand','Interest Rate','Financial Times/Refinitiv','Datastream','ECNZD1Y','B','5678','NZD','1y','Deposit'
-'5679','ECNZD3M','New Zealand Dollar 3 Months Deposit (Financial Times / Refinitiv)','New Zealand','Interest Rate','Financial Times/Refinitiv','Datastream','ECNZD3M','B','5679','NZD','3m','Deposit'
-'5680','ECNZD6M','New Zealand Dollar 6 Months Deposit (Financial Times / Refinitiv)','New Zealand','Interest Rate','Financial Times/Refinitiv','Datastream','ECNZD6M','B','5680','NZD','6m','Deposit'
-'5681','ECNZDST','New Zealand Dollar Short Term Deposit (Financial Times / Refinitiv)','New Zealand','Interest Rate','Financial Times/Refinitiv','Datastream','ECNZDST','B','5681','NZD','ST','Deposit'
-'5682','ECNOR1M','Norwegian Krone 1 Month Deposit (Financial Times / Refinitiv)','Norway','Interest Rate','Financial Times/Refinitiv','Datastream','ECNOR1M','B','5682','NOK','1m','Deposit'
-'5683','ECNOR1W','Norwegian Krone SW Deposit (Financial Times / Refinitiv)','Norway','Interest Rate','Financial Times/Refinitiv','Datastream','ECNOR1W','B','5683','NOK','1w','Deposit'
-'5684','ECNOR1Y','Norwegian Krone 1 Year Deposit (Financial Times / Refinitiv)','Norway','Interest Rate','Financial Times/Refinitiv','Datastream','ECNOR1Y','B','5684','NOK','1y','Deposit'
-'5685','ECNOR3M','Norwegian Krone 3 Months Deposit (Financial Times / Refinitiv)','Norway','Interest Rate','Financial Times/Refinitiv','Datastream','ECNOR3M','B','5685','NOK','3m','Deposit'
-'5686','ECNOR6M','Norwegian Krone 6 Months Deposit (Financial Times / Refinitiv)','Norway','Interest Rate','Financial Times/Refinitiv','Datastream','ECNOR6M','B','5686','NOK','6m','Deposit'
-'5687','ECNORST','Norwegian Krone Short Term Norwegian Krone','Norway','Interest Rate','Financial Times/Refinitiv','Datastream','ECNORST','B','5687','NOK','ST','Deposit'
-'5688','ECSAR1M','S African Rand 1 Month Deposit (TP / Refinitiv)','South Africa','Interest Rate','Financial Times/Refinitiv','Datastream','ECSAR1M','B','5688','ZAR','1m','Deposit'
-'5689','ECSAR1W','S African Rand SW Deposit (TP / Refinitiv)','South Africa','Interest Rate','Financial Times/Refinitiv','Datastream','ECSAR1W','B','5689','ZAR','1w','Deposit'
-'5690','ECSAR1Y','S African Rand 1 Year Deposit (TP / Refinitiv)','South Africa','Interest Rate','Financial Times/Refinitiv','Datastream','ECSAR1Y','B','5690','ZAR','1y','Deposit'
-'5691','ECSAR3M','S African Rand 3 Months Deposit (TP / Refinitiv)','South Africa','Interest Rate','Financial Times/Refinitiv','Datastream','ECSAR3M','B','5691','ZAR','3m','Deposit'
-'5692','ECSAR6M','S African Rand 6 Months Deposit (TP / Refinitiv)','South Africa','Interest Rate','Financial Times/Refinitiv','Datastream','ECSAR6M','B','5692','ZAR','6m','Deposit'
-'5693','ECSARST','S African Rand Short Term Deposit (TP / Refinitiv)','South Africa','Interest Rate','Financial Times/Refinitiv','Datastream','ECSARST','B','5693','ZAR','ST','Deposit'
-'5694','ECSWE1M','Swedish Krona 1 Month Deposit (Financial Times / Refinitiv)','Sweden','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWE1M','B','5694','SEK','1m','Deposit'
-'5695','ECSWE1W','Swedish Krona SW Deposit (Financial Times / Refinitiv)','Sweden','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWE1W','B','5695','SEK','1w','Deposit'
-'5696','ECSWE1Y','Swedish Krona 1 Year Deposit (Financial Times / Refinitiv)','Sweden','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWE1Y','B','5696','SEK','1y','Deposit'
-'5697','ECSWE3M','Swedish Krona 3 Months Deposit (Financial Times / Refinitiv)','Sweden','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWE3M','B','5697','SEK','3m','Deposit'
-'5698','ECSWE6M','Swedish Krona 6 Months Deposit (Financial Times / Refinitiv)','Sweden','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWE6M','B','5698','SEK','6m','Deposit'
-'5699','ECSWEST','Swedish Krona Short Term Deposit (Financial Times / Refinitiv)','Sweden','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWEST','B','5699','SEK','ST','Deposit'
-'5700','ECSWF1M','Swiss Franc 1 Month Deposit (Financial Times / Refinitiv)','Switzerland','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWF1M','B','5700','CHF','1m','Deposit'
-'5701','ECSWF1W','Swiss Franc SW Deposit (Financial Times / Refinitiv)','Switzerland','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWF1W','B','5701','CHF','1w','Deposit'
-'5702','ECSWF1Y','Swiss Franc 1 Year Deposit (Financial Times / Refinitiv)','Switzerland','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWF1Y','B','5702','CHF','1y','Deposit'
-'5703','ECSWF3M','Swiss Franc 3 Months Deposit (Financial Times / Refinitiv)','Switzerland','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWF3M','B','5703','CHF','3m','Deposit'
-'5704','ECSWF6M','Swiss Franc 6 Months Deposit (Financial Times / Refinitiv)','Switzerland','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWF6M','B','5704','CHF','6m','Deposit'
-'5705','ECSWFST','Swiss Franc Short Term Deposit (Financial Times / Refinitiv)','Switzerland','Interest Rate','Financial Times/Refinitiv','Datastream','ECSWFST','B','5705','CHF','ST','Deposit'
-'5706','ECUKP1W','United Kingdom Sterling SW Deposit (Financial Times / Refinitiv)','United Kingdom','Interest Rate','Financial Times/Refinitiv','Datastream','ECUKP1W','B','5706','GBP','1w','Deposit'
-'5707','ECUKP1Y','United Kingdom Sterling 1 Year Deposit (Financial Times / Refinitiv)','United Kingdom','Interest Rate','Financial Times/Refinitiv','Datastream','ECUKP1Y','B','5707','GBP','1y','Deposit'
-'5708','ECUKP3M','United Kingdom Sterling 3 Months Deposit (Financial Times / Refinitiv)','United Kingdom','Interest Rate','Financial Times/Refinitiv','Datastream','ECUKP3M','B','5708','GBP','3m','Deposit'
-'5709','ECUKP6M','United Kingdom Sterling 6 Months Deposit (Financial Times / Refinitiv)','United Kingdom','Interest Rate','Financial Times/Refinitiv','Datastream','ECUKP6M','B','5709','GBP','6m','Deposit'
-'5710','ECUKPST','United Kingdom Sterling Short Term Deposit (Financial Times / Refinitiv)','United Kingdom','Interest Rate','Financial Times/Refinitiv','Datastream','ECUKPST','B','5710','GBP','ST','Deposit'
-'5711','ECUKP1M','United Kingdom Sterling 1 Month Deposit (Financial Times / Refinitiv)','United Kingdom','Interest Rate','Financial Times/Refinitiv','Datastream','ECUKP1M','B','5711','GBP','1m','Deposit'
-'5712','ECUSD1M','United States Dollar 1 Month Deposit (Financial Times / Refinitiv)','United States','Interest Rate','Financial Times/Refinitiv','Datastream','ECUSD1M','B','5712','USD','1m','Deposit'
-'5713','ECUSD1W','United States Dollar SW Deposit (Financial Times / Refinitiv)','United States','Interest Rate','Financial Times/Refinitiv','Datastream','ECUSD1W','B','5713','USD','1w','Deposit'
-'5714','ECUSD1Y','United States Dollar 1 Year Deposit (Financial Times / Refinitiv)','United States','Interest Rate','Financial Times/Refinitiv','Datastream','ECUSD1Y','B','5714','USD','1y','Deposit'
-'5715','ECUSD3M','United States Dollar 3 Months Deposit (Financial Times / Refinitiv)','United States','Interest Rate','Financial Times/Refinitiv','Datastream','ECUSD3M','B','5715','USD','3m','Deposit'
-'5716','ECUSD6M','United States Dollar 6 Months Deposit (Financial Times / Refinitiv)','United States','Interest Rate','Financial Times/Refinitiv','Datastream','ECUSD6M','B','5716','USD','6m','Deposit'
-'5717','ECUSDST','United States Dollar Short Term Deposit (Financial Times / Refinitiv)','United States','Interest Rate','Financial Times/Refinitiv','Datastream','ECUSDST','B','5717','USD','ST','Deposit'
-'5718','ECBFRST','BG Euro - Franc Tomorrow Next Deposit (Financial Times / Refinitiv)','Belgium','Interest Rate','Financial Times/Refinitiv','Datastream','ECBFRST','B','5718','BEF','ST','Deposit'
-'5719','ECBFR1W','BG Euro - Franc SW Deposit (Financial Times / Refinitiv)','Belgium','Interest Rate','Financial Times/Refinitiv','Datastream','ECBFR1W','B','5719','BEF','1w','Deposit'
-'5720','ECBFR1M','BG Euro - Franc 1 Month Deposit (Financial Times / Refinitiv)','Belgium','Interest Rate','Financial Times/Refinitiv','Datastream','ECBFR1M','B','5720','BEF','1m','Deposit'
-'5721','ECBFR3M','BG Euro - Franc 3 Months Deposit (Financial Times / Refinitiv)','Belgium','Interest Rate','Financial Times/Refinitiv','Datastream','ECBFR3M','B','5721','BEF','3m','Deposit'
-'5722','ECBFR6M','BG Euro - Franc 6 Months Deposit (Financial Times / Refinitiv)','Belgium','Interest Rate','Financial Times/Refinitiv','Datastream','ECBFR6M','B','5722','BEF','6m','Deposit'
-'5723','ECBFR1Y','BG Euro - Franc 1 Year Deposit (Financial Times / Refinitiv)','Belgium','Interest Rate','Financial Times/Refinitiv','Datastream','ECBFR1Y','B','5723','BEF','1y','Deposit'
-'5724','ECFFRST','FR Euro - Franc Short Term Deposit (Financial Times / Refinitiv)','France','Interest Rate','Financial Times/Refinitiv','Datastream','ECFFRST','B','5724','FRF','ST','Deposit'
-'5725','ECFFR1W','FR Euro - Franc SW Deposit (Financial Times / Refinitiv)','France','Interest Rate','Financial Times/Refinitiv','Datastream','ECFFR1W','B','5725','FRF','1w','Deposit'
-'5726','ECFFR1M','FR Euro - Franc 1 Month Deposit (Financial Times / Refinitiv)','France','Interest Rate','Financial Times/Refinitiv','Datastream','ECFFR1M','B','5726','FRF','1m','Deposit'
-'5727','ECFFR3M','FR Euro - Franc 3 Months Deposit (Financial Times / Refinitiv)','France','Interest Rate','Financial Times/Refinitiv','Datastream','ECFFR3M','B','5727','FRF','3m','Deposit'
-'5728','ECFFR6M','FR Euro - Franc 6 Months Deposit (Financial Times / Refinitiv)','France','Interest Rate','Financial Times/Refinitiv','Datastream','ECFFR6M','B','5728','FRF','6m','Deposit'
-'5729','ECFFR1Y','FR Euro - Franc 1 Year Deposit (Financial Times / Refinitiv)','France','Interest Rate','Financial Times/Refinitiv','Datastream','ECFFR1Y','B','5729','FRF','1y','Deposit'
-'5730','ECWGMST','BD Euro - Mark Short Term Deposit (Financial Times / Refinitiv)','Germany','Interest Rate','Financial Times/Refinitiv','Datastream','ECWGMST','B','5730','DEM','ST','Deposit'
-'5731','ECWGM1W','BD Euro - Mark SW Deposit (Financial Times / Refinitiv)','Germany','Interest Rate','Financial Times/Refinitiv','Datastream','ECWGM1W','B','5731','DEM','1w','Deposit'
-'5732','ECWGM1M','BD Euro - Mark 1 Month Deposit (Financial Times / Refinitiv)','Germany','Interest Rate','Financial Times/Refinitiv','Datastream','ECWGM1M','B','5732','DEM','1m','Deposit'
-'5733','ECWGM3M','BD Euro - Mark 3 Months Deposit (Financial Times / Refinitiv)','Germany','Interest Rate','Financial Times/Refinitiv','Datastream','ECWGM3M','B','5733','DEM','3m','Deposit'
-'5734','ECWGM6M','BD Euro - Mark 6 Months Deposit (Financial Times / Refinitiv)','Germany','Interest Rate','Financial Times/Refinitiv','Datastream','ECWGM6M','B','5734','DEM','6m','Deposit'
-'5735','ECWGM1Y','BD Euro - Mark 1 Year Deposit (Financial Times / Refinitiv)','Germany','Interest Rate','Financial Times/Refinitiv','Datastream','ECWGM1Y','B','5735','DEM','1y','Deposit'
-'5736','ECITLST','IT Euro-Lira Short Term Deposit (Financial Times / Refinitiv)','Italy','Interest Rate','Financial Times/Refinitiv','Datastream','ECITLST','B','5736','ITL','ST','Deposit'
-'5737','ECITL1W','IT Euro-Lira SW Deposit (Financial Times / Refinitiv)','Italy','Interest Rate','Financial Times/Refinitiv','Datastream','ECITL1W','B','5737','ITL','1w','Deposit'
-'5738','ECITL1M','IT Euro-Lira 1 Month Deposit (Financial Times / Refinitiv)','Italy','Interest Rate','Financial Times/Refinitiv','Datastream','ECITL1M','B','5738','ITL','1m','Deposit'
-'5739','ECITL3M','IT Euro-Lira 3 Months Deposit (Financial Times / Refinitiv)','Italy','Interest Rate','Financial Times/Refinitiv','Datastream','ECITL3M','B','5739','ITL','3m','Deposit'
-'5740','ECITL6M','IT Euro-Lira 6 Months Deposit (Financial Times / Refinitiv)','Italy','Interest Rate','Financial Times/Refinitiv','Datastream','ECITL6M','B','5740','ITL','6m','Deposit'
-'5741','ECITL1Y','IT Euro-Lira 1 Year Deposit (Financial Times / Refinitiv)','Italy','Interest Rate','Financial Times/Refinitiv','Datastream','ECITL1Y','B','5741','ITL','1y','Deposit'
-'5742','ECNLGST','NL Euro-Guilder Tomorrow Next Deposit (Financial Times / Refinitiv)','Netherlands','Interest Rate','Financial Times/Refinitiv','Datastream','ECNLGST','B','5742','NLG','ST','Deposit'
-'5743','ECNLG1W','NL Euro-Guilder SW Deposit (Financial Times / Refinitiv)','Netherlands','Interest Rate','Financial Times/Refinitiv','Datastream','ECNLG1W','B','5743','NLG','1w','Deposit'
-'5744','ECNLG1M','NL Euro-Guilder 1 Month Deposit (Financial Times / Refinitiv)','Netherlands','Interest Rate','Financial Times/Refinitiv','Datastream','ECNLG1M','B','5744','NLG','1m','Deposit'
-'5745','ECNLG3M','NL Euro-Guilder 3 Months Deposit (Financial Times / Refinitiv)','Netherlands','Interest Rate','Financial Times/Refinitiv','Datastream','ECNLG3M','B','5745','NLG','3m','Deposit'
-'5746','ECNLG6M','NL Euro-Guilder 6 Months Deposit (Financial Times / Refinitiv)','Netherlands','Interest Rate','Financial Times/Refinitiv','Datastream','ECNLG6M','B','5746','NLG','6m','Deposit'
-'5747','ECNLG1Y','NL Euro-Guilder 1 Year Deposit (Financial Times / Refinitiv)','Netherlands','Interest Rate','Financial Times/Refinitiv','Datastream','ECNLG1Y','B','5747','NLG','1y','Deposit'
-'5748','ECPTEST','PT Euro-Escudo Tomorrow Next Deposit (Financial Times / Refinitiv)','Portugal','Interest Rate','Financial Times/Refinitiv','Datastream','ECPTEST','B','5748','PTE','ST','Deposit'
-'5749','ECPTE1W','PT Euro-Escudo SW Deposit (Financial Times / Refinitiv)','Portugal','Interest Rate','Financial Times/Refinitiv','Datastream','ECPTE1W','B','5749','PTE','1w','Deposit'
-'5750','ECPTE1M','PT Euro-Escudo 1 Month Deposit (Financial Times / Refinitiv)','Portugal','Interest Rate','Financial Times/Refinitiv','Datastream','ECPTE1M','B','5750','PTE','1m','Deposit'
-'5751','ECPTE3M','PT Euro-Escudo 3 Months Deposit (Financial Times / Refinitiv)','Portugal','Interest Rate','Financial Times/Refinitiv','Datastream','ECPTE3M','B','5751','PTE','3m','Deposit'
-'5752','ECPTE6M','PT Euro-Escudo 6 Months Deposit (Financial Times / Refinitiv)','Portugal','Interest Rate','Financial Times/Refinitiv','Datastream','ECPTE6M','B','5752','PTE','6m','Deposit'
-'5753','ECPTE1Y','PT Euro-Escudo 1 Year Deposit (Financial Times / Refinitiv)','Portugal','Interest Rate','Financial Times/Refinitiv','Datastream','ECPTE1Y','B','5753','PTE','1y','Deposit'
-'5754','ECESPST','ES Euro - Peseta Tomorrow Next Deposit (Financial Times / Refinitiv)','Spain','Interest Rate','Financial Times/Refinitiv','Datastream','ECESPST','B','5754','ESP','ST','Deposit'
-'5755','ECESP1W','ES Euro - Peseta 1 Week Deposit (Financial Times / Refinitiv)','Spain','Interest Rate','Financial Times/Refinitiv','Datastream','ECESP1W','B','5755','ESP','1w','Deposit'
-'5756','ECESP1M','ES Euro - Peseta 1 Month Deposit (Financial Times / Refinitiv)','Spain','Interest Rate','Financial Times/Refinitiv','Datastream','ECESP1M','B','5756','ESP','1m','Deposit'
-'5757','ECESP3M','ES Euro - Peseta 3 Months Deposit (Financial Times / Refinitiv)','Spain','Interest Rate','Financial Times/Refinitiv','Datastream','ECESP3M','B','5757','ESP','3m','Deposit'
-'5758','ECESP6M','ES Euro - Peseta 6 Months Deposit (Financial Times / Refinitiv)','Spain','Interest Rate','Financial Times/Refinitiv','Datastream','ECESP6M','B','5758','ESP','6m','Deposit'
-'5759','ECESP1Y','ES Euro - Peseta 1 Year Deposit (Financial Times / Refinitiv)','Spain','Interest Rate','Financial Times/Refinitiv','Datastream','ECESP1Y','B','5759','ESP','1y','Deposit'
-'5760','ECGRD1M','Greece Euro-Drachma 1 Month Disc (London : Financial Times)','Greece','Interest Rate','Financial Times/Refinitiv','Datastream','ECGRD1M','B','5760','GRD','1m','Deposit'
-'5761','ECGRD1W','Greece Euro-Drachma 1 Week Disc (London : Financial Times)','Greece','Interest Rate','Financial Times/Refinitiv','Datastream','ECGRD1W','B','5761','GRD','1w','Deposit'
-'5762','ECGRD1Y','Greece Euro-Drachma 1 Year Disc (London : Financial Times)','Greece','Interest Rate','Financial Times/Refinitiv','Datastream','ECGRD1Y','B','5762','GRD','1y','Deposit'
-'5763','ECGRD3M','Greece Euro-Drachma 3 Month Disc (London : Financial Times)','Greece','Interest Rate','Financial Times/Refinitiv','Datastream','ECGRD3M','B','5763','GRD','3m','Deposit'
-'5764','ECGRD6M','Greece Euro-Drachma 4 Month Disc (London : Financial Times)','Greece','Interest Rate','Financial Times/Refinitiv','Datastream','ECGRD6M','B','5764','GRD','6m','Deposit'
-'5765','ECGRDST','Greece Euro-Drachma S / Tdisc (London : Financial Times)','Greece','Interest Rate','Financial Times/Refinitiv','Datastream','ECGRDST','B','5765','GRD','ST','Deposit'
-'5766','ECINR1M','India Euro-Rupee 1 Month Disc','India','Interest Rate','Financial Times/Refinitiv','Datastream','ECINR1M','B','5766','INR','1m','Deposit'
-'5767','ECINR1W','India Euro-Rupee 1 Week Disc','India','Interest Rate','Financial Times/Refinitiv','Datastream','ECINR1W','B','5767','INR','1w','Deposit'
-'5768','ECINR1Y','India Euro-Rupee 1 Year Disc','India','Interest Rate','Financial Times/Refinitiv','Datastream','ECINR1Y','B','5768','INR','1y','Deposit'
-'5769','ECINR3M','India Euro-Rupee 3 Months Disc','India','Interest Rate','Financial Times/Refinitiv','Datastream','ECINR3M','B','5769','INR','3m','Deposit'
-'5770','ECINR6M','India Euro-Rupee 6 Months Disc','India','Interest Rate','Financial Times/Refinitiv','Datastream','ECINR6M','B','5770','INR','6m','Deposit'
-'5771','ECINRST','India Euro-Rupee Short Term Disc','India','Interest Rate','Financial Times/Refinitiv','Datastream','ECINRST','B','5771','INR','ST','Deposit'
-'5772','ECIDR1M','Indonesia Euro-RUP 1 Month Disc','Indonesia','Interest Rate','Financial Times/Refinitiv','Datastream','ECIDR1M','B','5772','IDR','1m','Deposit'
-'5773','ECIDR1W','Indonesia Euro-RUP 1 Week Disc','Indonesia','Interest Rate','Financial Times/Refinitiv','Datastream','ECIDR1W','B','5773','IDR','1w','Deposit'
-'5774','ECIDR1Y','Indonesia Euro-RUP 1 Year Disc','Indonesia','Interest Rate','Financial Times/Refinitiv','Datastream','ECIDR1Y','B','5774','IDR','1y','Deposit'
-'5775','ECIDR3M','Indonesia Euro-RUP 3 Months Disc','Indonesia','Interest Rate','Financial Times/Refinitiv','Datastream','ECIDR3M','B','5775','IDR','3m','Deposit'
-'5776','ECIDR6M','Indonesia Euro-RUP 6 Months Disc','Indonesia','Interest Rate','Financial Times/Refinitiv','Datastream','ECIDR6M','B','5776','IDR','6m','Deposit'
-'5777','ECIDRST','Indonesia Euro-RUP Short Term Disc','Indonesia','Interest Rate','Financial Times/Refinitiv','Datastream','ECIDRST','B','5777','IDR','ST','Deposit'
-'5778','ECMYR1M','Malaysia Euro-Ringgit 1 Month Disc','Malaysia','Interest Rate','Financial Times/Refinitiv','Datastream','ECMYR1M','B','5778','MYR','1m','Deposit'
-'5779','ECMYR1Y','Malaysia Euro-Ringgit 1 Year Disc','Malaysia','Interest Rate','Financial Times/Refinitiv','Datastream','ECMYR1Y','B','5779','MYR','1y','Deposit'
-'5780','ECMYR1W','Malaysia Euro-Ringgit 1 Week Disc','Malaysia','Interest Rate','Financial Times/Refinitiv','Datastream','ECMYR1W','B','5780','MYR','1w','Deposit'
-'5781','ECMYR3M','Malaysia Euro-Ringgit 3 Months Disc','Malaysia','Interest Rate','Financial Times/Refinitiv','Datastream','ECMYR3M','B','5781','MYR','3m','Deposit'
-'5782','ECMYR6M','Malaysia Euro-Ringgit 6 Months Disc','Malaysia','Interest Rate','Financial Times/Refinitiv','Datastream','ECMYR6M','B','5782','MYR','6m','Deposit'
-'5783','ECMYRST','Malaysia Euro-Ringgit Short Term Disc','Malaysia','Interest Rate','Financial Times/Refinitiv','Datastream','ECMYRST','B','5783','MYR','ST','Deposit'
-'5784','ECPHP1M','Philippine Euro-Peso 1 Month Disc','Philippines','Interest Rate','Financial Times/Refinitiv','Datastream','ECPHP1M','B','5784','PHP','1m','Deposit'
-'5785','ECPHP1W','Philippine Euro-Peso 1 Week Disc','Philippines','Interest Rate','Financial Times/Refinitiv','Datastream','ECPHP1W','B','5785','PHP','1w','Deposit'
-'5786','ECPHP1Y','Philippine Euro-Peso 1 Year Disc','Philippines','Interest Rate','Financial Times/Refinitiv','Datastream','ECPHP1Y','B','5786','PHP','1y','Deposit'
-'5787','ECPHP3M','Philippine Euro-Peso 3 Months Disc','Philippines','Interest Rate','Financial Times/Refinitiv','Datastream','ECPHP3M','B','5787','PHP','3m','Deposit'
-'5788','ECPHP6M','Philippine Euro-Peso 6 Months Disc','Philippines','Interest Rate','Financial Times/Refinitiv','Datastream','ECPHP6M','B','5788','PHP','6m','Deposit'
-'5789','ECPHPST','Philippine Euro-Peso Short Term Disc','Philippines','Interest Rate','Financial Times/Refinitiv','Datastream','ECPHPST','B','5789','PHP','ST','Deposit'
-'5790','ECTHB1M','Thailand Euro-Baht 1 Month Disc','Thailand','Interest Rate','Financial Times/Refinitiv','Datastream','ECTHB1M','B','5790','THB','1m','Deposit'
-'5791','ECTHB1W','Thailand Euro-Baht 1 Week Disc','Thailand','Interest Rate','Financial Times/Refinitiv','Datastream','ECTHB1W','B','5791','THB','1w','Deposit'
-'5792','ECTHB1Y','Thailand Euro-Baht 1 Year Disc','Thailand','Interest Rate','Financial Times/Refinitiv','Datastream','ECTHB1Y','B','5792','THB','1y','Deposit'
-'5793','ECTHB3M','Thailand Euro-Baht 3 Months Disc','Thailand','Interest Rate','Financial Times/Refinitiv','Datastream','ECTHB3M','B','5793','THB','3m','Deposit'
-'5794','ECTHB6M','Thailand Euro-Baht 6 Months Disc','Thailand','Interest Rate','Financial Times/Refinitiv','Datastream','ECTHB6M','B','5794','THB','6m','Deposit'
-'5795','ECTHBST','Thailand Euro-Baht Short Term Disc','Thailand','Interest Rate','Financial Times/Refinitiv','Datastream','ECTHBST','B','5795','THB','ST','Deposit'
-'5796','UKPRATE.','United Kingdom, Policy Rates, Bank Rate, End of Period','United Kingdom','Interest Rate','Bank of England','Datastream','UKPRATE.','BM','5796','GBP','ON','Policy'
-'5797','DKPRATE.','Denmark, Policy Rates, Discount Rate','Denmark','Interest Rate','Danmarks Nationalbank','Datastream','DKPRATE.','BM','5797','DKK','ON','Policy'
-'5798','SAPRATE.','South Africa, Policy Rates, Repo Rate','South Africa','Interest Rate','South African Reserve Bank','Datastream','SAPRATE.','BM','5798','ZAR','ON','Policy'
-'5799','BDPRATE.','Germany, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Germany','Interest Rate','ECB - European Central Bank','Datastream','BDPRATE.','BM','5799','EUR','ON','Policy'
-'5800','JPPRATE.','Japan, Policy Rates, Bank of Japan Main Policy Rate, Now Policy Rate Balance','Japan','Interest Rate','Bank of Japan','Datastream','JPPRATE.','BM','5800','JPY','ON','Policy'
-'5801','IRPRATE.','Ireland, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Ireland','Interest Rate','ECB - European Central Bank','Datastream','IRPRATE.','BM','5801','EUR','ON','Policy'
-'5802','PTPRATE.','Portugal, Policy Rates, Discount Rate, Short Term Euro Repo Rate','Portugal','Interest Rate','ECB - European Central Bank','Datastream','PTPRATE.','BM','5802','EUR','ON','Policy'
-'5803','GRPRATE.','Greece, Policy Rates, Discount Rate, Short Term Euro Repo Rate','Greece','Interest Rate','ECB - European Central Bank','Datastream','GRPRATE.','BM','5803','EUR','ON','Policy'
-'5804','OEPRATE.','Austria, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Austria','Interest Rate','ECB - European Central Bank','Datastream','OEPRATE.','BM','5804','EUR','ON','Policy'
-'5805','ITPRATE.','Italy, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Italy','Interest Rate','ECB - European Central Bank','Datastream','ITPRATE.','BM','5805','EUR','ON','Policy'
-'5806','TWPRATE.','Taiwan, Policy Rates, Discount Rate','Taiwan','Interest Rate','Central Bank of the Republic of China (Taiwan)','Datastream','TWPRATE.','BM','5806','TWD','ON','Policy'
-'5807','AAPRATE.','Algeria, Policy Rates, Discount Rate','Algeria','Interest Rate','Banque d\'Algerie','Datastream','AAPRATE.','BM','5807','DZD','ON','Policy'
-'5808','ESPRATE.','Spain, Policy Rates, Euro Short Term Repo Rate','Spain','Interest Rate','ECB - European Central Bank','Datastream','ESPRATE.','BM','5808','EUR','ON','Policy'
-'5809','BGPRATE.','Belgium, Policy Rates, Discount Rate, Short Term Euro Repo Rate','Belgium','Interest Rate','ECB - European Central Bank','Datastream','BGPRATE.','BM','5809','EUR','ON','Policy'
-'5810','CPPRATE.','Cyprus, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Cyprus','Interest Rate','ECB - European Central Bank','Datastream','CPPRATE.','BM','5810','CYP','ON','Policy'
-'5811','EDPRATE.','Ecuador, Policy Rates, Discount Rate','Ecuador','Interest Rate','Banco Central del Ecuador','Datastream','EDPRATE.','BM','5811','ECS','ON','Policy'
-'5812','USPRATE.','United States, Policy Rates, Federal Funds Target Rate, End of Period','United States','Interest Rate','Refinitiv','Datastream','USPRATE.','BM','5812','USD','ON','Policy'
-'5813','FRPRATE.','France, Policy Rates, Average Cost of Funds For Banks / Euro Repo Rate','France','Interest Rate','ECB - European Central Bank','Datastream','FRPRATE.','BM','5813','EUR','ON','Policy'
-'5814','SDPRATE.','Sweden, Policy Rates, Policy Rate','Sweden','Interest Rate','Sveriges Riksbank','Datastream','SDPRATE.','BM','5814','SEK','ON','Policy'
-'5815','BZPRATE.','Belize, Policy Rate, %','Belize','Interest Rate','Central Bank of Belize','Datastream','BZPRATE.','BM','5815','BZD','ON','Policy'
-'5816','MIPRATE.','Malawi, Policy Rates, Bank Rate','Malawi','Interest Rate','Reserve Bank of Malawi','Datastream','MIPRATE.','BM','5816','MWK','ON','Policy'
-'5817','AUPRATE.','Australia, Policy Rates, Cash Target Rate, End of Period','Australia','Interest Rate','Reserve Bank of Australia','Datastream','AUPRATE.','BM','5817','AUD','ON','Policy'
-'5818','HNPRATE.','Hungary, Policy Rates, Central Bank Base Rate','Hungary','Interest Rate','National Bank of Hungary','Datastream','HNPRATE.','BM','5818','HUF','ON','Policy'
-'5819','NLPRATE.','Netherlands, Policy Rates, Credit Advances / Short Term Euro Repo Rate','Netherlands','Interest Rate','ECB - European Central Bank','Datastream','NLPRATE.','BM','5819','EUR','ON','Policy'
-'5820','PHPRATE.','Philippines, Policy Rates, Overnight Lending Facility','Philippines','Interest Rate','Bangko Sentral ng Pilipinas','Datastream','PHPRATE.','BM','5820','PHP','ON','Policy'
-'5821','SZPRATE.','Eswatini, Policy Rates, Discount Rate','Eswatini','Interest Rate','Central Bank of Eswatini','Datastream','SZPRATE.','BM','5821','SZL','ON','Policy'
-'5822','WAPRATE.','Namibia, Policy Rates, Bank Rate','Namibia','Interest Rate','Bank of Namibia','Datastream','WAPRATE.','BM','5822','NAD','ON','Policy'
-'5823','NWPRATE.','Norway, Policy Rates, Sight Deposit Rate','Norway','Interest Rate','Norges Bank','Datastream','NWPRATE.','BM','5823','NOK','ON','Policy'
-'5824','PKPRATE.','Pakistan, Policy Rates, Main Policy Rate','Pakistan','Interest Rate','State Bank of Pakistan','Datastream','PKPRATE.','BM','5824','PKR','ON','Policy'
-'5825','CHPRATE.','China, Policy Rates, Major Loan Rate, Capital Construction, 1 Year and Below','China','Interest Rate','The People\'s Bank of China','Datastream','CHPRATE.','BM','5825','CNY','ON','Policy'
-'5826','HKPRATE.','Hong Kong, Policy Rates, Discount Rate','Hong Kong','Interest Rate','Hong Kong Monetary Authority','Datastream','HKPRATE.','BM','5826','HKD','ON','Policy'
-'5827','FNPRATE.','Finland, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Finland','Interest Rate','ECB - European Central Bank','Datastream','FNPRATE.','BM','5827','EUR','ON','Policy'
-'5828','CTPRATE.','Croatia, Policy Rates, Main Policy Rate','Croatia','Interest Rate','CNB - Croatian National Bank','Datastream','CTPRATE.','BM','5828','HRK','ON','Policy'
-'5829','CNPRATE.','Canada, Policy Rates, Target Rate','Canada','Interest Rate','CANSIM - Statistics Canada','Datastream','CNPRATE.','BM','5829','CAD','ON','Policy'
-'5830','ISPRATE.','Israel, Policy Rates, Headline Rate, End of Period','Israel','Interest Rate','Bank of Israel','Datastream','ISPRATE.','MS','5830','ILS','ON','Policy'
-'5831','NRPRATE.','Niger, Policy Rates, Marginal Lending Rate, End of Period','Niger','Interest Rate','Central Bank of West African States','Datastream','NRPRATE.','BM','5831','XOF','ON','Policy'
-'5832','IVPRATE.','Cote d\'Ivoire, Policy Rates, Marginal Lending Rate, End of Period','Ivory Coast','Interest Rate','Central Bank of West African States','Datastream','IVPRATE.','BM','5832','XAF','ON','Policy'
-'5833','SGPRATE.','Senegal, Policy Rates, Marginal Lending Rate, End of Period','Senegal','Interest Rate','Central Bank of West African States','Datastream','SGPRATE.','BM','5833','SGD','ON','Policy'
-'5834','THPRATE.','Thailand, Policy Rates, BOT 1 Day Bilateral Repurchase Rate','Thailand','Interest Rate','Bank of Thailand','Datastream','THPRATE.','BM','5834','THB','ON','Policy'
-'5835','CDPRATE.','Chad, Policy Rates, Reference Rate, TIAO','Chad','Interest Rate','Bank of Central African States (BEAC)','Datastream','CDPRATE.','BM','5835','KYD','ON','Policy'
-'5836','CBPRATE.','Colombia, Policy Rates, Intervention Rate','Colombia','Interest Rate','Banco de la Republica, Colombia','Datastream','CBPRATE.','BM','5836','COP','ON','Policy'
-'5837','MCPRATE.','Morocco, Policy Rates, Key Rate','Morocco','Interest Rate','Bank Al-Maghrib, Morocco','Datastream','MCPRATE.','BM','5837','MAD','ON','Policy'
-'5838','CZPRATE.','Czech Republic, Policy Rates, Repo Rate (2 Week)','Czech Republic','Interest Rate','CNB - Czech National Bank','Datastream','CZPRATE.','BM','5838','CZK','ON','Policy'
-'5839','BRPRATE.','Brazil, Policy Rates, Sistema Especial de Liquidacao e Custodia Target Rate, End of Period','Brazil','Interest Rate','Banco Central do Brasil','Datastream','BRPRATE.','BM','5839','BRL','ON','Policy'
-'5840','MAPRATE.','Malta, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Malta','Interest Rate','ECB - European Central Bank','Datastream','MAPRATE.','BM','5840','MTL','ON','Policy'
-'5841','CLPRATE.','Chile, Policy Rates, Central Bank of Chile Monetary Policy Target Rate','Chile','Interest Rate','Central Bank of Chile','Datastream','CLPRATE.','BM','5841','CLP','ON','Policy'
-'5842','AEPRATE.','Aruba, Interest Rate Margin','Aruba','Interest Rate','Central Bank of Aruba (CBA)','Datastream','AEPRATE.','A','5842','DZD','ON','Policy'
-'5843','POPRATE.','Poland, Policy Rates, Reference Rate (7-Day National Bank of Poland Bill Rate)','Poland','Interest Rate','National Bank of Poland','Datastream','POPRATE.','MS','5843','PLN','ON','Policy'
-'5844','JOPRATE.','Jordan, Policy Rates, Overnight Deposit Window Rate','Jordan','Interest Rate','Central Bank of Jordan','Datastream','JOPRATE.','BM','5844','JOD','ON','Policy'
-'5845','LXPRATE.','Luxembourg, Policy Rates, Base Rate','Luxembourg','Interest Rate','Banque centrale du Luxembourg','Datastream','LXPRATE.','BM','5845','EUR','ON','Policy'
-'5846','EMPRATE.','European Monetary Union, Policy Rates, Euro Short Term Repo Rate','Eurozone','Interest Rate','ECB - European Central Bank','Datastream','EMPRATE.','BM','5846','EUR','ON','Policy'
-'5848','NZPRATE.','New Zealand, Policy Rates, Official Cash Rate (OCR)','New Zealand','Interest Rate','Reserve Bank of New Zealand','Datastream','NZPRATE.','BM','5848','NZD','ON','Policy'
-'5849','KOPRATE.','South Korea, Policy Rates, Base Rate','South Korea','Interest Rate','The Bank of Korea','Datastream','KOPRATE.','BM','5849','KRW','ON','Policy'
-'5850','MOPRATE.','Macau, Policy Rates, Amcm Base Rate, End of Period','Macau','Interest Rate','Monetary Authority of Macao','Datastream','MOPRATE.','BM','5850','EUR','ON','Policy'
-'5851','VIPRATE.','Vietnam, Policy Rates, Base Interest Rate','Vietnam','Interest Rate','The State Bank of Vietnam','Datastream','VIPRATE.','BM','5851','VND','ON','Policy'
-'5852','TUPRATE.','Tunisia, Policy Rates, BCT Key Rate','Tunisia','Interest Rate','Central Bank of Tunisia','Datastream','TUPRATE.','MS','5852','TND','ON','Policy'
-'5853','GHPRATE.','Ghana, Policy Rates, Monetary Policy Rate, Methodology Break August 2015','Ghana','Interest Rate','Bank of Ghana','Datastream','GHPRATE.','BM','5853','GHS','ON','Policy'
-'5854','ALPRATE.','Albania, Policy Rates, Interest Rate, End of Period','Albania','Interest Rate','Bank of Albania','Datastream','ALPRATE.','BM','5854','ALL','ON','Policy'
-'5855','SIPRATE.','Saudi Arabia, Policy Rates, Repo Rate','Saudi Arabia','Interest Rate','Saudi Central Bank','Datastream','SIPRATE.','BM','5855','SAR','ON','Policy'
-'5856','SXPRATE.','Slovak Republic, Policy Rates, Repo 2 Week Tender Rate / Short Term Euro Repo Rate','Slovakia','Interest Rate','National Bank of Slovakia','Datastream','SXPRATE.','BM','5856','SKK','ON','Policy'
-'5857','INPRATE.','India, Policy Rates, Repo Rate','India','Interest Rate','Reserve Bank of India','Datastream','INPRATE.','BM','5857','INR','ON','Policy'
-'5858','ZMPRATE.','Zambia, Policy Rates, BOZ Policy Rate','Zambia','Interest Rate','Bank of Zambia','Datastream','ZMPRATE.','MS','5858','ZMW','ON','Policy'
-'5859','SJPRATE.','Slovenia, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Slovenia','Interest Rate','ECB - European Central Bank','Datastream','SJPRATE.','BM','5859','SIT','ON','Policy'
-'5860','MKPRATE.','North Macedonia, Policy Rates, Deposit Rate, 28 Days, Yield','North Macedonia','Interest Rate','National Bank of the Republic of North Macedonia','Datastream','MKPRATE.','BM','5860','MKD','ON','Policy'
-'5861','NGPRATE.','Nigeria, Policy Rates, Monetary Policy Rate','Nigeria','Interest Rate','CBN - Central Bank of Nigeria','Datastream','NGPRATE.','BM','5861','NGN','ON','Policy'
-'5862','KWDISCRTR','Kuwait, Policy Rates, Discount Rate','Kuwait','Interest Rate','Central Bank of Kuwait','Datastream','KWDISCRTR','Q','5862','KWD','ON','Policy'
-'5863','TTPRATE.','Trinidad and Tobago, Policy Rates, Repo Rate','Trinidad and Tobago','Interest Rate','Central Bank of Trinidad and Tobago','Datastream','TTPRATE.','BM','5863','TTD','ON','Policy'
-'5864','QAPRATE.','Qatar, Policy Rates, Lending Rate','Qatar','Interest Rate','Qatar Central Bank','Datastream','QAPRATE.','BM','5864','QAR','ON','Policy'
-'5865','RMPRATE.','Romania, Policy Rates, NBR Monetary Policy Rate','Romania','Interest Rate','National Bank of Romania','Datastream','RMPRATE.','BM','5865','RON','ON','Policy'
-'5866','RSPRATE.','Russia, Policy Rates, Minimum Rate On 7 Day Repo','Russia','Interest Rate','The Central Bank of the Russian Federation','Datastream','RSPRATE.','BM','5866','RUB','ON','Policy'
-'5867','PEPRATE.','Peru, Policy Rates, Reference Interest Rate','Peru','Interest Rate','Central Reserve Bank of Peru','Datastream','PEPRATE.','MS','5867','PEN','ON','Policy'
-'5868','AMPRATE.','Armenia, Policy Rates, Repo Agreements','Armenia','Interest Rate','Central Bank of Armenia','Datastream','AMPRATE.','BM','5868','AMD','ON','Policy'
-'5869','DRPRATE.','Dominican Republic, Policy Rates, Overnight Interest Rate (MPR), Per Annum','Dominican Republic','Interest Rate','Central Bank of Dominican Republic','Datastream','DRPRATE.','BM','5869','DOP','ON','Policy'
-'5870','OMPRATE.','Oman, Weighted Average Repo Rate','Oman','Interest Rate','Central Bank of Oman','Datastream','OMPRATE.','MS','5870','OMR','ON','Policy'
-'5871','MYPRATE.','Malaysia, Policy Rates, Overnight Policy Rate (OPR)','Malaysia','Interest Rate','Central Bank of Malaysia','Datastream','MYPRATE.','BM','5871','MYR','ON','Policy'
-'5872','KNPRATE.','Kenya, Policy Rates, Central Bank Rate','Kenya','Interest Rate','Central Bank of Kenya','Datastream','KNPRATE.','BM','5872','KES','ON','Policy'
-'5873','IQPRATE.','Iraq, Policy Rates, CBI Rate, End of Period','Iraq','Interest Rate','Central Bank of Iraq','Datastream','IQPRATE.','BM','5873','IQD','ON','Policy'
-'5874','GWPRATE.','Guatemala, Policy Rates, Key Interest Rate','Guatemala','Interest Rate','Bank of Guatemala','Datastream','GWPRATE.','BM','5874','GTQ','ON','Policy'
-'5875','HOPRATE.','Honduras, Policy Rates, Monetary Policy Rate','Honduras','Interest Rate','Central Bank of Honduras','Datastream','HOPRATE.','BM','5875','HNL','ON','Policy'
-'5876','IDPRATE.','Indonesia, Policy Rates, Bank of Indonesia Main Policy Rate, Now 7-Day Reverse Repo Rate','Indonesia','Interest Rate','Bank Indonesia','Datastream','IDPRATE.','BM','5876','IDR','ON','Policy'
-'5877','EYPRATE.','Egypt, Policy Rates, Overnight Deposit Rate, End of Period','Egypt','Interest Rate','Central Bank of Egypt','Datastream','EYPRATE.','BM','5877','EGP','ON','Policy'
-'5878','RWPRATE.','Rwanda, Policy Rates, BNR Key Repo Rate','Rwanda','Interest Rate','BNR - National Bank of Rwanda','Datastream','RWPRATE.','BM','5878','RWF','ON','Policy'
-'5879','MXPRATE.','Mexico, Policy Rates, Target Overnight Interbank Funding Rate, End of Period','Mexico','Interest Rate','Banco de Mexico','Datastream','MXPRATE.','BM','5879','MXN','ON','Policy'
-'5880','BAPRATE.','Bahrain, Policy Rates, CBB Key Policy Rate, One Week Deposit Rate','Bahrain','Interest Rate','Central Bank of Bahrain','Datastream','BAPRATE.','BM','5880','BHD','ON','Policy'
-'5881','CRPRATE.','Costa Rica, Policy Rates, Policy Rate','Costa Rica','Interest Rate','Central Bank of Costa Rica','Datastream','CRPRATE.','BM','5881','CRC','ON','Policy'
-'5882','MUPRATE.','Mauritius, Policy Rates, Key Repo Rate','Mauritius','Interest Rate','Bank of Mauritius','Datastream','MUPRATE.','BM','5882','MUR','ON','Policy'
-'5883','MGPRATE.','Mongolia, Policy Rates, Official Interest Rates of BOM, Policy Rate','Mongolia','Interest Rate','Bank of Mongolia','Datastream','MGPRATE.','BM','5883','MNT','ON','Policy'
-'5884','UAPRATE.','United Arab Emirates, Policy Rates, Base Rate','United Arab Emirates','Interest Rate','Central Bank of the United Arab Emirates','Datastream','UAPRATE.','BM','5884','AED','ON','Policy'
-'5885','GGPRATE.','Georgia, Policy Rates, Monetary Policy Interest Rate','Georgia','Interest Rate','National Bank of Georgia','Datastream','GGPRATE.','BM','5885','GEL','ON','Policy'
-'5886','TKPRATE.','Turkey, Policy Rates, Central Bank 1 Week Repo Lending Rate','Turkey','Interest Rate','Central Bank of the Republic of Turkey','Datastream','TKPRATE.','BM','5886','TRY','ON','Policy'
-'5887','PYPRATE.','Paraguay, Policy Rates, Monetary Policy Rate, Annual Terms','Paraguay','Interest Rate','Banco Central del Paraguay','Datastream','PYPRATE.','BM','5887','PYG','ON','Policy'
-'5888','EOPRATE.','Estonia, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Estonia','Interest Rate','ECB - European Central Bank','Datastream','EOPRATE.','BM','5888','EUR','ON','Policy'
-'5889','UGPRATE.','Uganda, Policy Rates, Central Bank Rate','Uganda','Interest Rate','Bank of Uganda','Datastream','UGPRATE.','BM','5889','UGX','ON','Policy'
-'5890','KHPRATE.','Cambodia, Prime Rate, Commercial Banks','Cambodia','Interest Rate','National Bank of Cambodia','Datastream','KHPRATE.','BM','5890','KHR','ON','Policy'
-'5891','LVPRATE.','Latvia, Policy Rates, Discount Rate / Short Term Euro Repo Rate','Latvia','Interest Rate','ECB - European Central Bank','Datastream','LVPRATE.','BM','5891','LVL','ON','Policy'
-'5892','ICPRATE.','Iceland, Policy Rates, Term Deposits Rate, 7 Day','Iceland','Interest Rate','Central Bank of Iceland','Datastream','ICPRATE.','BM','5892','ISK','ON','Policy'
-'5893','KZPRATE.','Kazakhstan, Policy Rates, Base Repo Rate, Overnight','Kazakhstan','Interest Rate','The National Bank of Kazakhstan','Datastream','KZPRATE.','BM','5893','KZT','ON','Policy'
-'5894','MDPRATE.','Madagascar, Policy Rates, BCM Lending Rate','Madagascar','Interest Rate','Banque Centrale de Madagascar','Datastream','MDPRATE.','BM','5894','MDL','ON','Policy'
-'5895','SWPRATE.','Switzerland, Policy Rates, Swiss National Bank Policy Rate','Switzerland','Interest Rate','SNB - Swiss National Bank','Datastream','SWPRATE.','BM','5895','CHF','ON','Policy'
-'5896','UYPRATE.','Uruguay, Monetary Policy Rate','Uruguay','Interest Rate','Banco Central del Uruguay','Datastream','UYPRATE.','BM','5896','UYU','ON','Policy'
-'23291','AG90DPP','Argentina Deposit 59 + Days (Per Annum)','Argentina','Interest Rate','BCRA - Central Bank of Argentina','Datastream','AG90DPP','B','23291','ARS','3m','Deposit'
-'40188','LKRDP1M','Refinitiv Sri Lanka Rupee 1 Month Deposit','Sri Lanka','Interest Rate','Refinitiv','Datastream','LKRDP1M','B','40188','LKR','1m','Deposit'
-'40189','LKRDP3M','Refinitiv Sri Lanka Rupee 3 Months Deposit','Sri Lanka','Interest Rate','Refinitiv','Datastream','LKRDP3M','B','40189','LKR','3m','Deposit'
-'40190','LKRDPON','Refinitiv Sri Lanka Rupee Overnight Deposit','Sri Lanka','Interest Rate','Refinitiv','Datastream','LKRDPON','B','40190','LKR','ON','Deposit'
-'40191','SRIBK1M','Sri Lanka Interbank 1 Month (Disc)','Sri Lanka','Interest Rate','Central Bank of Sri Lanka','Datastream','SRIBK1M','B','40191','LKR','1m','Interbank'
-'40192','SRIBKON','Sri Lanka Interbank 1D (Disc)','Sri Lanka','Interest Rate','Central Bank of Sri Lanka','Datastream','SRIBKON','B','40192','LKR','ON','Interbank'
-'40193','SRTBL3M','Sri Lanka Treasury Bill 3 Month','Sri Lanka','Interest Rate','Central Bank of Sri Lanka','Datastream','SRTBL3M','B','40193','LKR','3m','Treasury'
-'40194','VEDP30D','Venezuela 30 Day Deposit Rate','Venezuela','Interest Rate','Banco Central de Venezuela','Datastream','VEDP30D','B','40194','VEF','1m','Deposit'
-'40195','VENLEND','Venezuela Average LND Disc','Venezuela','Interest Rate','Banco Central de Venezuela','Datastream','VENLEND','B','40195','VEF','ON','Policy'
-'40196','VENOVER','Venezuela Overnight','Venezuela','Interest Rate','Banco Central de Venezuela','Datastream','VENOVER','B','40196','VEF','ON','Interbank'
-'40197','BRBCBPR','Brazil Central Bank Policy Rate','Brazil','Interest Rate','Bank for International Settlements','Datastream','BRBCBPR','B','40197','BRL','ON','Policy'
-'40199','BRCDIIR','Brazil Cdi Rate: Annual Terms 252 Basis','Brazil','Interest Rate','Banco Central do Brasil','Datastream','BRCDIIR','B','40199','BRL','ON','Policy'
-'40200','BROVERN','Brazil Financing Overnight Selic','Brazil','Interest Rate','Banco Central do Brasil','Datastream','BROVERN','B','40200','BRL','ON','Policy'
-'40201','CHBCBPR','China Central Bank Policy Rate','China','Interest Rate','Bank for International Settlements','Datastream','CHBCBPR','B','40201','CNY','ON','Policy'
-'40202','CHIB1MO','China Interbank 1 Month','China','Interest Rate','The People\'s Bank of China','Datastream','CHIB1MO','B','40202','CNY','1m','Interbank'
-'40203','CHIBKON','China Interbank O/N','China','Interest Rate','The People\'s Bank of China','Datastream','CHIBKON','B','40203','CNY','ON','Interbank'
-'40204','ECASD1M','Singapore Dollar 1M Singapore Dollar','Singapore','Interest Rate','Tullett Prebon','Datastream','ECASD1M','B','40204','SGD','1m','Deposit'
-'40205','ECASD3M','Singapore Dollar 3M Singapore Dollar','Singapore','Interest Rate','Tullett Prebon','Datastream','ECASD3M','B','40205','SGD','3m','Deposit'
-'40206','EGIBK1M','Egypt Interbank 1M Cairo','Egypt','Interest Rate','Refinitiv','Datastream','EGIBK1M','B','40206','EGP','1m','Interbank'
-'40207','EGIBKON','Egypt Interbank 1W Cairo','Egypt','Interest Rate','Refinitiv','Datastream','EGIBKON','B','40207','EGP','1W','Interbank'
-'40208','EYDISCR','Egypt Discount Rate','Egypt','Interest Rate','Central Bank of Egypt','Datastream','EYDISCR','B','40208','EGP','ON','Policy'
-'40209','EYINTRA','Egypt Overnight Dep Rate (Initial)','Egypt','Interest Rate','Central Bank of Egypt','Datastream','EYINTRA','B','40209','EGP','ON','Deposit'
-'40210','FNGTBSE','Finland Base Rate','Finland','Interest Rate','Bank of Finland','Datastream','FNGTBSE','B','40210','EUR','ON','Policy'
-'40211','FNIBF1M','Finland 1M Intbk Delayed See Eibor1M','Finland','Interest Rate','Refinitiv','Datastream','FNIBF1M','B','40211','FIM','1m','Interbank'
-'40212','FNIBF3M','Finland 3M Intbk Delayed See Eibor3M','Finland','Interest Rate','Refinitiv','Datastream','FNIBF3M','B','40212','FIM','3m','Interbank'
-'40213','HKDEP1M','Hong Kong Deposit 1 Month Disc','Hong Kong','Interest Rate','Major Commercial Bank, Hong Kong','Datastream','HKDEP1M','B','40213','HKD','1m','Deposit'
-'40214','HKDEP3M','Hong Kong Deposit 3 Month Disc','Hong Kong','Interest Rate','Major Commercial Bank, Hong Kong','Datastream','HKDEP3M','B','40214','HKD','3m','Deposit'
-'40215','HKDP1MD','Rfv Hongkong Dollar 1M Deposit','Hong Kong','Interest Rate','Refinitiv','Datastream','HKDP1MD','B','40215','HKD','1m','Deposit'
-'40216','HKDPOND','Rfv Hong Kong Dollar O/N Deposit','Hong Kong','Interest Rate','Refinitiv','Datastream','HKDPOND','B','40216','HKD','ON','Deposit'
-'40217','HKIBK1M','Hong Kong Interbank 1 Month Disc','Hong Kong','Interest Rate','Major Commercial Bank, Hong Kong','Datastream','HKIBK1M','B','40217','HKD','1m','Interbank'
-'40218','HKPRIME','Hong Kong Prime','Hong Kong','Interest Rate','Major Commercial Bank, Hong Kong','Datastream','HKPRIME','B','40218','HKD','ON','Policy'
-'40219','HNK3IBR','Hong Kong Interbank 3 Month Disc','Hong Kong','Interest Rate','Major Commercial Bank, Hong Kong','Datastream','HNK3IBR','B','40219','HKD','3m','Interbank'
-'40220','IDDEP1M','Indonesia Deposit 1 Month Disc','Indonesia','Interest Rate','Bank Indonesia','Datastream','IDDEP1M','B','40220','IDR','1m','Deposit'
-'40221','IDIBCAL','Indonesia Interbank Call Disc','Indonesia','Interest Rate','Bank Indonesia','Datastream','IDIBCAL','B','40221','IDR','3m','Interbank'
-'40222','IDIBK1M','Indonesia Interbank 1M','Indonesia','Interest Rate','Refinitiv','Datastream','IDIBK1M','B','40222','IDR','1m','Interbank'
-'40223','IDIBK3M','Indonesia Interbank 3M','Indonesia','Interest Rate','Refinitiv','Datastream','IDIBK3M','B','40223','IDR','3m','Interbank'
-'40224','IDIBKON','Indonesia Interbank O/N (Disc)','Indonesia','Interest Rate','Refinitiv','Datastream','IDIBKON','B','40224','IDR','ON','Interbank'
-'40225','IDRDP1M','Indonesian Rupiah 1M Deposit (Rfv)','Indonesia','Interest Rate','Refinitiv','Datastream','IDRDP1M','B','40225','IDR','1m','Deposit'
-'40226','IDRDP3M','Indonesian Rupiah 3M Deposit (Rfv)','Indonesia','Interest Rate','Refinitiv','Datastream','IDRDP3M','B','40226','IDR','3m','Deposit'
-'40227','IDRDPON','Indonesian Rupiah O/N Depo (Rfv)','Indonesia','Interest Rate','Refinitiv','Datastream','IDRDPON','B','40227','IDR','ON','Deposit'
-'40228','IDSBI90','Indonesia Sbi/Disc 90 Day Disc','Indonesia','Interest Rate','Bank Indonesia','Datastream','IDSBI90','B','40228','IDR','3m','Interbank'
-'40229','INBCBPR','India Central Bank Policy Rate','India','Interest Rate','Bank for International Settlements','Datastream','INBCBPR','B','40229','INR','ON','Policy'
-'40230','INDISCR','India Discount','India','Interest Rate','Reserve Bank of India','Datastream','INDISCR','B','40230','INR','ON','Policy'
-'40231','INTB1YR','India T-Bill Secondary \'Dead\'','India','Interest Rate','Kanji Pitamber & Co','Datastream','INTB1YR','B','40231','INR','3m','Government'
-'40232','INTB91D','India T-Bill Secondary \'Dead\'','India','Interest Rate','Kanji Pitamber & Co','Datastream','INTB91D','B','40232','INR','3m','Government'
-'40233','JODEPON','Central Bank of Jordan Main Rate','Jordan','Interest Rate','Central Bank of Jordan','Datastream','JODEPON','B','40233','JOD','ON','Policy'
-'40234','JODIB1M','Jordan Interbank 1M','Jordan','Interest Rate','Refinitiv','Datastream','JODIB1M','B','40234','JOD','1m','Interbank'
-'40235','JODIB3M','Jordan Interbank 3M','Jordan','Interest Rate','Refinitiv','Datastream','JODIB3M','B','40235','JOD','3m','Interbank'
-'40236','JODIBON','Jordan Interbank O/N','Jordan','Interest Rate','Refinitiv','Datastream','JODIBON','B','40236','JOD','ON','Interbank'
-'40237','KIB3MP1','Kuwaiti Dinar 3M Kibor','Kuwait','Interest Rate','Central Bank of Kuwait','Datastream','KIB3MP1','B','40237','KWD','3m','Interbank'
-'40238','KIBOR1M','Kuwaiti Dinar 1M Kibor','Kuwait','Interest Rate','Central Bank of Kuwait','Datastream','KIBOR1M','B','40238','KWD','1m','Interbank'
-'40239','KOCALL.','Bank Of Korea Base Rate','South Korea','Interest Rate','The Bank of Korea','Datastream','KOCALL.','B','40239','KRW','ON','Policy'
-'40240','KOCALLO','Korea Overnight Call Rate (Brokered)','South Korea','Interest Rate','The Bank of Korea','Datastream','KOCALLO','B','40240','KRW','ON','Policy'
-'40241','KOCD91D','Korea Ncd 91 Days','South Korea','Interest Rate','KOFIA - Korea Financial Investment Association','Datastream','KOCD91D','B','40241','KRW','3m','Deposit'
-'40242','KOTB91D','Korea Trade Bill 91D Discount Disc','South Korea','Interest Rate','KOFIA - Korea Financial Investment Association','Datastream','KOTB91D','B','40242','KRW','3m','Interbank'
-'40243','KWIBK3M','Kuwait Interbank 3M','Kuwait','Interest Rate','Refinitiv','Datastream','KWIBK3M','B','40243','KWD','3m','Interbank'
-'40244','LXSTECU','Lux.Se Bonds (Euro) Short Term Disc','Luxembourg','Interest Rate','Lux','Datastream','LXSTECU','B','40244','EUR','3m','Government'
-'40245','LXSTLUF','Lux.Se Bonds (Luf) Sh Term Disc','Luxembourg','Interest Rate','Lux','Datastream','LXSTLUF','B','40245','LUF','3m','Government'
-'40246','MXCET1D','Mexico Cetes 1 Day','Mexico','Interest Rate','Banco de Mexico','Datastream','MXCET1D','B','40246','MXN','ON','Policy'
-'40247','MXGSA91','Mexico Cetes 91 Day Rate','Mexico','Interest Rate','Banco de Mexico','Datastream','MXGSA91','B','40247','MXN','3m','Policy'
-'40248','MYBASEL','Malaysia Base Lending','Malaysia','Interest Rate','Maybank Group','Datastream','MYBASEL','B','40248','MYR','ON','Policy'
-'40249','MYIBK1M','Malaysia Interbank 1 Month','Malaysia','Interest Rate','Maybank Group','Datastream','MYIBK1M','B','40249','MYR','1m','Interbank'
-'40250','MYIBK3M','Malaysia Interbank 3 Month','Malaysia','Interest Rate','Maybank Group','Datastream','MYIBK3M','B','40250','MYR','3m','Interbank'
-'40251','MYIBKCL','Malaysia Interbank Overnight','Malaysia','Interest Rate','Maybank Group','Datastream','MYIBKCL','B','40251','MYR','ON','Interbank'
-'40252','MYRRRCB','Malaysia Rrr - Commercial Banks','Malaysia','Interest Rate','Central Bank of Malaysia','Datastream','MYRRRCB','B','40252','MYR','ON','Policy'
-'40253','NWIBK1M','Norway Interbank 1 Month Delayed','Norway','Interest Rate','Norges Bank','Datastream','NWIBK1M','B','40253','NOK','1m','Interbank'
-'40254','NWIBN3M','Norway Interbank 3Mth Delayed','Norway','Interest Rate','Norges Bank','Datastream','NWIBN3M','B','40254','NOK','3m','Interbank'
-'40255','NWIBNTN','Norway Interbank T/N (Nominal) \'Dead\'','Norway','Interest Rate','Norges Bank','Datastream','NWIBNTN','B','40255','NOK','ON','Interbank'
-'40256','NZBB30D','New Zealand 30 Day Bank Bill','New Zealand','Interest Rate','Reserve Bank of New Zealand','Datastream','NZBB30D','B','40256','NZD','1m','Deposit'
-'40257','NZBB60D','New Zealand 60 Day Bank Bill','New Zealand','Interest Rate','Reserve Bank of New Zealand','Datastream','NZBB60D','B','40257','NZD','2M','Deposit'
-'40258','NZBB90D','New Zealand 90 Day Bank Bill','New Zealand','Interest Rate','Reserve Bank of New Zealand','Datastream','NZBB90D','B','40258','NZD','3m','Deposit'
-'40259','NZBCBPR','New Zealand Central Bank Policy Rate','New Zealand','Interest Rate','Bank for International Settlements','Datastream','NZBCBPR','B','40259','NZD','ON','Policy'
-'40260','PEINBIR','Peru Interbank Interest Rate','Peru','Interest Rate','Central Reserve Bank of Peru','Datastream','PEINBIR','B','40260','PEN','3m','Interbank'
-'40261','PERONTU','Peru Interbank Interest Rate','Peru','Interest Rate','Central Reserve Bank of Peru','Datastream','PERONTU','B','40261','PEN','3m','Interbank'
-'40262','POBCBPR','Poland Central Bank Policy Rate','Poland','Interest Rate','Bank for International Settlements','Datastream','POBCBPR','B','40262','PLN','ON','Policy'
-'40263','POIBK1M','Rfv Polish Zloty 1M Deposit','Poland','Interest Rate','Refinitiv','Datastream','POIBK1M','B','40263','PLN','1m','Deposit'
-'40264','POIBK3M','Rfv Polish Zloty 3M Deposit','Poland','Interest Rate','Refinitiv','Datastream','POIBK3M','B','40264','PLN','3m','Deposit'
-'40265','POIBKON','Rfv Polish Zloty O/N Deposit','Poland','Interest Rate','Refinitiv','Datastream','POIBKON','B','40265','PLN','ON','Deposit'
-'40266','POLRATE','Poland Lombard Rate','Poland','Interest Rate','National Bank of Poland','Datastream','POLRATE','B','40266','PLN','ON','Policy'
-'40267','PSTAMNN','Peru Savings Rate (Disc)','Peru','Interest Rate','Lasco','Datastream','PSTAMNN','B','40267','PEN','ON','Policy'
-'40268','PSTIPMN','Peru (Disc) Loan Rate','Peru','Interest Rate','Lasco','Datastream','PSTIPMN','B','40268','PEN','ON','Policy'
-'40269','RSBCBPR','Russia Central Bank Policy Rate','Russia','Interest Rate','Bank for International Settlements','Datastream','RSBCBPR','B','40269','RUB','ON','Policy'
-'40270','RSIBK90','Russia Interbank 31 To 90 D\'Dead\'','Russia','Interest Rate','The Central Bank of the Russian Federation','Datastream','RSIBK90','B','40270','RUB','3m','Interbank'
-'40271','RSTBILL','Russia Government T-Bill Disc','Russia','Interest Rate','The Central Bank of the Russian Federation','Datastream','RSTBILL','B','40271','RUB','3m','Government'
-'40272','SAIBK1M','Saudi Arabia Ibk. 1M','Saudi Arabia','Interest Rate','Refinitiv','Datastream','SAIBK1M','B','40272','SAR','1m','Interbank'
-'40273','SAIBK3M','Saudi Arabia Ibk. 3M','Saudi Arabia','Interest Rate','Refinitiv','Datastream','SAIBK3M','B','40273','SAR','3m','Interbank'
-'40274','SGBOR3M','Singapore Sibor 3 Month (M\'Dead\'','Singapore','Interest Rate','Monetary Authority of Singapore','Datastream','SGBOR3M','B','40274','SGD','3m','Interbank'
-'40276','SNG3IBR','Singapore Interbank 3 Month Disc','Singapore','Interest Rate','DBS - Development Bank of Singapore','Datastream','SNG3IBR','B','40276','SGD','3m','Interbank'
-'40277','SNGIB1M','Singapore Interbank 1 Month \'Dead\'','Singapore','Interest Rate','DBS - Development Bank of Singapore','Datastream','SNGIB1M','B','40277','SGD','1m','Interbank'
-'40278','THIBK1M','Thailand Interbank 1 Month \'D Disc','Thailand','Interest Rate','Central Bank of Thailand','Datastream','THIBK1M','B','40278','THB','1m','Interbank'
-'40279','THIBK2M','Thailand Interbank 2 Month \'D Disc','Thailand','Interest Rate','Central Bank of Thailand','Datastream','THIBK2M','B','40279','THB','2M','Interbank'
-'40280','THIBK3M','Thailand Interbank 3 Month \'D Disc','Thailand','Interest Rate','Central Bank of Thailand','Datastream','THIBK3M','B','40280','THB','3m','Interbank'
-'40281','TKBLRON','Turkey Overnight Lending Rate','Turkey','Interest Rate','Refinitiv','Datastream','TKBLRON','B','40281','TRY','ON','Interbank'
-'40282','TKIBKON','Turkey Interbank O/N','Turkey','Interest Rate','Banks Association of Turkey (TBB)','Datastream','TKIBKON','B','40282','TRY','ON','Interbank'
-'40283','TKNIB1M','Turkey Interbank 1M (Min) Disc','Turkey','Interest Rate','Istanbul Bilgi Sistemleri','Datastream','TKNIB1M','B','40283','TRY','1m','Interbank'
-'40284','TKNIB3M','Turkey Interbank 3M (Min) Disc','Turkey','Interest Rate','Istanbul Bilgi Sistemleri','Datastream','TKNIB3M','B','40284','TRY','3m','Interbank'
-'40285','TKVIBON','Turkey Interbank O/N (Avg)','Turkey','Interest Rate','Istanbul Bilgi Sistemleri','Datastream','TKVIBON','B','40285','TRY','ON','Interbank'
-'40286','TKWDOND','Rfv Kuwaiti Dinar O/N Deposit','Kuwait','Interest Rate','Refinitiv','Datastream','TKWDOND','B','40286','KWD','ON','Interbank'
-'40287','TKXIB1M','Turkey Interbank 1M (Max) Disc','Turkey','Interest Rate','Istanbul Bilgi Sistemleri','Datastream','TKXIB1M','B','40287','TRY','1m','Interbank'
-'40288','TSAROND','Rfv Saudi Riyal O/N Deposit','Saudi Arabia','Interest Rate','Refinitiv','Datastream','TSAROND','B','40288','SAR','ON','Deposit'
-'40289','CLBCBPR','Chile Central Bank Policy Rate','Chile','Interest Rate','Bank for International Settlements','Datastream','CLBCBPR','B','40289','CLP','ON','Policy'
-'40290','CLOINIR','Chile Overnight Interbank Interest Rate','Chile','Interest Rate','Central Bank of Chile','Datastream','CLOINIR','B','40290','CLP','ON','Interbank'
-'40293','CB90CDR','Colombia Cd Rate 90-Day','Colombia','Interest Rate','Banco de la Republica, Colombia','Datastream','CB90CDR','B','40293','COP','3m','Interbank'
-'40294','CBIBKON','Colombia Interbank Overnight Disc','Colombia','Interest Rate','Banco de la Republica, Colombia','Datastream','CBIBKON','B','40294','COP','ON','Interbank'
-'40300','AUCASH11F','Australia Cash Rate 11 Am (End of Period)','Australia','Interest Rate','Reserve Bank of Australia','Datastream','AUCASH11F','BM','40300','AUD','ON','Policy'
-'40301','AUMSHORT','Australia Bank Accepted Bills - 90 Days','Australia','Interest Rate','Reserve Bank of Australia','Datastream','AUMSHORT','MS','40301','AUD','1m','Interbank'
-'40302','CN13883','Canada Treasury Bill 1 Month','Canada','Interest Rate','CANSIM - Statistics Canada','Datastream','CN13883','B','40302','CAD','1m','Treasury'
-'40303','CN13884','Canada Treasury Bill 3 Month','Canada','Interest Rate','CANSIM - Statistics Canada','Datastream','CN13884','B','40303','CAD','3m','Treasury'
-'40304','CNBCBPR','Canada Central Bank Policy Rate','Canada','Interest Rate','Bank for International Settlements','Datastream','CNBCBPR','B','40304','CAD','ON','Policy'
-'40305','FRCALL%.','France Money Market Int.Rates-Average Rate','France','Interest Rate','Banque de France','Datastream','FRCALL%.','MS','40305','FRF','1m','Deposit'
-'40306','FRFEDFD','US Fed Funds Eff Rate (D)','United States','Interest Rate','Federal Reserve, United States','Datastream','FRFEDFD','B','40306','USD','ON','Policy'
-'40307','FRI60C..','France Interest Rates: Govt. Treasury Bills(','France','Interest Rate','IMF - International Financial Statistics','Datastream','FRI60C..','MS','40307','FRF','3m','Treasury'
-'40308','FRINTER3','France Pibor / Euribor - 3-Month (Mth.Avg.)','France','Interest Rate','Main Economic Indicators,copyright OECD','Datastream','FRINTER3','MS','40308','FRF','3m','Interbank'
-'40309','FROIR060R','France Call Money/Interbank Rate','France','Interest Rate','Main Economic Indicators,copyright OECD','Datastream','FROIR060R','BM','40309','FRF','ON','Interbank'
-'40310','HKPRIME.','HK Prime Lending Rate (Ep)','Hong Kong','Interest Rate','Hong Kong Monetary Authority','Datastream','HKPRIME.','BM','40310','HKD','ON','Policy'
-'40311','NLEURO3.','Nl Euro-Guilder - 3 Month','Netherlands','Interest Rate','Main Economic Indicators,copyright OECD','Datastream','NLEURO3.','BM','40311','NLG','3m','Interbank'
-'40312','NLM60.A.R','Netherlands Discount Rate (End Of Period)','Netherlands','Interest Rate','IMF - International Financial Statistics','Datastream','NLM60.A.R','MS','40312','NLG','ON','Policy'
-'40313','NWDINTN','Norway Overnight Lending Rate','Norway','Interest Rate','Norges Bank','Datastream','NWDINTN','B','40313','NOK','ON','Policy'
-'40314','NWDISCRT','Norway Discount Rate / Overnight Lending Rate','Norway','Interest Rate','Refinitiv','Datastream','NWDISCRT','BM','40314','NOK','ON','Policy'
-'40315','SDBCBPR','Sweden Central Bank Policy Rate','Sweden','Interest Rate','Bank for International Settlements','Datastream','SDBCBPR','B','40315','SEK','ON','Policy'
-'40316','SDDISCRT','Sweden Discount Rate - Official','Sweden','Interest Rate','Sveriges Riksbank','Datastream','SDDISCRT','MS','40316','SEK','ON','Policy'
-'40317','SDOIR060R','Sweden Call Money/Interbank Rate','Sweden','Interest Rate','Main Economic Indicators,copyright OECD','Datastream','SDOIR060R','MS','40317','SEK','ON','Interbank'
-'40318','SPI60B..','Singapore Interest Rates: Money Market','Singapore','Interest Rate','IMF - International Financial Statistics','Datastream','SPI60B..','MS','40318','SGD','1m','Deposit'
-'40319','SWBCBPR','Switzerland Central Bank Policy Rate','Switzerland','Interest Rate','Bank for International Settlements','Datastream','SWBCBPR','B','40319','CHF','ON','Policy'
-'40320','SWDISCR','Switzerland Discount Rate','Switzerland','Interest Rate','Swiss National Bank','Datastream','SWDISCR','B','40320','CHF','ON','Policy'
-'40321','USBCBPR','US Central Bank Policy Rate','United States','Interest Rate','Bank for International Settlements','Datastream','USBCBPR','B','40321','USD','ON','Policy'
-'40322','USINTER3','US Interbank Rate - 3 Month (Month Avg)','United States','Interest Rate','Refinitiv','Datastream','USINTER3','MS','40322','USD','3m','Interbank'
-'40323','FRTCM1M','United States Treasury Constant Maturity 1 Month (Daily)','United States','Interest Rate','FRED','Datastream','FRTCM1M','B','40323','USD','1m','Treasury'
-'40324','USTBL1M','United States Treasury Bill 1 Month Disc','United States','Interest Rate','Financial Times','Datastream','USTBL1M','B','40324','USD','1m','Treasury'
-'40404','ADBR090','Australia 90 Day Bank Bill','Australia','Interest Rate','Reserve Bank of Australia','Datastream','ADBR090','B','40404','AUD','3m','Government'
-'41317','USDSFON','United States Dollar SOFR Overnight Index Swap Zero Curve On Point','United States','Interest Rate','LSEG Datastream','Datastream','USDSFON','B','41317','USD','ON','OIS Zero'
-'41318','USDSF1Y','United States Dollar SOFR Overnight Index Swap Zero Curve 1 Year Point','United States','Interest Rate','LSEG Datastream','Datastream','USDSF1Y','B','41318','USD','1Y','OIS Zero'
-'41319','USDSF2Y','United States Dollar SOFR Overnight Index Swap Zero Curve 2 Years Point','United States','Interest Rate','LSEG Datastream','Datastream','USDSF2Y','B','41319','USD','2Y','OIS Zero'
-'41320','USDSF3Y','United States Dollar SOFR Overnight Index Swap Zero Curve 3 Years Point','United States','Interest Rate','LSEG Datastream','Datastream','USDSF3Y','B','41320','USD','3Y','OIS Zero'
-'41321','USDSF4Y','United States Dollar SOFR Overnight Index Swap Zero Curve 4 Years Point','United States','Interest Rate','LSEG Datastream','Datastream','USDSF4Y','B','41321','USD','4Y','OIS Zero'
-'41322','USDSF5Y','United States Dollar SOFR Overnight Index Swap Zero Curve 5 Years Point','United States','Interest Rate','LSEG Datastream','Datastream','USDSF5Y','B','41322','USD','5Y','OIS Zero'
-'41323','GBPSOON','Great British Pound SONIA Overnight Index Swap Zero Curve On Point','United Kingdom','Interest Rate','LSEG Datastream','Datastream','GBPSOON','B','41323','GBP','ON','OIS Zero'
-'41324','GBPSO1Y','Great British Pound SONIA Overnight Index Swap Zero Curve 1 Year Point','United Kingdom','Interest Rate','LSEG Datastream','Datastream','GBPSO1Y','B','41324','GBP','1Y','OIS Zero'
-'41325','GBPSO2Y','Great British Pound SONIA Overnight Index Swap Zero Curve 2 Years Point','United Kingdom','Interest Rate','LSEG Datastream','Datastream','GBPSO2Y','B','41325','GBP','2Y','OIS Zero'
-'41326','GBPSO3Y','Great British Pound SONIA Overnight Index Swap Zero Curve 3 Years Point','United Kingdom','Interest Rate','LSEG Datastream','Datastream','GBPSO3Y','B','41326','GBP','3Y','OIS Zero'
-'41327','GBPSO4Y','Great British Pound SONIA Overnight Index Swap Zero Curve 4 Years Point','United Kingdom','Interest Rate','LSEG Datastream','Datastream','GBPSO4Y','B','41327','GBP','4Y','OIS Zero'
-'41328','GBPSO5Y','Great British Pound SONIA Overnight Index Swap Zero Curve 5 Years Point','United Kingdom','Interest Rate','LSEG Datastream','Datastream','GBPSO5Y','B','41328','GBP','5Y','OIS Zero'
-'41329','EUESTON','Euro ESTR Overnight Index Swap Zero Curve On Point','Eurozone','Interest Rate','LSEG Datastream','Datastream','EUESTON','B','41329','EUR','ON','OIS Zero'
-'41330','EUEST1Y','Euro ESTR Overnight Index Swap Zero Curve 1 Year Point','Eurozone','Interest Rate','LSEG Datastream','Datastream','EUEST1Y','B','41330','EUR','1Y','OIS Zero'
-'41331','EUEST2Y','Euro ESTR Overnight Index Swap Zero Curve 2 Years Point','Eurozone','Interest Rate','LSEG Datastream','Datastream','EUEST2Y','B','41331','EUR','2Y','OIS Zero'
-'41332','EUEST3Y','Euro ESTR Overnight Index Swap Zero Curve 3 Years Point','Eurozone','Interest Rate','LSEG Datastream','Datastream','EUEST3Y','B','41332','EUR','3Y','OIS Zero'
-'41333','EUEST4Y','Euro ESTR Overnight Index Swap Zero Curve 4 Years Point','Eurozone','Interest Rate','LSEG Datastream','Datastream','EUEST4Y','B','41333','EUR','4Y','OIS Zero'
-'41334','EUEST5Y','Euro ESTR Overnight Index Swap Zero Curve 5 Years Point','Eurozone','Interest Rate','LSEG Datastream','Datastream','EUEST5Y','B','41334','EUR','5Y','OIS Zero'
-'41335','CHFSAON','Swiss Franc SARON Overnight Index Swap Zero Curve On Point','Switzerland','Interest Rate','LSEG Datastream','Datastream','CHFSAON','B','41335','CHF','ON','OIS Zero'
-'41336','CHFSA1Y','Swiss Franc SARON Overnight Index Swap Zero Curve 1 Year Point','Switzerland','Interest Rate','LSEG Datastream','Datastream','CHFSA1Y','B','41336','CHF','1Y','OIS Zero'
-'41337','CHFSA2Y','Swiss Franc SARON Overnight Index Swap Zero Curve 2 Years Point','Switzerland','Interest Rate','LSEG Datastream','Datastream','CHFSA2Y','B','41337','CHF','2Y','OIS Zero'
-'41338','CHFSA3Y','Swiss Franc SARON Overnight Index Swap Zero Curve 3 Years Point','Switzerland','Interest Rate','LSEG Datastream','Datastream','CHFSA3Y','B','41338','CHF','3Y','OIS Zero'
-'41339','CHFSA4Y','Swiss Franc SARON Overnight Index Swap Zero Curve 4 Years Point','Switzerland','Interest Rate','LSEG Datastream','Datastream','CHFSA4Y','B','41339','CHF','4Y','OIS Zero'
-'41340','CHFSA5Y','Swiss Franc SARON Overnight Index Swap Zero Curve 5 Years Point','Switzerland','Interest Rate','LSEG Datastream','Datastream','CHFSA5Y','B','41340','CHF','5Y','OIS Zero'
-'41341','CADCOON','Canadian Dollar CORRA Overnight Index Swap Zero Curve On Point','Canada','Interest Rate','LSEG Datastream','Datastream','CADCOON','B','41341','CAD','ON','OIS Zero'
-'41342','CADCO1Y','Canadian Dollar CORRA Overnight Index Swap Zero Curve 1 Year Point','Canada','Interest Rate','LSEG Datastream','Datastream','CADCO1Y','B','41342','CAD','1Y','OIS Zero'
-'41343','CADCO2Y','Canadian Dollar CORRA Overnight Index Swap Zero Curve 2 Years Point','Canada','Interest Rate','LSEG Datastream','Datastream','CADCO2Y','B','41343','CAD','2Y','OIS Zero'
-'41344','CADCO3Y','Canadian Dollar CORRA Overnight Index Swap Zero Curve 3 Years Point','Canada','Interest Rate','LSEG Datastream','Datastream','CADCO3Y','B','41344','CAD','3Y','OIS Zero'
-'41345','CADCO4Y','Canadian Dollar CORRA Overnight Index Swap Zero Curve 4 Years Point','Canada','Interest Rate','LSEG Datastream','Datastream','CADCO4Y','B','41345','CAD','4Y','OIS Zero'
-'41346','CADCO5Y','Canadian Dollar CORRA Overnight Index Swap Zero Curve 5 Years Point','Canada','Interest Rate','LSEG Datastream','Datastream','CADCO5Y','B','41346','CAD','5Y','OIS Zero'
-'41347','AUDAOON','Australian Dollar Aonia Overnight Index Swap Zero Curve On Point','Australia','Interest Rate','LSEG Datastream','Datastream','AUDAOON','B','41347','AUD','ON','OIS Zero'
-'41348','AUDAO1Y','Australian Dollar Aonia Overnight Index Swap Zero Curve 1 Year Point','Australia','Interest Rate','LSEG Datastream','Datastream','AUDAO1Y','B','41348','AUD','1Y','OIS Zero'
-'41349','AUDAO2Y','Australian Dollar Aonia Overnight Index Swap Zero Curve 2 Years Point','Australia','Interest Rate','LSEG Datastream','Datastream','AUDAO2Y','B','41349','AUD','2Y','OIS Zero'
-'41350','AUDAO3Y','Australian Dollar Aonia Overnight Index Swap Zero Curve 3 Years Point','Australia','Interest Rate','LSEG Datastream','Datastream','AUDAO3Y','B','41350','AUD','3Y','OIS Zero'
-'41351','AUDAO4Y','Australian Dollar Aonia Overnight Index Swap Zero Curve 4 Years Point','Australia','Interest Rate','LSEG Datastream','Datastream','AUDAO4Y','B','41351','AUD','4Y','OIS Zero'
-'41352','AUDAO5Y','Australian Dollar Aonia Overnight Index Swap Zero Curve 5 Years Point','Australia','Interest Rate','LSEG Datastream','Datastream','AUDAO5Y','B','41352','AUD','5Y','OIS Zero'
+# uid	ticker	name	region	category	provider	datasource	symbol	frequency	uid	currency	maturity	type
+5473	BBUSD1M	IBA United States Dollar Interbank LIBOR 1 Month Delayed	United States	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBUSD1M	B	5473	USD	1m	Interbank
+5474	BBUSD3M	IBA United States Dollar Interbank LIBOR 3 Months Delayed	United States	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBUSD3M	B	5474	USD	3m	Interbank
+5475	BBGBP3M	IBA Great British Pound Interbank LIBOR 3 Months Delayed	United Kingdom	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBGBP3M	B	5475	GBP	3m	Interbank
+5476	BBJPY3M	IBA Japanese Yen Interbank LIBOR 3 Months Delayed	Japan	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBJPY3M	B	5476	JPY	3m	Interbank
+5477	BBCHF3M	IBA Swiss Franc Interbank LIBOR 3 Months Delayed	Switzerland	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBCHF3M	B	5477	CHF	3m	Interbank
+5478	BBGBP1M	IBA Great British Pound Interbank LIBOR 1 Month Delayed	United Kingdom	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBGBP1M	B	5478	GBP	1m	Interbank
+5479	BBUSD6M	IBA United States Dollar Interbank LIBOR 6 Months Delayed	United States	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBUSD6M	B	5479	USD	6m	Interbank
+5480	BBUSDON	IBA United States Dollar Interbank LIBOR Overnight Delayed	United States	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBUSDON	B	5480	USD	ON	Interbank
+5481	BBCHF12	IBA Swiss Franc Interbank LIBOR 12 Months Delayed	Switzerland	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBCHF12	B	5481	CHF	1y	Interbank
+5482	BBCHF1W	IBA Swiss Franc Interbank LIBOR 1 Week Delayed	Switzerland	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBCHF1W	B	5482	CHF	1w	Interbank
+5483	BBCHF2M	IBA Swiss Franc Interbank LIBOR 2 Months Delayed	Switzerland	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBCHF2M	B	5483	CHF	2m	Interbank
+5484	BBCHF6M	IBA Swiss Franc Interbank LIBOR 6 Months Delayed	Switzerland	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBCHF6M	B	5484	CHF	6m	Interbank
+5485	BBCHFSN	IBA Swiss Franc Interbank LIBOR Spot Next Delayed	Switzerland	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBCHFSN	B	5485	CHF	ST	Interbank
+5486	BBEUR1Y	IBA Euro Interbank LIBOR 12 Months Delayed	Eurozone	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBEUR1Y	B	5486	EUR	1y	Interbank
+5487	BBEUR1M	IBA Euro Interbank LIBOR 1 Month Delayed	Eurozone	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBEUR1M	B	5487	EUR	1m	Interbank
+5488	BBEUR1W	IBA Euro Interbank LIBOR 1 Week Delayed	Eurozone	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBEUR1W	B	5488	EUR	1w	Interbank
+5489	BBEUR2M	IBA Euro Interbank LIBOR 2 Months Delayed	Eurozone	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBEUR2M	B	5489	EUR	2m	Interbank
+5490	BBEUR6M	IBA Euro Interbank LIBOR 6 Months Delayed	Eurozone	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBEUR6M	B	5490	EUR	6m	Interbank
+5491	BBEURON	IBA Euro Interbank LIBOR Overnight Delayed	Eurozone	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBEURON	B	5491	EUR	ON	Interbank
+5492	BBGBP12	IBA Great British Pound Interbank LIBOR 12 Months Delayed	United Kingdom	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBGBP12	B	5492	GBP	1y	Interbank
+5493	BBGBP1W	IBA Great British Pound Interbank LIBOR 1 Week Delayed	United Kingdom	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBGBP1W	B	5493	GBP	1w	Interbank
+5494	BBGBP2M	IBA Great British Pound Interbank LIBOR 2 Months Delayed	United Kingdom	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBGBP2M	B	5494	GBP	2m	Interbank
+5495	BBGBP6M	IBA Great British Pound Interbank LIBOR 6 Months Delayed	United Kingdom	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBGBP6M	B	5495	GBP	6m	Interbank
+5496	BBGBPON	IBA Great British Pound Interbank LIBOR Overnight Delayed	United Kingdom	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBGBPON	B	5496	GBP	ON	Interbank
+5497	BBJPY12	IBA Japanese Yen Interbank LIBOR 12 Months Delayed	Japan	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBJPY12	B	5497	JPY	1y	Interbank
+5498	BBJPY1M	IBA Japanese Yen Interbank LIBOR 1 Month Delayed	Japan	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBJPY1M	B	5498	JPY	1m	Interbank
+5499	BBJPY1W	IBA Japanese Yen Interbank LIBOR 1 Week Delayed	Japan	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBJPY1W	B	5499	JPY	1w	Interbank
+5500	BBJPY2M	IBA Japanese Yen Interbank LIBOR 2 Months Delayed	Japan	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBJPY2M	B	5500	JPY	2m	Interbank
+5501	BBJPY6M	IBA Japanese Yen Interbank LIBOR 6 Months Delayed	Japan	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBJPY6M	B	5501	JPY	6m	Interbank
+5502	BBJPYSN	IBA Japanese Yen Interbank LIBOR Spot Next Delayed	Japan	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBJPYSN	B	5502	JPY	ST	Interbank
+5503	BBUSD12	IBA United States Dollar Interbank LIBOR 12 Months Delayed	United States	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBUSD12	B	5503	USD	1y	Interbank
+5504	BBUSD1W	IBA United States Dollar Interbank LIBOR 1 Week Delayed	United States	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBUSD1W	B	5504	USD	1w	Interbank
+5505	BBUSD2M	IBA United States Dollar Interbank LIBOR 2 Months Delayed	United States	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBUSD2M	B	5505	USD	2m	Interbank
+5506	BBDKK10	10 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK10	B	5506	DKK	10m	Interbank
+5507	BBSEK10	10 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK10	B	5507	SEK	10m	Interbank
+5508	BBSEK11	11 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK11	B	5508	SEK	11m	Interbank
+5509	BBDKK11	11 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK11	B	5509	DKK	11m	Interbank
+5510	BBSEK12	12 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK12	B	5510	SEK	1y	Interbank
+5511	BBDKK12	12 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK12	B	5511	DKK	1y	Interbank
+5512	BBAUD1M	Australia Interbank 1 Month (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD1M	B	5512	AUD	1m	Interbank
+5513	BBAUD1W	Australia Interbank 1 Week (LD Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD1W	B	5513	AUD	1w	Interbank
+5514	BBAUD10	Australia Interbank 10 Months (LD Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD10	B	5514	AUD	10m	Interbank
+5515	BBAUD11	Australia Interbank 11 Months (LD Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD11	B	5515	AUD	11m	Interbank
+5516	BBAUD12	Australia Interbank 12 Month (LD Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD12	B	5516	AUD	1y	Interbank
+5517	BBAUD2M	Australia Interbank 2 Months (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD2M	B	5517	AUD	2m	Interbank
+5518	BBAUD2W	Australia Interbank 2 Week (LD Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD2W	B	5518	AUD	2w	Interbank
+5519	BBAUD3M	Australia Interbank 3 Month (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD3M	B	5519	AUD	3m	Interbank
+5520	BBAUD4M	Australia Interbank 4 Months (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD4M	B	5520	AUD	4m	Interbank
+5521	BBAUD5M	Australia Interbank 5 Months (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD5M	B	5521	AUD	5m	Interbank
+5522	BBAUD6M	Australia Interbank 6 Months (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD6M	B	5522	AUD	6m	Interbank
+5523	BBAUD7M	Australia Interbank 7 Months (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD7M	B	5523	AUD	7m	Interbank
+5524	BBAUD8M	Australia Interbank 8 Months (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD8M	B	5524	AUD	8m	Interbank
+5525	BBAUD9M	Australia Interbank 9 Months (London Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUD9M	B	5525	AUD	9m	Interbank
+5526	BBAUDSN	Australia Interbank Spot Next (London : B Disc	Australia	Interest Rate	BBA - British Bankers' Association	Datastream	BBAUDSN	B	5526	AUD	ST	Interbank
+5527	BBCAD1M	Canada Interbank 1 Month (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD1M	B	5527	CAD	1m	Interbank
+5528	BBCAD1W	Canada Interbank 1 Week (LD Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD1W	B	5528	CAD	1w	Interbank
+5529	BBCAD10	Canada Interbank 10 Months (LD Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD10	B	5529	CAD	10m	Interbank
+5530	BBCAD11	Canada Interbank 11 Months (LD Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD11	B	5530	CAD	11m	Interbank
+5531	BBCAD12	Canada Interbank 12 Month (LD Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD12	B	5531	CAD	1y	Interbank
+5532	BBCAD2M	Canada Interbank 2 Months (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD2M	B	5532	CAD	2m	Interbank
+5533	BBCAD2W	Canada Interbank 2 Week (LD Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD2W	B	5533	CAD	2w	Interbank
+5534	BBCAD3M	Canada Interbank 3 Month (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD3M	B	5534	CAD	3m	Interbank
+5535	BBCAD4M	Canada Interbank 4 Months (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD4M	B	5535	CAD	4m	Interbank
+5536	BBCAD5M	Canada Interbank 5 Months (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD5M	B	5536	CAD	5m	Interbank
+5537	BBCAD6M	Canada Interbank 6 Months (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD6M	B	5537	CAD	6m	Interbank
+5538	BBCAD7M	Canada Interbank 7 Months (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD7M	B	5538	CAD	7m	Interbank
+5539	BBCAD8M	Canada Interbank 8 Months (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD8M	B	5539	CAD	8m	Interbank
+5540	BBCAD9M	Canada Interbank 9 Months (London Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCAD9M	B	5540	CAD	9m	Interbank
+5541	BBCADON	Canada Interbank Overnight (London : B Disc	Canada	Interest Rate	BBA - British Bankers' Association	Datastream	BBCADON	B	5541	CAD	ON	Interbank
+5542	BBDKK1M	Denmark Interbank 1 Month London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK1M	B	5542	DKK	1m	Interbank
+5543	BBDKK1W	Denmark Interbank 1 Week London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK1W	B	5543	DKK	1w	Interbank
+5544	BBDKK2M	Denmark Interbank 2 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK2M	B	5544	DKK	2m	Interbank
+5545	BBDKK2W	Denmark Interbank 2 Weeks London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK2W	B	5545	DKK	2w	Interbank
+5546	BBDKK3M	Denmark Interbank 3 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK3M	B	5546	DKK	3m	Interbank
+5547	BBDKK4M	Denmark Interbank 4 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK4M	B	5547	DKK	4m	Interbank
+5548	BBDKK5M	Denmark Interbank 5 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK5M	B	5548	DKK	5m	Interbank
+5549	BBDKK6M	Denmark Interbank 6 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK6M	B	5549	DKK	6m	Interbank
+5550	BBDKK7M	Denmark Interbank 7 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK7M	B	5550	DKK	7m	Interbank
+5551	BBDKK8M	Denmark Interbank 8 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK8M	B	5551	DKK	8m	Interbank
+5552	BBDKK9M	Denmark Interbank 9 Months London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKK9M	B	5552	DKK	9m	Interbank
+5553	BBEUR10	Euro Interbank 10 Months (LD Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR10	B	5553	EUR	10m	Interbank
+5554	BBEUR11	Euro Interbank 11 Months (LD Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR11	B	5554	EUR	11m	Interbank
+5555	BBEUR2W	Euro Interbank 2 Week (London : Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR2W	B	5555	EUR	2w	Interbank
+5556	BBEUR4M	Euro Interbank 4 Months (London Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR4M	B	5556	EUR	4m	Interbank
+5557	BBEUR5M	Euro Interbank 5 Months (London Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR5M	B	5557	EUR	5m	Interbank
+5558	BBEUR7M	Euro Interbank 7 Months (London Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR7M	B	5558	EUR	7m	Interbank
+5559	BBEUR8M	Euro Interbank 8 Months (London Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR8M	B	5559	EUR	8m	Interbank
+5560	BBEUR9M	Euro Interbank 9 Months (London Disc	Eurozone	Interest Rate	BBA - British Bankers' Association	Datastream	BBEUR9M	B	5560	EUR	9m	Interbank
+5561	BBCHF1M	IBA Swiss Franc Interbank LIBOR 1 Month Delayed Disc	Switzerland	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBCHF1M	B	5561	CHF	1m	Interbank
+5562	BBEUR3M	IBA Euro Interbank LIBOR 3 Months Delayed Disc	Eurozone	Interest Rate	ICE Benchmark Administration Ltd.	Datastream	BBEUR3M	B	5562	EUR	3m	Interbank
+5563	BBJPY10	Japan Interbank 10 Months (LD Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY10	B	5563	JPY	10m	Interbank
+5564	BBJPY11	Japan Interbank 11 Months (LD Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY11	B	5564	JPY	11m	Interbank
+5565	BBJPY2W	Japan Interbank 2 Week (LD Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY2W	B	5565	JPY	2w	Interbank
+5566	BBJPY4M	Japan Interbank 4 Months (London Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY4M	B	5566	JPY	4m	Interbank
+5567	BBJPY5M	Japan Interbank 5 Months (London Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY5M	B	5567	JPY	5m	Interbank
+5568	BBJPY7M	Japan Interbank 7 Months (London Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY7M	B	5568	JPY	7m	Interbank
+5569	BBJPY8M	Japan Interbank 8 Months (London Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY8M	B	5569	JPY	8m	Interbank
+5570	BBJPY9M	Japan Interbank 9 Months (London Disc	Japan	Interest Rate	BBA - British Bankers' Association	Datastream	BBJPY9M	B	5570	JPY	9m	Interbank
+5571	BBNZD10	New Zealand Interbank 10 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD10	B	5571	NZD	10m	Interbank
+5572	BBNZD11	New Zealand Interbank 11 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD11	B	5572	NZD	11m	Interbank
+5573	BBNZD12	New Zealand Interbank 12 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD12	B	5573	NZD	1y	Interbank
+5574	BBNZD1M	New Zealand Interbank 1 Month (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD1M	B	5574	NZD	1m	Interbank
+5575	BBNZD1W	New Zealand Interbank 1 Week (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD1W	B	5575	NZD	1w	Interbank
+5576	BBNZD2M	New Zealand Interbank 2 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD2M	B	5576	NZD	2m	Interbank
+5577	BBNZD2W	New Zealand Interbank 2 Weeks (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD2W	B	5577	NZD	2w	Interbank
+5578	BBNZD3M	New Zealand Interbank 3 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD3M	B	5578	NZD	3m	Interbank
+5579	BBNZD4M	New Zealand Interbank 4 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD4M	B	5579	NZD	4m	Interbank
+5580	BBNZD5M	New Zealand Interbank 5 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD5M	B	5580	NZD	5m	Interbank
+5581	BBNZD6M	New Zealand Interbank 6 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD6M	B	5581	NZD	6m	Interbank
+5582	BBNZD7M	New Zealand Interbank 7 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD7M	B	5582	NZD	7m	Interbank
+5583	BBNZD8M	New Zealand Interbank 8 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD8M	B	5583	NZD	8m	Interbank
+5584	BBNZD9M	New Zealand Interbank 9 Months (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZD9M	B	5584	NZD	9m	Interbank
+5585	BBNZDSN	New Zealand Interbank Spot Next (London : British Bankers Association) Disc	New Zealand	Interest Rate	BBA - British Bankers' Association	Datastream	BBNZDSN	B	5585	NZD	ST	Interbank
+5586	BBDKKON	Overnight London : British Bankers Association Disc	Denmark	Interest Rate	BBA - British Bankers' Association	Datastream	BBDKKON	B	5586	DKK	ON	Interbank
+5587	BBSEKSN	Spot Next London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEKSN	B	5587	SEK	ST	Interbank
+5588	BBSEK1M	Sweden Interbank 1 Month London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK1M	B	5588	SEK	1m	Interbank
+5589	BBSEK1W	Sweden Interbank 1 Week London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK1W	B	5589	SEK	1w	Interbank
+5590	BBSEK2M	Sweden Interbank 2 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK2M	B	5590	SEK	2m	Interbank
+5591	BBSEK2W	Sweden Interbank 2 Weeks London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK2W	B	5591	SEK	2w	Interbank
+5592	BBSEK3M	Sweden Interbank 3 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK3M	B	5592	SEK	3m	Interbank
+5593	BBSEK4M	Sweden Interbank 4 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK4M	B	5593	SEK	4m	Interbank
+5594	BBSEK5M	Sweden Interbank 5 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK5M	B	5594	SEK	5m	Interbank
+5595	BBSEK6M	Sweden Interbank 6 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK6M	B	5595	SEK	6m	Interbank
+5596	BBSEK7M	Sweden Interbank 7 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK7M	B	5596	SEK	7m	Interbank
+5597	BBSEK8M	Sweden Interbank 8 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK8M	B	5597	SEK	8m	Interbank
+5598	BBSEK9M	Sweden Interbank 9 Months London : British Bankers Association Disc	Sweden	Interest Rate	BBA - British Bankers' Association	Datastream	BBSEK9M	B	5598	SEK	9m	Interbank
+5599	BBCHF10	Switzerland Interbank 10 Months (LD Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF10	B	5599	CHF	10m	Interbank
+5600	BBCHF11	Switzerland Interbank 11 Months (LD Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF11	B	5600	CHF	11m	Interbank
+5601	BBCHF2W	Switzerland Interbank 2 Week (LD Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF2W	B	5601	CHF	2w	Interbank
+5602	BBCHF4M	Switzerland Interbank 4 Months (London Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF4M	B	5602	CHF	4m	Interbank
+5603	BBCHF5M	Switzerland Interbank 5 Months (London Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF5M	B	5603	CHF	5m	Interbank
+5604	BBCHF7M	Switzerland Interbank 7 Months (London Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF7M	B	5604	CHF	7m	Interbank
+5605	BBCHF8M	Switzerland Interbank 8 Months (London Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF8M	B	5605	CHF	8m	Interbank
+5606	BBCHF9M	Switzerland Interbank 9 Months (London Disc	Switzerland	Interest Rate	BBA - British Bankers' Association	Datastream	BBCHF9M	B	5606	CHF	9m	Interbank
+5607	BBGBP10	United Kingdom Interbank 10 Months (LD Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP10	B	5607	GBP	10m	Interbank
+5608	BBGBP11	United Kingdom Interbank 11 Months (LD Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP11	B	5608	GBP	11m	Interbank
+5609	BBGBP2W	United Kingdom Interbank 2 Week (LD Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP2W	B	5609	GBP	2w	Interbank
+5610	BBGBP4M	United Kingdom Interbank 4 Months (London Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP4M	B	5610	GBP	4m	Interbank
+5611	BBGBP5M	United Kingdom Interbank 5 Months (London Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP5M	B	5611	GBP	5m	Interbank
+5612	BBGBP7M	United Kingdom Interbank 7 Months (London Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP7M	B	5612	GBP	7m	Interbank
+5613	BBGBP8M	United Kingdom Interbank 8 Months (London Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP8M	B	5613	GBP	8m	Interbank
+5614	BBGBP9M	United Kingdom Interbank 9 Months (London Disc	United Kingdom	Interest Rate	BBA - British Bankers' Association	Datastream	BBGBP9M	B	5614	GBP	9m	Interbank
+5615	BBUSD10	United States Interbank 10 Months (LD Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD10	B	5615	USD	10m	Interbank
+5616	BBUSD11	United States Interbank 11 Months (LD Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD11	B	5616	USD	11m	Interbank
+5617	BBUSD2W	United States Interbank 2 Week (LD Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD2W	B	5617	USD	2w	Interbank
+5618	BBUSD4M	United States Interbank 4 Months (London Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD4M	B	5618	USD	4m	Interbank
+5619	BBUSD5M	United States Interbank 5 Months (London Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD5M	B	5619	USD	5m	Interbank
+5620	BBUSD7M	United States Interbank 7 Months (London Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD7M	B	5620	USD	7m	Interbank
+5621	BBUSD8M	United States Interbank 8 Months (London Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD8M	B	5621	USD	8m	Interbank
+5622	BBUSD9M	United States Interbank 9 Months (London Disc	United States	Interest Rate	BBA - British Bankers' Association	Datastream	BBUSD9M	B	5622	USD	9m	Interbank
+5623	ECAUD1M	Australian Dollar 1 Month Deposit (Financial Times / Refinitiv)	Australia	Interest Rate	Financial Times/Refinitiv	Datastream	ECAUD1M	B	5623	AUD	1m	Deposit
+5624	ECAUD1W	Australian Dollar SW Deposit (Financial Times / Refinitiv)	Australia	Interest Rate	Financial Times/Refinitiv	Datastream	ECAUD1W	B	5624	AUD	1w	Deposit
+5625	ECAUD1Y	Australian Dollar 1 Year Deposit (Financial Times / Refinitiv)	Australia	Interest Rate	Financial Times/Refinitiv	Datastream	ECAUD1Y	B	5625	AUD	1y	Deposit
+5626	ECAUD3M	Australian Dollar 3 Months Deposit (Financial Times / Refinitiv)	Australia	Interest Rate	Financial Times/Refinitiv	Datastream	ECAUD3M	B	5626	AUD	3m	Deposit
+5627	ECAUD6M	Australian Dollar 6 Months Deposit (Financial Times / Refinitiv)	Australia	Interest Rate	Financial Times/Refinitiv	Datastream	ECAUD6M	B	5627	AUD	6m	Deposit
+5628	ECAUDST	Australian Dollar Short Term Deposit (Financial Times / Refinitiv)	Australia	Interest Rate	Financial Times/Refinitiv	Datastream	ECAUDST	B	5628	AUD	ST	Deposit
+5629	ECCAD1M	Canadian Dollar 1 Month Deposit (Financial Times / Refinitiv)	Canada	Interest Rate	Financial Times/Refinitiv	Datastream	ECCAD1M	B	5629	CAD	1m	Deposit
+5630	ECCAD1W	Canadian Dollar SW Deposit (Financial Times / Refinitiv)	Canada	Interest Rate	Financial Times/Refinitiv	Datastream	ECCAD1W	B	5630	CAD	1w	Deposit
+5631	ECCAD1Y	Canadian Dollar 1 Year Deposit (Financial Times / Refinitiv)	Canada	Interest Rate	Financial Times/Refinitiv	Datastream	ECCAD1Y	B	5631	CAD	1y	Deposit
+5632	ECCAD3M	Canadian Dollar 3 Months Deposit (Financial Times / Refinitiv)	Canada	Interest Rate	Financial Times/Refinitiv	Datastream	ECCAD3M	B	5632	CAD	3m	Deposit
+5633	ECCAD6M	Canadian Dollar 6 Months Deposit (Financial Times / Refinitiv)	Canada	Interest Rate	Financial Times/Refinitiv	Datastream	ECCAD6M	B	5633	CAD	6m	Deposit
+5634	ECCADST	Canadian Dollar Short Term Canadian Dollar	Canada	Interest Rate	Financial Times/Refinitiv	Datastream	ECCADST	B	5634	CAD	ST	Deposit
+5635	ECDKN1M	Danish Krone 1 Month Deposit (Financial Times / Refinitiv)	Denmark	Interest Rate	Financial Times/Refinitiv	Datastream	ECDKN1M	B	5635	DKK	1m	Deposit
+5636	ECDKN1W	Danish Krone SW Deposit (Financial Times / Refinitiv)	Denmark	Interest Rate	Financial Times/Refinitiv	Datastream	ECDKN1W	B	5636	DKK	1w	Deposit
+5637	ECDKN1Y	Danish Krone 1 Year Deposit (Financial Times / Refinitiv)	Denmark	Interest Rate	Financial Times/Refinitiv	Datastream	ECDKN1Y	B	5637	DKK	1y	Deposit
+5638	ECDKN3M	Danish Krone 3 Months Deposit (Financial Times / Refinitiv)	Denmark	Interest Rate	Financial Times/Refinitiv	Datastream	ECDKN3M	B	5638	DKK	3m	Deposit
+5639	ECDKN6M	Danish Krone 6 Months Deposit (Financial Times / Refinitiv)	Denmark	Interest Rate	Financial Times/Refinitiv	Datastream	ECDKN6M	B	5639	DKK	6m	Deposit
+5640	ECDKNST	Danish Krone Short Term Deposit (Financial Times / Refinitiv)	Denmark	Interest Rate	Financial Times/Refinitiv	Datastream	ECDKNST	B	5640	DKK	ST	Deposit
+5641	ECEUR1M	Euro 1 Month Deposit (Financial Times / Refinitiv)	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	ECEUR1M	B	5641	EUR	1m	Deposit
+5642	ECEUR1W	Euro SW Deposit (Financial Times / Refinitiv)	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	ECEUR1W	B	5642	EUR	1w	Deposit
+5643	ECEUR1Y	Euro 1 Year Deposit (Financial Times / Refinitiv)	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	ECEUR1Y	B	5643	EUR	1y	Deposit
+5644	ECEUR3M	Euro 3 Months Deposit (Financial Times / Refinitiv)	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	ECEUR3M	B	5644	EUR	3m	Deposit
+5645	ECEUR6M	Euro 6 Months Deposit (Financial Times / Refinitiv)	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	ECEUR6M	B	5645	EUR	6m	Deposit
+5646	ECEURST	Euro Short Term Deposit (Financial Times / Refinitiv)	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	ECEURST	B	5646	EUR	ST	Deposit
+5647	GSEURTN	Refinitiv Euro Tomorrow Next Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEURTN	B	5647	EUR	TN	Deposit
+5648	GSEURON	Refinitiv Euro Overnight Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEURON	B	5648	EUR	ON	Deposit
+5649	GSEUR1W	Refinitiv Euro SW Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR1W	B	5649	EUR	1w	Deposit
+5650	GSEUR2W	Refinitiv Euro 2 Weeks Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR2W	B	5650	EUR	2w	Deposit
+5651	GSEUR3W	Refinitiv Euro 3W Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR3W	B	5651	EUR	3w	Deposit
+5652	GSEUR1M	Refinitiv Euro 1 Month Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR1M	B	5652	EUR	1m	Deposit
+5653	GSEUR2M	Refinitiv Euro 2 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR2M	B	5653	EUR	2m	Deposit
+5654	GSEUR3M	Refinitiv Euro 3 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR3M	B	5654	EUR	3m	Deposit
+5655	GSEUR4M	Refinitiv Euro 4 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR4M	B	5655	EUR	4m	Deposit
+5656	GSEUR5M	Refinitiv Euro 5 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR5M	B	5656	EUR	5m	Deposit
+5657	GSEUR6M	Refinitiv Euro 6 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR6M	B	5657	EUR	6m	Deposit
+5658	GSEUR7M	Refinitiv Euro 7 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR7M	B	5658	EUR	7m	Deposit
+5659	GSEUR8M	Refinitiv Euro 8 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR8M	B	5659	EUR	8m	Deposit
+5660	GSEUR9M	Refinitiv Euro 9 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR9M	B	5660	EUR	9m	Deposit
+5661	GSEUR10	Refinitiv Euro 10 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR10	B	5661	EUR	10m	Deposit
+5662	GSEUR11	Refinitiv Euro 11 Months Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR11	B	5662	EUR	11m	Deposit
+5663	GSEUR1Y	Refinitiv Euro 1 Year Deposit	Eurozone	Interest Rate	Financial Times/Refinitiv	Datastream	GSEUR1Y	B	5663	EUR	1y	Deposit
+5664	ECHKD1M	Hong Kong Dollar 1 Month Deposit (TP / Refinitiv)	Hong Kong	Interest Rate	Financial Times/Refinitiv	Datastream	ECHKD1M	B	5664	HKD	1m	Deposit
+5665	ECHKD1W	Hong Kong Dollar SW Deposit (TP / Refinitiv)	Hong Kong	Interest Rate	Financial Times/Refinitiv	Datastream	ECHKD1W	B	5665	HKD	1w	Deposit
+5666	ECHKD1Y	Hong Kong Dollar 1 Year Deposit (TP / Refinitiv)	Hong Kong	Interest Rate	Financial Times/Refinitiv	Datastream	ECHKD1Y	B	5666	HKD	1y	Deposit
+5667	ECHKD3M	Hong Kong Dollar 3 Months Deposit (TP / Refinitiv)	Hong Kong	Interest Rate	Financial Times/Refinitiv	Datastream	ECHKD3M	B	5667	HKD	3m	Deposit
+5668	ECHKD6M	Hong Kong Dollar 6 Months Deposit (TP / Refinitiv)	Hong Kong	Interest Rate	Financial Times/Refinitiv	Datastream	ECHKD6M	B	5668	HKD	6m	Deposit
+5669	ECHKDST	Hong Kong Dollar Short Term Deposit (TP / Refinitiv)	Hong Kong	Interest Rate	Financial Times/Refinitiv	Datastream	ECHKDST	B	5669	HKD	ST	Deposit
+5670	ECJAP1M	Japanese Yen 1 Month Deposit (Financial Times / Refinitiv)	Japan	Interest Rate	Financial Times/Refinitiv	Datastream	ECJAP1M	B	5670	JPY	1m	Deposit
+5671	ECJAP1W	Japanese Yen SW Deposit (Financial Times / Refinitiv)	Japan	Interest Rate	Financial Times/Refinitiv	Datastream	ECJAP1W	B	5671	JPY	1w	Deposit
+5672	ECJAP1Y	Japanese Yen 1 Year Deposit (Financial Times / Refinitiv)	Japan	Interest Rate	Financial Times/Refinitiv	Datastream	ECJAP1Y	B	5672	JPY	1y	Deposit
+5673	ECJAP3M	Japanese Yen 3 Months Deposit (Financial Times / Refinitiv)	Japan	Interest Rate	Financial Times/Refinitiv	Datastream	ECJAP3M	B	5673	JPY	3m	Deposit
+5674	ECJAP6M	Japanese Yen 6 Months Deposit (Financial Times / Refinitiv)	Japan	Interest Rate	Financial Times/Refinitiv	Datastream	ECJAP6M	B	5674	JPY	6m	Deposit
+5675	ECJAPST	Japanese Yen Short Term Deposit (Financial Times / Refinitiv)	Japan	Interest Rate	Financial Times/Refinitiv	Datastream	ECJAPST	B	5675	JPY	ST	Deposit
+5676	ECNZD1M	New Zealand Dollar 1 Month Deposit (Financial Times / Refinitiv)	New Zealand	Interest Rate	Financial Times/Refinitiv	Datastream	ECNZD1M	B	5676	NZD	1m	Deposit
+5677	ECNZD1W	New Zealand Dollar SW Deposit (Financial Times / Refinitiv)	New Zealand	Interest Rate	Financial Times/Refinitiv	Datastream	ECNZD1W	B	5677	NZD	1w	Deposit
+5678	ECNZD1Y	New Zealand Dollar 1 Year Deposit (Financial Times / Refinitiv)	New Zealand	Interest Rate	Financial Times/Refinitiv	Datastream	ECNZD1Y	B	5678	NZD	1y	Deposit
+5679	ECNZD3M	New Zealand Dollar 3 Months Deposit (Financial Times / Refinitiv)	New Zealand	Interest Rate	Financial Times/Refinitiv	Datastream	ECNZD3M	B	5679	NZD	3m	Deposit
+5680	ECNZD6M	New Zealand Dollar 6 Months Deposit (Financial Times / Refinitiv)	New Zealand	Interest Rate	Financial Times/Refinitiv	Datastream	ECNZD6M	B	5680	NZD	6m	Deposit
+5681	ECNZDST	New Zealand Dollar Short Term Deposit (Financial Times / Refinitiv)	New Zealand	Interest Rate	Financial Times/Refinitiv	Datastream	ECNZDST	B	5681	NZD	ST	Deposit
+5682	ECNOR1M	Norwegian Krone 1 Month Deposit (Financial Times / Refinitiv)	Norway	Interest Rate	Financial Times/Refinitiv	Datastream	ECNOR1M	B	5682	NOK	1m	Deposit
+5683	ECNOR1W	Norwegian Krone SW Deposit (Financial Times / Refinitiv)	Norway	Interest Rate	Financial Times/Refinitiv	Datastream	ECNOR1W	B	5683	NOK	1w	Deposit
+5684	ECNOR1Y	Norwegian Krone 1 Year Deposit (Financial Times / Refinitiv)	Norway	Interest Rate	Financial Times/Refinitiv	Datastream	ECNOR1Y	B	5684	NOK	1y	Deposit
+5685	ECNOR3M	Norwegian Krone 3 Months Deposit (Financial Times / Refinitiv)	Norway	Interest Rate	Financial Times/Refinitiv	Datastream	ECNOR3M	B	5685	NOK	3m	Deposit
+5686	ECNOR6M	Norwegian Krone 6 Months Deposit (Financial Times / Refinitiv)	Norway	Interest Rate	Financial Times/Refinitiv	Datastream	ECNOR6M	B	5686	NOK	6m	Deposit
+5687	ECNORST	Norwegian Krone Short Term Norwegian Krone	Norway	Interest Rate	Financial Times/Refinitiv	Datastream	ECNORST	B	5687	NOK	ST	Deposit
+5688	ECSAR1M	S African Rand 1 Month Deposit (TP / Refinitiv)	South Africa	Interest Rate	Financial Times/Refinitiv	Datastream	ECSAR1M	B	5688	ZAR	1m	Deposit
+5689	ECSAR1W	S African Rand SW Deposit (TP / Refinitiv)	South Africa	Interest Rate	Financial Times/Refinitiv	Datastream	ECSAR1W	B	5689	ZAR	1w	Deposit
+5690	ECSAR1Y	S African Rand 1 Year Deposit (TP / Refinitiv)	South Africa	Interest Rate	Financial Times/Refinitiv	Datastream	ECSAR1Y	B	5690	ZAR	1y	Deposit
+5691	ECSAR3M	S African Rand 3 Months Deposit (TP / Refinitiv)	South Africa	Interest Rate	Financial Times/Refinitiv	Datastream	ECSAR3M	B	5691	ZAR	3m	Deposit
+5692	ECSAR6M	S African Rand 6 Months Deposit (TP / Refinitiv)	South Africa	Interest Rate	Financial Times/Refinitiv	Datastream	ECSAR6M	B	5692	ZAR	6m	Deposit
+5693	ECSARST	S African Rand Short Term Deposit (TP / Refinitiv)	South Africa	Interest Rate	Financial Times/Refinitiv	Datastream	ECSARST	B	5693	ZAR	ST	Deposit
+5694	ECSWE1M	Swedish Krona 1 Month Deposit (Financial Times / Refinitiv)	Sweden	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWE1M	B	5694	SEK	1m	Deposit
+5695	ECSWE1W	Swedish Krona SW Deposit (Financial Times / Refinitiv)	Sweden	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWE1W	B	5695	SEK	1w	Deposit
+5696	ECSWE1Y	Swedish Krona 1 Year Deposit (Financial Times / Refinitiv)	Sweden	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWE1Y	B	5696	SEK	1y	Deposit
+5697	ECSWE3M	Swedish Krona 3 Months Deposit (Financial Times / Refinitiv)	Sweden	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWE3M	B	5697	SEK	3m	Deposit
+5698	ECSWE6M	Swedish Krona 6 Months Deposit (Financial Times / Refinitiv)	Sweden	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWE6M	B	5698	SEK	6m	Deposit
+5699	ECSWEST	Swedish Krona Short Term Deposit (Financial Times / Refinitiv)	Sweden	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWEST	B	5699	SEK	ST	Deposit
+5700	ECSWF1M	Swiss Franc 1 Month Deposit (Financial Times / Refinitiv)	Switzerland	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWF1M	B	5700	CHF	1m	Deposit
+5701	ECSWF1W	Swiss Franc SW Deposit (Financial Times / Refinitiv)	Switzerland	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWF1W	B	5701	CHF	1w	Deposit
+5702	ECSWF1Y	Swiss Franc 1 Year Deposit (Financial Times / Refinitiv)	Switzerland	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWF1Y	B	5702	CHF	1y	Deposit
+5703	ECSWF3M	Swiss Franc 3 Months Deposit (Financial Times / Refinitiv)	Switzerland	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWF3M	B	5703	CHF	3m	Deposit
+5704	ECSWF6M	Swiss Franc 6 Months Deposit (Financial Times / Refinitiv)	Switzerland	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWF6M	B	5704	CHF	6m	Deposit
+5705	ECSWFST	Swiss Franc Short Term Deposit (Financial Times / Refinitiv)	Switzerland	Interest Rate	Financial Times/Refinitiv	Datastream	ECSWFST	B	5705	CHF	ST	Deposit
+5706	ECUKP1W	United Kingdom Sterling SW Deposit (Financial Times / Refinitiv)	United Kingdom	Interest Rate	Financial Times/Refinitiv	Datastream	ECUKP1W	B	5706	GBP	1w	Deposit
+5707	ECUKP1Y	United Kingdom Sterling 1 Year Deposit (Financial Times / Refinitiv)	United Kingdom	Interest Rate	Financial Times/Refinitiv	Datastream	ECUKP1Y	B	5707	GBP	1y	Deposit
+5708	ECUKP3M	United Kingdom Sterling 3 Months Deposit (Financial Times / Refinitiv)	United Kingdom	Interest Rate	Financial Times/Refinitiv	Datastream	ECUKP3M	B	5708	GBP	3m	Deposit
+5709	ECUKP6M	United Kingdom Sterling 6 Months Deposit (Financial Times / Refinitiv)	United Kingdom	Interest Rate	Financial Times/Refinitiv	Datastream	ECUKP6M	B	5709	GBP	6m	Deposit
+5710	ECUKPST	United Kingdom Sterling Short Term Deposit (Financial Times / Refinitiv)	United Kingdom	Interest Rate	Financial Times/Refinitiv	Datastream	ECUKPST	B	5710	GBP	ST	Deposit
+5711	ECUKP1M	United Kingdom Sterling 1 Month Deposit (Financial Times / Refinitiv)	United Kingdom	Interest Rate	Financial Times/Refinitiv	Datastream	ECUKP1M	B	5711	GBP	1m	Deposit
+5712	ECUSD1M	United States Dollar 1 Month Deposit (Financial Times / Refinitiv)	United States	Interest Rate	Financial Times/Refinitiv	Datastream	ECUSD1M	B	5712	USD	1m	Deposit
+5713	ECUSD1W	United States Dollar SW Deposit (Financial Times / Refinitiv)	United States	Interest Rate	Financial Times/Refinitiv	Datastream	ECUSD1W	B	5713	USD	1w	Deposit
+5714	ECUSD1Y	United States Dollar 1 Year Deposit (Financial Times / Refinitiv)	United States	Interest Rate	Financial Times/Refinitiv	Datastream	ECUSD1Y	B	5714	USD	1y	Deposit
+5715	ECUSD3M	United States Dollar 3 Months Deposit (Financial Times / Refinitiv)	United States	Interest Rate	Financial Times/Refinitiv	Datastream	ECUSD3M	B	5715	USD	3m	Deposit
+5716	ECUSD6M	United States Dollar 6 Months Deposit (Financial Times / Refinitiv)	United States	Interest Rate	Financial Times/Refinitiv	Datastream	ECUSD6M	B	5716	USD	6m	Deposit
+5717	ECUSDST	United States Dollar Short Term Deposit (Financial Times / Refinitiv)	United States	Interest Rate	Financial Times/Refinitiv	Datastream	ECUSDST	B	5717	USD	ST	Deposit
+5718	ECBFRST	BG Euro - Franc Tomorrow Next Deposit (Financial Times / Refinitiv)	Belgium	Interest Rate	Financial Times/Refinitiv	Datastream	ECBFRST	B	5718	BEF	ST	Deposit
+5719	ECBFR1W	BG Euro - Franc SW Deposit (Financial Times / Refinitiv)	Belgium	Interest Rate	Financial Times/Refinitiv	Datastream	ECBFR1W	B	5719	BEF	1w	Deposit
+5720	ECBFR1M	BG Euro - Franc 1 Month Deposit (Financial Times / Refinitiv)	Belgium	Interest Rate	Financial Times/Refinitiv	Datastream	ECBFR1M	B	5720	BEF	1m	Deposit
+5721	ECBFR3M	BG Euro - Franc 3 Months Deposit (Financial Times / Refinitiv)	Belgium	Interest Rate	Financial Times/Refinitiv	Datastream	ECBFR3M	B	5721	BEF	3m	Deposit
+5722	ECBFR6M	BG Euro - Franc 6 Months Deposit (Financial Times / Refinitiv)	Belgium	Interest Rate	Financial Times/Refinitiv	Datastream	ECBFR6M	B	5722	BEF	6m	Deposit
+5723	ECBFR1Y	BG Euro - Franc 1 Year Deposit (Financial Times / Refinitiv)	Belgium	Interest Rate	Financial Times/Refinitiv	Datastream	ECBFR1Y	B	5723	BEF	1y	Deposit
+5724	ECFFRST	FR Euro - Franc Short Term Deposit (Financial Times / Refinitiv)	France	Interest Rate	Financial Times/Refinitiv	Datastream	ECFFRST	B	5724	FRF	ST	Deposit
+5725	ECFFR1W	FR Euro - Franc SW Deposit (Financial Times / Refinitiv)	France	Interest Rate	Financial Times/Refinitiv	Datastream	ECFFR1W	B	5725	FRF	1w	Deposit
+5726	ECFFR1M	FR Euro - Franc 1 Month Deposit (Financial Times / Refinitiv)	France	Interest Rate	Financial Times/Refinitiv	Datastream	ECFFR1M	B	5726	FRF	1m	Deposit
+5727	ECFFR3M	FR Euro - Franc 3 Months Deposit (Financial Times / Refinitiv)	France	Interest Rate	Financial Times/Refinitiv	Datastream	ECFFR3M	B	5727	FRF	3m	Deposit
+5728	ECFFR6M	FR Euro - Franc 6 Months Deposit (Financial Times / Refinitiv)	France	Interest Rate	Financial Times/Refinitiv	Datastream	ECFFR6M	B	5728	FRF	6m	Deposit
+5729	ECFFR1Y	FR Euro - Franc 1 Year Deposit (Financial Times / Refinitiv)	France	Interest Rate	Financial Times/Refinitiv	Datastream	ECFFR1Y	B	5729	FRF	1y	Deposit
+5730	ECWGMST	BD Euro - Mark Short Term Deposit (Financial Times / Refinitiv)	Germany	Interest Rate	Financial Times/Refinitiv	Datastream	ECWGMST	B	5730	DEM	ST	Deposit
+5731	ECWGM1W	BD Euro - Mark SW Deposit (Financial Times / Refinitiv)	Germany	Interest Rate	Financial Times/Refinitiv	Datastream	ECWGM1W	B	5731	DEM	1w	Deposit
+5732	ECWGM1M	BD Euro - Mark 1 Month Deposit (Financial Times / Refinitiv)	Germany	Interest Rate	Financial Times/Refinitiv	Datastream	ECWGM1M	B	5732	DEM	1m	Deposit
+5733	ECWGM3M	BD Euro - Mark 3 Months Deposit (Financial Times / Refinitiv)	Germany	Interest Rate	Financial Times/Refinitiv	Datastream	ECWGM3M	B	5733	DEM	3m	Deposit
+5734	ECWGM6M	BD Euro - Mark 6 Months Deposit (Financial Times / Refinitiv)	Germany	Interest Rate	Financial Times/Refinitiv	Datastream	ECWGM6M	B	5734	DEM	6m	Deposit
+5735	ECWGM1Y	BD Euro - Mark 1 Year Deposit (Financial Times / Refinitiv)	Germany	Interest Rate	Financial Times/Refinitiv	Datastream	ECWGM1Y	B	5735	DEM	1y	Deposit
+5736	ECITLST	IT Euro-Lira Short Term Deposit (Financial Times / Refinitiv)	Italy	Interest Rate	Financial Times/Refinitiv	Datastream	ECITLST	B	5736	ITL	ST	Deposit
+5737	ECITL1W	IT Euro-Lira SW Deposit (Financial Times / Refinitiv)	Italy	Interest Rate	Financial Times/Refinitiv	Datastream	ECITL1W	B	5737	ITL	1w	Deposit
+5738	ECITL1M	IT Euro-Lira 1 Month Deposit (Financial Times / Refinitiv)	Italy	Interest Rate	Financial Times/Refinitiv	Datastream	ECITL1M	B	5738	ITL	1m	Deposit
+5739	ECITL3M	IT Euro-Lira 3 Months Deposit (Financial Times / Refinitiv)	Italy	Interest Rate	Financial Times/Refinitiv	Datastream	ECITL3M	B	5739	ITL	3m	Deposit
+5740	ECITL6M	IT Euro-Lira 6 Months Deposit (Financial Times / Refinitiv)	Italy	Interest Rate	Financial Times/Refinitiv	Datastream	ECITL6M	B	5740	ITL	6m	Deposit
+5741	ECITL1Y	IT Euro-Lira 1 Year Deposit (Financial Times / Refinitiv)	Italy	Interest Rate	Financial Times/Refinitiv	Datastream	ECITL1Y	B	5741	ITL	1y	Deposit
+5742	ECNLGST	NL Euro-Guilder Tomorrow Next Deposit (Financial Times / Refinitiv)	Netherlands	Interest Rate	Financial Times/Refinitiv	Datastream	ECNLGST	B	5742	NLG	ST	Deposit
+5743	ECNLG1W	NL Euro-Guilder SW Deposit (Financial Times / Refinitiv)	Netherlands	Interest Rate	Financial Times/Refinitiv	Datastream	ECNLG1W	B	5743	NLG	1w	Deposit
+5744	ECNLG1M	NL Euro-Guilder 1 Month Deposit (Financial Times / Refinitiv)	Netherlands	Interest Rate	Financial Times/Refinitiv	Datastream	ECNLG1M	B	5744	NLG	1m	Deposit
+5745	ECNLG3M	NL Euro-Guilder 3 Months Deposit (Financial Times / Refinitiv)	Netherlands	Interest Rate	Financial Times/Refinitiv	Datastream	ECNLG3M	B	5745	NLG	3m	Deposit
+5746	ECNLG6M	NL Euro-Guilder 6 Months Deposit (Financial Times / Refinitiv)	Netherlands	Interest Rate	Financial Times/Refinitiv	Datastream	ECNLG6M	B	5746	NLG	6m	Deposit
+5747	ECNLG1Y	NL Euro-Guilder 1 Year Deposit (Financial Times / Refinitiv)	Netherlands	Interest Rate	Financial Times/Refinitiv	Datastream	ECNLG1Y	B	5747	NLG	1y	Deposit
+5748	ECPTEST	PT Euro-Escudo Tomorrow Next Deposit (Financial Times / Refinitiv)	Portugal	Interest Rate	Financial Times/Refinitiv	Datastream	ECPTEST	B	5748	PTE	ST	Deposit
+5749	ECPTE1W	PT Euro-Escudo SW Deposit (Financial Times / Refinitiv)	Portugal	Interest Rate	Financial Times/Refinitiv	Datastream	ECPTE1W	B	5749	PTE	1w	Deposit
+5750	ECPTE1M	PT Euro-Escudo 1 Month Deposit (Financial Times / Refinitiv)	Portugal	Interest Rate	Financial Times/Refinitiv	Datastream	ECPTE1M	B	5750	PTE	1m	Deposit
+5751	ECPTE3M	PT Euro-Escudo 3 Months Deposit (Financial Times / Refinitiv)	Portugal	Interest Rate	Financial Times/Refinitiv	Datastream	ECPTE3M	B	5751	PTE	3m	Deposit
+5752	ECPTE6M	PT Euro-Escudo 6 Months Deposit (Financial Times / Refinitiv)	Portugal	Interest Rate	Financial Times/Refinitiv	Datastream	ECPTE6M	B	5752	PTE	6m	Deposit
+5753	ECPTE1Y	PT Euro-Escudo 1 Year Deposit (Financial Times / Refinitiv)	Portugal	Interest Rate	Financial Times/Refinitiv	Datastream	ECPTE1Y	B	5753	PTE	1y	Deposit
+5754	ECESPST	ES Euro - Peseta Tomorrow Next Deposit (Financial Times / Refinitiv)	Spain	Interest Rate	Financial Times/Refinitiv	Datastream	ECESPST	B	5754	ESP	ST	Deposit
+5755	ECESP1W	ES Euro - Peseta 1 Week Deposit (Financial Times / Refinitiv)	Spain	Interest Rate	Financial Times/Refinitiv	Datastream	ECESP1W	B	5755	ESP	1w	Deposit
+5756	ECESP1M	ES Euro - Peseta 1 Month Deposit (Financial Times / Refinitiv)	Spain	Interest Rate	Financial Times/Refinitiv	Datastream	ECESP1M	B	5756	ESP	1m	Deposit
+5757	ECESP3M	ES Euro - Peseta 3 Months Deposit (Financial Times / Refinitiv)	Spain	Interest Rate	Financial Times/Refinitiv	Datastream	ECESP3M	B	5757	ESP	3m	Deposit
+5758	ECESP6M	ES Euro - Peseta 6 Months Deposit (Financial Times / Refinitiv)	Spain	Interest Rate	Financial Times/Refinitiv	Datastream	ECESP6M	B	5758	ESP	6m	Deposit
+5759	ECESP1Y	ES Euro - Peseta 1 Year Deposit (Financial Times / Refinitiv)	Spain	Interest Rate	Financial Times/Refinitiv	Datastream	ECESP1Y	B	5759	ESP	1y	Deposit
+5760	ECGRD1M	Greece Euro-Drachma 1 Month Disc (London : Financial Times)	Greece	Interest Rate	Financial Times/Refinitiv	Datastream	ECGRD1M	B	5760	GRD	1m	Deposit
+5761	ECGRD1W	Greece Euro-Drachma 1 Week Disc (London : Financial Times)	Greece	Interest Rate	Financial Times/Refinitiv	Datastream	ECGRD1W	B	5761	GRD	1w	Deposit
+5762	ECGRD1Y	Greece Euro-Drachma 1 Year Disc (London : Financial Times)	Greece	Interest Rate	Financial Times/Refinitiv	Datastream	ECGRD1Y	B	5762	GRD	1y	Deposit
+5763	ECGRD3M	Greece Euro-Drachma 3 Month Disc (London : Financial Times)	Greece	Interest Rate	Financial Times/Refinitiv	Datastream	ECGRD3M	B	5763	GRD	3m	Deposit
+5764	ECGRD6M	Greece Euro-Drachma 4 Month Disc (London : Financial Times)	Greece	Interest Rate	Financial Times/Refinitiv	Datastream	ECGRD6M	B	5764	GRD	6m	Deposit
+5765	ECGRDST	Greece Euro-Drachma S / Tdisc (London : Financial Times)	Greece	Interest Rate	Financial Times/Refinitiv	Datastream	ECGRDST	B	5765	GRD	ST	Deposit
+5766	ECINR1M	India Euro-Rupee 1 Month Disc	India	Interest Rate	Financial Times/Refinitiv	Datastream	ECINR1M	B	5766	INR	1m	Deposit
+5767	ECINR1W	India Euro-Rupee 1 Week Disc	India	Interest Rate	Financial Times/Refinitiv	Datastream	ECINR1W	B	5767	INR	1w	Deposit
+5768	ECINR1Y	India Euro-Rupee 1 Year Disc	India	Interest Rate	Financial Times/Refinitiv	Datastream	ECINR1Y	B	5768	INR	1y	Deposit
+5769	ECINR3M	India Euro-Rupee 3 Months Disc	India	Interest Rate	Financial Times/Refinitiv	Datastream	ECINR3M	B	5769	INR	3m	Deposit
+5770	ECINR6M	India Euro-Rupee 6 Months Disc	India	Interest Rate	Financial Times/Refinitiv	Datastream	ECINR6M	B	5770	INR	6m	Deposit
+5771	ECINRST	India Euro-Rupee Short Term Disc	India	Interest Rate	Financial Times/Refinitiv	Datastream	ECINRST	B	5771	INR	ST	Deposit
+5772	ECIDR1M	Indonesia Euro-RUP 1 Month Disc	Indonesia	Interest Rate	Financial Times/Refinitiv	Datastream	ECIDR1M	B	5772	IDR	1m	Deposit
+5773	ECIDR1W	Indonesia Euro-RUP 1 Week Disc	Indonesia	Interest Rate	Financial Times/Refinitiv	Datastream	ECIDR1W	B	5773	IDR	1w	Deposit
+5774	ECIDR1Y	Indonesia Euro-RUP 1 Year Disc	Indonesia	Interest Rate	Financial Times/Refinitiv	Datastream	ECIDR1Y	B	5774	IDR	1y	Deposit
+5775	ECIDR3M	Indonesia Euro-RUP 3 Months Disc	Indonesia	Interest Rate	Financial Times/Refinitiv	Datastream	ECIDR3M	B	5775	IDR	3m	Deposit
+5776	ECIDR6M	Indonesia Euro-RUP 6 Months Disc	Indonesia	Interest Rate	Financial Times/Refinitiv	Datastream	ECIDR6M	B	5776	IDR	6m	Deposit
+5777	ECIDRST	Indonesia Euro-RUP Short Term Disc	Indonesia	Interest Rate	Financial Times/Refinitiv	Datastream	ECIDRST	B	5777	IDR	ST	Deposit
+5778	ECMYR1M	Malaysia Euro-Ringgit 1 Month Disc	Malaysia	Interest Rate	Financial Times/Refinitiv	Datastream	ECMYR1M	B	5778	MYR	1m	Deposit
+5779	ECMYR1Y	Malaysia Euro-Ringgit 1 Year Disc	Malaysia	Interest Rate	Financial Times/Refinitiv	Datastream	ECMYR1Y	B	5779	MYR	1y	Deposit
+5780	ECMYR1W	Malaysia Euro-Ringgit 1 Week Disc	Malaysia	Interest Rate	Financial Times/Refinitiv	Datastream	ECMYR1W	B	5780	MYR	1w	Deposit
+5781	ECMYR3M	Malaysia Euro-Ringgit 3 Months Disc	Malaysia	Interest Rate	Financial Times/Refinitiv	Datastream	ECMYR3M	B	5781	MYR	3m	Deposit
+5782	ECMYR6M	Malaysia Euro-Ringgit 6 Months Disc	Malaysia	Interest Rate	Financial Times/Refinitiv	Datastream	ECMYR6M	B	5782	MYR	6m	Deposit
+5783	ECMYRST	Malaysia Euro-Ringgit Short Term Disc	Malaysia	Interest Rate	Financial Times/Refinitiv	Datastream	ECMYRST	B	5783	MYR	ST	Deposit
+5784	ECPHP1M	Philippine Euro-Peso 1 Month Disc	Philippines	Interest Rate	Financial Times/Refinitiv	Datastream	ECPHP1M	B	5784	PHP	1m	Deposit
+5785	ECPHP1W	Philippine Euro-Peso 1 Week Disc	Philippines	Interest Rate	Financial Times/Refinitiv	Datastream	ECPHP1W	B	5785	PHP	1w	Deposit
+5786	ECPHP1Y	Philippine Euro-Peso 1 Year Disc	Philippines	Interest Rate	Financial Times/Refinitiv	Datastream	ECPHP1Y	B	5786	PHP	1y	Deposit
+5787	ECPHP3M	Philippine Euro-Peso 3 Months Disc	Philippines	Interest Rate	Financial Times/Refinitiv	Datastream	ECPHP3M	B	5787	PHP	3m	Deposit
+5788	ECPHP6M	Philippine Euro-Peso 6 Months Disc	Philippines	Interest Rate	Financial Times/Refinitiv	Datastream	ECPHP6M	B	5788	PHP	6m	Deposit
+5789	ECPHPST	Philippine Euro-Peso Short Term Disc	Philippines	Interest Rate	Financial Times/Refinitiv	Datastream	ECPHPST	B	5789	PHP	ST	Deposit
+5790	ECTHB1M	Thailand Euro-Baht 1 Month Disc	Thailand	Interest Rate	Financial Times/Refinitiv	Datastream	ECTHB1M	B	5790	THB	1m	Deposit
+5791	ECTHB1W	Thailand Euro-Baht 1 Week Disc	Thailand	Interest Rate	Financial Times/Refinitiv	Datastream	ECTHB1W	B	5791	THB	1w	Deposit
+5792	ECTHB1Y	Thailand Euro-Baht 1 Year Disc	Thailand	Interest Rate	Financial Times/Refinitiv	Datastream	ECTHB1Y	B	5792	THB	1y	Deposit
+5793	ECTHB3M	Thailand Euro-Baht 3 Months Disc	Thailand	Interest Rate	Financial Times/Refinitiv	Datastream	ECTHB3M	B	5793	THB	3m	Deposit
+5794	ECTHB6M	Thailand Euro-Baht 6 Months Disc	Thailand	Interest Rate	Financial Times/Refinitiv	Datastream	ECTHB6M	B	5794	THB	6m	Deposit
+5795	ECTHBST	Thailand Euro-Baht Short Term Disc	Thailand	Interest Rate	Financial Times/Refinitiv	Datastream	ECTHBST	B	5795	THB	ST	Deposit
+5796	UKPRATE.	United Kingdom, Policy Rates, Bank Rate, End of Period	United Kingdom	Interest Rate	Bank of England	Datastream	UKPRATE.	BM	5796	GBP	ON	Policy
+5797	DKPRATE.	Denmark, Policy Rates, Discount Rate	Denmark	Interest Rate	Danmarks Nationalbank	Datastream	DKPRATE.	BM	5797	DKK	ON	Policy
+5798	SAPRATE.	South Africa, Policy Rates, Repo Rate	South Africa	Interest Rate	South African Reserve Bank	Datastream	SAPRATE.	BM	5798	ZAR	ON	Policy
+5799	BDPRATE.	Germany, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Germany	Interest Rate	ECB - European Central Bank	Datastream	BDPRATE.	BM	5799	EUR	ON	Policy
+5800	JPPRATE.	Japan, Policy Rates, Bank of Japan Main Policy Rate, Now Policy Rate Balance	Japan	Interest Rate	Bank of Japan	Datastream	JPPRATE.	BM	5800	JPY	ON	Policy
+5801	IRPRATE.	Ireland, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Ireland	Interest Rate	ECB - European Central Bank	Datastream	IRPRATE.	BM	5801	EUR	ON	Policy
+5802	PTPRATE.	Portugal, Policy Rates, Discount Rate, Short Term Euro Repo Rate	Portugal	Interest Rate	ECB - European Central Bank	Datastream	PTPRATE.	BM	5802	EUR	ON	Policy
+5803	GRPRATE.	Greece, Policy Rates, Discount Rate, Short Term Euro Repo Rate	Greece	Interest Rate	ECB - European Central Bank	Datastream	GRPRATE.	BM	5803	EUR	ON	Policy
+5804	OEPRATE.	Austria, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Austria	Interest Rate	ECB - European Central Bank	Datastream	OEPRATE.	BM	5804	EUR	ON	Policy
+5805	ITPRATE.	Italy, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Italy	Interest Rate	ECB - European Central Bank	Datastream	ITPRATE.	BM	5805	EUR	ON	Policy
+5806	TWPRATE.	Taiwan, Policy Rates, Discount Rate	Taiwan	Interest Rate	Central Bank of the Republic of China (Taiwan)	Datastream	TWPRATE.	BM	5806	TWD	ON	Policy
+5807	AAPRATE.	Algeria, Policy Rates, Discount Rate	Algeria	Interest Rate	Banque d'Algerie	Datastream	AAPRATE.	BM	5807	DZD	ON	Policy
+5808	ESPRATE.	Spain, Policy Rates, Euro Short Term Repo Rate	Spain	Interest Rate	ECB - European Central Bank	Datastream	ESPRATE.	BM	5808	EUR	ON	Policy
+5809	BGPRATE.	Belgium, Policy Rates, Discount Rate, Short Term Euro Repo Rate	Belgium	Interest Rate	ECB - European Central Bank	Datastream	BGPRATE.	BM	5809	EUR	ON	Policy
+5810	CPPRATE.	Cyprus, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Cyprus	Interest Rate	ECB - European Central Bank	Datastream	CPPRATE.	BM	5810	CYP	ON	Policy
+5811	EDPRATE.	Ecuador, Policy Rates, Discount Rate	Ecuador	Interest Rate	Banco Central del Ecuador	Datastream	EDPRATE.	BM	5811	ECS	ON	Policy
+5812	USPRATE.	United States, Policy Rates, Federal Funds Target Rate, End of Period	United States	Interest Rate	Refinitiv	Datastream	USPRATE.	BM	5812	USD	ON	Policy
+5813	FRPRATE.	France, Policy Rates, Average Cost of Funds For Banks / Euro Repo Rate	France	Interest Rate	ECB - European Central Bank	Datastream	FRPRATE.	BM	5813	EUR	ON	Policy
+5814	SDPRATE.	Sweden, Policy Rates, Policy Rate	Sweden	Interest Rate	Sveriges Riksbank	Datastream	SDPRATE.	BM	5814	SEK	ON	Policy
+5815	BZPRATE.	Belize, Policy Rate, %	Belize	Interest Rate	Central Bank of Belize	Datastream	BZPRATE.	BM	5815	BZD	ON	Policy
+5816	MIPRATE.	Malawi, Policy Rates, Bank Rate	Malawi	Interest Rate	Reserve Bank of Malawi	Datastream	MIPRATE.	BM	5816	MWK	ON	Policy
+5817	AUPRATE.	Australia, Policy Rates, Cash Target Rate, End of Period	Australia	Interest Rate	Reserve Bank of Australia	Datastream	AUPRATE.	BM	5817	AUD	ON	Policy
+5818	HNPRATE.	Hungary, Policy Rates, Central Bank Base Rate	Hungary	Interest Rate	National Bank of Hungary	Datastream	HNPRATE.	BM	5818	HUF	ON	Policy
+5819	NLPRATE.	Netherlands, Policy Rates, Credit Advances / Short Term Euro Repo Rate	Netherlands	Interest Rate	ECB - European Central Bank	Datastream	NLPRATE.	BM	5819	EUR	ON	Policy
+5820	PHPRATE.	Philippines, Policy Rates, Overnight Lending Facility	Philippines	Interest Rate	Bangko Sentral ng Pilipinas	Datastream	PHPRATE.	BM	5820	PHP	ON	Policy
+5821	SZPRATE.	Eswatini, Policy Rates, Discount Rate	Eswatini	Interest Rate	Central Bank of Eswatini	Datastream	SZPRATE.	BM	5821	SZL	ON	Policy
+5822	WAPRATE.	Namibia, Policy Rates, Bank Rate	Namibia	Interest Rate	Bank of Namibia	Datastream	WAPRATE.	BM	5822	NAD	ON	Policy
+5823	NWPRATE.	Norway, Policy Rates, Sight Deposit Rate	Norway	Interest Rate	Norges Bank	Datastream	NWPRATE.	BM	5823	NOK	ON	Policy
+5824	PKPRATE.	Pakistan, Policy Rates, Main Policy Rate	Pakistan	Interest Rate	State Bank of Pakistan	Datastream	PKPRATE.	BM	5824	PKR	ON	Policy
+5825	CHPRATE.	China, Policy Rates, Major Loan Rate, Capital Construction, 1 Year and Below	China	Interest Rate	The People's Bank of China	Datastream	CHPRATE.	BM	5825	CNY	ON	Policy
+5826	HKPRATE.	Hong Kong, Policy Rates, Discount Rate	Hong Kong	Interest Rate	Hong Kong Monetary Authority	Datastream	HKPRATE.	BM	5826	HKD	ON	Policy
+5827	FNPRATE.	Finland, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Finland	Interest Rate	ECB - European Central Bank	Datastream	FNPRATE.	BM	5827	EUR	ON	Policy
+5828	CTPRATE.	Croatia, Policy Rates, Main Policy Rate	Croatia	Interest Rate	CNB - Croatian National Bank	Datastream	CTPRATE.	BM	5828	HRK	ON	Policy
+5829	CNPRATE.	Canada, Policy Rates, Target Rate	Canada	Interest Rate	CANSIM - Statistics Canada	Datastream	CNPRATE.	BM	5829	CAD	ON	Policy
+5830	ISPRATE.	Israel, Policy Rates, Headline Rate, End of Period	Israel	Interest Rate	Bank of Israel	Datastream	ISPRATE.	MS	5830	ILS	ON	Policy
+5831	NRPRATE.	Niger, Policy Rates, Marginal Lending Rate, End of Period	Niger	Interest Rate	Central Bank of West African States	Datastream	NRPRATE.	BM	5831	XOF	ON	Policy
+5832	IVPRATE.	Cote d'Ivoire, Policy Rates, Marginal Lending Rate, End of Period	Ivory Coast	Interest Rate	Central Bank of West African States	Datastream	IVPRATE.	BM	5832	XAF	ON	Policy
+5833	SGPRATE.	Senegal, Policy Rates, Marginal Lending Rate, End of Period	Senegal	Interest Rate	Central Bank of West African States	Datastream	SGPRATE.	BM	5833	SGD	ON	Policy
+5834	THPRATE.	Thailand, Policy Rates, BOT 1 Day Bilateral Repurchase Rate	Thailand	Interest Rate	Bank of Thailand	Datastream	THPRATE.	BM	5834	THB	ON	Policy
+5835	CDPRATE.	Chad, Policy Rates, Reference Rate, TIAO	Chad	Interest Rate	Bank of Central African States (BEAC)	Datastream	CDPRATE.	BM	5835	KYD	ON	Policy
+5836	CBPRATE.	Colombia, Policy Rates, Intervention Rate	Colombia	Interest Rate	Banco de la Republica, Colombia	Datastream	CBPRATE.	BM	5836	COP	ON	Policy
+5837	MCPRATE.	Morocco, Policy Rates, Key Rate	Morocco	Interest Rate	Bank Al-Maghrib, Morocco	Datastream	MCPRATE.	BM	5837	MAD	ON	Policy
+5838	CZPRATE.	Czech Republic, Policy Rates, Repo Rate (2 Week)	Czech Republic	Interest Rate	CNB - Czech National Bank	Datastream	CZPRATE.	BM	5838	CZK	ON	Policy
+5839	BRPRATE.	Brazil, Policy Rates, Sistema Especial de Liquidacao e Custodia Target Rate, End of Period	Brazil	Interest Rate	Banco Central do Brasil	Datastream	BRPRATE.	BM	5839	BRL	ON	Policy
+5840	MAPRATE.	Malta, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Malta	Interest Rate	ECB - European Central Bank	Datastream	MAPRATE.	BM	5840	MTL	ON	Policy
+5841	CLPRATE.	Chile, Policy Rates, Central Bank of Chile Monetary Policy Target Rate	Chile	Interest Rate	Central Bank of Chile	Datastream	CLPRATE.	BM	5841	CLP	ON	Policy
+5842	AEPRATE.	Aruba, Interest Rate Margin	Aruba	Interest Rate	Central Bank of Aruba (CBA)	Datastream	AEPRATE.	A	5842	DZD	ON	Policy
+5843	POPRATE.	Poland, Policy Rates, Reference Rate (7-Day National Bank of Poland Bill Rate)	Poland	Interest Rate	National Bank of Poland	Datastream	POPRATE.	MS	5843	PLN	ON	Policy
+5844	JOPRATE.	Jordan, Policy Rates, Overnight Deposit Window Rate	Jordan	Interest Rate	Central Bank of Jordan	Datastream	JOPRATE.	BM	5844	JOD	ON	Policy
+5845	LXPRATE.	Luxembourg, Policy Rates, Base Rate	Luxembourg	Interest Rate	Banque centrale du Luxembourg	Datastream	LXPRATE.	BM	5845	EUR	ON	Policy
+5846	EMPRATE.	European Monetary Union, Policy Rates, Euro Short Term Repo Rate	Eurozone	Interest Rate	ECB - European Central Bank	Datastream	EMPRATE.	BM	5846	EUR	ON	Policy
+5848	NZPRATE.	New Zealand, Policy Rates, Official Cash Rate (OCR)	New Zealand	Interest Rate	Reserve Bank of New Zealand	Datastream	NZPRATE.	BM	5848	NZD	ON	Policy
+5849	KOPRATE.	South Korea, Policy Rates, Base Rate	South Korea	Interest Rate	The Bank of Korea	Datastream	KOPRATE.	BM	5849	KRW	ON	Policy
+5850	MOPRATE.	Macau, Policy Rates, Amcm Base Rate, End of Period	Macau	Interest Rate	Monetary Authority of Macao	Datastream	MOPRATE.	BM	5850	EUR	ON	Policy
+5851	VIPRATE.	Vietnam, Policy Rates, Base Interest Rate	Vietnam	Interest Rate	The State Bank of Vietnam	Datastream	VIPRATE.	BM	5851	VND	ON	Policy
+5852	TUPRATE.	Tunisia, Policy Rates, BCT Key Rate	Tunisia	Interest Rate	Central Bank of Tunisia	Datastream	TUPRATE.	MS	5852	TND	ON	Policy
+5853	GHPRATE.	Ghana, Policy Rates, Monetary Policy Rate, Methodology Break August 2015	Ghana	Interest Rate	Bank of Ghana	Datastream	GHPRATE.	BM	5853	GHS	ON	Policy
+5854	ALPRATE.	Albania, Policy Rates, Interest Rate, End of Period	Albania	Interest Rate	Bank of Albania	Datastream	ALPRATE.	BM	5854	ALL	ON	Policy
+5855	SIPRATE.	Saudi Arabia, Policy Rates, Repo Rate	Saudi Arabia	Interest Rate	Saudi Central Bank	Datastream	SIPRATE.	BM	5855	SAR	ON	Policy
+5856	SXPRATE.	Slovak Republic, Policy Rates, Repo 2 Week Tender Rate / Short Term Euro Repo Rate	Slovakia	Interest Rate	National Bank of Slovakia	Datastream	SXPRATE.	BM	5856	SKK	ON	Policy
+5857	INPRATE.	India, Policy Rates, Repo Rate	India	Interest Rate	Reserve Bank of India	Datastream	INPRATE.	BM	5857	INR	ON	Policy
+5858	ZMPRATE.	Zambia, Policy Rates, BOZ Policy Rate	Zambia	Interest Rate	Bank of Zambia	Datastream	ZMPRATE.	MS	5858	ZMW	ON	Policy
+5859	SJPRATE.	Slovenia, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Slovenia	Interest Rate	ECB - European Central Bank	Datastream	SJPRATE.	BM	5859	SIT	ON	Policy
+5860	MKPRATE.	North Macedonia, Policy Rates, Deposit Rate, 28 Days, Yield	North Macedonia	Interest Rate	National Bank of the Republic of North Macedonia	Datastream	MKPRATE.	BM	5860	MKD	ON	Policy
+5861	NGPRATE.	Nigeria, Policy Rates, Monetary Policy Rate	Nigeria	Interest Rate	CBN - Central Bank of Nigeria	Datastream	NGPRATE.	BM	5861	NGN	ON	Policy
+5862	KWDISCRTR	Kuwait, Policy Rates, Discount Rate	Kuwait	Interest Rate	Central Bank of Kuwait	Datastream	KWDISCRTR	Q	5862	KWD	ON	Policy
+5863	TTPRATE.	Trinidad and Tobago, Policy Rates, Repo Rate	Trinidad and Tobago	Interest Rate	Central Bank of Trinidad and Tobago	Datastream	TTPRATE.	BM	5863	TTD	ON	Policy
+5864	QAPRATE.	Qatar, Policy Rates, Lending Rate	Qatar	Interest Rate	Qatar Central Bank	Datastream	QAPRATE.	BM	5864	QAR	ON	Policy
+5865	RMPRATE.	Romania, Policy Rates, NBR Monetary Policy Rate	Romania	Interest Rate	National Bank of Romania	Datastream	RMPRATE.	BM	5865	RON	ON	Policy
+5866	RSPRATE.	Russia, Policy Rates, Minimum Rate On 7 Day Repo	Russia	Interest Rate	The Central Bank of the Russian Federation	Datastream	RSPRATE.	BM	5866	RUB	ON	Policy
+5867	PEPRATE.	Peru, Policy Rates, Reference Interest Rate	Peru	Interest Rate	Central Reserve Bank of Peru	Datastream	PEPRATE.	MS	5867	PEN	ON	Policy
+5868	AMPRATE.	Armenia, Policy Rates, Repo Agreements	Armenia	Interest Rate	Central Bank of Armenia	Datastream	AMPRATE.	BM	5868	AMD	ON	Policy
+5869	DRPRATE.	Dominican Republic, Policy Rates, Overnight Interest Rate (MPR), Per Annum	Dominican Republic	Interest Rate	Central Bank of Dominican Republic	Datastream	DRPRATE.	BM	5869	DOP	ON	Policy
+5870	OMPRATE.	Oman, Weighted Average Repo Rate	Oman	Interest Rate	Central Bank of Oman	Datastream	OMPRATE.	MS	5870	OMR	ON	Policy
+5871	MYPRATE.	Malaysia, Policy Rates, Overnight Policy Rate (OPR)	Malaysia	Interest Rate	Central Bank of Malaysia	Datastream	MYPRATE.	BM	5871	MYR	ON	Policy
+5872	KNPRATE.	Kenya, Policy Rates, Central Bank Rate	Kenya	Interest Rate	Central Bank of Kenya	Datastream	KNPRATE.	BM	5872	KES	ON	Policy
+5873	IQPRATE.	Iraq, Policy Rates, CBI Rate, End of Period	Iraq	Interest Rate	Central Bank of Iraq	Datastream	IQPRATE.	BM	5873	IQD	ON	Policy
+5874	GWPRATE.	Guatemala, Policy Rates, Key Interest Rate	Guatemala	Interest Rate	Bank of Guatemala	Datastream	GWPRATE.	BM	5874	GTQ	ON	Policy
+5875	HOPRATE.	Honduras, Policy Rates, Monetary Policy Rate	Honduras	Interest Rate	Central Bank of Honduras	Datastream	HOPRATE.	BM	5875	HNL	ON	Policy
+5876	IDPRATE.	Indonesia, Policy Rates, Bank of Indonesia Main Policy Rate, Now 7-Day Reverse Repo Rate	Indonesia	Interest Rate	Bank Indonesia	Datastream	IDPRATE.	BM	5876	IDR	ON	Policy
+5877	EYPRATE.	Egypt, Policy Rates, Overnight Deposit Rate, End of Period	Egypt	Interest Rate	Central Bank of Egypt	Datastream	EYPRATE.	BM	5877	EGP	ON	Policy
+5878	RWPRATE.	Rwanda, Policy Rates, BNR Key Repo Rate	Rwanda	Interest Rate	BNR - National Bank of Rwanda	Datastream	RWPRATE.	BM	5878	RWF	ON	Policy
+5879	MXPRATE.	Mexico, Policy Rates, Target Overnight Interbank Funding Rate, End of Period	Mexico	Interest Rate	Banco de Mexico	Datastream	MXPRATE.	BM	5879	MXN	ON	Policy
+5880	BAPRATE.	Bahrain, Policy Rates, CBB Key Policy Rate, One Week Deposit Rate	Bahrain	Interest Rate	Central Bank of Bahrain	Datastream	BAPRATE.	BM	5880	BHD	ON	Policy
+5881	CRPRATE.	Costa Rica, Policy Rates, Policy Rate	Costa Rica	Interest Rate	Central Bank of Costa Rica	Datastream	CRPRATE.	BM	5881	CRC	ON	Policy
+5882	MUPRATE.	Mauritius, Policy Rates, Key Repo Rate	Mauritius	Interest Rate	Bank of Mauritius	Datastream	MUPRATE.	BM	5882	MUR	ON	Policy
+5883	MGPRATE.	Mongolia, Policy Rates, Official Interest Rates of BOM, Policy Rate	Mongolia	Interest Rate	Bank of Mongolia	Datastream	MGPRATE.	BM	5883	MNT	ON	Policy
+5884	UAPRATE.	United Arab Emirates, Policy Rates, Base Rate	United Arab Emirates	Interest Rate	Central Bank of the United Arab Emirates	Datastream	UAPRATE.	BM	5884	AED	ON	Policy
+5885	GGPRATE.	Georgia, Policy Rates, Monetary Policy Interest Rate	Georgia	Interest Rate	National Bank of Georgia	Datastream	GGPRATE.	BM	5885	GEL	ON	Policy
+5886	TKPRATE.	Turkey, Policy Rates, Central Bank 1 Week Repo Lending Rate	Turkey	Interest Rate	Central Bank of the Republic of Turkey	Datastream	TKPRATE.	BM	5886	TRY	ON	Policy
+5887	PYPRATE.	Paraguay, Policy Rates, Monetary Policy Rate, Annual Terms	Paraguay	Interest Rate	Banco Central del Paraguay	Datastream	PYPRATE.	BM	5887	PYG	ON	Policy
+5888	EOPRATE.	Estonia, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Estonia	Interest Rate	ECB - European Central Bank	Datastream	EOPRATE.	BM	5888	EUR	ON	Policy
+5889	UGPRATE.	Uganda, Policy Rates, Central Bank Rate	Uganda	Interest Rate	Bank of Uganda	Datastream	UGPRATE.	BM	5889	UGX	ON	Policy
+5890	KHPRATE.	Cambodia, Prime Rate, Commercial Banks	Cambodia	Interest Rate	National Bank of Cambodia	Datastream	KHPRATE.	BM	5890	KHR	ON	Policy
+5891	LVPRATE.	Latvia, Policy Rates, Discount Rate / Short Term Euro Repo Rate	Latvia	Interest Rate	ECB - European Central Bank	Datastream	LVPRATE.	BM	5891	LVL	ON	Policy
+5892	ICPRATE.	Iceland, Policy Rates, Term Deposits Rate, 7 Day	Iceland	Interest Rate	Central Bank of Iceland	Datastream	ICPRATE.	BM	5892	ISK	ON	Policy
+5893	KZPRATE.	Kazakhstan, Policy Rates, Base Repo Rate, Overnight	Kazakhstan	Interest Rate	The National Bank of Kazakhstan	Datastream	KZPRATE.	BM	5893	KZT	ON	Policy
+5894	MDPRATE.	Madagascar, Policy Rates, BCM Lending Rate	Madagascar	Interest Rate	Banque Centrale de Madagascar	Datastream	MDPRATE.	BM	5894	MDL	ON	Policy
+5895	SWPRATE.	Switzerland, Policy Rates, Swiss National Bank Policy Rate	Switzerland	Interest Rate	SNB - Swiss National Bank	Datastream	SWPRATE.	BM	5895	CHF	ON	Policy
+5896	UYPRATE.	Uruguay, Monetary Policy Rate	Uruguay	Interest Rate	Banco Central del Uruguay	Datastream	UYPRATE.	BM	5896	UYU	ON	Policy
+23291	AG90DPP	Argentina Deposit 59 + Days (Per Annum)	Argentina	Interest Rate	BCRA - Central Bank of Argentina	Datastream	AG90DPP	B	23291	ARS	3m	Deposit
+40188	LKRDP1M	Refinitiv Sri Lanka Rupee 1 Month Deposit	Sri Lanka	Interest Rate	Refinitiv	Datastream	LKRDP1M	B	40188	LKR	1m	Deposit
+40189	LKRDP3M	Refinitiv Sri Lanka Rupee 3 Months Deposit	Sri Lanka	Interest Rate	Refinitiv	Datastream	LKRDP3M	B	40189	LKR	3m	Deposit
+40190	LKRDPON	Refinitiv Sri Lanka Rupee Overnight Deposit	Sri Lanka	Interest Rate	Refinitiv	Datastream	LKRDPON	B	40190	LKR	ON	Deposit
+40191	SRIBK1M	Sri Lanka Interbank 1 Month (Disc)	Sri Lanka	Interest Rate	Central Bank of Sri Lanka	Datastream	SRIBK1M	B	40191	LKR	1m	Interbank
+40192	SRIBKON	Sri Lanka Interbank 1D (Disc)	Sri Lanka	Interest Rate	Central Bank of Sri Lanka	Datastream	SRIBKON	B	40192	LKR	ON	Interbank
+40193	SRTBL3M	Sri Lanka Treasury Bill 3 Month	Sri Lanka	Interest Rate	Central Bank of Sri Lanka	Datastream	SRTBL3M	B	40193	LKR	3m	Treasury
+40194	VEDP30D	Venezuela 30 Day Deposit Rate	Venezuela	Interest Rate	Banco Central de Venezuela	Datastream	VEDP30D	B	40194	VEF	1m	Deposit
+40195	VENLEND	Venezuela Average LND Disc	Venezuela	Interest Rate	Banco Central de Venezuela	Datastream	VENLEND	B	40195	VEF	ON	Policy
+40196	VENOVER	Venezuela Overnight	Venezuela	Interest Rate	Banco Central de Venezuela	Datastream	VENOVER	B	40196	VEF	ON	Interbank
+40197	BRBCBPR	Brazil Central Bank Policy Rate	Brazil	Interest Rate	Bank for International Settlements	Datastream	BRBCBPR	B	40197	BRL	ON	Policy
+40199	BRCDIIR	Brazil Cdi Rate: Annual Terms 252 Basis	Brazil	Interest Rate	Banco Central do Brasil	Datastream	BRCDIIR	B	40199	BRL	ON	Policy
+40200	BROVERN	Brazil Financing Overnight Selic	Brazil	Interest Rate	Banco Central do Brasil	Datastream	BROVERN	B	40200	BRL	ON	Policy
+40201	CHBCBPR	China Central Bank Policy Rate	China	Interest Rate	Bank for International Settlements	Datastream	CHBCBPR	B	40201	CNY	ON	Policy
+40202	CHIB1MO	China Interbank 1 Month	China	Interest Rate	The People's Bank of China	Datastream	CHIB1MO	B	40202	CNY	1m	Interbank
+40203	CHIBKON	China Interbank O/N	China	Interest Rate	The People's Bank of China	Datastream	CHIBKON	B	40203	CNY	ON	Interbank
+40204	ECASD1M	Singapore Dollar 1M Singapore Dollar	Singapore	Interest Rate	Tullett Prebon	Datastream	ECASD1M	B	40204	SGD	1m	Deposit
+40205	ECASD3M	Singapore Dollar 3M Singapore Dollar	Singapore	Interest Rate	Tullett Prebon	Datastream	ECASD3M	B	40205	SGD	3m	Deposit
+40206	EGIBK1M	Egypt Interbank 1M Cairo	Egypt	Interest Rate	Refinitiv	Datastream	EGIBK1M	B	40206	EGP	1m	Interbank
+40207	EGIBKON	Egypt Interbank 1W Cairo	Egypt	Interest Rate	Refinitiv	Datastream	EGIBKON	B	40207	EGP	1W	Interbank
+40208	EYDISCR	Egypt Discount Rate	Egypt	Interest Rate	Central Bank of Egypt	Datastream	EYDISCR	B	40208	EGP	ON	Policy
+40209	EYINTRA	Egypt Overnight Dep Rate (Initial)	Egypt	Interest Rate	Central Bank of Egypt	Datastream	EYINTRA	B	40209	EGP	ON	Deposit
+40210	FNGTBSE	Finland Base Rate	Finland	Interest Rate	Bank of Finland	Datastream	FNGTBSE	B	40210	EUR	ON	Policy
+40211	FNIBF1M	Finland 1M Intbk Delayed See Eibor1M	Finland	Interest Rate	Refinitiv	Datastream	FNIBF1M	B	40211	FIM	1m	Interbank
+40212	FNIBF3M	Finland 3M Intbk Delayed See Eibor3M	Finland	Interest Rate	Refinitiv	Datastream	FNIBF3M	B	40212	FIM	3m	Interbank
+40213	HKDEP1M	Hong Kong Deposit 1 Month Disc	Hong Kong	Interest Rate	Major Commercial Bank, Hong Kong	Datastream	HKDEP1M	B	40213	HKD	1m	Deposit
+40214	HKDEP3M	Hong Kong Deposit 3 Month Disc	Hong Kong	Interest Rate	Major Commercial Bank, Hong Kong	Datastream	HKDEP3M	B	40214	HKD	3m	Deposit
+40215	HKDP1MD	Rfv Hongkong Dollar 1M Deposit	Hong Kong	Interest Rate	Refinitiv	Datastream	HKDP1MD	B	40215	HKD	1m	Deposit
+40216	HKDPOND	Rfv Hong Kong Dollar O/N Deposit	Hong Kong	Interest Rate	Refinitiv	Datastream	HKDPOND	B	40216	HKD	ON	Deposit
+40217	HKIBK1M	Hong Kong Interbank 1 Month Disc	Hong Kong	Interest Rate	Major Commercial Bank, Hong Kong	Datastream	HKIBK1M	B	40217	HKD	1m	Interbank
+40218	HKPRIME	Hong Kong Prime	Hong Kong	Interest Rate	Major Commercial Bank, Hong Kong	Datastream	HKPRIME	B	40218	HKD	ON	Policy
+40219	HNK3IBR	Hong Kong Interbank 3 Month Disc	Hong Kong	Interest Rate	Major Commercial Bank, Hong Kong	Datastream	HNK3IBR	B	40219	HKD	3m	Interbank
+40220	IDDEP1M	Indonesia Deposit 1 Month Disc	Indonesia	Interest Rate	Bank Indonesia	Datastream	IDDEP1M	B	40220	IDR	1m	Deposit
+40221	IDIBCAL	Indonesia Interbank Call Disc	Indonesia	Interest Rate	Bank Indonesia	Datastream	IDIBCAL	B	40221	IDR	3m	Interbank
+40222	IDIBK1M	Indonesia Interbank 1M	Indonesia	Interest Rate	Refinitiv	Datastream	IDIBK1M	B	40222	IDR	1m	Interbank
+40223	IDIBK3M	Indonesia Interbank 3M	Indonesia	Interest Rate	Refinitiv	Datastream	IDIBK3M	B	40223	IDR	3m	Interbank
+40224	IDIBKON	Indonesia Interbank O/N (Disc)	Indonesia	Interest Rate	Refinitiv	Datastream	IDIBKON	B	40224	IDR	ON	Interbank
+40225	IDRDP1M	Indonesian Rupiah 1M Deposit (Rfv)	Indonesia	Interest Rate	Refinitiv	Datastream	IDRDP1M	B	40225	IDR	1m	Deposit
+40226	IDRDP3M	Indonesian Rupiah 3M Deposit (Rfv)	Indonesia	Interest Rate	Refinitiv	Datastream	IDRDP3M	B	40226	IDR	3m	Deposit
+40227	IDRDPON	Indonesian Rupiah O/N Depo (Rfv)	Indonesia	Interest Rate	Refinitiv	Datastream	IDRDPON	B	40227	IDR	ON	Deposit
+40228	IDSBI90	Indonesia Sbi/Disc 90 Day Disc	Indonesia	Interest Rate	Bank Indonesia	Datastream	IDSBI90	B	40228	IDR	3m	Interbank
+40229	INBCBPR	India Central Bank Policy Rate	India	Interest Rate	Bank for International Settlements	Datastream	INBCBPR	B	40229	INR	ON	Policy
+40230	INDISCR	India Discount	India	Interest Rate	Reserve Bank of India	Datastream	INDISCR	B	40230	INR	ON	Policy
+40231	INTB1YR	India T-Bill Secondary 'Dead'	India	Interest Rate	Kanji Pitamber & Co	Datastream	INTB1YR	B	40231	INR	3m	Government
+40232	INTB91D	India T-Bill Secondary 'Dead'	India	Interest Rate	Kanji Pitamber & Co	Datastream	INTB91D	B	40232	INR	3m	Government
+40233	JODEPON	Central Bank of Jordan Main Rate	Jordan	Interest Rate	Central Bank of Jordan	Datastream	JODEPON	B	40233	JOD	ON	Policy
+40234	JODIB1M	Jordan Interbank 1M	Jordan	Interest Rate	Refinitiv	Datastream	JODIB1M	B	40234	JOD	1m	Interbank
+40235	JODIB3M	Jordan Interbank 3M	Jordan	Interest Rate	Refinitiv	Datastream	JODIB3M	B	40235	JOD	3m	Interbank
+40236	JODIBON	Jordan Interbank O/N	Jordan	Interest Rate	Refinitiv	Datastream	JODIBON	B	40236	JOD	ON	Interbank
+40237	KIB3MP1	Kuwaiti Dinar 3M Kibor	Kuwait	Interest Rate	Central Bank of Kuwait	Datastream	KIB3MP1	B	40237	KWD	3m	Interbank
+40238	KIBOR1M	Kuwaiti Dinar 1M Kibor	Kuwait	Interest Rate	Central Bank of Kuwait	Datastream	KIBOR1M	B	40238	KWD	1m	Interbank
+40239	KOCALL.	Bank Of Korea Base Rate	South Korea	Interest Rate	The Bank of Korea	Datastream	KOCALL.	B	40239	KRW	ON	Policy
+40240	KOCALLO	Korea Overnight Call Rate (Brokered)	South Korea	Interest Rate	The Bank of Korea	Datastream	KOCALLO	B	40240	KRW	ON	Policy
+40241	KOCD91D	Korea Ncd 91 Days	South Korea	Interest Rate	KOFIA - Korea Financial Investment Association	Datastream	KOCD91D	B	40241	KRW	3m	Deposit
+40242	KOTB91D	Korea Trade Bill 91D Discount Disc	South Korea	Interest Rate	KOFIA - Korea Financial Investment Association	Datastream	KOTB91D	B	40242	KRW	3m	Interbank
+40243	KWIBK3M	Kuwait Interbank 3M	Kuwait	Interest Rate	Refinitiv	Datastream	KWIBK3M	B	40243	KWD	3m	Interbank
+40244	LXSTECU	Lux.Se Bonds (Euro) Short Term Disc	Luxembourg	Interest Rate	Lux	Datastream	LXSTECU	B	40244	EUR	3m	Government
+40245	LXSTLUF	Lux.Se Bonds (Luf) Sh Term Disc	Luxembourg	Interest Rate	Lux	Datastream	LXSTLUF	B	40245	LUF	3m	Government
+40246	MXCET1D	Mexico Cetes 1 Day	Mexico	Interest Rate	Banco de Mexico	Datastream	MXCET1D	B	40246	MXN	ON	Policy
+40247	MXGSA91	Mexico Cetes 91 Day Rate	Mexico	Interest Rate	Banco de Mexico	Datastream	MXGSA91	B	40247	MXN	3m	Policy
+40248	MYBASEL	Malaysia Base Lending	Malaysia	Interest Rate	Maybank Group	Datastream	MYBASEL	B	40248	MYR	ON	Policy
+40249	MYIBK1M	Malaysia Interbank 1 Month	Malaysia	Interest Rate	Maybank Group	Datastream	MYIBK1M	B	40249	MYR	1m	Interbank
+40250	MYIBK3M	Malaysia Interbank 3 Month	Malaysia	Interest Rate	Maybank Group	Datastream	MYIBK3M	B	40250	MYR	3m	Interbank
+40251	MYIBKCL	Malaysia Interbank Overnight	Malaysia	Interest Rate	Maybank Group	Datastream	MYIBKCL	B	40251	MYR	ON	Interbank
+40252	MYRRRCB	Malaysia Rrr - Commercial Banks	Malaysia	Interest Rate	Central Bank of Malaysia	Datastream	MYRRRCB	B	40252	MYR	ON	Policy
+40253	NWIBK1M	Norway Interbank 1 Month Delayed	Norway	Interest Rate	Norges Bank	Datastream	NWIBK1M	B	40253	NOK	1m	Interbank
+40254	NWIBN3M	Norway Interbank 3Mth Delayed	Norway	Interest Rate	Norges Bank	Datastream	NWIBN3M	B	40254	NOK	3m	Interbank
+40255	NWIBNTN	Norway Interbank T/N (Nominal) 'Dead'	Norway	Interest Rate	Norges Bank	Datastream	NWIBNTN	B	40255	NOK	ON	Interbank
+40256	NZBB30D	New Zealand 30 Day Bank Bill	New Zealand	Interest Rate	Reserve Bank of New Zealand	Datastream	NZBB30D	B	40256	NZD	1m	Deposit
+40257	NZBB60D	New Zealand 60 Day Bank Bill	New Zealand	Interest Rate	Reserve Bank of New Zealand	Datastream	NZBB60D	B	40257	NZD	2M	Deposit
+40258	NZBB90D	New Zealand 90 Day Bank Bill	New Zealand	Interest Rate	Reserve Bank of New Zealand	Datastream	NZBB90D	B	40258	NZD	3m	Deposit
+40259	NZBCBPR	New Zealand Central Bank Policy Rate	New Zealand	Interest Rate	Bank for International Settlements	Datastream	NZBCBPR	B	40259	NZD	ON	Policy
+40260	PEINBIR	Peru Interbank Interest Rate	Peru	Interest Rate	Central Reserve Bank of Peru	Datastream	PEINBIR	B	40260	PEN	3m	Interbank
+40261	PERONTU	Peru Interbank Interest Rate	Peru	Interest Rate	Central Reserve Bank of Peru	Datastream	PERONTU	B	40261	PEN	3m	Interbank
+40262	POBCBPR	Poland Central Bank Policy Rate	Poland	Interest Rate	Bank for International Settlements	Datastream	POBCBPR	B	40262	PLN	ON	Policy
+40263	POIBK1M	Rfv Polish Zloty 1M Deposit	Poland	Interest Rate	Refinitiv	Datastream	POIBK1M	B	40263	PLN	1m	Deposit
+40264	POIBK3M	Rfv Polish Zloty 3M Deposit	Poland	Interest Rate	Refinitiv	Datastream	POIBK3M	B	40264	PLN	3m	Deposit
+40265	POIBKON	Rfv Polish Zloty O/N Deposit	Poland	Interest Rate	Refinitiv	Datastream	POIBKON	B	40265	PLN	ON	Deposit
+40266	POLRATE	Poland Lombard Rate	Poland	Interest Rate	National Bank of Poland	Datastream	POLRATE	B	40266	PLN	ON	Policy
+40267	PSTAMNN	Peru Savings Rate (Disc)	Peru	Interest Rate	Lasco	Datastream	PSTAMNN	B	40267	PEN	ON	Policy
+40268	PSTIPMN	Peru (Disc) Loan Rate	Peru	Interest Rate	Lasco	Datastream	PSTIPMN	B	40268	PEN	ON	Policy
+40269	RSBCBPR	Russia Central Bank Policy Rate	Russia	Interest Rate	Bank for International Settlements	Datastream	RSBCBPR	B	40269	RUB	ON	Policy
+40270	RSIBK90	Russia Interbank 31 To 90 D'Dead'	Russia	Interest Rate	The Central Bank of the Russian Federation	Datastream	RSIBK90	B	40270	RUB	3m	Interbank
+40271	RSTBILL	Russia Government T-Bill Disc	Russia	Interest Rate	The Central Bank of the Russian Federation	Datastream	RSTBILL	B	40271	RUB	3m	Government
+40272	SAIBK1M	Saudi Arabia Ibk. 1M	Saudi Arabia	Interest Rate	Refinitiv	Datastream	SAIBK1M	B	40272	SAR	1m	Interbank
+40273	SAIBK3M	Saudi Arabia Ibk. 3M	Saudi Arabia	Interest Rate	Refinitiv	Datastream	SAIBK3M	B	40273	SAR	3m	Interbank
+40274	SGBOR3M	Singapore Sibor 3 Month (M'Dead'	Singapore	Interest Rate	Monetary Authority of Singapore	Datastream	SGBOR3M	B	40274	SGD	3m	Interbank
+40276	SNG3IBR	Singapore Interbank 3 Month Disc	Singapore	Interest Rate	DBS - Development Bank of Singapore	Datastream	SNG3IBR	B	40276	SGD	3m	Interbank
+40277	SNGIB1M	Singapore Interbank 1 Month 'Dead'	Singapore	Interest Rate	DBS - Development Bank of Singapore	Datastream	SNGIB1M	B	40277	SGD	1m	Interbank
+40278	THIBK1M	Thailand Interbank 1 Month 'D Disc	Thailand	Interest Rate	Central Bank of Thailand	Datastream	THIBK1M	B	40278	THB	1m	Interbank
+40279	THIBK2M	Thailand Interbank 2 Month 'D Disc	Thailand	Interest Rate	Central Bank of Thailand	Datastream	THIBK2M	B	40279	THB	2M	Interbank
+40280	THIBK3M	Thailand Interbank 3 Month 'D Disc	Thailand	Interest Rate	Central Bank of Thailand	Datastream	THIBK3M	B	40280	THB	3m	Interbank
+40281	TKBLRON	Turkey Overnight Lending Rate	Turkey	Interest Rate	Refinitiv	Datastream	TKBLRON	B	40281	TRY	ON	Interbank
+40282	TKIBKON	Turkey Interbank O/N	Turkey	Interest Rate	Banks Association of Turkey (TBB)	Datastream	TKIBKON	B	40282	TRY	ON	Interbank
+40283	TKNIB1M	Turkey Interbank 1M (Min) Disc	Turkey	Interest Rate	Istanbul Bilgi Sistemleri	Datastream	TKNIB1M	B	40283	TRY	1m	Interbank
+40284	TKNIB3M	Turkey Interbank 3M (Min) Disc	Turkey	Interest Rate	Istanbul Bilgi Sistemleri	Datastream	TKNIB3M	B	40284	TRY	3m	Interbank
+40285	TKVIBON	Turkey Interbank O/N (Avg)	Turkey	Interest Rate	Istanbul Bilgi Sistemleri	Datastream	TKVIBON	B	40285	TRY	ON	Interbank
+40286	TKWDOND	Rfv Kuwaiti Dinar O/N Deposit	Kuwait	Interest Rate	Refinitiv	Datastream	TKWDOND	B	40286	KWD	ON	Interbank
+40287	TKXIB1M	Turkey Interbank 1M (Max) Disc	Turkey	Interest Rate	Istanbul Bilgi Sistemleri	Datastream	TKXIB1M	B	40287	TRY	1m	Interbank
+40288	TSAROND	Rfv Saudi Riyal O/N Deposit	Saudi Arabia	Interest Rate	Refinitiv	Datastream	TSAROND	B	40288	SAR	ON	Deposit
+40289	CLBCBPR	Chile Central Bank Policy Rate	Chile	Interest Rate	Bank for International Settlements	Datastream	CLBCBPR	B	40289	CLP	ON	Policy
+40290	CLOINIR	Chile Overnight Interbank Interest Rate	Chile	Interest Rate	Central Bank of Chile	Datastream	CLOINIR	B	40290	CLP	ON	Interbank
+40293	CB90CDR	Colombia Cd Rate 90-Day	Colombia	Interest Rate	Banco de la Republica, Colombia	Datastream	CB90CDR	B	40293	COP	3m	Interbank
+40294	CBIBKON	Colombia Interbank Overnight Disc	Colombia	Interest Rate	Banco de la Republica, Colombia	Datastream	CBIBKON	B	40294	COP	ON	Interbank
+40300	AUCASH11F	Australia Cash Rate 11 Am (End of Period)	Australia	Interest Rate	Reserve Bank of Australia	Datastream	AUCASH11F	BM	40300	AUD	ON	Policy
+40301	AUMSHORT	Australia Bank Accepted Bills - 90 Days	Australia	Interest Rate	Reserve Bank of Australia	Datastream	AUMSHORT	MS	40301	AUD	1m	Interbank
+40302	CN13883	Canada Treasury Bill 1 Month	Canada	Interest Rate	CANSIM - Statistics Canada	Datastream	CN13883	B	40302	CAD	1m	Treasury
+40303	CN13884	Canada Treasury Bill 3 Month	Canada	Interest Rate	CANSIM - Statistics Canada	Datastream	CN13884	B	40303	CAD	3m	Treasury
+40304	CNBCBPR	Canada Central Bank Policy Rate	Canada	Interest Rate	Bank for International Settlements	Datastream	CNBCBPR	B	40304	CAD	ON	Policy
+40305	FRCALL%.	France Money Market Int.Rates-Average Rate	France	Interest Rate	Banque de France	Datastream	FRCALL%.	MS	40305	FRF	1m	Deposit
+40306	FRFEDFD	US Fed Funds Eff Rate (D)	United States	Interest Rate	Federal Reserve, United States	Datastream	FRFEDFD	B	40306	USD	ON	Policy
+40307	FRI60C..	France Interest Rates: Govt. Treasury Bills(	France	Interest Rate	IMF - International Financial Statistics	Datastream	FRI60C..	MS	40307	FRF	3m	Treasury
+40308	FRINTER3	France Pibor / Euribor - 3-Month (Mth.Avg.)	France	Interest Rate	Main Economic Indicators,copyright OECD	Datastream	FRINTER3	MS	40308	FRF	3m	Interbank
+40309	FROIR060R	France Call Money/Interbank Rate	France	Interest Rate	Main Economic Indicators,copyright OECD	Datastream	FROIR060R	BM	40309	FRF	ON	Interbank
+40310	HKPRIME.	HK Prime Lending Rate (Ep)	Hong Kong	Interest Rate	Hong Kong Monetary Authority	Datastream	HKPRIME.	BM	40310	HKD	ON	Policy
+40311	NLEURO3.	Nl Euro-Guilder - 3 Month	Netherlands	Interest Rate	Main Economic Indicators,copyright OECD	Datastream	NLEURO3.	BM	40311	NLG	3m	Interbank
+40312	NLM60.A.R	Netherlands Discount Rate (End Of Period)	Netherlands	Interest Rate	IMF - International Financial Statistics	Datastream	NLM60.A.R	MS	40312	NLG	ON	Policy
+40313	NWDINTN	Norway Overnight Lending Rate	Norway	Interest Rate	Norges Bank	Datastream	NWDINTN	B	40313	NOK	ON	Policy
+40314	NWDISCRT	Norway Discount Rate / Overnight Lending Rate	Norway	Interest Rate	Refinitiv	Datastream	NWDISCRT	BM	40314	NOK	ON	Policy
+40315	SDBCBPR	Sweden Central Bank Policy Rate	Sweden	Interest Rate	Bank for International Settlements	Datastream	SDBCBPR	B	40315	SEK	ON	Policy
+40316	SDDISCRT	Sweden Discount Rate - Official	Sweden	Interest Rate	Sveriges Riksbank	Datastream	SDDISCRT	MS	40316	SEK	ON	Policy
+40317	SDOIR060R	Sweden Call Money/Interbank Rate	Sweden	Interest Rate	Main Economic Indicators,copyright OECD	Datastream	SDOIR060R	MS	40317	SEK	ON	Interbank
+40318	SPI60B..	Singapore Interest Rates: Money Market	Singapore	Interest Rate	IMF - International Financial Statistics	Datastream	SPI60B..	MS	40318	SGD	1m	Deposit
+40319	SWBCBPR	Switzerland Central Bank Policy Rate	Switzerland	Interest Rate	Bank for International Settlements	Datastream	SWBCBPR	B	40319	CHF	ON	Policy
+40320	SWDISCR	Switzerland Discount Rate	Switzerland	Interest Rate	Swiss National Bank	Datastream	SWDISCR	B	40320	CHF	ON	Policy
+40321	USBCBPR	US Central Bank Policy Rate	United States	Interest Rate	Bank for International Settlements	Datastream	USBCBPR	B	40321	USD	ON	Policy
+40322	USINTER3	US Interbank Rate - 3 Month (Month Avg)	United States	Interest Rate	Refinitiv	Datastream	USINTER3	MS	40322	USD	3m	Interbank
+40323	FRTCM1M	United States Treasury Constant Maturity 1 Month (Daily)	United States	Interest Rate	FRED	Datastream	FRTCM1M	B	40323	USD	1m	Treasury
+40324	USTBL1M	United States Treasury Bill 1 Month Disc	United States	Interest Rate	Financial Times	Datastream	USTBL1M	B	40324	USD	1m	Treasury
+40404	ADBR090	Australia 90 Day Bank Bill	Australia	Interest Rate	Reserve Bank of Australia	Datastream	ADBR090	B	40404	AUD	3m	Government
+41317	USDSFON	United States Dollar SOFR Overnight Index Swap Zero Curve On Point	United States	Interest Rate	LSEG Datastream	Datastream	USDSFON	B	41317	USD	ON	OIS Zero
+41318	USDSF1Y	United States Dollar SOFR Overnight Index Swap Zero Curve 1 Year Point	United States	Interest Rate	LSEG Datastream	Datastream	USDSF1Y	B	41318	USD	1Y	OIS Zero
+41319	USDSF2Y	United States Dollar SOFR Overnight Index Swap Zero Curve 2 Years Point	United States	Interest Rate	LSEG Datastream	Datastream	USDSF2Y	B	41319	USD	2Y	OIS Zero
+41320	USDSF3Y	United States Dollar SOFR Overnight Index Swap Zero Curve 3 Years Point	United States	Interest Rate	LSEG Datastream	Datastream	USDSF3Y	B	41320	USD	3Y	OIS Zero
+41321	USDSF4Y	United States Dollar SOFR Overnight Index Swap Zero Curve 4 Years Point	United States	Interest Rate	LSEG Datastream	Datastream	USDSF4Y	B	41321	USD	4Y	OIS Zero
+41322	USDSF5Y	United States Dollar SOFR Overnight Index Swap Zero Curve 5 Years Point	United States	Interest Rate	LSEG Datastream	Datastream	USDSF5Y	B	41322	USD	5Y	OIS Zero
+41323	GBPSOON	Great British Pound SONIA Overnight Index Swap Zero Curve On Point	United Kingdom	Interest Rate	LSEG Datastream	Datastream	GBPSOON	B	41323	GBP	ON	OIS Zero
+41324	GBPSO1Y	Great British Pound SONIA Overnight Index Swap Zero Curve 1 Year Point	United Kingdom	Interest Rate	LSEG Datastream	Datastream	GBPSO1Y	B	41324	GBP	1Y	OIS Zero
+41325	GBPSO2Y	Great British Pound SONIA Overnight Index Swap Zero Curve 2 Years Point	United Kingdom	Interest Rate	LSEG Datastream	Datastream	GBPSO2Y	B	41325	GBP	2Y	OIS Zero
+41326	GBPSO3Y	Great British Pound SONIA Overnight Index Swap Zero Curve 3 Years Point	United Kingdom	Interest Rate	LSEG Datastream	Datastream	GBPSO3Y	B	41326	GBP	3Y	OIS Zero
+41327	GBPSO4Y	Great British Pound SONIA Overnight Index Swap Zero Curve 4 Years Point	United Kingdom	Interest Rate	LSEG Datastream	Datastream	GBPSO4Y	B	41327	GBP	4Y	OIS Zero
+41328	GBPSO5Y	Great British Pound SONIA Overnight Index Swap Zero Curve 5 Years Point	United Kingdom	Interest Rate	LSEG Datastream	Datastream	GBPSO5Y	B	41328	GBP	5Y	OIS Zero
+41329	EUESTON	Euro ESTR Overnight Index Swap Zero Curve On Point	Eurozone	Interest Rate	LSEG Datastream	Datastream	EUESTON	B	41329	EUR	ON	OIS Zero
+41330	EUEST1Y	Euro ESTR Overnight Index Swap Zero Curve 1 Year Point	Eurozone	Interest Rate	LSEG Datastream	Datastream	EUEST1Y	B	41330	EUR	1Y	OIS Zero
+41331	EUEST2Y	Euro ESTR Overnight Index Swap Zero Curve 2 Years Point	Eurozone	Interest Rate	LSEG Datastream	Datastream	EUEST2Y	B	41331	EUR	2Y	OIS Zero
+41332	EUEST3Y	Euro ESTR Overnight Index Swap Zero Curve 3 Years Point	Eurozone	Interest Rate	LSEG Datastream	Datastream	EUEST3Y	B	41332	EUR	3Y	OIS Zero
+41333	EUEST4Y	Euro ESTR Overnight Index Swap Zero Curve 4 Years Point	Eurozone	Interest Rate	LSEG Datastream	Datastream	EUEST4Y	B	41333	EUR	4Y	OIS Zero
+41334	EUEST5Y	Euro ESTR Overnight Index Swap Zero Curve 5 Years Point	Eurozone	Interest Rate	LSEG Datastream	Datastream	EUEST5Y	B	41334	EUR	5Y	OIS Zero
+41335	CHFSAON	Swiss Franc SARON Overnight Index Swap Zero Curve On Point	Switzerland	Interest Rate	LSEG Datastream	Datastream	CHFSAON	B	41335	CHF	ON	OIS Zero
+41336	CHFSA1Y	Swiss Franc SARON Overnight Index Swap Zero Curve 1 Year Point	Switzerland	Interest Rate	LSEG Datastream	Datastream	CHFSA1Y	B	41336	CHF	1Y	OIS Zero
+41337	CHFSA2Y	Swiss Franc SARON Overnight Index Swap Zero Curve 2 Years Point	Switzerland	Interest Rate	LSEG Datastream	Datastream	CHFSA2Y	B	41337	CHF	2Y	OIS Zero
+41338	CHFSA3Y	Swiss Franc SARON Overnight Index Swap Zero Curve 3 Years Point	Switzerland	Interest Rate	LSEG Datastream	Datastream	CHFSA3Y	B	41338	CHF	3Y	OIS Zero
+41339	CHFSA4Y	Swiss Franc SARON Overnight Index Swap Zero Curve 4 Years Point	Switzerland	Interest Rate	LSEG Datastream	Datastream	CHFSA4Y	B	41339	CHF	4Y	OIS Zero
+41340	CHFSA5Y	Swiss Franc SARON Overnight Index Swap Zero Curve 5 Years Point	Switzerland	Interest Rate	LSEG Datastream	Datastream	CHFSA5Y	B	41340	CHF	5Y	OIS Zero
+41341	CADCOON	Canadian Dollar CORRA Overnight Index Swap Zero Curve On Point	Canada	Interest Rate	LSEG Datastream	Datastream	CADCOON	B	41341	CAD	ON	OIS Zero
+41342	CADCO1Y	Canadian Dollar CORRA Overnight Index Swap Zero Curve 1 Year Point	Canada	Interest Rate	LSEG Datastream	Datastream	CADCO1Y	B	41342	CAD	1Y	OIS Zero
+41343	CADCO2Y	Canadian Dollar CORRA Overnight Index Swap Zero Curve 2 Years Point	Canada	Interest Rate	LSEG Datastream	Datastream	CADCO2Y	B	41343	CAD	2Y	OIS Zero
+41344	CADCO3Y	Canadian Dollar CORRA Overnight Index Swap Zero Curve 3 Years Point	Canada	Interest Rate	LSEG Datastream	Datastream	CADCO3Y	B	41344	CAD	3Y	OIS Zero
+41345	CADCO4Y	Canadian Dollar CORRA Overnight Index Swap Zero Curve 4 Years Point	Canada	Interest Rate	LSEG Datastream	Datastream	CADCO4Y	B	41345	CAD	4Y	OIS Zero
+41346	CADCO5Y	Canadian Dollar CORRA Overnight Index Swap Zero Curve 5 Years Point	Canada	Interest Rate	LSEG Datastream	Datastream	CADCO5Y	B	41346	CAD	5Y	OIS Zero
+41347	AUDAOON	Australian Dollar Aonia Overnight Index Swap Zero Curve On Point	Australia	Interest Rate	LSEG Datastream	Datastream	AUDAOON	B	41347	AUD	ON	OIS Zero
+41348	AUDAO1Y	Australian Dollar Aonia Overnight Index Swap Zero Curve 1 Year Point	Australia	Interest Rate	LSEG Datastream	Datastream	AUDAO1Y	B	41348	AUD	1Y	OIS Zero
+41349	AUDAO2Y	Australian Dollar Aonia Overnight Index Swap Zero Curve 2 Years Point	Australia	Interest Rate	LSEG Datastream	Datastream	AUDAO2Y	B	41349	AUD	2Y	OIS Zero
+41350	AUDAO3Y	Australian Dollar Aonia Overnight Index Swap Zero Curve 3 Years Point	Australia	Interest Rate	LSEG Datastream	Datastream	AUDAO3Y	B	41350	AUD	3Y	OIS Zero
+41351	AUDAO4Y	Australian Dollar Aonia Overnight Index Swap Zero Curve 4 Years Point	Australia	Interest Rate	LSEG Datastream	Datastream	AUDAO4Y	B	41351	AUD	4Y	OIS Zero
+41352	AUDAO5Y	Australian Dollar Aonia Overnight Index Swap Zero Curve 5 Years Point	Australia	Interest Rate	LSEG Datastream	Datastream	AUDAO5Y	B	41352	AUD	5Y	OIS Zero
