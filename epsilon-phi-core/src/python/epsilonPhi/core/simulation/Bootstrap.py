@@ -14,6 +14,7 @@ from epsilonPhi.core.dataModel.enums.Rates import RateType
 from epsilonPhi.core.dataModel.dataSources.GlobalDataSource import GlobalDataSource
 from epsilonPhi.core.schema.Schema import CContext
 from epsilonPhi.core.simulation.SimStructs import *
+from epsilonPhi.core.simulation.ShiftedHullWhite import ShiftedHullWhite
 from epsilonPhi.core.timeSeries.regression import *
 
 
@@ -419,6 +420,18 @@ class SAABootstrapper(AbstractBootstrapper):
     def hold_start_states(self):
         return int(self.simulation_config.simHoldStartStates)
 
+    @property
+    def use_shifted_hull_white(self):
+        """
+        Whether cash and inflation paths use the shift decomposition Hull-White model.
+
+        Defaults to enabled. Set ``simShiftedHW`` to 0 on the simulation config to
+        fall back to the legacy AR(1) recursion with cross-sectional re-centring;
+        the attribute is read defensively so no config migration is required.
+        """
+        flag = getattr(self.simulation_config, 'simShiftedHW', None)
+        return True if flag is None else bool(flag)
+
     @staticmethod
     def extract_shocks(df):
 
@@ -568,6 +581,49 @@ class SAABootstrapper(AbstractBootstrapper):
         else:
             raise ValueError("Unsupported rate type")
 
+    def prepare_shifted_hull_white_shocks(
+            self,
+            asset,
+            blocks,
+            curr_env_idx,
+            current_indicator
+    ):
+        """
+        Calibrate the shift decomposition model and assemble its innovation panel.
+
+        The mean reversion speed is estimated once over the full sample rather than
+        re-fitted against each step of the anchor path, and the bootstrap blocks
+        index the resulting centred residual pool directly, so the block bootstrap
+        and current environment conditioning carry over unchanged.
+
+        Parameters
+        ----------
+        asset : pd.Series
+            Historical rate series the model is calibrated on.
+        blocks : np.ndarray
+            Bootstrap indices of shape (T, nbstraps) into the historical sample.
+        curr_env_idx : np.ndarray
+            Boolean mask of shape (T, nbstraps) flagging draws taken from the current
+            environment, whose innovations are demeaned within their block.
+        current_indicator : pd.DataFrame
+            Current environment indicator aligned with the historical sample.
+
+        Returns
+        -------
+        tuple of (HullWhiteCalibration, np.ndarray)
+            The calibration and the innovation panel of shape (T, nbstraps).
+        """
+
+        calibration = ShiftedHullWhite.calibrate(asset.values)
+        demeaned_shocks = self.demean_values_in_blocks(
+            calibration.shocks,
+            current_indicator
+        )
+
+        shocks_panel = calibration.shocks[blocks]
+        shocks_panel[curr_env_idx] = demeaned_shocks[blocks[curr_env_idx]]
+        return calibration, shocks_panel
+
     def prepare_cash_and_inflation_paths(
             self,
             asset,
@@ -600,8 +656,6 @@ class SAABootstrapper(AbstractBootstrapper):
         )
 
         current_indicator = self.get_current_environment_indicator()
-        shocks_panels = SimulationHelper.extract_shocks(
-            asset, mu_vals, dmu_dt_vals * self._schema.dt, current_indicator)
 
         paths_panel = self.prepare_boostrap_blocks(
             bs_indices,
@@ -610,18 +664,37 @@ class SAABootstrapper(AbstractBootstrapper):
         blocks = paths_panel.get_paths()
         curr_env_idx = paths_panel.get_short_block_indicator().astype(bool)
 
-        shocks_panel = np.vstack([shocks_panels[blocks[x], x, 0] for x in range(240)])
-        demeaned_shocks = np.vstack([shocks_panels[blocks[x], x, 1] for x in range(240)])
-        shocks_panel[curr_env_idx] = demeaned_shocks[curr_env_idx]
-        mean_rev = np.vstack([shocks_panels[blocks[x], x, 2] for x in range(240)])
+        if self.use_shifted_hull_white:
+            # r(t) = mu(t) + x(t) with E[x(t)] = 0, so the anchor is reproduced by
+            # construction and no cross-sectional re-centring of the paths is needed
+            calibration, shocks_panel = self.prepare_shifted_hull_white_shocks(
+                asset,
+                blocks,
+                curr_env_idx,
+                current_indicator
+            )
+            paths = ShiftedHullWhite.simulate(
+                mu_vals,
+                shocks_panel,
+                calibration.mean_reversion,
+                rate_floor
+            )
+        else:
+            shocks_panels = SimulationHelper.extract_shocks(
+                asset, mu_vals, dmu_dt_vals * self._schema.dt, current_indicator)
 
-        paths = SimulationHelper.simulate_paths(
-            mu_vals,
-            dmu_dt_vals * self._schema.dt,
-            shocks_panel,
-            mean_rev,
-            rate_floor
-        )
+            shocks_panel = np.vstack([shocks_panels[blocks[x], x, 0] for x in range(240)])
+            demeaned_shocks = np.vstack([shocks_panels[blocks[x], x, 1] for x in range(240)])
+            shocks_panel[curr_env_idx] = demeaned_shocks[curr_env_idx]
+            mean_rev = np.vstack([shocks_panels[blocks[x], x, 2] for x in range(240)])
+
+            paths = SimulationHelper.simulate_paths(
+                mu_vals,
+                dmu_dt_vals * self._schema.dt,
+                shocks_panel,
+                mean_rev,
+                rate_floor
+            )
 
         return PathsPanel(paths)
 
