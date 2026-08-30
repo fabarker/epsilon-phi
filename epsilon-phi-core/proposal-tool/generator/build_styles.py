@@ -598,7 +598,9 @@ def main():
     th = THEMES[0]
     html, css, js = build_assets(th)
 
-    root = os.path.join(ROOT, SLUG)
+    # the generator sits in generator/; the page folder is its sibling, so that
+    # PORTING.md's "copy the folder" is literal
+    root = os.path.join(os.path.dirname(ROOT), SLUG)
     for sub in ("static/css", "static/js", "static/fonts"):
         os.makedirs(os.path.join(root, sub), exist_ok=True)
 

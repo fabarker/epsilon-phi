@@ -179,8 +179,8 @@ td code,th code{white-space:nowrap}
       <span>Audience <b>Web designer &amp; software engineer</b></span>
       <span>Host <b>cyrus_pmg.dashboard</b></span>
       <span>Conformance <b>WCAG 2.2 AA</b></span>
-      <span>Prototype <b>ui-style-explorations/proposalTool</b></span>
-      <span>Decision log <b>ui-design-qa.md</b></span>
+      <span>Prototype <b>proposalTool/</b></span>
+      <span>Decision log <b>DECISIONS.md</b></span>
     </div>
   </div>
 </header>
@@ -268,7 +268,7 @@ td code,th code{white-space:nowrap}
 
   <div class="note">
     <h4>Provenance</h4>
-    <p>Every decision here traces to a numbered exchange in <code>ui-design-qa.md</code>. Where this
+    <p>Every decision here traces to a numbered exchange in <code>DECISIONS.md</code>. Where this
       document states a rule without qualification, that rule was confirmed. Where it says
       <em>assumption</em>, it was not &mdash; challenge those first.</p>
   </div>
@@ -1920,14 +1920,19 @@ e.g. EpsilonPhi_Scenario_USD_Hedged_2026-08-29.xlsx</code></pre>
   <div class="tw"><table>
     <thead><tr><th>Artifact</th><th>What it is</th></tr></thead>
     <tbody>
-      <tr><td><code>ui-style-explorations/proposalTool/</code></td>
+      <tr><td><code>proposalTool/</code></td>
         <td>The working prototype, in the host's page-folder layout. Interactive.</td></tr>
-      <tr><td><code>ui-style-explorations/PORTING.md</code></td>
+      <tr><td><code>PORTING.md</code></td>
         <td>Drop-in steps: copy the folder, add one route, add one nav link.</td></tr>
-      <tr><td><code>ui-style-explorations/*.py</code></td>
+      <tr><td><code>generator/*.py</code></td>
         <td>The generator. A development tool &mdash; what ships is the generated static files.</td></tr>
-      <tr><td><code>ui-design-qa.md</code></td>
-        <td>The full decision log, Q1 to Q35, with the reasoning behind every rule here.</td></tr>
+      <tr><td><code>backend/scenario_port.py</code></td>
+        <td>The eight-method adapter the host implements, extracted from &sect;4.2 as an importable
+          module.</td></tr>
+      <tr><td><code>reference/landing-swiss.html</code></td>
+        <td>The chosen landing as a standalone page, the design reference for &sect;7.1.</td></tr>
+      <tr><td><code>DECISIONS.md</code></td>
+        <td>The full decision log, Q1 to Q45, with the reasoning behind every rule here.</td></tr>
       <tr><td><code>DASHBOARD_AUDIT_extracted.md</code></td>
         <td>The host codebase audit that &sect;3 is derived from.</td></tr>
       <tr><td><code>epsilonPhi/core/reporting/formatting_*.yaml</code></td>
@@ -1943,6 +1948,6 @@ e.g. EpsilonPhi_Scenario_USD_Hedged_2026-08-29.xlsx</code></pre>
 
 <footer class="foot">
   <p>Epsilon Phi Proposal Tool &middot; production build specification, revision 3 &middot;
-    generated 29 August 2026. Decisions trace to <code>ui-design-qa.md</code>. Items marked
+    generated 29 August 2026. Decisions trace to <code>DECISIONS.md</code>. Items marked
     <em>assumption</em> were not confirmed and should be challenged before they are built.</p>
 </footer>

@@ -1904,3 +1904,63 @@ is now §1.4 &mdash; nothing cross-referenced it.
 Earlier entries in this log still say `scenarioAnalysis` and *Scenario Analysis*. It is an
 append-only record of what was true when written, and rewriting it would destroy the history of
 the decision.
+
+---
+
+## Q45 — Consolidated into a hand-off package
+
+> **You:** bring it all together into a single directory that can be handed off to a software
+> engineer … for them to fully implement the entire system front to back in line with the guidance
+
+Everything now lives in **`epsilon-phi-core/proposal-tool/`**. The work was *moved*, not copied —
+`ui-spec/` and `ui-style-explorations/` no longer exist. Two copies of a spec drift; one does not.
+
+### Structure, and why
+
+```
+proposal-tool/
+  README.md            the entry point: what to read, in what order
+  spec.html            the build reference, revision 3
+  PORTING.md           dropping it into cyrus_pmg.dashboard
+  DECISIONS.md         this log
+  proposalTool/        THE DELIVERABLE — copied into the host verbatim
+  backend/             the adapter contract
+  generator/           development tool, does not ship
+  reference/           the chosen landing, standalone
+```
+
+`proposalTool/` sits at the top level rather than nested, so PORTING.md's *"copy the folder"* stays
+literal. The generator moved into `generator/` and now writes to its **sibling**, which took one
+line: `root = os.path.join(os.path.dirname(ROOT), SLUG)`.
+
+### Two files created
+
+**`backend/scenario_port.py`** — the eight-method `ScenarioPort` Protocol, extracted from spec §4.2
+into an importable module. The referenced types (`BasisInput`, `Schema`, `PortfolioResult` …) are
+left as forward references under `TYPE_CHECKING`, with a comment pointing at the section that
+specifies each one's shape. Binding them to concrete dataclasses would have invented contract
+detail the spec does not fix, and the receiving project's own types are the right home.
+
+**`README.md`** — reading order, the directory map, the backend in one paragraph with the endpoint
+table and its latency profile, the four implementation traps that cost the most time, and the
+naming rule. It is the only file that assumes no prior context.
+
+### Deleted
+
+The old `ui-style-explorations/README.md`. It still described the round-two navy landing — *"a dark
+navy front door … three allocations drawn as composition bands … on a white sheet floating over the
+navy"* — which Swiss replaced two rounds ago. A stale orientation document is worse than none, and
+the new README supersedes it.
+
+### Verified
+
+Clean rebuild from the generator into the new location; all five suites pass against the
+regenerated JS; both the prototype and the landing reference render with all three house faces
+loading and no horizontal overflow; every path named in the README resolves; no reference to
+`ui-style-explorations`, `ui-spec/` or `ui-design-qa.md` survives anywhere except the historical
+entries in this log.
+
+### Left alone
+
+Earlier entries here still name the old paths. This is an append-only record of what was true when
+written; rewriting it would destroy the history the spec's §16.1 points readers at.
