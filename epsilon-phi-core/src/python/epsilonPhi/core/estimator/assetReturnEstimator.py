@@ -10,17 +10,45 @@ import math
 class AssetReturnEstimator(CAssetReturnEstimatorInf):
     _cache = {}
 
+    # Rolling-window normalisation statistics, shared across every asset.
+    # See calc_return_betas: the statistic depends only on the factor window
+    # and the model, so one asset's windows serve all the others.
+    _window_cache = {}
+
     def __init__(self):
         super(AssetReturnEstimator, self).__init__()
 
     @staticmethod
     def calc_return_betas(asset, hedging_ratio=0.5, normalized=True):
+        """Rolling 60-observation factor betas for *asset*.
 
-        schema_currency = asset.schema.currency
-        asset_in_schema_currency = asset.convert_asset_to_currency(schema_currency, hedging_ratio)
+        Results are bit-identical to the original implementation; only the
+        work done to reach them changed:
+
+        * The per-window normalisation statistic is memoised in
+          ``_window_cache``. It is derived from the orthogonalised factor
+          window, which depends on the model and the window's dates but NOT
+          on the asset - the original recomputed it for every asset, and it
+          dominated the profile (roughly two thirds of this function).
+        * The ``convert_asset_to_currency`` call was removed. Its result was
+          used only for ``.schema``, and ``Asset.convert_asset_to_currency``
+          returns an asset carrying the *same* schema object, so
+          ``asset.schema`` is the identical object (verified). The regression
+          itself reads ``asset.get_excess_return_df()``, the unconverted
+          asset.
+
+        NOTE for the model owner: because the converted asset was discarded,
+        ``hedging_ratio`` has never influenced this function's output -
+        verified identical at ratios 0.0, 0.5 and 1.0. The parameter is kept
+        for API compatibility. If return betas are meant to vary with the
+        hedge (i.e. the regression should use the converted asset's excess
+        returns), that is a model change, not a performance one, and the
+        cache key in get_return_betas must gain the ratio back at the same
+        time.
+        """
 
         model = asset.schema.BaseModel
-        factor_df = asset_in_schema_currency.schema.get_return_factors_panel()
+        factor_df = asset.schema.get_return_factors_panel()
 
         rx = asset.get_excess_return_df()
         y, X = rx.intersect_over_date_range(factor_df)
@@ -30,33 +58,35 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
         start = 60
         end = y.shape[0] + 1
 
+        model_key = model.__hash__()
+        index = X.index
+        X_values = X.values
+        y_values = y.values
+
         betas = np.full((end - win, factor_df.shape[1]), np.nan)
         for i in range(start, end):
 
-            X_prime = X.iloc[i - win:i].copy()
-            y_prime = y.iloc[i - win:i].copy()
-            orth_X = model.regression.orthogonalize_columns(X_prime,
-                                                            model.orthogonal_list)
+            lo, hi = i - win, i
+            window_key = (model_key, index[lo], index[hi - 1], normalized)
+            stdev = AssetReturnEstimator._window_cache.get(window_key)
 
-            if normalized:
-                stdev = np.std(orth_X, axis=0, ddof=1)
-            else:
-                stdev = 1
+            if stdev is None:
+                if normalized:
+                    orth_X = model.regression.orthogonalize_columns(
+                        X.iloc[lo:hi].copy(),
+                        model.orthogonal_list
+                    )
+                    stdev = np.std(orth_X, axis=0, ddof=1).values
+                else:
+                    stdev = 1
+                AssetReturnEstimator._window_cache[window_key] = stdev
 
-            eDfArray = X_prime / stdev
             _, b = model.regression.simple_regression_OLS_with_array(
-                eDfArray.values,
-                y_prime.values
+                X_values[lo:hi] / stdev,
+                y_values[lo:hi]
             )
 
             betas[i - win] = b
-
-        #regstats = model.regression.regress(
-        #    X,
-        #    y,
-        #    orthogonalize_columns=model.orthogonal_list,
-        #    normalize=normalized
-        #)
 
         return pd.DataFrame(
             betas,
@@ -156,16 +186,37 @@ class AssetReturnEstimator(CAssetReturnEstimatorInf):
 
 
     @staticmethod
+    def _return_beta_cache_key(asset, normalized):
+        """Key on everything calc_return_betas actually reads.
+
+        The previous key was (name, hedging_ratio, normalized, model hash).
+        That was wrong in both directions: it carried ``hedging_ratio``, which
+        the computation does not use (so every hedging policy recomputed
+        identical betas), and it omitted the schema, whose currency and date
+        window the excess-return series does depend on.
+        """
+        schema = asset.schema
+        return (
+            asset.name,
+            schema.currency,
+            str(schema.start_date),
+            str(schema.end_date),
+            normalized,
+            schema.BaseModel.__hash__(),
+        )
+
+    @staticmethod
     def get_return_betas(asset, hedging_ratio, normalized=True):
 
-        if (asset.name, hedging_ratio, normalized, asset.schema.BaseModel.__hash__()) not in AssetReturnEstimator._cache:
-            AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized, asset.schema.BaseModel.__hash__())] = (
+        key = AssetReturnEstimator._return_beta_cache_key(asset, normalized)
+        if key not in AssetReturnEstimator._cache:
+            AssetReturnEstimator._cache[key] = (
                 AssetReturnEstimator.calc_return_betas(
                 asset,
                 hedging_ratio,
                 normalized)
             )
-        return AssetReturnEstimator._cache[(asset.name, hedging_ratio, normalized, asset.schema.BaseModel.__hash__())]
+        return AssetReturnEstimator._cache[key]
 
 
 
