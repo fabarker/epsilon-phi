@@ -1,0 +1,832 @@
+5897	TRUS10T	Refinitiv United States Government Benchmark Bid Yield 10 Years	United States	Yield	Refinitiv	Datastream	TRUS10T	B	5897	USD	10.0	Govt
+5898	TRBD10T	Refinitiv Germany Government Benchmark Bid Yield 10 Years	Germany	Yield	Refinitiv	Datastream	TRBD10T	B	5898	EUR	10.0	Govt
+5899	TRUS2YT	Refinitiv United States Government Benchmark Bid Yield 2 Years	United States	Yield	Refinitiv	Datastream	TRUS2YT	B	5899	USD	2.0	Govt
+5900	TRUS3MT	Refinitiv United States Government Benchmark Bid Yield 3 Months	United States	Yield	Refinitiv	Datastream	TRUS3MT	B	5900	USD	0.25	Govt
+5901	TRJP10T	Refinitiv Japan Government Benchmark Bid Yield 10 Years	Japan	Yield	Refinitiv	Datastream	TRJP10T	B	5901	JPY	10.0	Govt
+5902	TRUK10T	Refinitiv United Kingdom Government Benchmark Bid Yield 10 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK10T	B	5902	GBP	10.0	Govt
+5903	TRUS1YT	Refinitiv United States Government Benchmark Bid Yield 1 Year	United States	Yield	Refinitiv	Datastream	TRUS1YT	B	5903	USD	1.0	Govt
+5904	TRUS5YT	Refinitiv United States Government Benchmark Bid Yield 5 Years	United States	Yield	Refinitiv	Datastream	TRUS5YT	B	5904	USD	5.0	Govt
+5905	TRIT10T	Refinitiv Italy Government Benchmark Bid Yield 10 Years	Italy	Yield	Refinitiv	Datastream	TRIT10T	B	5905	EUR	10.0	Govt
+5906	TRUS1MT	Refinitiv United States Government Benchmark Bid Yield 1 Month	United States	Yield	Refinitiv	Datastream	TRUS1MT	B	5906	USD	0.0833	Govt
+5907	TRUS10C	Refinitiv United States Government Benchmark CM Bid Yield 10 Years	United States	Yield	Refinitiv	Datastream	TRUS10C	B
+5908	TREU10T	Refinitiv Eurozone Government Benchmark Bid Yield 10 Years	Eurozone	Yield	Refinitiv	Datastream	TREU10T	B	5908	EUR	10.0	Govt
+5909	TRFR10T	Refinitiv France Government Benchmark Bid Yield 10 Years	France	Yield	Refinitiv	Datastream	TRFR10T	B	5909	EUR	10.0	Govt
+5910	TRGR10T	Refinitiv Greece Government Benchmark Bid Yield 10 Years	Greece	Yield	Refinitiv	Datastream	TRGR10T	B	5910	EUR	10.0	Govt
+5911	TRES10T	Refinitiv Spain Government Benchmark Bid Yield 10 Years	Spain	Yield	Refinitiv	Datastream	TRES10T	B	5911	EUR	10.0	Govt
+5912	TRUS6MT	Refinitiv United States Government Benchmark Bid Yield 6 Months	United States	Yield	Refinitiv	Datastream	TRUS6MT	B	5912	USD	0.5	Govt
+5913	TRCN10T	Refinitiv Canada Government Benchmark Bid Yield 10 Years	Canada	Yield	Refinitiv	Datastream	TRCN10T	B	5913	CAD	10.0	Govt
+5914	TRSD10T	Refinitiv Sweden Government Benchmark Bid Yield 10 Years	Sweden	Yield	Refinitiv	Datastream	TRSD10T	B	5914	SEK	10.0	Govt
+5915	TRUK5YT	Refinitiv United Kingdom Government Benchmark Bid Yield 5 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK5YT	B	5915	GBP	5.0	Govt
+5916	TRUS3YT	Refinitiv United States Government Benchmark Bid Yield 3 Years	United States	Yield	Refinitiv	Datastream	TRUS3YT	B	5916	USD	3.0	Govt
+5917	TRPO10T	Refinitiv Poland Government Benchmark Bid Yield 10 Years	Poland	Yield	Refinitiv	Datastream	TRPO10T	B	5917	PLN	10.0	Govt
+5918	TRPT10T	Refinitiv Portugal Government Benchmark Bid Yield 10 Years	Portugal	Yield	Refinitiv	Datastream	TRPT10T	B	5918	EUR	10.0	Govt
+5919	TRSW5YT	Refinitiv Switzerland Government Benchmark Bid Yield 5 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW5YT	B	5919	CHF	5.0	Govt
+5920	TRUS30T	Refinitiv United States Government Benchmark Bid Yield 30 Years	United States	Yield	Refinitiv	Datastream	TRUS30T	B	5920	USD	30.0	Govt
+5921	TRUS7YT	Refinitiv United States Government Benchmark Bid Yield 7 Years	United States	Yield	Refinitiv	Datastream	TRUS7YT	B	5921	USD	7.0	Govt
+5922	TRDK10T	Refinitiv Denmark Government Benchmark Bid Yield 10 Years	Denmark	Yield	Refinitiv	Datastream	TRDK10T	B	5922	DKK	10.0	Govt
+5923	TRNL10T	Refinitiv Netherlands Government Benchmark Bid Yield 10 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL10T	B	5923	EUR	10.0	Govt
+5924	TRRO10T	Refinitiv Romania Government Benchmark Bid Yield 10 Years	Romania	Yield	Refinitiv	Datastream	TRRO10T	B	5924	RON	10.0	Govt
+5925	TRSW1YT	Refinitiv Switzerland Government Benchmark Bid Yield 1 Year	Switzerland	Yield	Refinitiv	Datastream	TRSW1YT	B	5925	CHF	1.0	Govt
+5926	TRSW3MT	Refinitiv Switzerland Government Benchmark Bid Yield 3 Months	Switzerland	Yield	Refinitiv	Datastream	TRSW3MT	B	5926	CHF	0.25	Govt
+5927	TRUK2YT	Refinitiv United Kingdom Government Benchmark Bid Yield 2 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK2YT	B	5927	GBP	2.0	Govt
+5928	TROE10T	Refinitiv Austria Government Benchmark Bid Yield 10 Years	Austria	Yield	Refinitiv	Datastream	TROE10T	B	5928	EUR	10.0	Govt
+5929	TRBL10T	Refinitiv Bulgaria Government Benchmark Bid Yield 10 Years	Bulgaria	Yield	Refinitiv	Datastream	TRBL10T	B	5929	BGN	10.0	Govt
+5930	TRFN10T	Refinitiv Finland Government Benchmark Bid Yield 10 Years	Finland	Yield	Refinitiv	Datastream	TRFN10T	B	5930	EUR	10.0	Govt
+5931	TRSW15T	Refinitiv Switzerland Government Benchmark Bid Yield 15 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW15T	B	5931	CHF	15.0	Govt
+5932	TRSW1MT	Refinitiv Switzerland Government Benchmark Bid Yield 1 Month	Switzerland	Yield	Refinitiv	Datastream	TRSW1MT	B	5932	CHF	0.0833	Govt
+5933	TRTK2YT	Refinitiv Turkey Government Benchmark Bid Yield 2 Years	Turkey	Yield	Refinitiv	Datastream	TRTK2YT	B	5933	TRY	2.0	Govt
+5934	TRUK3MT	Refinitiv United Kingdom Government Benchmark Bid Yield 3 Months	United Kingdom	Yield	Refinitiv	Datastream	TRUK3MT	B	5934	GBP	0.25	Govt
+5935	TRUS20C	Refinitiv United States Government Benchmark CM Bid Yield 20 Years	United States	Yield	Refinitiv	Datastream	TRUS20C	B
+5936	TRHR10T	Refinitiv Croatia Government Benchmark Bid Yield 10 Years	Croatia	Yield	Refinitiv	Datastream	TRHR10T	B	5936	EUR	10.0	Govt
+5937	TRIE10T	Refinitiv Ireland Government Benchmark Bid Yield 10 Years	Ireland	Yield	Refinitiv	Datastream	TRIE10T	B	5937	EUR	10.0	Govt
+5938	TRSK10T	Refinitiv Slovakia Government Benchmark Bid Yield 10 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK10T	B	5938	EUR	10.0	Govt
+5939	TRSI10T	Refinitiv Slovenia Government Benchmark Bid Yield 10 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI10T	B	5939	EUR	10.0	Govt
+5940	TRSW20T	Refinitiv Switzerland Government Benchmark Bid Yield 20 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW20T	B	5940	CHF	20.0	Govt
+5941	TRSW30T	Refinitiv Switzerland Government Benchmark Bid Yield 30 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW30T	B	5941	CHF	30.0	Govt
+5942	TRSW9YT	Refinitiv Switzerland Government Benchmark Bid Yield 9 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW9YT	B	5942	CHF	9.0	Govt
+5943	TRTK5YT	Refinitiv Turkey Government Benchmark Bid Yield 5 Years	Turkey	Yield	Refinitiv	Datastream	TRTK5YT	B	5943	TRY	5.0	Govt
+5944	TRUK20T	Refinitiv United Kingdom Government Benchmark Bid Yield 20 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK20T	B	5944	GBP	20.0	Govt
+5945	TRBG10T	Refinitiv Belgium Government Benchmark Bid Yield 10 Years	Belgium	Yield	Refinitiv	Datastream	TRBG10T	B	5945	EUR	10.0	Govt
+5946	TRCP10T	Refinitiv Cyprus Government Benchmark Bid Yield 10 Years	Cyprus	Yield	Refinitiv	Datastream	TRCP10T	B	5946	EUR	10.0	Govt
+5947	TRHN10T	Refinitiv Hungary Government Benchmark Bid Yield 10 Years	Hungary	Yield	Refinitiv	Datastream	TRHN10T	B	5947	HUF	10.0	Govt
+5948	TRLT10T	Refinitiv Lithuania Government Benchmark Bid Yield 10 Years	Lithuania	Yield	Refinitiv	Datastream	TRLT10T	B	5948	EUR	10.0	Govt
+5949	TRMT10T	Refinitiv Malta Government Benchmark Bid Yield 10 Years	Malta	Yield	Refinitiv	Datastream	TRMT10T	B	5949	EUR	10.0	Govt
+5950	TRSW1WT	Refinitiv Switzerland Government Benchmark Bid Yield 1 Week	Switzerland	Yield	Refinitiv	Datastream	TRSW1WT	B	5950	CHF	0.019	Govt
+5951	TRSW2MT	Refinitiv Switzerland Government Benchmark Bid Yield 2 Months	Switzerland	Yield	Refinitiv	Datastream	TRSW2MT	B	5951	CHF	0.167	Govt
+5952	TRSW2YT	Refinitiv Switzerland Government Benchmark Bid Yield 2 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW2YT	B	5952	CHF	2.0	Govt
+5953	TRSW3YT	Refinitiv Switzerland Government Benchmark Bid Yield 3 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW3YT	B	5953	CHF	3.0	Govt
+5954	TRSW4YT	Refinitiv Switzerland Government Benchmark Bid Yield 4 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW4YT	B	5954	CHF	4.0	Govt
+5955	TRSW6MT	Refinitiv Switzerland Government Benchmark Bid Yield 6 Months	Switzerland	Yield	Refinitiv	Datastream	TRSW6MT	B	5955	CHF	0.5	Govt
+5956	TRSW6YT	Refinitiv Switzerland Government Benchmark Bid Yield 6 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW6YT	B	5956	CHF	6.0	Govt
+5957	TRSW7YT	Refinitiv Switzerland Government Benchmark Bid Yield 7 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW7YT	B	5957	CHF	7.0	Govt
+5958	TRSW8YT	Refinitiv Switzerland Government Benchmark Bid Yield 8 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW8YT	B	5958	CHF	8.0	Govt
+5959	TRTW20T	Refinitiv Taiwan Government Benchmark Bid Yield 20 Years	Taiwan	Yield	Refinitiv	Datastream	TRTW20T	B	5959	TWD	20.0	Govt
+5960	TRTW2YT	Refinitiv Taiwan Government Benchmark Bid Yield 2 Years	Taiwan	Yield	Refinitiv	Datastream	TRTW2YT	B	5960	TWD	2.0	Govt
+5961	TRTW30T	Refinitiv Taiwan Government Benchmark Bid Yield 30 Years	Taiwan	Yield	Refinitiv	Datastream	TRTW30T	B	5961	TWD	30.0	Govt
+5962	TRTW5YT	Refinitiv Taiwan Government Benchmark Bid Yield 5 Years	Taiwan	Yield	Refinitiv	Datastream	TRTW5YT	B	5962	TWD	5.0	Govt
+5963	TRTZ15T	Refinitiv Tanzania Government Benchmark Bid Yield 15 Years	Tanzania	Yield	Refinitiv	Datastream	TRTZ15T	B	5963	TZS	15.0	Govt
+5964	TRTZ1YT	Refinitiv Tanzania Government Benchmark Bid Yield 1 Year	Tanzania	Yield	Refinitiv	Datastream	TRTZ1YT	B	5964	TZS	1.0	Govt
+5965	TRTZ20T	Refinitiv Tanzania Government Benchmark Bid Yield 20 Years	Tanzania	Yield	Refinitiv	Datastream	TRTZ20T	B	5965	TZS	20.0	Govt
+5966	TRTZ2YT	Refinitiv Tanzania Government Benchmark Bid Yield 2 Years	Tanzania	Yield	Refinitiv	Datastream	TRTZ2YT	B	5966	TZS	2.0	Govt
+5967	TRTZ3MT	Refinitiv Tanzania Government Benchmark Bid Yield 3 Months	Tanzania	Yield	Refinitiv	Datastream	TRTZ3MT	B	5967	TZS	0.25	Govt
+5968	TRTZ5YT	Refinitiv Tanzania Government Benchmark Bid Yield 5 Years	Tanzania	Yield	Refinitiv	Datastream	TRTZ5YT	B	5968	TZS	5.0	Govt
+5969	TRTZ6MT	Refinitiv Tanzania Government Benchmark Bid Yield 6 Months	Tanzania	Yield	Refinitiv	Datastream	TRTZ6MT	B	5969	TZS	0.5	Govt
+5970	TRTZ7YT	Refinitiv Tanzania Government Benchmark Bid Yield 7 Years	Tanzania	Yield	Refinitiv	Datastream	TRTZ7YT	B	5970	TZS	7.0	Govt
+5971	TRTH12T	Refinitiv Thailand Government Benchmark Bid Yield 12 Years	Thailand	Yield	Refinitiv	Datastream	TRTH12T	B	5971	THB	12.0	Govt
+5972	TRTH14T	Refinitiv Thailand Government Benchmark Bid Yield 14 Years	Thailand	Yield	Refinitiv	Datastream	TRTH14T	B	5972	THB	14.0	Govt
+5973	TRTH15T	Refinitiv Thailand Government Benchmark Bid Yield 15 Years	Thailand	Yield	Refinitiv	Datastream	TRTH15T	B	5973	THB	15.0	Govt
+5974	TRTH16T	Refinitiv Thailand Government Benchmark Bid Yield 16 Years	Thailand	Yield	Refinitiv	Datastream	TRTH16T	B	5974	THB	16.0	Govt
+5975	TRTH1YT	Refinitiv Thailand Government Benchmark Bid Yield 1 Year	Thailand	Yield	Refinitiv	Datastream	TRTH1YT	B	5975	THB	1.0	Govt
+5976	TRTH20T	Refinitiv Thailand Government Benchmark Bid Yield 20 Years	Thailand	Yield	Refinitiv	Datastream	TRTH20T	B	5976	THB	20.0	Govt
+5977	TRTH2YT	Refinitiv Thailand Government Benchmark Bid Yield 2 Years	Thailand	Yield	Refinitiv	Datastream	TRTH2YT	B	5977	THB	2.0	Govt
+5978	TRTH3YT	Refinitiv Thailand Government Benchmark Bid Yield 3 Years	Thailand	Yield	Refinitiv	Datastream	TRTH3YT	B	5978	THB	3.0	Govt
+5979	TRTH4YT	Refinitiv Thailand Government Benchmark Bid Yield 4 Years	Thailand	Yield	Refinitiv	Datastream	TRTH4YT	B	5979	THB	4.0	Govt
+5980	TRTH50T	Refinitiv Thailand Government Benchmark Bid Yield 50 Years	Thailand	Yield	Refinitiv	Datastream	TRTH50T	B	5980	THB	50.0	Govt
+5981	TRTH5YT	Refinitiv Thailand Government Benchmark Bid Yield 5 Years	Thailand	Yield	Refinitiv	Datastream	TRTH5YT	B	5981	THB	5.0	Govt
+5982	TRTH7YT	Refinitiv Thailand Government Benchmark Bid Yield 7 Years	Thailand	Yield	Refinitiv	Datastream	TRTH7YT	B	5982	THB	7.0	Govt
+5983	TRTK1MT	Refinitiv Turkey Government Benchmark Bid Yield 1 Month	Turkey	Yield	Refinitiv	Datastream	TRTK1MT	B	5983	TRY	0.0833	Govt
+5984	TRTK1YT	Refinitiv Turkey Government Benchmark Bid Yield 1 Year	Turkey	Yield	Refinitiv	Datastream	TRTK1YT	B	5984	TRY	1.0	Govt
+5985	TRTK3MT	Refinitiv Turkey Government Benchmark Bid Yield 3 Months	Turkey	Yield	Refinitiv	Datastream	TRTK3MT	B	5985	TRY	0.25	Govt
+5986	TRTK3YT	Refinitiv Turkey Government Benchmark Bid Yield 3 Years	Turkey	Yield	Refinitiv	Datastream	TRTK3YT	B	5986	TRY	3.0	Govt
+5987	TRTK6MT	Refinitiv Turkey Government Benchmark Bid Yield 6 Months	Turkey	Yield	Refinitiv	Datastream	TRTK6MT	B	5987	TRY	0.5	Govt
+5988	TRTK9MT	Refinitiv Turkey Government Benchmark Bid Yield 9 Months	Turkey	Yield	Refinitiv	Datastream	TRTK9MT	B	5988	TRY	0.75	Govt
+5989	TRUG15T	Refinitiv Uganda Government Benchmark Bid Yield 15 Years	Uganda	Yield	Refinitiv	Datastream	TRUG15T	B	5989	UGX	15.0	Govt
+5990	TRUG1YT	Refinitiv Uganda Government Benchmark Bid Yield 1 Year	Uganda	Yield	Refinitiv	Datastream	TRUG1YT	B	5990	UGX	1.0	Govt
+5991	TRUG2YT	Refinitiv Uganda Government Benchmark Bid Yield 2 Years	Uganda	Yield	Refinitiv	Datastream	TRUG2YT	B	5991	UGX	2.0	Govt
+5992	TRUG3MT	Refinitiv Uganda Government Benchmark Bid Yield 3 Months	Uganda	Yield	Refinitiv	Datastream	TRUG3MT	B	5992	UGX	0.25	Govt
+5993	TRUG3YT	Refinitiv Uganda Government Benchmark Bid Yield 3 Years	Uganda	Yield	Refinitiv	Datastream	TRUG3YT	B	5993	UGX	3.0	Govt
+5994	TRUG5YT	Refinitiv Uganda Government Benchmark Bid Yield 5 Years	Uganda	Yield	Refinitiv	Datastream	TRUG5YT	B	5994	UGX	5.0	Govt
+5995	TRUG6MT	Refinitiv Uganda Government Benchmark Bid Yield 6 Months	Uganda	Yield	Refinitiv	Datastream	TRUG6MT	B	5995	UGX	0.5	Govt
+5996	TRUK1YT	Refinitiv United Kingdom Government Benchmark Bid Yield 1 Year	United Kingdom	Yield	Refinitiv	Datastream	TRUK1YT	B	5996	GBP	1.0	Govt
+5997	TRUA1YT	Refinitiv Ukraine Government Benchmark Bid Yield 1 Year	Botswana	Yield	Refinitiv	Datastream	TRUA1YT	B	5997	UAH	1.0	Govt
+5998	TRUA2YT	Refinitiv Ukraine Government Benchmark Bid Yield 2 Years	Botswana	Yield	Refinitiv	Datastream	TRUA2YT	B	5998	UAH	2.0	Govt
+5999	TRUA3YT	Refinitiv Ukraine Government Benchmark Bid Yield 3 Years	Botswana	Yield	Refinitiv	Datastream	TRUA3YT	B	5999	UAH	3.0	Govt
+6000	TRUS2MT	Refinitiv United States Government Benchmark Bid Yield 2 Months	United States	Yield	Refinitiv	Datastream	TRUS2MT	B	6000	USD	0.167	Govt
+6001	TRUS1MC	Refinitiv United States Government Benchmark CM Bid Yield 1 Month	United States	Yield	Refinitiv	Datastream	TRUS1MC	B
+6002	TRUS3MC	Refinitiv United States Government Benchmark CM Bid Yield 3 Months	United States	Yield	Refinitiv	Datastream	TRUS3MC	B
+6003	TRVN15T	Refinitiv Vietnam Government Benchmark Bid Yield 15 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN15T	B	6003	VND	15.0	Govt
+6004	TRVN1YT	Refinitiv Vietnam Government Benchmark Bid Yield 1 Year	Vietnam	Yield	Refinitiv	Datastream	TRVN1YT	B	6004	VND	1.0	Govt
+6005	TRVN20T	Refinitiv Vietnam Government Benchmark Bid Yield 20 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN20T	B	6005	VND	20.0	Govt
+6006	TRVN2YT	Refinitiv Vietnam Government Benchmark Bid Yield 2 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN2YT	B	6006	VND	2.0	Govt
+6007	TRVN30T	Refinitiv Vietnam Government Benchmark Bid Yield 30 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN30T	B	6007	VND	30.0	Govt
+6008	TRVN3YT	Refinitiv Vietnam Government Benchmark Bid Yield 3 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN3YT	B	6008	VND	3.0	Govt
+6009	TRVN5YT	Refinitiv Vietnam Government Benchmark Bid Yield 5 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN5YT	B	6009	VND	5.0	Govt
+6010	TRVN7YT	Refinitiv Vietnam Government Benchmark Bid Yield 7 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN7YT	B	6010	VND	7.0	Govt
+6011	TRUK15T	Refinitiv United Kingdom Government Benchmark Bid Yield 15 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK15T	B	6011	GBP	15.0	Govt
+6012	TRUK3YT	Refinitiv United Kingdom Government Benchmark Bid Yield 3 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK3YT	B	6012	GBP	3.0	Govt
+6014	TRUK1MT	Refinitiv United Kingdom Government Benchmark Bid Yield 1 Month	United Kingdom	Yield	Refinitiv	Datastream	TRUK1MT	B	6014	GBP	0.0833	Govt
+6015	TRUK25T	Refinitiv United Kingdom Government Benchmark Bid Yield 25 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK25T	B	6015	GBP	25.0	Govt
+6016	TRUK30T	Refinitiv United Kingdom Government Benchmark Bid Yield 30 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK30T	B	6016	GBP	30.0	Govt
+6017	TRUK40T	Refinitiv United Kingdom Government Benchmark Bid Yield 40 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK40T	B	6017	GBP	40.0	Govt
+6018	TRUK4YT	Refinitiv United Kingdom Government Benchmark Bid Yield 4 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK4YT	B	6018	GBP	4.0	Govt
+6019	TRUK50T	Refinitiv United Kingdom Government Benchmark Bid Yield 50 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK50T	B	6019	GBP	50.0	Govt
+6020	TRUK6MT	Refinitiv United Kingdom Government Benchmark Bid Yield 6 Months	United Kingdom	Yield	Refinitiv	Datastream	TRUK6MT	B	6020	GBP	0.5	Govt
+6021	TRUK6YT	Refinitiv United Kingdom Government Benchmark Bid Yield 6 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK6YT	B	6021	GBP	6.0	Govt
+6022	TRUK7YT	Refinitiv United Kingdom Government Benchmark Bid Yield 7 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK7YT	B	6022	GBP	7.0	Govt
+6023	TRUK8YT	Refinitiv United Kingdom Government Benchmark Bid Yield 8 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK8YT	B	6023	GBP	8.0	Govt
+6024	TRUK9YT	Refinitiv United Kingdom Government Benchmark Bid Yield 9 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK9YT	B	6024	GBP	9.0	Govt
+6025	TRCZ10T	Refinitiv Czech REP Government Benchmark Bid Yield 10 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ10T	B	6025	CZK	10.0	Govt
+6026	TRUK12T	Refinitiv United Kingdom Government Benchmark Bid Yield 12 Years	United Kingdom	Yield	Refinitiv	Datastream	TRUK12T	B	6026	GBP	12.0	Govt
+6027	TRUS1YC	Refinitiv United States Government Benchmark CM Bid Yield 1 Year	United States	Yield	Refinitiv	Datastream	TRUS1YC	B
+6030	TRUS2YC	Refinitiv United States Government Benchmark CM Bid Yield 2 Years	United States	Yield	Refinitiv	Datastream	TRUS2YC	B
+6031	TRUS30C	Refinitiv United States Government Benchmark CM Bid Yield 30 Years	United States	Yield	Refinitiv	Datastream	TRUS30C	B
+6032	TRUS3YC	Refinitiv United States Government Benchmark CM Bid Yield 3 Years	United States	Yield	Refinitiv	Datastream	TRUS3YC	B
+6033	TRUS5YC	Refinitiv United States Government Benchmark CM Bid Yield 5 Years	United States	Yield	Refinitiv	Datastream	TRUS5YC	B
+6034	TRUS6MC	Refinitiv United States Government Benchmark CM Bid Yield 6 Months	United States	Yield	Refinitiv	Datastream	TRUS6MC	B
+6035	TRUS7YC	Refinitiv United States Government Benchmark CM Bid Yield 7 Years	United States	Yield	Refinitiv	Datastream	TRUS7YC	B
+6046	TRCH10T	Refinitiv China Government Benchmark Bid Yield 10 Years	China	Yield	Refinitiv	Datastream	TRCH10T	B	6046	CNY	10.0	Govt
+6047	TRBD2YT	Refinitiv Germany Government Benchmark Bid Yield 2 Years	Germany	Yield	Refinitiv	Datastream	TRBD2YT	B	6047	EUR	2.0	Govt
+6048	TRBR10T	Refinitiv Brazil Government Benchmark Bid Yield 10 Years	Brazil	Yield	Refinitiv	Datastream	TRBR10T	B	6048	BRL	10.0	Govt
+6049	TRBD3MT	Refinitiv Germany Government Benchmark Bid Yield 3 Months	Germany	Yield	Refinitiv	Datastream	TRBD3MT	B	6049	EUR	0.25	Govt
+6050	TRBD5YT	Refinitiv Germany Government Benchmark Bid Yield 5 Years	Germany	Yield	Refinitiv	Datastream	TRBD5YT	B	6050	EUR	5.0	Govt
+6051	TRAU10T	Refinitiv Australia Government Benchmark Bid Yield 10 Years	Australia	Yield	Refinitiv	Datastream	TRAU10T	B	6051	AUD	10.0	Govt
+6052	TRJP5YT	Refinitiv Japan Government Benchmark Bid Yield 5 Years	Japan	Yield	Refinitiv	Datastream	TRJP5YT	B	6052	JPY	5.0	Govt
+6053	TRBD1YT	Refinitiv Germany Government Benchmark Bid Yield 1 Year	Germany	Yield	Refinitiv	Datastream	TRBD1YT	B	6053	EUR	1.0	Govt
+6054	TRIT5YT	Refinitiv Italy Government Benchmark Bid Yield 5 Years	Italy	Yield	Refinitiv	Datastream	TRIT5YT	B	6054	EUR	5.0	Govt
+6055	TRJP1YT	Refinitiv Japan Government Benchmark Bid Yield 1 Year	Japan	Yield	Refinitiv	Datastream	TRJP1YT	B	6055	JPY	1.0	Govt
+6056	TRJP3MT	Refinitiv Japan Government Benchmark Bid Yield 3 Months	Japan	Yield	Refinitiv	Datastream	TRJP3MT	B	6056	JPY	0.25	Govt
+6057	TRSD5YT	Refinitiv Sweden Government Benchmark Bid Yield 5 Years	Sweden	Yield	Refinitiv	Datastream	TRSD5YT	B	6057	SEK	5.0	Govt
+6058	TRFR5YT	Refinitiv France Government Benchmark Bid Yield 5 Years	France	Yield	Refinitiv	Datastream	TRFR5YT	B	6058	EUR	5.0	Govt
+6059	TRGH10T	Refinitiv Ghana Government Benchmark Bid Yield 10 Years	Ghana	Yield	Refinitiv	Datastream	TRGH10T	B	6059	GHS	10.0	Govt
+6060	TRIN10T	Refinitiv India Government Benchmark Bid Yield 10 Years	India	Yield	Refinitiv	Datastream	TRIN10T	B	6060	INR	10.0	Govt
+6061	TRSA10T	Refinitiv S Africa Government Benchmark Bid Yield 10 Years	South Africa	Yield	Refinitiv	Datastream	TRSA10T	B	6061	ZAR	10.0	Govt
+6062	TRSW10T	Refinitiv Switzerland Government Benchmark Bid Yield 10 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW10T	B	6062	CHF	10.0	Govt
+6063	TRAU1YT	Refinitiv Australia Government Benchmark Bid Yield 1 Year	Australia	Yield	Refinitiv	Datastream	TRAU1YT	B	6063	AUD	1.0	Govt
+6064	TREU3MT	Refinitiv Eurozone Government Benchmark Bid Yield 3 Months	Eurozone	Yield	Refinitiv	Datastream	TREU3MT	B	6064	EUR	0.25	Govt
+6065	TRFR2YT	Refinitiv France Government Benchmark Bid Yield 2 Years	France	Yield	Refinitiv	Datastream	TRFR2YT	B	6065	EUR	2.0	Govt
+6066	TRBD1MT	Refinitiv Germany Government Benchmark Bid Yield 1 Month	Germany	Yield	Refinitiv	Datastream	TRBD1MT	B	6066	EUR	0.0833	Govt
+6067	TRJP2YT	Refinitiv Japan Government Benchmark Bid Yield 2 Years	Japan	Yield	Refinitiv	Datastream	TRJP2YT	B	6067	JPY	2.0	Govt
+6068	TRKE10T	Refinitiv Kenya Government Benchmark Bid Yield 10 Years	Kenya	Yield	Refinitiv	Datastream	TRKE10T	B	6068	KES	10.0	Govt
+6069	TRMX10T	Refinitiv Mexico Government Benchmark Bid Yield 10 Years	Mexico	Yield	Refinitiv	Datastream	TRMX10T	B	6069	MXN	10.0	Govt
+6070	TRNL5YT	Refinitiv Netherlands Government Benchmark Bid Yield 5 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL5YT	B	6070	EUR	5.0	Govt
+6071	TRAU5YT	Refinitiv Australia Government Benchmark Bid Yield 5 Years	Australia	Yield	Refinitiv	Datastream	TRAU5YT	B	6071	AUD	5.0	Govt
+6072	TRCN3MT	Refinitiv Canada Government Benchmark Bid Yield 3 Months	Canada	Yield	Refinitiv	Datastream	TRCN3MT	B	6072	CAD	0.25	Govt
+6073	TRCH5YT	Refinitiv China Government Benchmark Bid Yield 5 Years	China	Yield	Refinitiv	Datastream	TRCH5YT	B	6073	CNY	5.0	Govt
+6074	TRDK3MT	Refinitiv Denmark Government Benchmark Bid Yield 3 Months	Denmark	Yield	Refinitiv	Datastream	TRDK3MT	B	6074	DKK	0.25	Govt
+6075	TRDK5YT	Refinitiv Denmark Government Benchmark Bid Yield 5 Years	Denmark	Yield	Refinitiv	Datastream	TRDK5YT	B	6075	DKK	5.0	Govt
+6076	TREU2YT	Refinitiv Eurozone Government Benchmark Bid Yield 2 Years	Eurozone	Yield	Refinitiv	Datastream	TREU2YT	B	6076	EUR	2.0	Govt
+6077	TRBD30T	Refinitiv Germany Government Benchmark Bid Yield 30 Years	Germany	Yield	Refinitiv	Datastream	TRBD30T	B	6077	EUR	30.0	Govt
+6078	TRBD3YT	Refinitiv Germany Government Benchmark Bid Yield 3 Years	Germany	Yield	Refinitiv	Datastream	TRBD3YT	B	6078	EUR	3.0	Govt
+6079	TRID10T	Refinitiv Indonesia Government Benchmark Bid Yield 10 Years	Indonesia	Yield	Refinitiv	Datastream	TRID10T	B	6079	IDR	10.0	Govt
+6080	TRIL10T	Refinitiv Israel Government Benchmark Bid Yield 10 Years	Israel	Yield	Refinitiv	Datastream	TRIL10T	B	6080	ILS	10.0	Govt
+6081	TRIT1YT	Refinitiv Italy Government Benchmark Bid Yield 1 Year	Italy	Yield	Refinitiv	Datastream	TRIT1YT	B	6081	EUR	1.0	Govt
+6082	TRIT2YT	Refinitiv Italy Government Benchmark Bid Yield 2 Years	Italy	Yield	Refinitiv	Datastream	TRIT2YT	B	6082	EUR	2.0	Govt
+6083	TRJP30T	Refinitiv Japan Government Benchmark Bid Yield 30 Years	Japan	Yield	Refinitiv	Datastream	TRJP30T	B	6083	JPY	30.0	Govt
+6084	TRJP7YT	Refinitiv Japan Government Benchmark Bid Yield 7 Years	Japan	Yield	Refinitiv	Datastream	TRJP7YT	B	6084	JPY	7.0	Govt
+6085	TRMY10T	Refinitiv Malaysia Government Benchmark Bid Yield 10 Years	Malaysia	Yield	Refinitiv	Datastream	TRMY10T	B	6085	MYR	10.0	Govt
+6086	TRNW1YT	Refinitiv Norway Government Benchmark Bid Yield 1 Year	Norway	Yield	Refinitiv	Datastream	TRNW1YT	B	6086	NOK	1.0	Govt
+6087	TRSG10T	Refinitiv Singapore Government Benchmark Bid Yield 10 Years	Singapore	Yield	Refinitiv	Datastream	TRSG10T	B	6087	SGD	10.0	Govt
+6088	TRTH10T	Refinitiv Thailand Government Benchmark Bid Yield 10 Years	Thailand	Yield	Refinitiv	Datastream	TRTH10T	B	6088	THB	10.0	Govt
+6089	TRAU2YT	Refinitiv Australia Government Benchmark Bid Yield 2 Years	Australia	Yield	Refinitiv	Datastream	TRAU2YT	B	6089	AUD	2.0	Govt
+6090	TRAU6YT	Refinitiv Australia Government Benchmark Bid Yield 6 Years	Australia	Yield	Refinitiv	Datastream	TRAU6YT	B	6090	AUD	6.0	Govt
+6091	TROE100	Refinitiv Austria Government Benchmark Bid Yield 100Y	Austria	Yield	Refinitiv	Datastream	TROE100	B	6091	EUR	100.0	Govt
+6092	TROE5YT	Refinitiv Austria Government Benchmark Bid Yield 5 Years	Austria	Yield	Refinitiv	Datastream	TROE5YT	B	6092	EUR	5.0	Govt
+6093	TROE70T	Refinitiv Austria Government Benchmark Bid Yield 70Y	Austria	Yield	Refinitiv	Datastream	TROE70T	B	6093	EUR	70.0	Govt
+6094	TROE95T	Refinitiv Austria Government Benchmark Bid Yield 95Y	Austria	Yield	Refinitiv	Datastream	TROE95T	B	6094	EUR	95.0	Govt
+6095	TRBG2YT	Refinitiv Belgium Government Benchmark Bid Yield 2 Years	Belgium	Yield	Refinitiv	Datastream	TRBG2YT	B	6095	EUR	2.0	Govt
+6096	TRBG3YT	Refinitiv Belgium Government Benchmark Bid Yield 3 Years	Belgium	Yield	Refinitiv	Datastream	TRBG3YT	B	6096	EUR	3.0	Govt
+6097	TRBG5YT	Refinitiv Belgium Government Benchmark Bid Yield 5 Years	Belgium	Yield	Refinitiv	Datastream	TRBG5YT	B	6097	EUR	5.0	Govt
+6098	TRBR2YT	Refinitiv Brazil Government Benchmark Bid Yield 2 Years	Brazil	Yield	Refinitiv	Datastream	TRBR2YT	B	6098	BRL	2.0	Govt
+6099	TRCN1MT	Refinitiv Canada Government Benchmark Bid Yield 1 Month	Canada	Yield	Refinitiv	Datastream	TRCN1MT	B	6099	CAD	0.0833	Govt
+6100	TRCN1YT	Refinitiv Canada Government Benchmark Bid Yield 1 Year	Canada	Yield	Refinitiv	Datastream	TRCN1YT	B	6100	CAD	1.0	Govt
+6101	TRCN5YT	Refinitiv Canada Government Benchmark Bid Yield 5 Years	Canada	Yield	Refinitiv	Datastream	TRCN5YT	B	6101	CAD	5.0	Govt
+6102	TRCL10T	Refinitiv Chile Government Benchmark Bid Yield 10 Years	Chile	Yield	Refinitiv	Datastream	TRCL10T	B	6102	CLP	10.0	Govt
+6103	TRCL1YT	Refinitiv Chile Government Benchmark Bid Yield 1 Year	Chile	Yield	Refinitiv	Datastream	TRCL1YT	B	6103	CLP	1.0	Govt
+6104	TRCL2YT	Refinitiv Chile Government Benchmark Bid Yield 2 Years	Chile	Yield	Refinitiv	Datastream	TRCL2YT	B	6104	CLP	2.0	Govt
+6105	TRCH1YT	Refinitiv China Government Benchmark Bid Yield 1 Year	China	Yield	Refinitiv	Datastream	TRCH1YT	B	6105	CNY	1.0	Govt
+6106	TRCH2YT	Refinitiv China Government Benchmark Bid Yield 2 Years	China	Yield	Refinitiv	Datastream	TRCH2YT	B	6106	CNY	2.0	Govt
+6107	TRCO10T	Refinitiv Colombia Government Benchmark Bid Yield 10 Years	Colombia	Yield	Refinitiv	Datastream	TRCO10T	B	6107	COP	10.0	Govt
+6108	TRCO2YT	Refinitiv Colombia Government Benchmark Bid Yield 2 Years	Colombia	Yield	Refinitiv	Datastream	TRCO2YT	B	6108	COP	2.0	Govt
+6109	TREU1YT	Refinitiv Eurozone Government Benchmark Bid Yield 1 Year	Eurozone	Yield	Refinitiv	Datastream	TREU1YT	B	6109	EUR	1.0	Govt
+6110	TRFN5YT	Refinitiv Finland Government Benchmark Bid Yield 5 Years	Finland	Yield	Refinitiv	Datastream	TRFN5YT	B	6110	EUR	5.0	Govt
+6111	TRFR1YT	Refinitiv France Government Benchmark Bid Yield 1 Year	France	Yield	Refinitiv	Datastream	TRFR1YT	B	6111	EUR	1.0	Govt
+6112	TRFR3MT	Refinitiv France Government Benchmark Bid Yield 3 Months	France	Yield	Refinitiv	Datastream	TRFR3MT	B	6112	EUR	0.25	Govt
+6113	TRBD15T	Refinitiv Germany Government Benchmark Bid Yield 15 Years	Germany	Yield	Refinitiv	Datastream	TRBD15T	B	6113	EUR	15.0	Govt
+6114	TRBD20T	Refinitiv Germany Government Benchmark Bid Yield 20 Years	Germany	Yield	Refinitiv	Datastream	TRBD20T	B	6114	EUR	20.0	Govt
+6115	TRBD25T	Refinitiv Germany Government Benchmark Bid Yield 25 Years	Germany	Yield	Refinitiv	Datastream	TRBD25T	B	6115	EUR	25.0	Govt
+6116	TRBD4YT	Refinitiv Germany Government Benchmark Bid Yield 4 Years	Germany	Yield	Refinitiv	Datastream	TRBD4YT	B	6116	EUR	4.0	Govt
+6117	TRBD6MT	Refinitiv Germany Government Benchmark Bid Yield 6 Months	Germany	Yield	Refinitiv	Datastream	TRBD6MT	B	6117	EUR	0.5	Govt
+6118	TRBD6YT	Refinitiv Germany Government Benchmark Bid Yield 6 Years	Germany	Yield	Refinitiv	Datastream	TRBD6YT	B	6118	EUR	6.0	Govt
+6119	TRBD7YT	Refinitiv Germany Government Benchmark Bid Yield 7 Years	Germany	Yield	Refinitiv	Datastream	TRBD7YT	B	6119	EUR	7.0	Govt
+6120	TRBD8YT	Refinitiv Germany Government Benchmark Bid Yield 8 Years	Germany	Yield	Refinitiv	Datastream	TRBD8YT	B	6120	EUR	8.0	Govt
+6121	TRBD9YT	Refinitiv Germany Government Benchmark Bid Yield 9 Years	Germany	Yield	Refinitiv	Datastream	TRBD9YT	B	6121	EUR	9.0	Govt
+6122	TRIN1YT	Refinitiv India Government Benchmark Bid Yield 1 Year	India	Yield	Refinitiv	Datastream	TRIN1YT	B	6122	INR	1.0	Govt
+6123	TRIN2YT	Refinitiv India Government Benchmark Bid Yield 2 Years	India	Yield	Refinitiv	Datastream	TRIN2YT	B	6123	INR	2.0	Govt
+6124	TRIN3MT	Refinitiv India Government Benchmark Bid Yield 3 Months	India	Yield	Refinitiv	Datastream	TRIN3MT	B	6124	INR	0.25	Govt
+6125	TRIT15T	Refinitiv Italy Government Benchmark Bid Yield 15 Years	Italy	Yield	Refinitiv	Datastream	TRIT15T	B	6125	EUR	15.0	Govt
+6126	TRIT20T	Refinitiv Italy Government Benchmark Bid Yield 20 Years	Italy	Yield	Refinitiv	Datastream	TRIT20T	B	6126	EUR	20.0	Govt
+6127	TRIT30T	Refinitiv Italy Government Benchmark Bid Yield 30 Years	Italy	Yield	Refinitiv	Datastream	TRIT30T	B	6127	EUR	30.0	Govt
+6128	TRIT3MT	Refinitiv Italy Government Benchmark Bid Yield 3 Months	Italy	Yield	Refinitiv	Datastream	TRIT3MT	B	6128	EUR	0.25	Govt
+6129	TRIT3YT	Refinitiv Italy Government Benchmark Bid Yield 3 Years	Italy	Yield	Refinitiv	Datastream	TRIT3YT	B	6129	EUR	3.0	Govt
+6130	TRIT4YT	Refinitiv Italy Government Benchmark Bid Yield 4 Years	Italy	Yield	Refinitiv	Datastream	TRIT4YT	B	6130	EUR	4.0	Govt
+6131	TRIT6MT	Refinitiv Italy Government Benchmark Bid Yield 6 Months	Italy	Yield	Refinitiv	Datastream	TRIT6MT	B	6131	EUR	0.5	Govt
+6132	TRIT6YT	Refinitiv Italy Government Benchmark Bid Yield 6 Years	Italy	Yield	Refinitiv	Datastream	TRIT6YT	B	6132	EUR	6.0	Govt
+6133	TRIT7YT	Refinitiv Italy Government Benchmark Bid Yield 7 Years	Italy	Yield	Refinitiv	Datastream	TRIT7YT	B	6133	EUR	7.0	Govt
+6134	TRIT8YT	Refinitiv Italy Government Benchmark Bid Yield 8 Years	Italy	Yield	Refinitiv	Datastream	TRIT8YT	B	6134	EUR	8.0	Govt
+6135	TRIT9YT	Refinitiv Italy Government Benchmark Bid Yield 9 Years	Italy	Yield	Refinitiv	Datastream	TRIT9YT	B	6135	EUR	9.0	Govt
+6136	TRJP15T	Refinitiv Japan Government Benchmark Bid Yield 15 Years	Japan	Yield	Refinitiv	Datastream	TRJP15T	B	6136	JPY	15.0	Govt
+6137	TRJP20T	Refinitiv Japan Government Benchmark Bid Yield 20 Years	Japan	Yield	Refinitiv	Datastream	TRJP20T	B	6137	JPY	20.0	Govt
+6138	TRJP3YT	Refinitiv Japan Government Benchmark Bid Yield 3 Years	Japan	Yield	Refinitiv	Datastream	TRJP3YT	B	6138	JPY	3.0	Govt
+6139	TRJP40T	Refinitiv Japan Government Benchmark Bid Yield 40 Years	Japan	Yield	Refinitiv	Datastream	TRJP40T	B	6139	JPY	40.0	Govt
+6140	TRJP4YT	Refinitiv Japan Government Benchmark Bid Yield 4 Years	Japan	Yield	Refinitiv	Datastream	TRJP4YT	B	6140	JPY	4.0	Govt
+6141	TRJP6YT	Refinitiv Japan Government Benchmark Bid Yield 6 Years	Japan	Yield	Refinitiv	Datastream	TRJP6YT	B	6141	JPY	6.0	Govt
+6142	TRJP8YT	Refinitiv Japan Government Benchmark Bid Yield 8 Years	Japan	Yield	Refinitiv	Datastream	TRJP8YT	B	6142	JPY	8.0	Govt
+6143	TRJP9YT	Refinitiv Japan Government Benchmark Bid Yield 9 Years	Japan	Yield	Refinitiv	Datastream	TRJP9YT	B	6143	JPY	9.0	Govt
+6144	TRLV5YT	Refinitiv Latvia Government Benchmark Bid Yield 5 Years	Latvia	Yield	Refinitiv	Datastream	TRLV5YT	B	6144	EUR	5.0	Govt
+6145	TRMY3WT	Refinitiv Malaysia Government Benchmark Bid Yield 3W	Malaysia	Yield	Refinitiv	Datastream	TRMY3WT	B	6145	MYR	0.058	Govt
+6146	TRMY5YT	Refinitiv Malaysia Government Benchmark Bid Yield 5 Years	Malaysia	Yield	Refinitiv	Datastream	TRMY5YT	B	6146	MYR	5.0	Govt
+6147	TRNL3MT	Refinitiv Netherlands Government Benchmark Bid Yield 3 Months	Netherlands	Yield	Refinitiv	Datastream	TRNL3MT	B	6147	EUR	0.25	Govt
+6148	TRNL8YT	Refinitiv Netherlands Government Benchmark Bid Yield 8 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL8YT	B	6148	EUR	8.0	Govt
+6149	TRNW10T	Refinitiv Norway Government Benchmark Bid Yield 10 Years	Norway	Yield	Refinitiv	Datastream	TRNW10T	B	6149	NOK	10.0	Govt
+6150	TRNW3MT	Refinitiv Norway Government Benchmark Bid Yield 3 Months	Norway	Yield	Refinitiv	Datastream	TRNW3MT	B	6150	NOK	0.25	Govt
+6151	TRNW5YT	Refinitiv Norway Government Benchmark Bid Yield 5 Years	Norway	Yield	Refinitiv	Datastream	TRNW5YT	B	6151	NOK	5.0	Govt
+6152	TRPK10T	Refinitiv Pakistan Government Benchmark Bid Yield 10 Years	Pakistan	Yield	Refinitiv	Datastream	TRPK10T	B	6152	PKR	10.0	Govt
+6153	TRPE20T	Refinitiv Peru Government Benchmark Bid Yield 20 Years	Peru	Yield	Refinitiv	Datastream	TRPE20T	B	6153	PEN	20.0	Govt
+6154	TRPE2YT	Refinitiv Peru Government Benchmark Bid Yield 2 Years	Peru	Yield	Refinitiv	Datastream	TRPE2YT	B	6154	PEN	2.0	Govt
+6155	TRPH10T	Refinitiv Philippines Government Benchmark Bid Yield 10 Years	Philippines	Yield	Refinitiv	Datastream	TRPH10T	B	6155	PHP	10.0	Govt
+6156	TRPH2YT	Refinitiv Philippines Government Benchmark Bid Yield 2 Years	Philippines	Yield	Refinitiv	Datastream	TRPH2YT	B	6156	PHP	2.0	Govt
+6157	TRPO1YT	Refinitiv Poland Government Benchmark Bid Yield 1 Year	Poland	Yield	Refinitiv	Datastream	TRPO1YT	B	6157	PLN	1.0	Govt
+6158	TRES5YT	Refinitiv Spain Government Benchmark Bid Yield 5 Years	Spain	Yield	Refinitiv	Datastream	TRES5YT	B	6158	EUR	5.0	Govt
+6159	TRSD3MT	Refinitiv Sweden Government Benchmark Bid Yield 3 Months	Sweden	Yield	Refinitiv	Datastream	TRSD3MT	B	6159	SEK	0.25	Govt
+6160	TRZM10T	Refinitiv Zambia Government Benchmark Bid Yield 10 Years	Zambia	Yield	Refinitiv	Datastream	TRZM10T	B	6160	ZMK	10.0	Govt
+6161	TRAU12T	Refinitiv Australia Government Benchmark Bid Yield 12 Years	Australia	Yield	Refinitiv	Datastream	TRAU12T	B	6161	AUD	12.0	Govt
+6162	TRAU15T	Refinitiv Australia Government Benchmark Bid Yield 15 Years	Australia	Yield	Refinitiv	Datastream	TRAU15T	B	6162	AUD	15.0	Govt
+6163	TRAU20T	Refinitiv Australia Government Benchmark Bid Yield 20 Years	Australia	Yield	Refinitiv	Datastream	TRAU20T	B	6163	AUD	20.0	Govt
+6164	TRAU30T	Refinitiv Australia Government Benchmark Bid Yield 30 Years	Australia	Yield	Refinitiv	Datastream	TRAU30T	B	6164	AUD	30.0	Govt
+6165	TRAU3YT	Refinitiv Australia Government Benchmark Bid Yield 3 Years	Australia	Yield	Refinitiv	Datastream	TRAU3YT	B	6165	AUD	3.0	Govt
+6166	TRAU4YT	Refinitiv Australia Government Benchmark Bid Yield 4 Years	Australia	Yield	Refinitiv	Datastream	TRAU4YT	B	6166	AUD	4.0	Govt
+6167	TRAU7YT	Refinitiv Australia Government Benchmark Bid Yield 7 Years	Australia	Yield	Refinitiv	Datastream	TRAU7YT	B	6167	AUD	7.0	Govt
+6168	TRAU8YT	Refinitiv Australia Government Benchmark Bid Yield 8 Years	Australia	Yield	Refinitiv	Datastream	TRAU8YT	B	6168	AUD	8.0	Govt
+6169	TRAU9YT	Refinitiv Australia Government Benchmark Bid Yield 9 Years	Australia	Yield	Refinitiv	Datastream	TRAU9YT	B	6169	AUD	9.0	Govt
+6170	TROE15T	Refinitiv Austria Government Benchmark Bid Yield 15 Years	Austria	Yield	Refinitiv	Datastream	TROE15T	B	6170	EUR	15.0	Govt
+6171	TROE1YT	Refinitiv Austria Government Benchmark Bid Yield 1 Year	Austria	Yield	Refinitiv	Datastream	TROE1YT	B	6171	EUR	1.0	Govt
+6172	TROE20T	Refinitiv Austria Government Benchmark Bid Yield 20 Years	Austria	Yield	Refinitiv	Datastream	TROE20T	B	6172	EUR	20.0	Govt
+6173	TROE25T	Refinitiv Austria Government Benchmark Bid Yield 25 Years	Austria	Yield	Refinitiv	Datastream	TROE25T	B	6173	EUR	25.0	Govt
+6174	TROE2YT	Refinitiv Austria Government Benchmark Bid Yield 2 Years	Austria	Yield	Refinitiv	Datastream	TROE2YT	B	6174	EUR	2.0	Govt
+6175	TROE30T	Refinitiv Austria Government Benchmark Bid Yield 30 Years	Austria	Yield	Refinitiv	Datastream	TROE30T	B	6175	EUR	30.0	Govt
+6176	TROE3MT	Refinitiv Austria Government Benchmark Bid Yield 3 Months	Austria	Yield	Refinitiv	Datastream	TROE3MT	B	6176	EUR	0.25	Govt
+6177	TROE3YT	Refinitiv Austria Government Benchmark Bid Yield 3 Years	Austria	Yield	Refinitiv	Datastream	TROE3YT	B	6177	EUR	3.0	Govt
+6178	TROE40T	Refinitiv Austria Government Benchmark Bid Yield 40 Years	Austria	Yield	Refinitiv	Datastream	TROE40T	B	6178	EUR	40.0	Govt
+6179	TROE4YT	Refinitiv Austria Government Benchmark Bid Yield 4 Years	Austria	Yield	Refinitiv	Datastream	TROE4YT	B	6179	EUR	4.0	Govt
+6180	TROE50T	Refinitiv Austria Government Benchmark Bid Yield 50 Years	Austria	Yield	Refinitiv	Datastream	TROE50T	B	6180	EUR	50.0	Govt
+6181	TROE6MT	Refinitiv Austria Government Benchmark Bid Yield 6 Months	Austria	Yield	Refinitiv	Datastream	TROE6MT	B	6181	EUR	0.5	Govt
+6182	TROE6YT	Refinitiv Austria Government Benchmark Bid Yield 6 Years	Austria	Yield	Refinitiv	Datastream	TROE6YT	B	6182	EUR	6.0	Govt
+6183	TROE7YT	Refinitiv Austria Government Benchmark Bid Yield 7 Years	Austria	Yield	Refinitiv	Datastream	TROE7YT	B	6183	EUR	7.0	Govt
+6184	TROE8YT	Refinitiv Austria Government Benchmark Bid Yield 8 Years	Austria	Yield	Refinitiv	Datastream	TROE8YT	B	6184	EUR	8.0	Govt
+6185	TROE9YT	Refinitiv Austria Government Benchmark Bid Yield 9 Years	Austria	Yield	Refinitiv	Datastream	TROE9YT	B	6185	EUR	9.0	Govt
+6186	TRBH1YT	Refinitiv Bahrain Government Benchmark Bid Yield 1 Year	Bahrain	Yield	Refinitiv	Datastream	TRBH1YT	B	6186	BHD	1.0	Govt
+6187	TRBH2YT	Refinitiv Bahrain Government Benchmark Bid Yield 2 Years	Bahrain	Yield	Refinitiv	Datastream	TRBH2YT	B	6187	BHD	2.0	Govt
+6188	TRBH3MT	Refinitiv Bahrain Government Benchmark Bid Yield 3 Months	Bahrain	Yield	Refinitiv	Datastream	TRBH3MT	B	6188	BHD	0.25	Govt
+6189	TRBH5YT	Refinitiv Bahrain Government Benchmark Bid Yield 5 Years	Bahrain	Yield	Refinitiv	Datastream	TRBH5YT	B	6189	BHD	5.0	Govt
+6190	TRBH6MT	Refinitiv Bahrain Government Benchmark Bid Yield 6 Months	Bahrain	Yield	Refinitiv	Datastream	TRBH6MT	B	6190	BHD	0.5	Govt
+6191	TRBH9MT	Refinitiv Bahrain Government Benchmark Bid Yield 9 Months	Bahrain	Yield	Refinitiv	Datastream	TRBH9MT	B	6191	BHD	0.75	Govt
+6192	TRBN10T	Refinitiv Bangladesh Government Benchmark Bid Yield 10 Years	Bangladesh	Yield	Refinitiv	Datastream	TRBN10T	B	6192	BDT	10.0	Govt
+6193	TRBN15T	Refinitiv Bangladesh Government Benchmark Bid Yield 15 Years	Bangladesh	Yield	Refinitiv	Datastream	TRBN15T	B	6193	BDT	15.0	Govt
+6194	TRBN1YT	Refinitiv Bangladesh Government Benchmark Bid Yield 1 Year	Bangladesh	Yield	Refinitiv	Datastream	TRBN1YT	B	6194	BDT	1.0	Govt
+6195	TRBN20T	Refinitiv Bangladesh Government Benchmark Bid Yield 20 Years	Bangladesh	Yield	Refinitiv	Datastream	TRBN20T	B	6195	BDT	20.0	Govt
+6196	TRBN2YT	Refinitiv Bangladesh Government Benchmark Bid Yield 2 Years	Bangladesh	Yield	Refinitiv	Datastream	TRBN2YT	B	6196	BDT	2.0	Govt
+6197	TRBN3MT	Refinitiv Bangladesh Government Benchmark Bid Yield 3 Months	Bangladesh	Yield	Refinitiv	Datastream	TRBN3MT	B	6197	BDT	0.25	Govt
+6198	TRBN5YT	Refinitiv Bangladesh Government Benchmark Bid Yield 5 Years	Bangladesh	Yield	Refinitiv	Datastream	TRBN5YT	B	6198	BDT	5.0	Govt
+6199	TRBN6MT	Refinitiv Bangladesh Government Benchmark Bid Yield 6 Months	Bangladesh	Yield	Refinitiv	Datastream	TRBN6MT	B	6199	BDT	0.5	Govt
+6200	TRBG15T	Refinitiv Belgium Government Benchmark Bid Yield 15 Years	Belgium	Yield	Refinitiv	Datastream	TRBG15T	B	6200	EUR	15.0	Govt
+6201	TRBG1MT	Refinitiv Belgium Government Benchmark Bid Yield 1 Month	Belgium	Yield	Refinitiv	Datastream	TRBG1MT	B	6201	EUR	0.083	Govt
+6202	TRBG1YT	Refinitiv Belgium Government Benchmark Bid Yield 1 Year	Belgium	Yield	Refinitiv	Datastream	TRBG1YT	B	6202	EUR	1.0	Govt
+6203	TRBG20T	Refinitiv Belgium Government Benchmark Bid Yield 20 Years	Belgium	Yield	Refinitiv	Datastream	TRBG20T	B	6203	EUR	20.0	Govt
+6204	TRBG30T	Refinitiv Belgium Government Benchmark Bid Yield 30 Years	Belgium	Yield	Refinitiv	Datastream	TRBG30T	B	6204	EUR	30.0	Govt
+6205	TRBG3MT	Refinitiv Belgium Government Benchmark Bid Yield 3 Months	Belgium	Yield	Refinitiv	Datastream	TRBG3MT	B	6205	EUR	0.25	Govt
+6206	TRBG4YT	Refinitiv Belgium Government Benchmark Bid Yield 4 Years	Belgium	Yield	Refinitiv	Datastream	TRBG4YT	B	6206	EUR	4.0	Govt
+6207	TRBG50T	Refinitiv Belgium Government Benchmark Bid Yield 50 Years	Belgium	Yield	Refinitiv	Datastream	TRBG50T	B	6207	EUR	50.0	Govt
+6208	TRBG6MT	Refinitiv Belgium Government Benchmark Bid Yield 6 Months	Belgium	Yield	Refinitiv	Datastream	TRBG6MT	B	6208	EUR	0.5	Govt
+6209	TRBG6YT	Refinitiv Belgium Government Benchmark Bid Yield 6 Years	Belgium	Yield	Refinitiv	Datastream	TRBG6YT	B	6209	EUR	6.0	Govt
+6210	TRBG7YT	Refinitiv Belgium Government Benchmark Bid Yield 7 Years	Belgium	Yield	Refinitiv	Datastream	TRBG7YT	B	6210	EUR	7.0	Govt
+6211	TRBG8YT	Refinitiv Belgium Government Benchmark Bid Yield 8 Years	Belgium	Yield	Refinitiv	Datastream	TRBG8YT	B	6211	EUR	8.0	Govt
+6212	TRBG9MT	Refinitiv Belgium Government Benchmark Bid Yield 9 Months	Belgium	Yield	Refinitiv	Datastream	TRBG9MT	B	6212	EUR	0.75	Govt
+6213	TRBG9YT	Refinitiv Belgium Government Benchmark Bid Yield 9 Years	Belgium	Yield	Refinitiv	Datastream	TRBG9YT	B	6213	EUR	9.0	Govt
+6214	TRBJ1YT	Refinitiv Benin Government Benchmark Bid Yield 1 Year	Benin	Yield	Refinitiv	Datastream	TRBJ1YT	B	6214	XAF	1.0	Govt
+6215	TRBJ3YT	Refinitiv Benin Government Benchmark Bid Yield 3 Years	Benin	Yield	Refinitiv	Datastream	TRBJ3YT	B	6215	XAF	3.0	Govt
+6216	TRBJ6YT	Refinitiv Benin Government Benchmark Bid Yield 6 Years	Benin	Yield	Refinitiv	Datastream	TRBJ6YT	B	6216	XAF	6.0	Govt
+6217	TRBW20T	Refinitiv Botswana Government Benchmark Bid Yield 20 Years	Gabon	Yield	Refinitiv	Datastream	TRBW20T	B	6217	BWP	20.0	Govt
+6218	TRBW22T	Refinitiv Botswana Government Benchmark Bid Yield 22 Years	Gabon	Yield	Refinitiv	Datastream	TRBW22T	B	6218	BWP	22.0	Govt
+6219	TRBW3YT	Refinitiv Botswana Government Benchmark Bid Yield 3 Years	Gabon	Yield	Refinitiv	Datastream	TRBW3YT	B	6219	BWP	3.0	Govt
+6220	TRBW5YT	Refinitiv Botswana Government Benchmark Bid Yield 5 Years	Gabon	Yield	Refinitiv	Datastream	TRBW5YT	B	6220	BWP	5.0	Govt
+6221	TRBW6MT	Refinitiv Botswana Government Benchmark Bid Yield 6 Months	Gabon	Yield	Refinitiv	Datastream	TRBW6MT	B	6221	BWP	0.5	Govt
+6222	TRBR1YT	Refinitiv Brazil Government Benchmark Bid Yield 1 Year	Brazil	Yield	Refinitiv	Datastream	TRBR1YT	B	6222	BRL	1.0	Govt
+6223	TRBR3MT	Refinitiv Brazil Government Benchmark Bid Yield 3 Months	Brazil	Yield	Refinitiv	Datastream	TRBR3MT	B	6223	BRL	0.25	Govt
+6224	TRBR3YT	Refinitiv Brazil Government Benchmark Bid Yield 3 Years	Brazil	Yield	Refinitiv	Datastream	TRBR3YT	B	6224	BRL	3.0	Govt
+6225	TRBR5YT	Refinitiv Brazil Government Benchmark Bid Yield 5 Years	Brazil	Yield	Refinitiv	Datastream	TRBR5YT	B	6225	BRL	5.0	Govt
+6226	TRBR6MT	Refinitiv Brazil Government Benchmark Bid Yield 6 Months	Brazil	Yield	Refinitiv	Datastream	TRBR6MT	B	6226	BRL	0.5	Govt
+6227	TRBR8YT	Refinitiv Brazil Government Benchmark Bid Yield 8 Years	Brazil	Yield	Refinitiv	Datastream	TRBR8YT	B	6227	BRL	8.0	Govt
+6228	TRBR9MT	Refinitiv Brazil Government Benchmark Bid Yield 9 Months	Brazil	Yield	Refinitiv	Datastream	TRBR9MT	B	6228	BRL	0.75	Govt
+6229	TRBL1MT	Refinitiv Bulgaria Government Benchmark Bid Yield 1 Month	Bulgaria	Yield	Refinitiv	Datastream	TRBL1MT	B	6229	BGN	0.083	Govt
+6230	TRBL1WT	Refinitiv Bulgaria Government Benchmark Bid Yield 1 Week	Bulgaria	Yield	Refinitiv	Datastream	TRBL1WT	B	6230	BGN	0.019	Govt
+6231	TRBL1YT	Refinitiv Bulgaria Government Benchmark Bid Yield 1 Year	Bulgaria	Yield	Refinitiv	Datastream	TRBL1YT	B	6231	BGN	1.0	Govt
+6232	TRBL2YT	Refinitiv Bulgaria Government Benchmark Bid Yield 2 Years	Bulgaria	Yield	Refinitiv	Datastream	TRBL2YT	B	6232	BGN	2.0	Govt
+6233	TRBL3YT	Refinitiv Bulgaria Government Benchmark Bid Yield 3 Years	Bulgaria	Yield	Refinitiv	Datastream	TRBL3YT	B	6233	BGN	3.0	Govt
+6234	TRBL4YT	Refinitiv Bulgaria Government Benchmark Bid Yield 4 Years	Bulgaria	Yield	Refinitiv	Datastream	TRBL4YT	B	6234	BGN	4.0	Govt
+6235	TRBL5YT	Refinitiv Bulgaria Government Benchmark Bid Yield 5 Years	Bulgaria	Yield	Refinitiv	Datastream	TRBL5YT	B	6235	BGN	5.0	Govt
+6236	TRBL7YT	Refinitiv Bulgaria Government Benchmark Bid Yield 7 Years	Bulgaria	Yield	Refinitiv	Datastream	TRBL7YT	B	6236	BGN	7.0	Govt
+6237	TRCN20T	Refinitiv Canada Government Benchmark Bid Yield 20 Years	Canada	Yield	Refinitiv	Datastream	TRCN20T	B	6237	CAD	20.0	Govt
+6238	TRCN2MT	Refinitiv Canada Government Benchmark Bid Yield 2 Months	Canada	Yield	Refinitiv	Datastream	TRCN2MT	B	6238	CAD	0.167	Govt
+6239	TRCN2YT	Refinitiv Canada Government Benchmark Bid Yield 2 Years	Canada	Yield	Refinitiv	Datastream	TRCN2YT	B	6239	CAD	2.0	Govt
+6240	TRCN30T	Refinitiv Canada Government Benchmark Bid Yield 30 Years	Canada	Yield	Refinitiv	Datastream	TRCN30T	B	6240	CAD	30.0	Govt
+6241	TRCN3YT	Refinitiv Canada Government Benchmark Bid Yield 3 Years	Canada	Yield	Refinitiv	Datastream	TRCN3YT	B	6241	CAD	3.0	Govt
+6242	TRCN4YT	Refinitiv Canada Government Benchmark Bid Yield 4 Years	Canada	Yield	Refinitiv	Datastream	TRCN4YT	B	6242	CAD	4.0	Govt
+6243	TRCN6MT	Refinitiv Canada Government Benchmark Bid Yield 6 Months	Canada	Yield	Refinitiv	Datastream	TRCN6MT	B	6243	CAD	0.5	Govt
+6244	TRCN7YT	Refinitiv Canada Government Benchmark Bid Yield 7 Years	Canada	Yield	Refinitiv	Datastream	TRCN7YT	B	6244	CAD	7.0	Govt
+6245	TRCL3YT	Refinitiv Chile Government Benchmark Bid Yield 3 Years	Chile	Yield	Refinitiv	Datastream	TRCL3YT	B	6245	CLP	3.0	Govt
+6246	TRCL4YT	Refinitiv Chile Government Benchmark Bid Yield 4 Years	Chile	Yield	Refinitiv	Datastream	TRCL4YT	B	6246	CLP	4.0	Govt
+6247	TRCL5YT	Refinitiv Chile Government Benchmark Bid Yield 5 Years	Chile	Yield	Refinitiv	Datastream	TRCL5YT	B	6247	CLP	5.0	Govt
+6248	TRCL8YT	Refinitiv Chile Government Benchmark Bid Yield 8 Years	Chile	Yield	Refinitiv	Datastream	TRCL8YT	B	6248	CLP	8.0	Govt
+6249	TRCH15T	Refinitiv China Government Benchmark Bid Yield 15 Years	China	Yield	Refinitiv	Datastream	TRCH15T	B	6249	CNY	15.0	Govt
+6250	TRCH20T	Refinitiv China Government Benchmark Bid Yield 20 Years	China	Yield	Refinitiv	Datastream	TRCH20T	B	6250	CNY	20.0	Govt
+6251	TRCH30T	Refinitiv China Government Benchmark Bid Yield 30 Years	China	Yield	Refinitiv	Datastream	TRCH30T	B	6251	CNY	30.0	Govt
+6252	TRCH3YT	Refinitiv China Government Benchmark Bid Yield 3 Years	China	Yield	Refinitiv	Datastream	TRCH3YT	B	6252	CNY	3.0	Govt
+6253	TRCH7YT	Refinitiv China Government Benchmark Bid Yield 7 Years	China	Yield	Refinitiv	Datastream	TRCH7YT	B	6253	CNY	7.0	Govt
+6254	TRCO15T	Refinitiv Colombia Government Benchmark Bid Yield 15 Years	Colombia	Yield	Refinitiv	Datastream	TRCO15T	B	6254	COP	15.0	Govt
+6255	TRCO4YT	Refinitiv Colombia Government Benchmark Bid Yield 4 Years	Colombia	Yield	Refinitiv	Datastream	TRCO4YT	B	6255	COP	4.0	Govt
+6256	TRCO5YT	Refinitiv Colombia Government Benchmark Bid Yield 5 Years	Colombia	Yield	Refinitiv	Datastream	TRCO5YT	B	6256	COP	5.0	Govt
+6257	TRHR1YT	Refinitiv Croatia Government Benchmark Bid Yield 1 Year	Croatia	Yield	Refinitiv	Datastream	TRHR1YT	B	6257	EUR	1.0	Govt
+6258	TRHR2YT	Refinitiv Croatia Government Benchmark Bid Yield 2 Years	Croatia	Yield	Refinitiv	Datastream	TRHR2YT	B	6258	EUR	2.0	Govt
+6259	TRHR3YT	Refinitiv Croatia Government Benchmark Bid Yield 3 Years	Croatia	Yield	Refinitiv	Datastream	TRHR3YT	B	6259	EUR	3.0	Govt
+6260	TRHR4YT	Refinitiv Croatia Government Benchmark Bid Yield 4 Years	Croatia	Yield	Refinitiv	Datastream	TRHR4YT	B	6260	EUR	4.0	Govt
+6261	TRHR5YT	Refinitiv Croatia Government Benchmark Bid Yield 5 Years	Croatia	Yield	Refinitiv	Datastream	TRHR5YT	B	6261	EUR	5.0	Govt
+6262	TRCP20T	Refinitiv Cyprus Government Benchmark Bid Yield 20 Years	Cyprus	Yield	Refinitiv	Datastream	TRCP20T	B	6262	EUR	20.0	Govt
+6263	TRCP2YT	Refinitiv Cyprus Government Benchmark Bid Yield 2 Years	Cyprus	Yield	Refinitiv	Datastream	TRCP2YT	B	6263	EUR	2.0	Govt
+6264	TRCP30T	Refinitiv Cyprus Government Benchmark Bid Yield 30 Years	Cyprus	Yield	Refinitiv	Datastream	TRCP30T	B	6264	EUR	30.0	Govt
+6265	TRCP3YT	Refinitiv Cyprus Government Benchmark Bid Yield 3 Years	Cyprus	Yield	Refinitiv	Datastream	TRCP3YT	B	6265	EUR	3.0	Govt
+6266	TRCP4YT	Refinitiv Cyprus Government Benchmark Bid Yield 4 Years	Cyprus	Yield	Refinitiv	Datastream	TRCP4YT	B	6266	EUR	4.0	Govt
+6267	TRCP7YT	Refinitiv Cyprus Government Benchmark Bid Yield 7 Years	Cyprus	Yield	Refinitiv	Datastream	TRCP7YT	B	6267	EUR	7.0	Govt
+6268	TRDK20T	Refinitiv Denmark Government Benchmark Bid Yield 20 Years	Denmark	Yield	Refinitiv	Datastream	TRDK20T	B	6268	DKK	20.0	Govt
+6269	TRDK2YT	Refinitiv Denmark Government Benchmark Bid Yield 2 Years	Denmark	Yield	Refinitiv	Datastream	TRDK2YT	B	6269	DKK	2.0	Govt
+6270	TRDK30T	Refinitiv Denmark Government Benchmark Bid Yield 30 Years	Denmark	Yield	Refinitiv	Datastream	TRDK30T	B	6270	DKK	30.0	Govt
+6271	TRDK3YT	Refinitiv Denmark Government Benchmark Bid Yield 3 Years	Denmark	Yield	Refinitiv	Datastream	TRDK3YT	B	6271	DKK	3.0	Govt
+6272	TRDK6MT	Refinitiv Denmark Government Benchmark Bid Yield 6 Months	Denmark	Yield	Refinitiv	Datastream	TRDK6MT	B	6272	DKK	0.5	Govt
+6273	TRDK8YT	Refinitiv Denmark Government Benchmark Bid Yield 8 Years	Denmark	Yield	Refinitiv	Datastream	TRDK8YT	B	6273	DKK	8.0	Govt
+6274	TREG10T	Refinitiv Egypt Government Benchmark Bid Yield 10 Years	Egypt	Yield	Refinitiv	Datastream	TREG10T	B	6274	EGP	10.0	Govt
+6275	TREG1YT	Refinitiv Egypt Government Benchmark Bid Yield 1 Year	Egypt	Yield	Refinitiv	Datastream	TREG1YT	B	6275	EGP	1.0	Govt
+6276	TREG2YT	Refinitiv Egypt Government Benchmark Bid Yield 2 Years	Egypt	Yield	Refinitiv	Datastream	TREG2YT	B	6276	EGP	2.0	Govt
+6277	TREG3MT	Refinitiv Egypt Government Benchmark Bid Yield 3 Months	Egypt	Yield	Refinitiv	Datastream	TREG3MT	B	6277	EGP	0.25	Govt
+6278	TREG3YT	Refinitiv Egypt Government Benchmark Bid Yield 3 Years	Egypt	Yield	Refinitiv	Datastream	TREG3YT	B	6278	EGP	3.0	Govt
+6279	TREG5YT	Refinitiv Egypt Government Benchmark Bid Yield 5 Years	Egypt	Yield	Refinitiv	Datastream	TREG5YT	B	6279	EGP	5.0	Govt
+6280	TREG6MT	Refinitiv Egypt Government Benchmark Bid Yield 6 Months	Egypt	Yield	Refinitiv	Datastream	TREG6MT	B	6280	EGP	0.5	Govt
+6281	TREG7YT	Refinitiv Egypt Government Benchmark Bid Yield 7 Years	Egypt	Yield	Refinitiv	Datastream	TREG7YT	B	6281	EGP	7.0	Govt
+6282	TREG9MT	Refinitiv Egypt Government Benchmark Bid Yield 9 Months	Egypt	Yield	Refinitiv	Datastream	TREG9MT	B	6282	EGP	0.75	Govt
+6283	TREU15T	Refinitiv Eurozone Government Benchmark Bid Yield 15 Years	Eurozone	Yield	Refinitiv	Datastream	TREU15T	B	6283	EUR	15.0	Govt
+6284	TREU1MT	Refinitiv Eurozone Government Benchmark Bid Yield 1 Month	Eurozone	Yield	Refinitiv	Datastream	TREU1MT	B	6284	EUR	0.0833	Govt
+6285	TREU20T	Refinitiv Eurozone Government Benchmark Bid Yield 20 Years	Eurozone	Yield	Refinitiv	Datastream	TREU20T	B	6285	EUR	20.0	Govt
+6286	TREU25T	Refinitiv Eurozone Government Benchmark Bid Yield 25 Years	Eurozone	Yield	Refinitiv	Datastream	TREU25T	B	6286	EUR	25.0	Govt
+6287	TREU30T	Refinitiv Eurozone Government Benchmark Bid Yield 30 Years	Eurozone	Yield	Refinitiv	Datastream	TREU30T	B	6287	EUR	30.0	Govt
+6288	TREU3YT	Refinitiv Eurozone Government Benchmark Bid Yield 3 Years	Eurozone	Yield	Refinitiv	Datastream	TREU3YT	B	6288	EUR	3.0	Govt
+6289	TREU4YT	Refinitiv Eurozone Government Benchmark Bid Yield 4 Years	Eurozone	Yield	Refinitiv	Datastream	TREU4YT	B	6289	EUR	4.0	Govt
+6290	TREU5YT	Refinitiv Eurozone Government Benchmark Bid Yield 5 Years	Eurozone	Yield	Refinitiv	Datastream	TREU5YT	B	6290	EUR	5.0	Govt
+6291	TREU6MT	Refinitiv Eurozone Government Benchmark Bid Yield 6 Months	Eurozone	Yield	Refinitiv	Datastream	TREU6MT	B	6291	EUR	0.5	Govt
+6292	TREU6YT	Refinitiv Eurozone Government Benchmark Bid Yield 6 Years	Eurozone	Yield	Refinitiv	Datastream	TREU6YT	B	6292	EUR	6.0	Govt
+6293	TREU7YT	Refinitiv Eurozone Government Benchmark Bid Yield 7 Years	Eurozone	Yield	Refinitiv	Datastream	TREU7YT	B	6293	EUR	7.0	Govt
+6294	TREU8YT	Refinitiv Eurozone Government Benchmark Bid Yield 8 Years	Eurozone	Yield	Refinitiv	Datastream	TREU8YT	B	6294	EUR	8.0	Govt
+6295	TREU9MT	Refinitiv Eurozone Government Benchmark Bid Yield 9 Months	Eurozone	Yield	Refinitiv	Datastream	TREU9MT	B	6295	EUR	0.75	Govt
+6296	TREU9YT	Refinitiv Eurozone Government Benchmark Bid Yield 9 Years	Eurozone	Yield	Refinitiv	Datastream	TREU9YT	B	6296	EUR	9.0	Govt
+6297	TRFN15T	Refinitiv Finland Government Benchmark Bid Yield 15 Years	Finland	Yield	Refinitiv	Datastream	TRFN15T	B	6297	EUR	15.0	Govt
+6298	TRFN2YT	Refinitiv Finland Government Benchmark Bid Yield 2 Years	Finland	Yield	Refinitiv	Datastream	TRFN2YT	B	6298	EUR	2.0	Govt
+6299	TRFN30T	Refinitiv Finland Government Benchmark Bid Yield 30 Years	Finland	Yield	Refinitiv	Datastream	TRFN30T	B	6299	EUR	30.0	Govt
+6300	TRFN3YT	Refinitiv Finland Government Benchmark Bid Yield 3 Years	Finland	Yield	Refinitiv	Datastream	TRFN3YT	B	6300	EUR	3.0	Govt
+6301	TRFN4YT	Refinitiv Finland Government Benchmark Bid Yield 4 Years	Finland	Yield	Refinitiv	Datastream	TRFN4YT	B	6301	EUR	4.0	Govt
+6302	TRFN6YT	Refinitiv Finland Government Benchmark Bid Yield 6 Years	Finland	Yield	Refinitiv	Datastream	TRFN6YT	B	6302	EUR	6.0	Govt
+6303	TRFN8YT	Refinitiv Finland Government Benchmark Bid Yield 8 Years	Finland	Yield	Refinitiv	Datastream	TRFN8YT	B	6303	EUR	8.0	Govt
+6304	TRFR15T	Refinitiv France Government Benchmark Bid Yield 15 Years	France	Yield	Refinitiv	Datastream	TRFR15T	B	6304	EUR	15.0	Govt
+6305	TRFR1MT	Refinitiv France Government Benchmark Bid Yield 1 Month	France	Yield	Refinitiv	Datastream	TRFR1MT	B	6305	EUR	0.083	Govt
+6306	TRFR20T	Refinitiv France Government Benchmark Bid Yield 20 Years	France	Yield	Refinitiv	Datastream	TRFR20T	B	6306	EUR	20.0	Govt
+6307	TRFR25T	Refinitiv France Government Benchmark Bid Yield 25 Years	France	Yield	Refinitiv	Datastream	TRFR25T	B	6307	EUR	25.0	Govt
+6308	TRFR30T	Refinitiv France Government Benchmark Bid Yield 30 Years	France	Yield	Refinitiv	Datastream	TRFR30T	B	6308	EUR	30.0	Govt
+6309	TRFR3YT	Refinitiv France Government Benchmark Bid Yield 3 Years	France	Yield	Refinitiv	Datastream	TRFR3YT	B	6309	EUR	3.0	Govt
+6310	TRFR4YT	Refinitiv France Government Benchmark Bid Yield 4 Years	France	Yield	Refinitiv	Datastream	TRFR4YT	B	6310	EUR	4.0	Govt
+6311	TRFR50T	Refinitiv France Government Benchmark Bid Yield 50 Years	France	Yield	Refinitiv	Datastream	TRFR50T	B	6311	EUR	50.0	Govt
+6312	TRFR6MT	Refinitiv France Government Benchmark Bid Yield 6 Months	France	Yield	Refinitiv	Datastream	TRFR6MT	B	6312	EUR	0.5	Govt
+6313	TRFR6YT	Refinitiv France Government Benchmark Bid Yield 6 Years	France	Yield	Refinitiv	Datastream	TRFR6YT	B	6313	EUR	6.0	Govt
+6314	TRFR7YT	Refinitiv France Government Benchmark Bid Yield 7 Years	France	Yield	Refinitiv	Datastream	TRFR7YT	B	6314	EUR	7.0	Govt
+6315	TRFR8YT	Refinitiv France Government Benchmark Bid Yield 8 Years	France	Yield	Refinitiv	Datastream	TRFR8YT	B	6315	EUR	8.0	Govt
+6316	TRFR9MT	Refinitiv France Government Benchmark Bid Yield 9 Months	France	Yield	Refinitiv	Datastream	TRFR9MT	B	6316	EUR	0.75	Govt
+6317	TRFR9YT	Refinitiv France Government Benchmark Bid Yield 9 Years	France	Yield	Refinitiv	Datastream	TRFR9YT	B	6317	EUR	9.0	Govt
+6318	TRBD9MT	Refinitiv Germany Government Benchmark Bid Yield 9 Months	Germany	Yield	Refinitiv	Datastream	TRBD9MT	B	6318	EUR	0.75	Govt
+6319	TRGH15T	Refinitiv Ghana Government Benchmark Bid Yield 15 Years	Ghana	Yield	Refinitiv	Datastream	TRGH15T	B	6319	GHS	15.0	Govt
+6320	TRGH3MT	Refinitiv Ghana Government Benchmark Bid Yield 3 Months	Ghana	Yield	Refinitiv	Datastream	TRGH3MT	B	6320	GHS	0.25	Govt
+6321	TRGH5YT	Refinitiv Ghana Government Benchmark Bid Yield 5 Years	Ghana	Yield	Refinitiv	Datastream	TRGH5YT	B	6321	GHS	5.0	Govt
+6322	TRGH6MT	Refinitiv Ghana Government Benchmark Bid Yield 6 Months	Ghana	Yield	Refinitiv	Datastream	TRGH6MT	B	6322	GHS	0.5	Govt
+6323	TRGH7YT	Refinitiv Ghana Government Benchmark Bid Yield 7 Years	Ghana	Yield	Refinitiv	Datastream	TRGH7YT	B	6323	GHS	7.0	Govt
+6324	TRGR15T	Refinitiv Greece Government Benchmark Bid Yield 15 Years	Greece	Yield	Refinitiv	Datastream	TRGR15T	B	6324	EUR	15.0	Govt
+6325	TRGR1MT	Refinitiv Greece Government Benchmark Bid Yield 1 Month	Greece	Yield	Refinitiv	Datastream	TRGR1MT	B	6325	EUR	0.0833	Govt
+6326	TRGR1YT	Refinitiv Greece Government Benchmark Bid Yield 1 Year	Greece	Yield	Refinitiv	Datastream	TRGR1YT	B	6326	EUR	1.0	Govt
+6327	TRGR20T	Refinitiv Greece Government Benchmark Bid Yield 20 Years	Greece	Yield	Refinitiv	Datastream	TRGR20T	B	6327	EUR	20.0	Govt
+6328	TRGR2YT	Refinitiv Greece Government Benchmark Bid Yield 2 Years	Greece	Yield	Refinitiv	Datastream	TRGR2YT	B	6328	EUR	2.0	Govt
+6329	TRGR30T	Refinitiv Greece Government Benchmark Bid Yield 30 Years	Greece	Yield	Refinitiv	Datastream	TRGR30T	B	6329	EUR	30.0	Govt
+6330	TRGR3MT	Refinitiv Greece Government Benchmark Bid Yield 3 Months	Greece	Yield	Refinitiv	Datastream	TRGR3MT	B	6330	EUR	0.25	Govt
+6331	TRGR5YT	Refinitiv Greece Government Benchmark Bid Yield 5 Years	Greece	Yield	Refinitiv	Datastream	TRGR5YT	B	6331	EUR	5.0	Govt
+6332	TRGR6MT	Refinitiv Greece Government Benchmark Bid Yield 6 Months	Greece	Yield	Refinitiv	Datastream	TRGR6MT	B	6332	EUR	0.5	Govt
+6333	TRGR7YT	Refinitiv Greece Government Benchmark Bid Yield 7 Years	Greece	Yield	Refinitiv	Datastream	TRGR7YT	B	6333	EUR	7.0	Govt
+6334	TRHN15T	Refinitiv Hungary Government Benchmark Bid Yield 15 Years	Hungary	Yield	Refinitiv	Datastream	TRHN15T	B	6334	HUF	15.0	Govt
+6335	TRHN1YT	Refinitiv Hungary Government Benchmark Bid Yield 1 Year	Hungary	Yield	Refinitiv	Datastream	TRHN1YT	B	6335	HUF	1.0	Govt
+6336	TRHN20T	Refinitiv Hungary Government Benchmark Bid Yield 20 Years	Hungary	Yield	Refinitiv	Datastream	TRHN20T	B	6336	HUF	20.0	Govt
+6337	TRHN3MT	Refinitiv Hungary Government Benchmark Bid Yield 3 Months	Hungary	Yield	Refinitiv	Datastream	TRHN3MT	B	6337	HUF	0.25	Govt
+6338	TRHN3YT	Refinitiv Hungary Government Benchmark Bid Yield 3 Years	Hungary	Yield	Refinitiv	Datastream	TRHN3YT	B	6338	HUF	3.0	Govt
+6339	TRHN5YT	Refinitiv Hungary Government Benchmark Bid Yield 5 Years	Hungary	Yield	Refinitiv	Datastream	TRHN5YT	B	6339	HUF	5.0	Govt
+6340	TRHN6MT	Refinitiv Hungary Government Benchmark Bid Yield 6 Months	Hungary	Yield	Refinitiv	Datastream	TRHN6MT	B	6340	HUF	0.5	Govt
+6341	TRIS10T	Refinitiv Iceland Government Benchmark Bid Yield 10 Years	Iceland	Yield	Refinitiv	Datastream	TRIS10T	B	6341	ISK	10.0	Govt
+6342	TRIS2YT	Refinitiv Iceland Government Benchmark Bid Yield 2 Years	Iceland	Yield	Refinitiv	Datastream	TRIS2YT	B	6342	ISK	2.0	Govt
+6343	TRIS5YT	Refinitiv Iceland Government Benchmark Bid Yield 5 Years	Iceland	Yield	Refinitiv	Datastream	TRIS5YT	B	6343	ISK	5.0	Govt
+6344	TRIN11T	Refinitiv India Government Benchmark Bid Yield 11 Years	India	Yield	Refinitiv	Datastream	TRIN11T	B	6344	INR	11.0	Govt
+6345	TRIN12T	Refinitiv India Government Benchmark Bid Yield 12 Years	India	Yield	Refinitiv	Datastream	TRIN12T	B	6345	INR	12.0	Govt
+6346	TRIN13T	Refinitiv India Government Benchmark Bid Yield 13 Years	India	Yield	Refinitiv	Datastream	TRIN13T	B	6346	INR	13.0	Govt
+6347	TRIN14T	Refinitiv India Government Benchmark Bid Yield 14 Years	India	Yield	Refinitiv	Datastream	TRIN14T	B	6347	INR	14.0	Govt
+6348	TRIN15T	Refinitiv India Government Benchmark Bid Yield 15 Years	India	Yield	Refinitiv	Datastream	TRIN15T	B	6348	INR	15.0	Govt
+6349	TRIN19T	Refinitiv India Government Benchmark Bid Yield 19 Years	India	Yield	Refinitiv	Datastream	TRIN19T	B	6349	INR	19.0	Govt
+6350	TRIN24T	Refinitiv India Government Benchmark Bid Yield 24 Years	India	Yield	Refinitiv	Datastream	TRIN24T	B	6350	INR	24.0	Govt
+6351	TRIN30T	Refinitiv India Government Benchmark Bid Yield 30 Years	India	Yield	Refinitiv	Datastream	TRIN30T	B	6351	INR	30.0	Govt
+6352	TRIN3YT	Refinitiv India Government Benchmark Bid Yield 3 Years	India	Yield	Refinitiv	Datastream	TRIN3YT	B	6352	INR	3.0	Govt
+6353	TRIN40T	Refinitiv India Government Benchmark Bid Yield 40 Years	India	Yield	Refinitiv	Datastream	TRIN40T	B	6353	INR	40.0	Govt
+6354	TRIN4YT	Refinitiv India Government Benchmark Bid Yield 4 Years	India	Yield	Refinitiv	Datastream	TRIN4YT	B	6354	INR	4.0	Govt
+6355	TRIN5YT	Refinitiv India Government Benchmark Bid Yield 5 Years	India	Yield	Refinitiv	Datastream	TRIN5YT	B	6355	INR	5.0	Govt
+6356	TRIN6MT	Refinitiv India Government Benchmark Bid Yield 6 Months	India	Yield	Refinitiv	Datastream	TRIN6MT	B	6356	INR	0.5	Govt
+6357	TRIN6YT	Refinitiv India Government Benchmark Bid Yield 6 Years	India	Yield	Refinitiv	Datastream	TRIN6YT	B	6357	INR	6.0	Govt
+6358	TRIN7YT	Refinitiv India Government Benchmark Bid Yield 7 Years	India	Yield	Refinitiv	Datastream	TRIN7YT	B	6358	INR	7.0	Govt
+6359	TRIN8YT	Refinitiv India Government Benchmark Bid Yield 8 Years	India	Yield	Refinitiv	Datastream	TRIN8YT	B	6359	INR	8.0	Govt
+6360	TRIN9YT	Refinitiv India Government Benchmark Bid Yield 9 Years	India	Yield	Refinitiv	Datastream	TRIN9YT	B	6360	INR	9.0	Govt
+6361	TRID15T	Refinitiv Indonesia Government Benchmark Bid Yield 15 Years	Indonesia	Yield	Refinitiv	Datastream	TRID15T	B	6361	IDR	15.0	Govt
+6362	TRID1MT	Refinitiv Indonesia Government Benchmark Bid Yield 1 Month	Indonesia	Yield	Refinitiv	Datastream	TRID1MT	B	6362	IDR	0.083	Govt
+6363	TRID1YT	Refinitiv Indonesia Government Benchmark Bid Yield 1 Year	Indonesia	Yield	Refinitiv	Datastream	TRID1YT	B	6363	IDR	1.0	Govt
+6364	TRID20T	Refinitiv Indonesia Government Benchmark Bid Yield 20 Years	Indonesia	Yield	Refinitiv	Datastream	TRID20T	B	6364	IDR	20.0	Govt
+6365	TRID25T	Refinitiv Indonesia Government Benchmark Bid Yield 25 Years	Indonesia	Yield	Refinitiv	Datastream	TRID25T	B	6365	IDR	25.0	Govt
+6366	TRID30T	Refinitiv Indonesia Government Benchmark Bid Yield 30 Years	Indonesia	Yield	Refinitiv	Datastream	TRID30T	B	6366	IDR	30.0	Govt
+6367	TRID3MT	Refinitiv Indonesia Government Benchmark Bid Yield 3 Months	Indonesia	Yield	Refinitiv	Datastream	TRID3MT	B	6367	IDR	0.25	Govt
+6368	TRID3YT	Refinitiv Indonesia Government Benchmark Bid Yield 3 Years	Indonesia	Yield	Refinitiv	Datastream	TRID3YT	B	6368	IDR	3.0	Govt
+6369	TRID5YT	Refinitiv Indonesia Government Benchmark Bid Yield 5 Years	Indonesia	Yield	Refinitiv	Datastream	TRID5YT	B	6369	IDR	5.0	Govt
+6370	TRID6MT	Refinitiv Indonesia Government Benchmark Bid Yield 6 Months	Indonesia	Yield	Refinitiv	Datastream	TRID6MT	B	6370	IDR	0.5	Govt
+6371	TRIE15T	Refinitiv Ireland Government Benchmark Bid Yield 15 Years	Ireland	Yield	Refinitiv	Datastream	TRIE15T	B	6371	EUR	15.0	Govt
+6372	TRIE1YT	Refinitiv Ireland Government Benchmark Bid Yield 1 Year	Ireland	Yield	Refinitiv	Datastream	TRIE1YT	B	6372	EUR	1.0	Govt
+6373	TRIE20T	Refinitiv Ireland Government Benchmark Bid Yield 20 Years	Ireland	Yield	Refinitiv	Datastream	TRIE20T	B	6373	EUR	20.0	Govt
+6374	TRIE25T	Refinitiv Ireland Government Benchmark Bid Yield 25 Years	Ireland	Yield	Refinitiv	Datastream	TRIE25T	B	6374	EUR	25.0	Govt
+6375	TRIE2YT	Refinitiv Ireland Government Benchmark Bid Yield 2 Years	Ireland	Yield	Refinitiv	Datastream	TRIE2YT	B	6375	EUR	2.0	Govt
+6376	TRIE30T	Refinitiv Ireland Government Benchmark Bid Yield 30 Years	Ireland	Yield	Refinitiv	Datastream	TRIE30T	B	6376	EUR	30.0	Govt
+6377	TRIE3YT	Refinitiv Ireland Government Benchmark Bid Yield 3 Years	Ireland	Yield	Refinitiv	Datastream	TRIE3YT	B	6377	EUR	3.0	Govt
+6378	TRIE4YT	Refinitiv Ireland Government Benchmark Bid Yield 4 Years	Ireland	Yield	Refinitiv	Datastream	TRIE4YT	B	6378	EUR	4.0	Govt
+6379	TRIE5YT	Refinitiv Ireland Government Benchmark Bid Yield 5 Years	Ireland	Yield	Refinitiv	Datastream	TRIE5YT	B	6379	EUR	5.0	Govt
+6380	TRIE6YT	Refinitiv Ireland Government Benchmark Bid Yield 6 Years	Ireland	Yield	Refinitiv	Datastream	TRIE6YT	B	6380	EUR	6.0	Govt
+6381	TRIE7YT	Refinitiv Ireland Government Benchmark Bid Yield 7 Years	Ireland	Yield	Refinitiv	Datastream	TRIE7YT	B	6381	EUR	7.0	Govt
+6382	TRIE8YT	Refinitiv Ireland Government Benchmark Bid Yield 8 Years	Ireland	Yield	Refinitiv	Datastream	TRIE8YT	B	6382	EUR	8.0	Govt
+6383	TRIL1MT	Refinitiv Israel Government Benchmark Bid Yield 1 Month	Israel	Yield	Refinitiv	Datastream	TRIL1MT	B	6383	ILS	0.083	Govt
+6384	TRIL1YT	Refinitiv Israel Government Benchmark Bid Yield 1 Year	Israel	Yield	Refinitiv	Datastream	TRIL1YT	B	6384	ILS	1.0	Govt
+6385	TRIL20T	Refinitiv Israel Government Benchmark Bid Yield 20 Years	Israel	Yield	Refinitiv	Datastream	TRIL20T	B	6385	ILS	20.0	Govt
+6386	TRIL2YT	Refinitiv Israel Government Benchmark Bid Yield 2 Years	Israel	Yield	Refinitiv	Datastream	TRIL2YT	B	6386	ILS	2.0	Govt
+6387	TRIL30T	Refinitiv Israel Government Benchmark Bid Yield 30 Years	Israel	Yield	Refinitiv	Datastream	TRIL30T	B	6387	ILS	30.0	Govt
+6388	TRIL3MT	Refinitiv Israel Government Benchmark Bid Yield 3 Months	Israel	Yield	Refinitiv	Datastream	TRIL3MT	B	6388	ILS	0.25	Govt
+6389	TRIL3YT	Refinitiv Israel Government Benchmark Bid Yield 3 Years	Israel	Yield	Refinitiv	Datastream	TRIL3YT	B	6389	ILS	3.0	Govt
+6390	TRIL5YT	Refinitiv Israel Government Benchmark Bid Yield 5 Years	Israel	Yield	Refinitiv	Datastream	TRIL5YT	B	6390	ILS	5.0	Govt
+6391	TRIL6MT	Refinitiv Israel Government Benchmark Bid Yield 6 Months	Israel	Yield	Refinitiv	Datastream	TRIL6MT	B	6391	ILS	0.5	Govt
+6392	TRIL9MT	Refinitiv Israel Government Benchmark Bid Yield 9 Months	Israel	Yield	Refinitiv	Datastream	TRIL9MT	B	6392	ILS	0.75	Govt
+6393	TRIT1MT	Refinitiv Italy Government Benchmark Bid Yield 1 Month	Italy	Yield	Refinitiv	Datastream	TRIT1MT	B	6393	EUR	0.083	Govt
+6394	TRIT25T	Refinitiv Italy Government Benchmark Bid Yield 25 Years	Italy	Yield	Refinitiv	Datastream	TRIT25T	B	6394	EUR	25.0	Govt
+6395	TRIT50T	Refinitiv Italy Government Benchmark Bid Yield 50 Years	Italy	Yield	Refinitiv	Datastream	TRIT50T	B	6395	EUR	50.0	Govt
+6396	TRIT9MT	Refinitiv Italy Government Benchmark Bid Yield 9 Months	Italy	Yield	Refinitiv	Datastream	TRIT9MT	B	6396	EUR	0.75	Govt
+6397	TRJP6MT	Refinitiv Japan Government Benchmark Bid Yield 6 Months	Japan	Yield	Refinitiv	Datastream	TRJP6MT	B	6397	JPY	0.5	Govt
+6398	TRJO10T	Refinitiv Jordan Government Benchmark Bid Yield 10 Years	Jordan	Yield	Refinitiv	Datastream	TRJO10T	B	6398	JOD	10.0	Govt
+6399	TRJO18M	Refinitiv Jordan Government Benchmark Bid Yield 18 Months	Jordan	Yield	Refinitiv	Datastream	TRJO18M	B	6399	JOD	1.5	Govt
+6400	TRJO1YT	Refinitiv Jordan Government Benchmark Bid Yield 1 Year	Jordan	Yield	Refinitiv	Datastream	TRJO1YT	B	6400	JOD	1.0	Govt
+6401	TRJO2YT	Refinitiv Jordan Government Benchmark Bid Yield 2 Years	Jordan	Yield	Refinitiv	Datastream	TRJO2YT	B	6401	JOD	2.0	Govt
+6402	TRJO3MT	Refinitiv Jordan Government Benchmark Bid Yield 3 Months	Jordan	Yield	Refinitiv	Datastream	TRJO3MT	B	6402	JOD	0.25	Govt
+6403	TRJO3YT	Refinitiv Jordan Government Benchmark Bid Yield 3 Years	Jordan	Yield	Refinitiv	Datastream	TRJO3YT	B	6403	JOD	3.0	Govt
+6404	TRJO5YT	Refinitiv Jordan Government Benchmark Bid Yield 5 Years	Jordan	Yield	Refinitiv	Datastream	TRJO5YT	B	6404	JOD	5.0	Govt
+6405	TRJO6MT	Refinitiv Jordan Government Benchmark Bid Yield 6 Months	Jordan	Yield	Refinitiv	Datastream	TRJO6MT	B	6405	JOD	0.5	Govt
+6406	TRJO7YT	Refinitiv Jordan Government Benchmark Bid Yield 7 Years	Jordan	Yield	Refinitiv	Datastream	TRJO7YT	B	6406	JOD	7.0	Govt
+6407	TRKZ10T	Refinitiv Kazakhstan Government Benchmark Bid Yield 10 Years	Iran	Yield	Refinitiv	Datastream	TRKZ10T	B	6407	KZT	10.0	Govt
+6408	TRKZ15T	Refinitiv Kazakhstan Government Benchmark Bid Yield 15 Years	Iran	Yield	Refinitiv	Datastream	TRKZ15T	B	6408	KZT	15.0	Govt
+6409	TRKZ1MT	Refinitiv Kazakhstan Government Benchmark Bid Yield 1 Month	Iran	Yield	Refinitiv	Datastream	TRKZ1MT	B	6409	KZT	0.083	Govt
+6410	TRKZ1YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 1 Year	Iran	Yield	Refinitiv	Datastream	TRKZ1YT	B	6410	KZT	1.0	Govt
+6411	TRKZ25T	Refinitiv Kazakhstan Government Benchmark Bid Yield 25 Years	Iran	Yield	Refinitiv	Datastream	TRKZ25T	B	6411	KZT	25.0	Govt
+6412	TRKZ2YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 2 Years	Iran	Yield	Refinitiv	Datastream	TRKZ2YT	B	6412	KZT	2.0	Govt
+6413	TRKZ3MT	Refinitiv Kazakhstan Government Benchmark Bid Yield 3 Months	Iran	Yield	Refinitiv	Datastream	TRKZ3MT	B	6413	KZT	0.25	Govt
+6414	TRKZ3YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 3 Years	Iran	Yield	Refinitiv	Datastream	TRKZ3YT	B	6414	KZT	3.0	Govt
+6415	TRKZ4YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 4 Years	Iran	Yield	Refinitiv	Datastream	TRKZ4YT	B	6415	KZT	4.0	Govt
+6416	TRKZ5YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 5 Years	Iran	Yield	Refinitiv	Datastream	TRKZ5YT	B	6416	KZT	5.0	Govt
+6417	TRKZ6MT	Refinitiv Kazakhstan Government Benchmark Bid Yield 6 Months	Iran	Yield	Refinitiv	Datastream	TRKZ6MT	B	6417	KZT	0.5	Govt
+6418	TRKZ6YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 6 Years	Iran	Yield	Refinitiv	Datastream	TRKZ6YT	B	6418	KZT	6.0	Govt
+6419	TRKZ7YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 7 Years	Iran	Yield	Refinitiv	Datastream	TRKZ7YT	B	6419	KZT	7.0	Govt
+6420	TRKZ8YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 8 Years	Iran	Yield	Refinitiv	Datastream	TRKZ8YT	B	6420	KZT	8.0	Govt
+6421	TRKZ9YT	Refinitiv Kazakhstan Government Benchmark Bid Yield 9 Years	Iran	Yield	Refinitiv	Datastream	TRKZ9YT	B	6421	KZT	9.0	Govt
+6422	TRKE15T	Refinitiv Kenya Government Benchmark Bid Yield 15 Years	Kenya	Yield	Refinitiv	Datastream	TRKE15T	B	6422	KES	15.0	Govt
+6423	TRKE1YT	Refinitiv Kenya Government Benchmark Bid Yield 1 Year	Kenya	Yield	Refinitiv	Datastream	TRKE1YT	B	6423	KES	1.0	Govt
+6424	TRKE20T	Refinitiv Kenya Government Benchmark Bid Yield 20 Years	Kenya	Yield	Refinitiv	Datastream	TRKE20T	B	6424	KES	20.0	Govt
+6425	TRKE25T	Refinitiv Kenya Government Benchmark Bid Yield 25 Years	Kenya	Yield	Refinitiv	Datastream	TRKE25T	B	6425	KES	25.0	Govt
+6426	TRKE2YT	Refinitiv Kenya Government Benchmark Bid Yield 2 Years	Kenya	Yield	Refinitiv	Datastream	TRKE2YT	B	6426	KES	2.0	Govt
+6427	TRKE3MT	Refinitiv Kenya Government Benchmark Bid Yield 3 Months	Kenya	Yield	Refinitiv	Datastream	TRKE3MT	B	6427	KES	97.996	Govt
+6428	TRKE3YT	Refinitiv Kenya Government Benchmark Bid Yield 3 Years	Kenya	Yield	Refinitiv	Datastream	TRKE3YT	B	6428	KES	3.0	Govt
+6429	TRKE4YT	Refinitiv Kenya Government Benchmark Bid Yield 4 Years	Kenya	Yield	Refinitiv	Datastream	TRKE4YT	B	6429	KES	4.0	Govt
+6430	TRKE5YT	Refinitiv Kenya Government Benchmark Bid Yield 5 Years	Kenya	Yield	Refinitiv	Datastream	TRKE5YT	B	6430	KES	5.0	Govt
+6431	TRKE6MT	Refinitiv Kenya Government Benchmark Bid Yield 6 Months	Kenya	Yield	Refinitiv	Datastream	TRKE6MT	B	6431	KES	95.62	Govt
+6432	TRKE6YT	Refinitiv Kenya Government Benchmark Bid Yield 6 Years	Kenya	Yield	Refinitiv	Datastream	TRKE6YT	B	6432	KES	6.0	Govt
+6433	TRKE7YT	Refinitiv Kenya Government Benchmark Bid Yield 7 Years	Kenya	Yield	Refinitiv	Datastream	TRKE7YT	B	6433	KES	7.0	Govt
+6434	TRKE8YT	Refinitiv Kenya Government Benchmark Bid Yield 8 Years	Kenya	Yield	Refinitiv	Datastream	TRKE8YT	B	6434	KES	8.0	Govt
+6435	TRKE9YT	Refinitiv Kenya Government Benchmark Bid Yield 9 Years	Kenya	Yield	Refinitiv	Datastream	TRKE9YT	B	6435	KES	9.0	Govt
+6436	TRLV2YT	Refinitiv Latvia Government Benchmark Bid Yield 2 Years	Latvia	Yield	Refinitiv	Datastream	TRLV2YT	B	6436	EUR	2.0	Govt
+6437	TRLV3YT	Refinitiv Latvia Government Benchmark Bid Yield 3 Years	Latvia	Yield	Refinitiv	Datastream	TRLV3YT	B	6437	EUR	3.0	Govt
+6438	TRLT3YT	Refinitiv Lithuania Government Benchmark Bid Yield 3 Years	Lithuania	Yield	Refinitiv	Datastream	TRLT3YT	B	6438	EUR	3.0	Govt
+6439	TRLT5YT	Refinitiv Lithuania Government Benchmark Bid Yield 5 Years	Lithuania	Yield	Refinitiv	Datastream	TRLT5YT	B	6439	EUR	5.0	Govt
+6440	TRMY15T	Refinitiv Malaysia Government Benchmark Bid Yield 15 Years	Malaysia	Yield	Refinitiv	Datastream	TRMY15T	B	6440	MYR	15.0	Govt
+6441	TRMY1YT	Refinitiv Malaysia Government Benchmark Bid Yield 1 Year	Malaysia	Yield	Refinitiv	Datastream	TRMY1YT	B	6441	MYR	1.0	Govt
+6442	TRMY20T	Refinitiv Malaysia Government Benchmark Bid Yield 20 Years	Malaysia	Yield	Refinitiv	Datastream	TRMY20T	B	6442	MYR	20.0	Govt
+6443	TRMY30T	Refinitiv Malaysia Government Benchmark Bid Yield 30 Years	Malaysia	Yield	Refinitiv	Datastream	TRMY30T	B	6443	MYR	30.0	Govt
+6444	TRMY3MT	Refinitiv Malaysia Government Benchmark Bid Yield 3 Months	Malaysia	Yield	Refinitiv	Datastream	TRMY3MT	B	6444	MYR	0.25	Govt
+6445	TRMY3YT	Refinitiv Malaysia Government Benchmark Bid Yield 3 Years	Malaysia	Yield	Refinitiv	Datastream	TRMY3YT	B	6445	MYR	3.0	Govt
+6446	TRMY7MT	Refinitiv Malaysia Government Benchmark Bid Yield 7 Months	Malaysia	Yield	Refinitiv	Datastream	TRMY7MT	B	6446	MYR	0.583	Govt
+6447	TRMY7YT	Refinitiv Malaysia Government Benchmark Bid Yield 7 Years	Malaysia	Yield	Refinitiv	Datastream	TRMY7YT	B	6447	MYR	7.0	Govt
+6448	TRMT1MT	Refinitiv Malta Government Benchmark Bid Yield 1 Month	Malta	Yield	Refinitiv	Datastream	TRMT1MT	B	6448	EUR	0.083	Govt
+6449	TRMT1YT	Refinitiv Malta Government Benchmark Bid Yield 1 Year	Malta	Yield	Refinitiv	Datastream	TRMT1YT	B	6449	EUR	1.0	Govt
+6450	TRMT20T	Refinitiv Malta Government Benchmark Bid Yield 20 Years	Malta	Yield	Refinitiv	Datastream	TRMT20T	B	6450	EUR	20.0	Govt
+6451	TRMT25T	Refinitiv Malta Government Benchmark Bid Yield 25 Years	Malta	Yield	Refinitiv	Datastream	TRMT25T	B	6451	EUR	25.0	Govt
+6452	TRMT3MT	Refinitiv Malta Government Benchmark Bid Yield 3 Months	Malta	Yield	Refinitiv	Datastream	TRMT3MT	B	6452	EUR	0.25	Govt
+6453	TRMT3YT	Refinitiv Malta Government Benchmark Bid Yield 3 Years	Malta	Yield	Refinitiv	Datastream	TRMT3YT	B	6453	EUR	3.0	Govt
+6454	TRMT5YT	Refinitiv Malta Government Benchmark Bid Yield 5 Years	Malta	Yield	Refinitiv	Datastream	TRMT5YT	B	6454	EUR	5.0	Govt
+6455	TRMT6MT	Refinitiv Malta Government Benchmark Bid Yield 6 Months	Malta	Yield	Refinitiv	Datastream	TRMT6MT	B	6455	EUR	0.5	Govt
+6456	TRMU10T	Refinitiv Mauritius Government Benchmark Bid Yield 10 Years	Mauritius	Yield	Refinitiv	Datastream	TRMU10T	B	6456	MUR	10.0	Govt
+6457	TRMU15T	Refinitiv Mauritius Government Benchmark Bid Yield 15 Years	Mauritius	Yield	Refinitiv	Datastream	TRMU15T	B	6457	MUR	15.0	Govt
+6458	TRMU1YT	Refinitiv Mauritius Government Benchmark Bid Yield 1 Year	Mauritius	Yield	Refinitiv	Datastream	TRMU1YT	B	6458	MUR	1.0	Govt
+6459	TRMU20T	Refinitiv Mauritius Government Benchmark Bid Yield 20 Years	Mauritius	Yield	Refinitiv	Datastream	TRMU20T	B	6459	MUR	20.0	Govt
+6460	TRMU2MT	Refinitiv Mauritius Government Benchmark Bid Yield 2 Months	Mauritius	Yield	Refinitiv	Datastream	TRMU2MT	B	6460	MUR	0.167	Govt
+6461	TRMU2YT	Refinitiv Mauritius Government Benchmark Bid Yield 2 Years	Mauritius	Yield	Refinitiv	Datastream	TRMU2YT	B	6461	MUR	2.0	Govt
+6462	TRMU3YT	Refinitiv Mauritius Government Benchmark Bid Yield 3 Years	Mauritius	Yield	Refinitiv	Datastream	TRMU3YT	B	6462	MUR	3.0	Govt
+6463	TRMU4MT	Refinitiv Mauritius Government Benchmark Bid Yield 4 Months	Mauritius	Yield	Refinitiv	Datastream	TRMU4MT	B	6463	MUR	0.333	Govt
+6464	TRMU4YT	Refinitiv Mauritius Government Benchmark Bid Yield 4 Years	Mauritius	Yield	Refinitiv	Datastream	TRMU4YT	B	6464	MUR	4.0	Govt
+6465	TRMU5YT	Refinitiv Mauritius Government Benchmark Bid Yield 5 Years	Mauritius	Yield	Refinitiv	Datastream	TRMU5YT	B	6465	MUR	5.0	Govt
+6466	TRMU6MT	Refinitiv Mauritius Government Benchmark Bid Yield 6 Months	Mauritius	Yield	Refinitiv	Datastream	TRMU6MT	B	6466	MUR	0.5	Govt
+6467	TRMU8MT	Refinitiv Mauritius Government Benchmark Bid Yield 8 Months	Mauritius	Yield	Refinitiv	Datastream	TRMU8MT	B	6467	MUR	0.667	Govt
+6468	TRMX15T	Refinitiv Mexico Government Benchmark Bid Yield 15 Years	Mexico	Yield	Refinitiv	Datastream	TRMX15T	B	6468	MXN	15.0	Govt
+6469	TRMX1MT	Refinitiv Mexico Government Benchmark Bid Yield 1 Month	Mexico	Yield	Refinitiv	Datastream	TRMX1MT	B	6469	MXN	0.083	Govt
+6470	TRMX1YT	Refinitiv Mexico Government Benchmark Bid Yield 1 Year	Mexico	Yield	Refinitiv	Datastream	TRMX1YT	B	6470	MXN	1.0	Govt
+6471	TRMX20T	Refinitiv Mexico Government Benchmark Bid Yield 20 Years	Mexico	Yield	Refinitiv	Datastream	TRMX20T	B	6471	MXN	20.0	Govt
+6472	TRMX30T	Refinitiv Mexico Government Benchmark Bid Yield 30 Years	Mexico	Yield	Refinitiv	Datastream	TRMX30T	B	6472	MXN	30.0	Govt
+6473	TRMX3MT	Refinitiv Mexico Government Benchmark Bid Yield 3 Months	Mexico	Yield	Refinitiv	Datastream	TRMX3MT	B	6473	MXN	0.25	Govt
+6474	TRMX3YT	Refinitiv Mexico Government Benchmark Bid Yield 3 Years	Mexico	Yield	Refinitiv	Datastream	TRMX3YT	B	6474	MXN	3.0	Govt
+6475	TRMX5YT	Refinitiv Mexico Government Benchmark Bid Yield 5 Years	Mexico	Yield	Refinitiv	Datastream	TRMX5YT	B	6475	MXN	5.0	Govt
+6476	TRMX6MT	Refinitiv Mexico Government Benchmark Bid Yield 6 Months	Mexico	Yield	Refinitiv	Datastream	TRMX6MT	B	6476	MXN	0.5	Govt
+6477	TRMX7YT	Refinitiv Mexico Government Benchmark Bid Yield 7 Years	Mexico	Yield	Refinitiv	Datastream	TRMX7YT	B	6477	MXN	7.0	Govt
+6478	TRMX9MT	Refinitiv Mexico Government Benchmark Bid Yield 9 Months	Mexico	Yield	Refinitiv	Datastream	TRMX9MT	B	6478	MXN	0.75	Govt
+6479	TRMA10T	Refinitiv Morocco Government Benchmark Bid Yield 10 Years	Morocco	Yield	Refinitiv	Datastream	TRMA10T	B	6479	MAD	10.0	Govt
+6480	TRMA15T	Refinitiv Morocco Government Benchmark Bid Yield 15 Years	Morocco	Yield	Refinitiv	Datastream	TRMA15T	B	6480	MAD	15.0	Govt
+6481	TRMA2YT	Refinitiv Morocco Government Benchmark Bid Yield 2 Years	Morocco	Yield	Refinitiv	Datastream	TRMA2YT	B	6481	MAD	2.0	Govt
+6482	TRMA3MT	Refinitiv Morocco Government Benchmark Bid Yield 3 Months	Morocco	Yield	Refinitiv	Datastream	TRMA3MT	B	6482	MAD	0.25	Govt
+6483	TRMA5YT	Refinitiv Morocco Government Benchmark Bid Yield 5 Years	Morocco	Yield	Refinitiv	Datastream	TRMA5YT	B	6483	MAD	0.5	Govt
+6484	TRMA6MT	Refinitiv Morocco Government Benchmark Bid Yield 6 Months	Morocco	Yield	Refinitiv	Datastream	TRMA6MT	B	6484	MAD	0.25	Govt
+6485	TRNA10T	Refinitiv Namibia Government Benchmark Bid Yield 10 Years	Namibia	Yield	Refinitiv	Datastream	TRNA10T	B	6485	NAD	10.0	Govt
+6486	TRNA15T	Refinitiv Namibia Government Benchmark Bid Yield 15 Years	Namibia	Yield	Refinitiv	Datastream	TRNA15T	B	6486	NAD	15.0	Govt
+6487	TRNA1YT	Refinitiv Namibia Government Benchmark Bid Yield 1 Year	Namibia	Yield	Refinitiv	Datastream	TRNA1YT	B	6487	NAD	1.0	Govt
+6488	TRNA20T	Refinitiv Namibia Government Benchmark Bid Yield 20 Years	Namibia	Yield	Refinitiv	Datastream	TRNA20T	B	6488	NAD	20.0	Govt
+6489	TRNA3MT	Refinitiv Namibia Government Benchmark Bid Yield 3 Months	Namibia	Yield	Refinitiv	Datastream	TRNA3MT	B	6489	NAD	0.25	Govt
+6490	TRNA3YT	Refinitiv Namibia Government Benchmark Bid Yield 3 Years	Namibia	Yield	Refinitiv	Datastream	TRNA3YT	B	6490	NAD	3.0	Govt
+6491	TRNA6MT	Refinitiv Namibia Government Benchmark Bid Yield 6 Months	Namibia	Yield	Refinitiv	Datastream	TRNA6MT	B	6491	NAD	0.5	Govt
+6492	TRNA7YT	Refinitiv Namibia Government Benchmark Bid Yield 7 Years	Namibia	Yield	Refinitiv	Datastream	TRNA7YT	B	6492	NAD	7.0	Govt
+6493	TRNA9MT	Refinitiv Namibia Government Benchmark Bid Yield 9 Months	Namibia	Yield	Refinitiv	Datastream	TRNA9MT	B	6493	NAD	0.75	Govt
+6494	TRNL15T	Refinitiv Netherlands Government Benchmark Bid Yield 15 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL15T	B	6494	EUR	15.0	Govt
+6495	TRNL1MT	Refinitiv Netherlands Government Benchmark Bid Yield 1 Month	Netherlands	Yield	Refinitiv	Datastream	TRNL1MT	B	6495	EUR	0.083	Govt
+6496	TRNL20T	Refinitiv Netherlands Government Benchmark Bid Yield 20 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL20T	B	6496	EUR	20.0	Govt
+6497	TRNL25T	Refinitiv Netherlands Government Benchmark Bid Yield 25 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL25T	B	6497	EUR	25.0	Govt
+6498	TRNL2YT	Refinitiv Netherlands Government Benchmark Bid Yield 2 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL2YT	B	6498	EUR	2.0	Govt
+6499	TRNL30T	Refinitiv Netherlands Government Benchmark Bid Yield 30 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL30T	B	6499	EUR	30.0	Govt
+6500	TRNL3YT	Refinitiv Netherlands Government Benchmark Bid Yield 3 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL3YT	B	6500	EUR	3.0	Govt
+6501	TRNL4YT	Refinitiv Netherlands Government Benchmark Bid Yield 4 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL4YT	B	6501	EUR	4.0	Govt
+6502	TRNL6MT	Refinitiv Netherlands Government Benchmark Bid Yield 6 Months	Netherlands	Yield	Refinitiv	Datastream	TRNL6MT	B	6502	EUR	0.5	Govt
+6503	TRNL6YT	Refinitiv Netherlands Government Benchmark Bid Yield 6 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL6YT	B	6503	EUR	6.0	Govt
+6504	TRNL7YT	Refinitiv Netherlands Government Benchmark Bid Yield 7 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL7YT	B	6504	EUR	7.0	Govt
+6505	TRNL9YT	Refinitiv Netherlands Government Benchmark Bid Yield 9 Years	Netherlands	Yield	Refinitiv	Datastream	TRNL9YT	B	6505	EUR	9.0	Govt
+6506	TRNG10T	Refinitiv Nigeria Government Benchmark Bid Yield 10 Years	Nigeria	Yield	Refinitiv	Datastream	TRNG10T	B	6506	NGN	10.0	Govt
+6507	TRNG1YT	Refinitiv Nigeria Government Benchmark Bid Yield 1 Year	Nigeria	Yield	Refinitiv	Datastream	TRNG1YT	B	6507	NGN	1.0	Govt
+6508	TRNG20T	Refinitiv Nigeria Government Benchmark Bid Yield 20 Years	Nigeria	Yield	Refinitiv	Datastream	TRNG20T	B	6508	NGN	20.0	Govt
+6509	TRNG2YT	Refinitiv Nigeria Government Benchmark Bid Yield 2 Years	Nigeria	Yield	Refinitiv	Datastream	TRNG2YT	B	6509	NGN	2.0	Govt
+6510	TRNG3MT	Refinitiv Nigeria Government Benchmark Bid Yield 3 Months	Nigeria	Yield	Refinitiv	Datastream	TRNG3MT	B	6510	NGN	0.25	Govt
+6511	TRNG3YT	Refinitiv Nigeria Government Benchmark Bid Yield 3 Years	Nigeria	Yield	Refinitiv	Datastream	TRNG3YT	B	6511	NGN	3.0	Govt
+6512	TRNG4YT	Refinitiv Nigeria Government Benchmark Bid Yield 4 Years	Nigeria	Yield	Refinitiv	Datastream	TRNG4YT	B	6512	NGN	4.0	Govt
+6513	TRNG5YT	Refinitiv Nigeria Government Benchmark Bid Yield 5 Years	Nigeria	Yield	Refinitiv	Datastream	TRNG5YT	B	6513	NGN	5.0	Govt
+6514	TRNG6MT	Refinitiv Nigeria Government Benchmark Bid Yield 6 Months	Nigeria	Yield	Refinitiv	Datastream	TRNG6MT	B	6514	NGN	0.5	Govt
+6515	TRNG7YT	Refinitiv Nigeria Government Benchmark Bid Yield 7 Years	Nigeria	Yield	Refinitiv	Datastream	TRNG7YT	B	6515	NGN	7.0	Govt
+6516	TRNW3YT	Refinitiv Norway Government Benchmark Bid Yield 3 Years	Norway	Yield	Refinitiv	Datastream	TRNW3YT	B	6516	NOK	3.0	Govt
+6517	TRNW6MT	Refinitiv Norway Government Benchmark Bid Yield 6 Months	Norway	Yield	Refinitiv	Datastream	TRNW6MT	B	6517	NOK	0.5	Govt
+6518	TRNW9MT	Refinitiv Norway Government Benchmark Bid Yield 9 Months	Norway	Yield	Refinitiv	Datastream	TRNW9MT	B	6518	NOK	0.75	Govt
+6519	TRPK15T	Refinitiv Pakistan Government Benchmark Bid Yield 15 Years	Pakistan	Yield	Refinitiv	Datastream	TRPK15T	B	6519	PKR	15.0	Govt
+6520	TRPK1YT	Refinitiv Pakistan Government Benchmark Bid Yield 1 Year	Pakistan	Yield	Refinitiv	Datastream	TRPK1YT	B	6520	PKR	1.0	Govt
+6521	TRPK20T	Refinitiv Pakistan Government Benchmark Bid Yield 20 Years	Pakistan	Yield	Refinitiv	Datastream	TRPK20T	B	6521	PKR	20.0	Govt
+6522	TRPK3MT	Refinitiv Pakistan Government Benchmark Bid Yield 3 Months	Pakistan	Yield	Refinitiv	Datastream	TRPK3MT	B	6522	PKR	0.25	Govt
+6523	TRPK3YT	Refinitiv Pakistan Government Benchmark Bid Yield 3 Years	Pakistan	Yield	Refinitiv	Datastream	TRPK3YT	B	6523	PKR	3.0	Govt
+6524	TRPK5YT	Refinitiv Pakistan Government Benchmark Bid Yield 5 Years	Pakistan	Yield	Refinitiv	Datastream	TRPK5YT	B	6524	PKR	5.0	Govt
+6525	TRPK6MT	Refinitiv Pakistan Government Benchmark Bid Yield 6 Months	Pakistan	Yield	Refinitiv	Datastream	TRPK6MT	B	6525	PKR	0.5	Govt
+6526	TRPE10T	Refinitiv Peru Government Benchmark Bid Yield 10 Years	Peru	Yield	Refinitiv	Datastream	TRPE10T	B	6526	PEN	10.0	Govt
+6527	TRPE15T	Refinitiv Peru Government Benchmark Bid Yield 15 Years	Peru	Yield	Refinitiv	Datastream	TRPE15T	B	6527	PEN	15.0	Govt
+6528	TRPE30T	Refinitiv Peru Government Benchmark Bid Yield 30 Years	Peru	Yield	Refinitiv	Datastream	TRPE30T	B	6528	PEN	30.0	Govt
+6529	TRPE5YT	Refinitiv Peru Government Benchmark Bid Yield 5 Years	Peru	Yield	Refinitiv	Datastream	TRPE5YT	B	6529	PEN	5.0	Govt
+6530	TRPH1MT	Refinitiv Philippines Government Benchmark Bid Yield 1 Month	Philippines	Yield	Refinitiv	Datastream	TRPH1MT	B	6530	PHP	0.0833	Govt
+6531	TRPH1YT	Refinitiv Philippines Government Benchmark Bid Yield 1 Year	Philippines	Yield	Refinitiv	Datastream	TRPH1YT	B	6531	PHP	1.0	Govt
+6532	TRPH20T	Refinitiv Philippines Government Benchmark Bid Yield 20 Years	Philippines	Yield	Refinitiv	Datastream	TRPH20T	B	6532	PHP	20.0	Govt
+6533	TRPH3MT	Refinitiv Philippines Government Benchmark Bid Yield 3 Months	Philippines	Yield	Refinitiv	Datastream	TRPH3MT	B	6533	PHP	0.25	Govt
+6534	TRPH3YT	Refinitiv Philippines Government Benchmark Bid Yield 3 Years	Philippines	Yield	Refinitiv	Datastream	TRPH3YT	B	6534	PHP	3.0	Govt
+6535	TRPH4YT	Refinitiv Philippines Government Benchmark Bid Yield 4 Years	Philippines	Yield	Refinitiv	Datastream	TRPH4YT	B	6535	PHP	4.0	Govt
+6536	TRPH5YT	Refinitiv Philippines Government Benchmark Bid Yield 5 Years	Philippines	Yield	Refinitiv	Datastream	TRPH5YT	B	6536	PHP	5.0	Govt
+6537	TRPH6MT	Refinitiv Philippines Government Benchmark Bid Yield 6 Months	Philippines	Yield	Refinitiv	Datastream	TRPH6MT	B	6537	PHP	0.5	Govt
+6538	TRPH7YT	Refinitiv Philippines Government Benchmark Bid Yield 7 Years	Philippines	Yield	Refinitiv	Datastream	TRPH7YT	B	6538	PHP	7.0	Govt
+6539	TRPO1MT	Refinitiv Poland Government Benchmark Bid Yield 1 Month	Poland	Yield	Refinitiv	Datastream	TRPO1MT	B	6539	PLN	0.0833	Govt
+6540	TRPO2MT	Refinitiv Poland Government Benchmark Bid Yield 2 Months	Poland	Yield	Refinitiv	Datastream	TRPO2MT	B	6540	PLN	0.167	Govt
+6541	TRPO2YT	Refinitiv Poland Government Benchmark Bid Yield 2 Years	Poland	Yield	Refinitiv	Datastream	TRPO2YT	B	6541	PLN	2.0	Govt
+6542	TRPO3YT	Refinitiv Poland Government Benchmark Bid Yield 3 Years	Poland	Yield	Refinitiv	Datastream	TRPO3YT	B	6542	PLN	3.0	Govt
+6543	TRPO4YT	Refinitiv Poland Government Benchmark Bid Yield 4 Years	Poland	Yield	Refinitiv	Datastream	TRPO4YT	B	6543	PLN	4.0	Govt
+6544	TRPO5YT	Refinitiv Poland Government Benchmark Bid Yield 5 Years	Poland	Yield	Refinitiv	Datastream	TRPO5YT	B	6544	PLN	5.0	Govt
+6545	TRPO6YT	Refinitiv Poland Government Benchmark Bid Yield 6 Years	Poland	Yield	Refinitiv	Datastream	TRPO6YT	B	6545	PLN	6.0	Govt
+6546	TRPO7YT	Refinitiv Poland Government Benchmark Bid Yield 7 Years	Poland	Yield	Refinitiv	Datastream	TRPO7YT	B	6546	PLN	7.0	Govt
+6547	TRPT15T	Refinitiv Portugal Government Benchmark Bid Yield 15 Years	Portugal	Yield	Refinitiv	Datastream	TRPT15T	B	6547	EUR	15.0	Govt
+6548	TRPT1YT	Refinitiv Portugal Government Benchmark Bid Yield 1 Year	Portugal	Yield	Refinitiv	Datastream	TRPT1YT	B	6548	EUR	1.0	Govt
+6549	TRPT20T	Refinitiv Portugal Government Benchmark Bid Yield 20 Years	Portugal	Yield	Refinitiv	Datastream	TRPT20T	B	6549	EUR	20.0	Govt
+6550	TRPT2YT	Refinitiv Portugal Government Benchmark Bid Yield 2 Years	Portugal	Yield	Refinitiv	Datastream	TRPT2YT	B	6550	EUR	2.0	Govt
+6551	TRPT30T	Refinitiv Portugal Government Benchmark Bid Yield 30 Years	Portugal	Yield	Refinitiv	Datastream	TRPT30T	B	6551	EUR	30.0	Govt
+6552	TRPT3MT	Refinitiv Portugal Government Benchmark Bid Yield 3 Months	Portugal	Yield	Refinitiv	Datastream	TRPT3MT	B	6552	EUR	0.25	Govt
+6553	TRPT3YT	Refinitiv Portugal Government Benchmark Bid Yield 3 Years	Portugal	Yield	Refinitiv	Datastream	TRPT3YT	B	6553	EUR	3.0	Govt
+6554	TRPT4YT	Refinitiv Portugal Government Benchmark Bid Yield 4 Years	Portugal	Yield	Refinitiv	Datastream	TRPT4YT	B	6554	EUR	4.0	Govt
+6555	TRPT5YT	Refinitiv Portugal Government Benchmark Bid Yield 5 Years	Portugal	Yield	Refinitiv	Datastream	TRPT5YT	B	6555	EUR	5.0	Govt
+6556	TRPT6MT	Refinitiv Portugal Government Benchmark Bid Yield 6 Months	Portugal	Yield	Refinitiv	Datastream	TRPT6MT	B	6556	EUR	0.5	Govt
+6557	TRPT6YT	Refinitiv Portugal Government Benchmark Bid Yield 6 Years	Portugal	Yield	Refinitiv	Datastream	TRPT6YT	B	6557	EUR	6.0	Govt
+6558	TRPT7YT	Refinitiv Portugal Government Benchmark Bid Yield 7 Years	Portugal	Yield	Refinitiv	Datastream	TRPT7YT	B	6558	EUR	7.0	Govt
+6559	TRPT8YT	Refinitiv Portugal Government Benchmark Bid Yield 8 Years	Portugal	Yield	Refinitiv	Datastream	TRPT8YT	B	6559	EUR	8.0	Govt
+6560	TRPT9YT	Refinitiv Portugal Government Benchmark Bid Yield 9 Years	Portugal	Yield	Refinitiv	Datastream	TRPT9YT	B	6560	EUR	9.0	Govt
+6561	TRQA2YT	Refinitiv Qatar Government Benchmark Bid Yield 2 Years	Qatar	Yield	Refinitiv	Datastream	TRQA2YT	B	6561	QAR	2.0	Govt
+6562	TRQA3MT	Refinitiv Qatar Government Benchmark Bid Yield 3 Months	Qatar	Yield	Refinitiv	Datastream	TRQA3MT	B	6562	QAR	0.25	Govt
+6563	TRQA5YT	Refinitiv Qatar Government Benchmark Bid Yield 5 Years	Qatar	Yield	Refinitiv	Datastream	TRQA5YT	B	6563	QAR	5.0	Govt
+6564	TRQA6MT	Refinitiv Qatar Government Benchmark Bid Yield 6 Months	Qatar	Yield	Refinitiv	Datastream	TRQA6MT	B	6564	QAR	0.5	Govt
+6565	TRQA9MT	Refinitiv Qatar Government Benchmark Bid Yield 9 Months	Qatar	Yield	Refinitiv	Datastream	TRQA9MT	B	6565	QAR	0.75	Govt
+6566	TRRO1YT	Refinitiv Romania Government Benchmark Bid Yield 1 Year	Romania	Yield	Refinitiv	Datastream	TRRO1YT	B	6566	RON	1.0	Govt
+6567	TRRO2YT	Refinitiv Romania Government Benchmark Bid Yield 2 Years	Romania	Yield	Refinitiv	Datastream	TRRO2YT	B	6567	RON	2.0	Govt
+6568	TRRO3YT	Refinitiv Romania Government Benchmark Bid Yield 3 Years	Romania	Yield	Refinitiv	Datastream	TRRO3YT	B	6568	RON	3.0	Govt
+6569	TRRO4YT	Refinitiv Romania Government Benchmark Bid Yield 4 Years	Romania	Yield	Refinitiv	Datastream	TRRO4YT	B	6569	RON	4.0	Govt
+6570	TRRO5YT	Refinitiv Romania Government Benchmark Bid Yield 5 Years	Romania	Yield	Refinitiv	Datastream	TRRO5YT	B	6570	RON	5.0	Govt
+6571	TRRO6MT	Refinitiv Romania Government Benchmark Bid Yield 6 Months	Romania	Yield	Refinitiv	Datastream	TRRO6MT	B	6571	RON	0.5	Govt
+6572	TRRO7YT	Refinitiv Romania Government Benchmark Bid Yield 7 Years	Romania	Yield	Refinitiv	Datastream	TRRO7YT	B	6572	RON	7.0	Govt
+6573	TRRS10T	Refinitiv Russia Government Benchmark Bid Yield 10 Years	Russia	Yield	Refinitiv	Datastream	TRRS10T	B	6573	RUB	10.0	Govt
+6574	TRRS15T	Refinitiv Russia Government Benchmark Bid Yield 15 Years	Russia	Yield	Refinitiv	Datastream	TRRS15T	B	6574	RUB	15.0	Govt
+6575	TRRS1MT	Refinitiv Russia Government Benchmark Bid Yield 1 Month	Russia	Yield	Refinitiv	Datastream	TRRS1MT	B	6575	RUB	0.0833	Govt
+6576	TRRS1WT	Refinitiv Russia Government Benchmark Bid Yield 1 Week	Russia	Yield	Refinitiv	Datastream	TRRS1WT	B	6576	RUB	0.019	Govt
+6577	TRRS1YT	Refinitiv Russia Government Benchmark Bid Yield 1 Year	Russia	Yield	Refinitiv	Datastream	TRRS1YT	B	6577	RUB	1.0	Govt
+6578	TRRS20T	Refinitiv Russia Government Benchmark Bid Yield 20 Years	Russia	Yield	Refinitiv	Datastream	TRRS20T	B	6578	RUB	20.0	Govt
+6579	TRRS2MT	Refinitiv Russia Government Benchmark Bid Yield 2 Months	Russia	Yield	Refinitiv	Datastream	TRRS2MT	B	6579	RUB	0.167	Govt
+6580	TRRS2WT	Refinitiv Russia Government Benchmark Bid Yield 2 Weeks	Russia	Yield	Refinitiv	Datastream	TRRS2WT	B	6580	RUB	0.038	Govt
+6581	TRRS2YT	Refinitiv Russia Government Benchmark Bid Yield 2 Years	Russia	Yield	Refinitiv	Datastream	TRRS2YT	B	6581	RUB	2.0	Govt
+6582	TRRS3MT	Refinitiv Russia Government Benchmark Bid Yield 3 Months	Russia	Yield	Refinitiv	Datastream	TRRS3MT	B	6582	RUB	0.25	Govt
+6583	TRRS3YT	Refinitiv Russia Government Benchmark Bid Yield 3 Years	Russia	Yield	Refinitiv	Datastream	TRRS3YT	B	6583	RUB	3.0	Govt
+6584	TRRS5YT	Refinitiv Russia Government Benchmark Bid Yield 5 Years	Russia	Yield	Refinitiv	Datastream	TRRS5YT	B	6584	RUB	5.0	Govt
+6585	TRRS6MT	Refinitiv Russia Government Benchmark Bid Yield 6 Months	Russia	Yield	Refinitiv	Datastream	TRRS6MT	B	6585	RUB	0.5	Govt
+6586	TRRS7YT	Refinitiv Russia Government Benchmark Bid Yield 7 Years	Russia	Yield	Refinitiv	Datastream	TRRS7YT	B	6586	RUB	7.0	Govt
+6587	TRSA3MT	Refinitiv S Africa Government Benchmark Bid Yield 3 Months	South Africa	Yield	Refinitiv	Datastream	TRSA3MT	B	6587	ZAR	0.25	Govt
+6588	TRSA5YT	Refinitiv S Africa Government Benchmark Bid Yield 5 Years	South Africa	Yield	Refinitiv	Datastream	TRSA5YT	B	6588	ZAR	5.0	Govt
+6589	TRKR10T	Refinitiv S Korea Government Benchmark Bid Yield 10 Years	South Korea	Yield	Refinitiv	Datastream	TRKR10T	B	6589	KRW	10.0	Govt
+6590	TRSE3YT	Refinitiv Senegal Government Benchmark Bid Yield 3 Years	Senegal	Yield	Refinitiv	Datastream	TRSE3YT	B	6590	XAF	3.0	Govt
+6591	TRSE5YT	Refinitiv Senegal Government Benchmark Bid Yield 5 Years	Senegal	Yield	Refinitiv	Datastream	TRSE5YT	B	6591	XAF	5.0	Govt
+6592	TRSE7YT	Refinitiv Senegal Government Benchmark Bid Yield 7 Years	Senegal	Yield	Refinitiv	Datastream	TRSE7YT	B	6592	XAF	7.0	Govt
+6593	TRSB10T	Refinitiv Serbia Government Benchmark Bid Yield 10 Years	Serbia and Montenegro	Yield	Refinitiv	Datastream	TRSB10T	B	6593	RSD	10.0	Govt
+6594	TRSB1YT	Refinitiv Serbia Government Benchmark Bid Yield 1 Year	Serbia and Montenegro	Yield	Refinitiv	Datastream	TRSB1YT	B	6594	RSD	1.0	Govt
+6595	TRSB2YT	Refinitiv Serbia Government Benchmark Bid Yield 2 Years	Serbia and Montenegro	Yield	Refinitiv	Datastream	TRSB2YT	B	6595	RSD	2.0	Govt
+6596	TRSB3YT	Refinitiv Serbia Government Benchmark Bid Yield 3 Years	Serbia and Montenegro	Yield	Refinitiv	Datastream	TRSB3YT	B	6596	RSD	3.0	Govt
+6597	TRSG15T	Refinitiv Singapore Government Benchmark Bid Yield 15 Years	Singapore	Yield	Refinitiv	Datastream	TRSG15T	B	6597	SGD	15.0	Govt
+6598	TRSG1MT	Refinitiv Singapore Government Benchmark Bid Yield 1 Month	Singapore	Yield	Refinitiv	Datastream	TRSG1MT	B	6598	SGD	0.0833	Govt
+6599	TRSG1YT	Refinitiv Singapore Government Benchmark Bid Yield 1 Year	Singapore	Yield	Refinitiv	Datastream	TRSG1YT	B	6599	SGD	1.0	Govt
+6600	TRSG20T	Refinitiv Singapore Government Benchmark Bid Yield 20 Years	Singapore	Yield	Refinitiv	Datastream	TRSG20T	B	6600	SGD	20.0	Govt
+6601	TRSG2YT	Refinitiv Singapore Government Benchmark Bid Yield 2 Years	Singapore	Yield	Refinitiv	Datastream	TRSG2YT	B	6601	SGD	2.0	Govt
+6602	TRSG30T	Refinitiv Singapore Government Benchmark Bid Yield 30 Years	Singapore	Yield	Refinitiv	Datastream	TRSG30T	B	6602	SGD	30.0	Govt
+6603	TRSG3MT	Refinitiv Singapore Government Benchmark Bid Yield 3 Months	Singapore	Yield	Refinitiv	Datastream	TRSG3MT	B	6603	SGD	0.25	Govt
+6604	TRSG5YT	Refinitiv Singapore Government Benchmark Bid Yield 5 Years	Singapore	Yield	Refinitiv	Datastream	TRSG5YT	B	6604	SGD	5.0	Govt
+6605	TRSG6MT	Refinitiv Singapore Government Benchmark Bid Yield 6 Months	Singapore	Yield	Refinitiv	Datastream	TRSG6MT	B	6605	SGD	0.5	Govt
+6606	TRSK13T	Refinitiv Slovakia Government Benchmark Bid Yield 13 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK13T	B	6606	EUR	13.0	Govt
+6607	TRSK18T	Refinitiv Slovakia Government Benchmark Bid Yield 18 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK18T	B	6607	EUR	18.0	Govt
+6608	TRSK2YT	Refinitiv Slovakia Government Benchmark Bid Yield 2 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK2YT	B	6608	EUR	2.0	Govt
+6609	TRSK30T	Refinitiv Slovakia Government Benchmark Bid Yield 30 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK30T	B	6609	EUR	30.0	Govt
+6610	TRSK50T	Refinitiv Slovakia Government Benchmark Bid Yield 50 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK50T	B	6610	EUR	50.0	Govt
+6611	TRSK5YT	Refinitiv Slovakia Government Benchmark Bid Yield 5 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK5YT	B	6611	EUR	5.0	Govt
+6612	TRSK6YT	Refinitiv Slovakia Government Benchmark Bid Yield 6 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK6YT	B	6612	EUR	6.0	Govt
+6613	TRSK8YT	Refinitiv Slovakia Government Benchmark Bid Yield 8 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK8YT	B	6613	EUR	8.0	Govt
+6614	TRSK9YT	Refinitiv Slovakia Government Benchmark Bid Yield 9 Years	Slovakia	Yield	Refinitiv	Datastream	TRSK9YT	B	6614	EUR	9.0	Govt
+6615	TRSI15T	Refinitiv Slovenia Government Benchmark Bid Yield 15 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI15T	B	6615	EUR	15.0	Govt
+6616	TRSI1YT	Refinitiv Slovenia Government Benchmark Bid Yield 1 Year	Slovenia	Yield	Refinitiv	Datastream	TRSI1YT	B	6616	EUR	1.0	Govt
+6617	TRSI20T	Refinitiv Slovenia Government Benchmark Bid Yield 20 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI20T	B	6617	EUR	20.0	Govt
+6618	TRSI25T	Refinitiv Slovenia Government Benchmark Bid Yield 25 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI25T	B	6618	EUR	25.0	Govt
+6619	TRSI3YT	Refinitiv Slovenia Government Benchmark Bid Yield 3 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI3YT	B	6619	EUR	3.0	Govt
+6620	TRSI4YT	Refinitiv Slovenia Government Benchmark Bid Yield 4 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI4YT	B	6620	EUR	4.0	Govt
+6621	TRSI5YT	Refinitiv Slovenia Government Benchmark Bid Yield 5 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI5YT	B	6621	EUR	5.0	Govt
+6622	TRSI7YT	Refinitiv Slovenia Government Benchmark Bid Yield 7 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI7YT	B	6622	EUR	7.0	Govt
+6623	TRSI8YT	Refinitiv Slovenia Government Benchmark Bid Yield 8 Years	Slovenia	Yield	Refinitiv	Datastream	TRSI8YT	B	6623	EUR	8.0	Govt
+6624	TRES15T	Refinitiv Spain Government Benchmark Bid Yield 15 Years	Spain	Yield	Refinitiv	Datastream	TRES15T	B	6624	EUR	15.0	Govt
+6625	TRES1MT	Refinitiv Spain Government Benchmark Bid Yield 1 Month	Spain	Yield	Refinitiv	Datastream	TRES1MT	B	6625	EUR	0.083	Govt
+6626	TRES1YT	Refinitiv Spain Government Benchmark Bid Yield 1 Year	Spain	Yield	Refinitiv	Datastream	TRES1YT	B	6626	EUR	1.0	Govt
+6627	TRES20T	Refinitiv Spain Government Benchmark Bid Yield 20 Years	Spain	Yield	Refinitiv	Datastream	TRES20T	B	6627	EUR	20.0	Govt
+6628	TRES25T	Refinitiv Spain Government Benchmark Bid Yield 25 Years	Spain	Yield	Refinitiv	Datastream	TRES25T	B	6628	EUR	25.0	Govt
+6629	TRES2YT	Refinitiv Spain Government Benchmark Bid Yield 2 Years	Spain	Yield	Refinitiv	Datastream	TRES2YT	B	6629	EUR	2.0	Govt
+6630	TRES30T	Refinitiv Spain Government Benchmark Bid Yield 30 Years	Spain	Yield	Refinitiv	Datastream	TRES30T	B	6630	EUR	30.0	Govt
+6631	TRES3MT	Refinitiv Spain Government Benchmark Bid Yield 3 Months	Spain	Yield	Refinitiv	Datastream	TRES3MT	B	6631	EUR	0.25	Govt
+6632	TRES3YT	Refinitiv Spain Government Benchmark Bid Yield 3 Years	Spain	Yield	Refinitiv	Datastream	TRES3YT	B	6632	EUR	3.0	Govt
+6633	TRES4YT	Refinitiv Spain Government Benchmark Bid Yield 4 Years	Spain	Yield	Refinitiv	Datastream	TRES4YT	B	6633	EUR	4.0	Govt
+6634	TRES6MT	Refinitiv Spain Government Benchmark Bid Yield 6 Months	Spain	Yield	Refinitiv	Datastream	TRES6MT	B	6634	EUR	0.5	Govt
+6635	TRES6YT	Refinitiv Spain Government Benchmark Bid Yield 6 Years	Spain	Yield	Refinitiv	Datastream	TRES6YT	B	6635	EUR	6.0	Govt
+6636	TRES7YT	Refinitiv Spain Government Benchmark Bid Yield 7 Years	Spain	Yield	Refinitiv	Datastream	TRES7YT	B	6636	EUR	7.0	Govt
+6637	TRES8YT	Refinitiv Spain Government Benchmark Bid Yield 8 Years	Spain	Yield	Refinitiv	Datastream	TRES8YT	B	6637	EUR	8.0	Govt
+6638	TRES9MT	Refinitiv Spain Government Benchmark Bid Yield 9 Months	Spain	Yield	Refinitiv	Datastream	TRES9MT	B	6638	EUR	0.75	Govt
+6639	TRES9YT	Refinitiv Spain Government Benchmark Bid Yield 9 Years	Spain	Yield	Refinitiv	Datastream	TRES9YT	B	6639	EUR	9.0	Govt
+6640	TRSD12T	Refinitiv Sweden Government Benchmark Bid Yield 12 Years	Sweden	Yield	Refinitiv	Datastream	TRSD12T	B	6640	SEK	12.0	Govt
+6641	TRSD1MT	Refinitiv Sweden Government Benchmark Bid Yield 1 Month	Sweden	Yield	Refinitiv	Datastream	TRSD1MT	B	6641	SEK	0.0833	Govt
+6642	TRSD20T	Refinitiv Sweden Government Benchmark Bid Yield 20 Years	Sweden	Yield	Refinitiv	Datastream	TRSD20T	B	6642	SEK	20.0	Govt
+6643	TRSD2MT	Refinitiv Sweden Government Benchmark Bid Yield 2 Months	Sweden	Yield	Refinitiv	Datastream	TRSD2MT	B	6643	SEK	0.167	Govt
+6644	TRSD2YT	Refinitiv Sweden Government Benchmark Bid Yield 2 Years	Sweden	Yield	Refinitiv	Datastream	TRSD2YT	B	6644	SEK	2.0	Govt
+6645	TRSD7YT	Refinitiv Sweden Government Benchmark Bid Yield 7 Years	Sweden	Yield	Refinitiv	Datastream	TRSD7YT	B	6645	SEK	7.0	Govt
+6646	TRSW40T	Refinitiv Switzerland Government Benchmark Bid Yield 40 Years	Switzerland	Yield	Refinitiv	Datastream	TRSW40T	B	6646	CHF	40.0	Govt
+6647	TRTW10T	Refinitiv Taiwan Government Benchmark Bid Yield 10 Years	Taiwan	Yield	Refinitiv	Datastream	TRTW10T	B	6647	TWD	10.0	Govt
+6648	TRTZ10T	Refinitiv Tanzania Government Benchmark Bid Yield 10 Years	Tanzania	Yield	Refinitiv	Datastream	TRTZ10T	B	6648	TZS	10.0	Govt
+6649	TRTK10T	Refinitiv Turkey Government Benchmark Bid Yield 10 Years	Turkey	Yield	Refinitiv	Datastream	TRTK10T	B	6649	TRY	10.0	Govt
+6650	TRUG10T	Refinitiv Uganda Government Benchmark Bid Yield 10 Years	Uganda	Yield	Refinitiv	Datastream	TRUG10T	B	6650	UGX	10.0	Govt
+6651	TRUA6YT	Refinitiv Ukraine Government Benchmark Bid Yield 6 Years	Botswana	Yield	Refinitiv	Datastream	TRUA6YT	B	6651	UAH	6.0	Govt
+6652	TRUS20T	Refinitiv United States Government Benchmark Bid Yield 20 Years	United States	Yield	Refinitiv	Datastream	TRUS20T	B	6652	USD	20.0	Govt
+6653	TRVN10T	Refinitiv Vietnam Government Benchmark Bid Yield 10 Years	Vietnam	Yield	Refinitiv	Datastream	TRVN10T	B	6653	VND	10.0	Govt
+6654	TRNZ10T	Refinitiv New Zealand Government Benchmark Bid Yield 10 Years	New Zealand	Yield	Refinitiv	Datastream	TRNZ10T	B	6654	NZD	10.0	Govt
+6655	TRSA30T	Refinitiv S Africa Government Benchmark Bid Yield 30 Years	South Africa	Yield	Refinitiv	Datastream	TRSA30T	B	6655	ZAR	30.0	Govt
+6656	TRKR1YT	Refinitiv S Korea Government Benchmark Bid Yield 1 Year	South Korea	Yield	Refinitiv	Datastream	TRKR1YT	B	6656	KRW	1.0	Govt
+6657	TRKR2YT	Refinitiv S Korea Government Benchmark Bid Yield 2 Years	South Korea	Yield	Refinitiv	Datastream	TRKR2YT	B	6657	KRW	2.0	Govt
+6658	TRBF10T	Refinitiv Burkina Faso Government Benchmark Bid Yield 10 Years	Burkina Faso	Yield	Refinitiv	Datastream	TRBF10T	B	6658	XAF	10.0	Govt
+6659	TRBF1YT	Refinitiv Burkina Faso Government Benchmark Bid Yield 1 Year	Burkina Faso	Yield	Refinitiv	Datastream	TRBF1YT	B	6659	XAF	1.0	Govt
+6660	TRBF2YT	Refinitiv Burkina Faso Government Benchmark Bid Yield 2 Years	Burkina Faso	Yield	Refinitiv	Datastream	TRBF2YT	B	6660	XAF	2.0	Govt
+6661	TRCZ15T	Refinitiv Czech REP Government Benchmark Bid Yield 15 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ15T	B	6661	CZK	15.0	Govt
+6662	TRCZ1YT	Refinitiv Czech REP Government Benchmark Bid Yield 1 Year	Czech Republic	Yield	Refinitiv	Datastream	TRCZ1YT	B	6662	CZK	1.0	Govt
+6663	TRCZ20T	Refinitiv Czech REP Government Benchmark Bid Yield 20 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ20T	B	6663	CZK	20.0	Govt
+6664	TRCZ2YT	Refinitiv Czech REP Government Benchmark Bid Yield 2 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ2YT	B	6664	CZK	2.0	Govt
+6665	TRCZ3YT	Refinitiv Czech REP Government Benchmark Bid Yield 3 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ3YT	B	6665	CZK	3.0	Govt
+6666	TRCZ4YT	Refinitiv Czech REP Government Benchmark Bid Yield 4 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ4YT	B	6666	CZK	4.0	Govt
+6667	TRCZ50T	Refinitiv Czech REP Government Benchmark Bid Yield 50 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ50T	B	6667	CZK	50.0	Govt
+6668	TRCZ5YT	Refinitiv Czech REP Government Benchmark Bid Yield 5 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ5YT	B	6668	CZK	5.0	Govt
+6669	TRCZ6YT	Refinitiv Czech REP Government Benchmark Bid Yield 6 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ6YT	B	6669	CZK	6.0	Govt
+6670	TRCZ7YT	Refinitiv Czech REP Government Benchmark Bid Yield 7 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ7YT	B	6670	CZK	7.0	Govt
+6671	TRCZ8YT	Refinitiv Czech REP Government Benchmark Bid Yield 8 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ8YT	B	6671	CZK	8.0	Govt
+6672	TRCZ9YT	Refinitiv Czech REP Government Benchmark Bid Yield 9 Years	Czech Republic	Yield	Refinitiv	Datastream	TRCZ9YT	B	6672	CZK	9.0	Govt
+6673	TRHK10T	Refinitiv Hong Kong Government Benchmark Bid Yield 10 Years	Hong Kong	Yield	Refinitiv	Datastream	TRHK10T	B	6673	HKD	10.0	Govt
+6674	TRHK15T	Refinitiv Hong Kong Government Benchmark Bid Yield 15 Years	Hong Kong	Yield	Refinitiv	Datastream	TRHK15T	B	6674	HKD	15.0	Govt
+6675	TRHK1MT	Refinitiv Hong Kong Government Benchmark Bid Yield 1 Month	Hong Kong	Yield	Refinitiv	Datastream	TRHK1MT	B	6675	HKD	0.0833	Govt
+6676	TRHK1WT	Refinitiv Hong Kong Government Benchmark Bid Yield 1 Week	Hong Kong	Yield	Refinitiv	Datastream	TRHK1WT	B	6676	HKD	0.0192	Govt
+6677	TRHK1YT	Refinitiv Hong Kong Government Benchmark Bid Yield 1 Year	Hong Kong	Yield	Refinitiv	Datastream	TRHK1YT	B	6677	HKD	1.0	Govt
+6678	TRHK2YT	Refinitiv Hong Kong Government Benchmark Bid Yield 2 Years	Hong Kong	Yield	Refinitiv	Datastream	TRHK2YT	B	6678	HKD	2.0	Govt
+6679	TRHK3MT	Refinitiv Hong Kong Government Benchmark Bid Yield 3 Months	Hong Kong	Yield	Refinitiv	Datastream	TRHK3MT	B	6679	HKD	0.25	Govt
+6680	TRHK3YT	Refinitiv Hong Kong Government Benchmark Bid Yield 3 Years	Hong Kong	Yield	Refinitiv	Datastream	TRHK3YT	B	6680	HKD	3.0	Govt
+6681	TRHK5YT	Refinitiv Hong Kong Government Benchmark Bid Yield 5 Years	Hong Kong	Yield	Refinitiv	Datastream	TRHK5YT	B	6681	HKD	5.0	Govt
+6682	TRHK6MT	Refinitiv Hong Kong Government Benchmark Bid Yield 6 Months	Hong Kong	Yield	Refinitiv	Datastream	TRHK6MT	B	6682	HKD	0.5	Govt
+6683	TRHK7YT	Refinitiv Hong Kong Government Benchmark Bid Yield 7 Years	Hong Kong	Yield	Refinitiv	Datastream	TRHK7YT	B	6683	HKD	7.0	Govt
+6684	TRHK9MT	Refinitiv Hong Kong Government Benchmark Bid Yield 9 Months	Hong Kong	Yield	Refinitiv	Datastream	TRHK9MT	B	6684	HKD	0.75	Govt
+6685	TRIC10T	Refinitiv Ivory Coast Government Benchmark Bid Yield 10 Years	Ivory Coast	Yield	Refinitiv	Datastream	TRIC10T	B	6685	XAF	10.0	Govt
+6686	TRIC1YT	Refinitiv Ivory Coast Government Benchmark Bid Yield 1 Year	Ivory Coast	Yield	Refinitiv	Datastream	TRIC1YT	B	6686	XAF	1.0	Govt
+6687	TRIC3MT	Refinitiv Ivory Coast Government Benchmark Bid Yield 3 Months	Ivory Coast	Yield	Refinitiv	Datastream	TRIC3MT	B	6687	XAF	0.25	Govt
+6688	TRIC3YT	Refinitiv Ivory Coast Government Benchmark Bid Yield 3 Years	Ivory Coast	Yield	Refinitiv	Datastream	TRIC3YT	B	6688	XAF	3.0	Govt
+6689	TRIC5YT	Refinitiv Ivory Coast Government Benchmark Bid Yield 5 Years	Ivory Coast	Yield	Refinitiv	Datastream	TRIC5YT	B	6689	XAF	5.0	Govt
+6690	TRIC6MT	Refinitiv Ivory Coast Government Benchmark Bid Yield 6 Months	Ivory Coast	Yield	Refinitiv	Datastream	TRIC6MT	B	6690	XAF	0.5	Govt
+6691	TRIC7YT	Refinitiv Ivory Coast Government Benchmark Bid Yield 7 Years	Ivory Coast	Yield	Refinitiv	Datastream	TRIC7YT	B	6691	XAF	7.0	Govt
+6692	TRTG10T	Refinitiv New Togo Government Benchmark Bid Yield 10 Years	Togo	Yield	Refinitiv	Datastream	TRTG10T	B	6692	XAF	10.0	Govt
+6693	TRTG1YT	Refinitiv New Togo Government Benchmark Bid Yield 1 Year	Togo	Yield	Refinitiv	Datastream	TRTG1YT	B	6693	XAF	1.0	Govt
+6694	TRTG3YT	Refinitiv New Togo Government Benchmark Bid Yield 3 Years	Togo	Yield	Refinitiv	Datastream	TRTG3YT	B	6694	XAF	3.0	Govt
+6695	TRNZ15T	Refinitiv New Zealand Government Benchmark Bid Yield 15 Years	New Zealand	Yield	Refinitiv	Datastream	TRNZ15T	B	6695	NZD	15.0	Govt
+6696	TRNZ1MT	Refinitiv New Zealand Government Benchmark Bid Yield 1 Month	New Zealand	Yield	Refinitiv	Datastream	TRNZ1MT	B	6696	NZD	0.083	Govt
+6697	TRNZ1YT	Refinitiv New Zealand Government Benchmark Bid Yield 1 Year	New Zealand	Yield	Refinitiv	Datastream	TRNZ1YT	B	6697	NZD	1.0	Govt
+6698	TRNZ20T	Refinitiv New Zealand Government Benchmark Bid Yield 20 Years	New Zealand	Yield	Refinitiv	Datastream	TRNZ20T	B	6698	NZD	20.0	Govt
+6699	TRNZ2MT	Refinitiv New Zealand Government Benchmark Bid Yield 2 Months	New Zealand	Yield	Refinitiv	Datastream	TRNZ2MT	B	6699	NZD	0.167	Govt
+6700	TRNZ2YT	Refinitiv New Zealand Government Benchmark Bid Yield 2 Years	New Zealand	Yield	Refinitiv	Datastream	TRNZ2YT	B	6700	NZD	2.0	Govt
+6701	TRNZ3MT	Refinitiv New Zealand Government Benchmark Bid Yield 3 Months	New Zealand	Yield	Refinitiv	Datastream	TRNZ3MT	B	6701	NZD	0.25	Govt
+6702	TRNZ4MT	Refinitiv New Zealand Government Benchmark Bid Yield 4 Months	New Zealand	Yield	Refinitiv	Datastream	TRNZ4MT	B	6702	NZD	0.333	Govt
+6703	TRNZ5MT	Refinitiv New Zealand Government Benchmark Bid Yield 5 Months	New Zealand	Yield	Refinitiv	Datastream	TRNZ5MT	B	6703	NZD	0.417	Govt
+6704	TRNZ5YT	Refinitiv New Zealand Government Benchmark Bid Yield 5 Years	New Zealand	Yield	Refinitiv	Datastream	TRNZ5YT	B	6704	NZD	5.0	Govt
+6705	TRNZ6MT	Refinitiv New Zealand Government Benchmark Bid Yield 6 Months	New Zealand	Yield	Refinitiv	Datastream	TRNZ6MT	B	6705	NZD	0.5	Govt
+6706	TRNZ7YT	Refinitiv New Zealand Government Benchmark Bid Yield 7 Years	New Zealand	Yield	Refinitiv	Datastream	TRNZ7YT	B	6706	NZD	7.0	Govt
+6707	TRSA12T	Refinitiv S Africa Government Benchmark Bid Yield 12 Years	South Africa	Yield	Refinitiv	Datastream	TRSA12T	B	6707	ZAR	12.0	Govt
+6708	TRSA20T	Refinitiv S Africa Government Benchmark Bid Yield 20 Years	South Africa	Yield	Refinitiv	Datastream	TRSA20T	B	6708	ZAR	20.0	Govt
+6709	TRSA25T	Refinitiv S Africa Government Benchmark Bid Yield 25 Years	South Africa	Yield	Refinitiv	Datastream	TRSA25T	B	6709	ZAR	25.0	Govt
+6710	TRKR20T	Refinitiv S Korea Government Benchmark Bid Yield 20 Years	South Korea	Yield	Refinitiv	Datastream	TRKR20T	B	6710	KRW	20.0	Govt
+6711	TRKR30T	Refinitiv S Korea Government Benchmark Bid Yield 30 Years	South Korea	Yield	Refinitiv	Datastream	TRKR30T	B	6711	KRW	30.0	Govt
+6712	TRKR3YT	Refinitiv S Korea Government Benchmark Bid Yield 3 Years	South Korea	Yield	Refinitiv	Datastream	TRKR3YT	B	6712	KRW	3.0	Govt
+6713	TRKR4YT	Refinitiv S Korea Government Benchmark Bid Yield 4 Years	South Korea	Yield	Refinitiv	Datastream	TRKR4YT	B	6713	KRW	4.0	Govt
+6714	TRKR50T	Refinitiv S Korea Government Benchmark Bid Yield 50 Years	South Korea	Yield	Refinitiv	Datastream	TRKR50T	B	6714	KRW	50.0	Govt
+6715	TRKR5YT	Refinitiv S Korea Government Benchmark Bid Yield 5 Years	South Korea	Yield	Refinitiv	Datastream	TRKR5YT	B	6715	KRW	5.0	Govt
+6716	TRLK10T	Refinitiv Sri Lanka Government Benchmark Bid Yield 10 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK10T	B	6716	LKR	10.0	Govt
+6717	TRLK15T	Refinitiv Sri Lanka Government Benchmark Bid Yield 15 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK15T	B	6717	LKR	15.0	Govt
+6718	TRLK1YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 1 Year	Sri Lanka	Yield	Refinitiv	Datastream	TRLK1YT	B	6718	LKR	1.0	Govt
+6719	TRLK2YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 2 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK2YT	B	6719	LKR	2.0	Govt
+6720	TRLK3MT	Refinitiv Sri Lanka Government Benchmark Bid Yield 3 Months	Sri Lanka	Yield	Refinitiv	Datastream	TRLK3MT	B	6720	LKR	0.25	Govt
+6721	TRLK3YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 3 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK3YT	B	6721	LKR	3.0	Govt
+6722	TRLK4YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 4 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK4YT	B	6722	LKR	4.0	Govt
+6723	TRLK5YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 5 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK5YT	B	6723	LKR	5.0	Govt
+6724	TRLK6MT	Refinitiv Sri Lanka Government Benchmark Bid Yield 6 Months	Sri Lanka	Yield	Refinitiv	Datastream	TRLK6MT	B	6724	LKR	0.5	Govt
+6725	TRLK6YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 6 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK6YT	B	6725	LKR	1.0	Govt
+6726	TRLK7YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 7 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK7YT	B	6726	LKR	7.0	Govt
+6727	TRLK8YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 8 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK8YT	B	6727	LKR	8.0	Govt
+6728	TRLK9YT	Refinitiv Sri Lanka Government Benchmark Bid Yield 9 Years	Sri Lanka	Yield	Refinitiv	Datastream	TRLK9YT	B	6728	LKR	9.0	Govt
+6736	TRZM15T	Refinitiv Zambia Government Benchmark Bid Yield 15 Years	Zambia	Yield	Refinitiv	Datastream	TRZM15T	B	6736	ZMK	15.0	Govt
+6737	TRZM1YT	Refinitiv Zambia Government Benchmark Bid Yield 1 Year	Zambia	Yield	Refinitiv	Datastream	TRZM1YT	B	6737	ZMK	1.0	Govt
+6738	TRZM2YT	Refinitiv Zambia Government Benchmark Bid Yield 2 Years	Zambia	Yield	Refinitiv	Datastream	TRZM2YT	B	6738	ZMK	2.0	Govt
+6739	TRZM3MT	Refinitiv Zambia Government Benchmark Bid Yield 3 Months	Zambia	Yield	Refinitiv	Datastream	TRZM3MT	B	6739	ZMK	0.25	Govt
+6740	TRZM3YT	Refinitiv Zambia Government Benchmark Bid Yield 3 Years	Zambia	Yield	Refinitiv	Datastream	TRZM3YT	B	6740	ZMK	3.0	Govt
+6741	TRZM5YT	Refinitiv Zambia Government Benchmark Bid Yield 5 Years	Zambia	Yield	Refinitiv	Datastream	TRZM5YT	B	6741	ZMK	5.0	Govt
+6742	TRZM6MT	Refinitiv Zambia Government Benchmark Bid Yield 6 Months	Zambia	Yield	Refinitiv	Datastream	TRZM6MT	B	6742	ZMK	0.5	Govt
+6743	TRZM7YT	Refinitiv Zambia Government Benchmark Bid Yield 7 Years	Zambia	Yield	Refinitiv	Datastream	TRZM7YT	B	6743	ZMK	7.0	Govt
+6744	TRZM9MT	Refinitiv Zambia Government Benchmark Bid Yield 9 Months	Zambia	Yield	Refinitiv	Datastream	TRZM9MT	B	6744	ZMK	0.75	Govt
+40405	CN13867	Canada Government Bond 10 Year+	Canada	Yield	CANSIM - Statistics Canada	Datastream	CN13867	B	40405	CAD	10	Govt
+40406	CN13895	Canada Govt. Bnchmk. Bond 10 Year	Canada	Yield	CANSIM - Statistics Canada	Datastream	CN13895	B	40406	CAD	10	Govt
+40407	FRNGLTB	France Bond Yield Govt.10 Yr(Disc)	France	Yield	The Economist	Datastream	FRNGLTB	B	40407	FRF	10	Govt
+40408	ITLGLTB	Italy Bond Yield Govt.10 Yr Disc	Italy	Yield	The Economist	Datastream	ITLGLTB	B	40408	ITL	10	Govt

@@ -1,0 +1,503 @@
+from __future__ import annotations
+
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from threading import RLock
+from typing import Any, Callable, Iterator, Mapping, Sequence, TypeVar
+
+import pickle
+import re
+
+import pandas as pd
+from sqlalchemy import create_engine, func, inspect, select
+from sqlalchemy.engine import Engine, URL
+from sqlalchemy.orm import Session, sessionmaker
+
+
+# Import your real models explicitly. Avoid wildcard imports.
+from epsilonPhi.core.dataModel.alchemist.DataModel import (
+    Base,
+    TimeSeriesSpec,
+    CurrencyMapper,
+    DatabasePickle,
+    FactorSpec,
+    BondIndexSpec,
+    YieldCurveSpec,
+    InterestRateSpec,
+    EconomicSpec,
+    ImpliedVolatilitySpec,
+    ImpliedVolatilityNew,
+)
+
+# From your concrete-table time-series schema.
+# Example:
+# from epsilonPhi.core.dataModel.alchemist.DataModel import TS_MODEL_BY_TYPE
+
+
+T = TypeVar("T")
+
+
+# --------------------------------------------------------------------------- #
+# Configuration (injected, not imported from a global Env at module load time)
+# --------------------------------------------------------------------------- #
+@dataclass(frozen=True, slots=True)
+class DbConfig:
+    """Connection + pool settings. Credentials are passed in, never inlined
+    into a hand-built URL string (URL.create handles escaping safely)."""
+
+    drivername: str
+    username: str
+    password: str
+    host: str
+    database: str
+    port: int | None = None
+    # Pool resilience — the defaults that prevent the classic
+    # "OperationalError after idle" production failure.
+    pool_pre_ping: bool = True
+    pool_recycle_seconds: int = 1800
+    pool_size: int = 5
+    max_overflow: int = 10
+    pool_timeout: int = 30
+    echo: bool = False
+
+    def url(self, database: str | None = None) -> URL:
+        return URL.create(
+            self.drivername,
+            username=self.username,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            database=database or self.database,
+        )
+
+
+class EngineRegistry:
+    """Creates, caches, and disposes SQLAlchemy engines.
+
+    Engines are thread-safe and intended to be shared per process.
+    Sessions are not thread-safe and are created separately.
+    """
+
+    def __init__(self, config: DbConfig) -> None:
+        self._config = config
+        self._engines: dict[str, Engine] = {}
+        self._lock = threading.Lock()
+
+    def get_engine(self, database: str | None = None) -> Engine:
+        name = database or self._config.database
+        engine = self._engines.get(name)
+        if engine is not None:
+            return engine
+        with self._lock:
+            engine = self._engines.get(name)  # re-check inside the lock
+            if engine is None:
+                engine = self._build(name)
+                self._engines[name] = engine
+            return engine
+
+def _build(self, database: str) -> Engine:
+        cfg = self._config
+        kwargs: dict[str, object] = {
+            "pool_pre_ping": cfg.pool_pre_ping,
+            "pool_recycle": cfg.pool_recycle_seconds,
+            "echo": cfg.echo,
+        }
+        # Queue-pool sizing is invalid for SQLite's default pools; only apply
+        # it for real server engines.
+        if not cfg.drivername.startswith("sqlite"):
+            kwargs.update(
+                pool_size=cfg.pool_size,
+                max_overflow=cfg.max_overflow,
+                pool_timeout=cfg.pool_timeout,
+            )
+        log.info("Creating engine for database %r", database)
+        return create_engine(cfg.url(database), **kwargs)
+
+
+    def dispose(self, database: str | None = None) -> None:
+        """Dispose one engine, or all cached engines."""
+        with self._lock:
+            if database is None:
+                engines = list(self._engines.values())
+                self._engines.clear()
+                for engine in engines:
+                    engine.dispose()
+                return
+
+            engine = self._engines.pop(database, None)
+            if engine is not None:
+                engine.dispose()
+
+     def dispose_all(self) -> None:
+        """Release every pool. Call on application shutdown."""
+        with self._lock:
+            for engine in self._engines.values():
+                engine.dispose()
+            self._engines.clear()
+
+
+class SessionProvider:
+    """Owns sessionmaker objects and exposes safe context managers.
+
+    This replaces the Singleton + scoped_session design.
+    """
+
+    def __init__(
+        self,
+        engines: EngineRegistry,
+        *,
+        expire_on_commit: bool = False,
+        autoflush: bool = True,
+    ):
+        self._engines = engines
+        self._makers: dict[str, sessionmaker[Session]] = {}
+        self._lock = RLock()
+        self._expire_on_commit = expire_on_commit
+        self._autoflush = autoflush
+
+    def sessionmaker_for(self, database: str | None = None) -> sessionmaker[Session]:
+        engine = self._engines.get_engine(database)
+        database_name = str(engine.url.database)
+
+        with self._lock:
+            maker = self._makers.get(database_name)
+
+            if maker is None:
+                maker = sessionmaker(
+                    bind=engine,
+                    expire_on_commit=self._expire_on_commit,
+                    autoflush=self._autoflush,
+		    future=True
+                )
+                self._makers[database_name] = maker
+
+            return maker
+
+    @contextmanager
+    def session(self, database: str | None = None) -> Iterator[Session]:
+        """Open a session without automatically committing.
+
+        Use this for read operations or when the caller wants manual transaction
+        control.
+        """
+
+        db_session = self.sessionmaker_for(database)()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    @contextmanager
+    def read_only(self, database: str | None = None) -> Iterator[Session]:
+        """No commit path; rolls back to discard any accidental flush."""
+        session = self.sessionmaker_for(database)()
+        try:
+            yield session
+        finally:
+            session.rollback()
+            session.close()
+
+    @contextmanager
+    def transaction(self, database: str | None = None) -> Iterator[Session]:
+        """Open a session and transaction.
+
+        Commits on success, rolls back on exception, always closes.
+        """
+        db_session = self.sessionmaker_for(database)()
+        try:
+            with db_session.begin():
+                yield db_session
+        finally:
+            db_session.close()
+
+    @contextmanager
+    def nested_transaction(self, session: Session) -> Iterator[Session]:
+        """Open a SAVEPOINT inside an existing session transaction.
+
+        This is for partial rollbacks or test fixtures, not for normal top-level
+        transaction management.
+        """
+        with session.begin_nested():
+            yield session
+
+
+def create_schema(engine: Engine) -> None:
+    """Explicit schema creation for tests/dev only.
+
+    Do not call this from SessionProvider or EngineRegistry.
+    In production, use migrations.
+    """
+    Base.metadata.create_all(engine)
+
+
+def table_names(engine: Engine) -> list[str]:
+    """Return database table names using SQLAlchemy inspection."""
+    return inspect(engine).get_table_names()
+
+
+def column_names(engine: Engine, table_name: str) -> list[str]:
+    """Return column names for a table using SQLAlchemy inspection."""
+    return [col["name"] for col in inspect(engine).get_columns(table_name)]
+
+
+def read_dataframe(session: Session, stmt: Any) -> pd.DataFrame:
+    """Run a SQLAlchemy statement through the current session connection."""
+    return pd.read_sql_query(stmt, session.connection())
+
+
+
+class ReferenceDataRepository:
+    """Domain queries for specs, tickers, factors, and currencies.
+
+    This class does not own sessions. A session is injected by the caller.
+    """
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def get_uid_from_ticker(self, ticker: str) -> int | None:
+        return self.session.scalar(
+            select(TimeSeriesSpec.uid).where(TimeSeriesSpec.ticker == ticker)
+        )
+
+    def get_ticker_from_uid(self, uid: int) -> str | None:
+        return self.session.scalar(
+            select(TimeSeriesSpec.ticker).where(TimeSeriesSpec.uid == uid)
+        )
+
+    def get_spec_by_uid(self, uid: int) -> TimeSeriesSpec | None:
+        return self.session.get(TimeSeriesSpec, uid)
+
+    def get_spec_by_ticker(self, ticker: str) -> TimeSeriesSpec | None:
+        return self.session.scalar(
+            select(TimeSeriesSpec).where(TimeSeriesSpec.ticker == ticker)
+        )
+
+    def get_asset_reporting_name(
+        self,
+        tickers: str | Sequence[str] | None,
+    ) -> tuple[str, str] | tuple[list[str], list[str]] | tuple[list, list]:
+        if tickers is None:
+            return [], []
+
+        ticker_list = [tickers] if isinstance(tickers, str) else list(tickers)
+
+        rows = self.session.execute(
+            select(TimeSeriesSpec.category, TimeSeriesSpec.name)
+            .where(TimeSeriesSpec.ticker.in_(ticker_list))
+        ).all()
+
+        if not rows:
+            return [], []
+
+        categories, names = zip(*rows)
+
+        if len(rows) == 1:
+            return names[0], categories[0]
+
+        return list(names), list(categories)
+
+    def get_currency_from_region(self, region: str) -> str | None:
+        return self.session.scalar(
+            select(CurrencyMapper.code).where(CurrencyMapper.region == region)
+        )
+
+    def get_region_from_currency(self, currency: str) -> str | None:
+        return self.session.scalar(
+            select(CurrencyMapper.region)
+            .where(CurrencyMapper.code == currency.upper())
+        )
+
+    def get_currency_name(self, code: str) -> str | None:
+        return self.session.scalar(
+            select(CurrencyMapper.name).where(CurrencyMapper.code == code.upper())
+        )
+
+    def is_euro_legacy(self, currency: str) -> bool | None:
+        return self.session.scalar(
+            select(CurrencyMapper.EUR_legacy)
+            .where(CurrencyMapper.code == currency.upper())
+        )
+
+    def get_factor_ticker(
+        self,
+        factor_mnemonic: str,
+        *,
+        region: str | None = None,
+        universe: str | None = None,
+        provider: str | None = None,
+    ) -> str | list[str] | None:
+        stmt = select(FactorSpec.ticker).where(FactorSpec.factor == factor_mnemonic)
+
+        if region is not None:
+            stmt = stmt.where(FactorSpec.region == region)
+        if universe is not None:
+            stmt = stmt.where(FactorSpec.universe == universe)
+        if provider is not None:
+            stmt = stmt.where(FactorSpec.provider == provider)
+
+        rows = list(self.session.scalars(stmt))
+
+        if not rows:
+            return None
+
+        if len(rows) == 1:
+            return rows[0]
+
+        return rows
+
+    def get_max_uid(self) -> int | None:
+        return self.session.scalar(select(func.max(TimeSeriesSpec.uid)))
+
+    def get_govt_bond_ticker_for_region(
+        self,
+        region: str,
+        maturity: int,
+    ) -> str | None:
+        return self.session.scalar(
+            select(BondIndexSpec.ticker).where(
+                BondIndexSpec.region == region,
+                BondIndexSpec.sector == "Govt",
+                BondIndexSpec.maturity == maturity,
+            )
+        )
+
+    def get_interest_rate_maturities_for_region(self, region: str) -> list[str]:
+        rows = self.session.scalars(
+            select(InterestRateSpec.maturity)
+            .where(InterestRateSpec.region == region)
+            .distinct()
+        ).all()
+
+        return list(rows)
+
+    def get_interest_rate_tickers_from_region(
+        self,
+        region: str,
+        *,
+        maturity: str | Sequence[str] | None = None,
+        rate_type: str | Sequence[str] | None = None,
+    ) -> pd.DataFrame:
+        stmt = select(
+            InterestRateSpec.uid,
+            InterestRateSpec.ticker,
+            InterestRateSpec.maturity,
+            InterestRateSpec.type,
+        ).where(InterestRateSpec.region == region)
+
+        if maturity is not None:
+            maturities = [maturity] if isinstance(maturity, str) else list(maturity)
+            stmt = stmt.where(InterestRateSpec.maturity.in_(maturities))
+
+        if rate_type is not None:
+            rate_types = [rate_type] if isinstance(rate_type, str) else list(rate_type)
+            stmt = stmt.where(InterestRateSpec.type.in_(rate_types))
+
+        return read_dataframe(self.session, stmt)
+
+    def get_cpi_tickers_from_region(self, region: str) -> pd.DataFrame:
+        stmt = (
+            select(EconomicSpec.uid, EconomicSpec.ticker)
+            .where(
+                EconomicSpec.region == region,
+                EconomicSpec.indicator == "CPI",
+                EconomicSpec.seasonal_adjustment == 1,
+            )
+        )
+        return read_dataframe(self.session, stmt)
+
+
+    """Reads time-series observations from concrete per-type tables."""
+
+    def __init__(
+        self,
+        session: Session,
+        model_by_asset_type: Mapping[str, type[Any]],
+    ):
+        self.session = session
+        self.model_by_asset_type = model_by_asset_type
+
+    def model_for_uid(self, uid: int) -> type[Any]:
+        asset_type = self.session.scalar(
+            select(TimeSeriesSpec.asset_type).where(TimeSeriesSpec.uid == uid)
+        )
+
+        if asset_type is None:
+            raise LookupError(f"No TimeSeriesSpec found for uid={uid}")
+
+        try:
+            return self.model_by_asset_type[asset_type]
+        except KeyError as exc:
+            raise LookupError(
+                f"No concrete time-series model registered for asset_type={asset_type!r}"
+            ) from exc
+
+    def model_for_ticker(self, ticker: str) -> type[Any]:
+        row = self.session.execute(
+            select(TimeSeriesSpec.uid, TimeSeriesSpec.asset_type)
+            .where(TimeSeriesSpec.ticker == ticker)
+        ).one_or_none()
+
+        if row is None:
+            raise LookupError(f"No TimeSeriesSpec found for ticker={ticker!r}")
+
+        _uid, asset_type = row
+
+        try:
+            return self.model_by_asset_type[asset_type]
+        except KeyError as exc:
+            raise LookupError(
+                f"No concrete time-series model registered for asset_type={asset_type!r}"
+            ) from exc
+
+    def latest_observation_date(self, uid: int):
+        model = self.model_for_uid(uid)
+
+        return self.session.scalar(
+            select(func.max(model.date)).where(model.uid == uid)
+        )
+
+    def dataframe_from_uid(
+        self,
+        uid: int,
+        *,
+        start=None,
+        end=None,
+    ) -> pd.DataFrame:
+        model = self.model_for_uid(uid)
+
+        stmt = select(model).where(model.uid == uid)
+
+        if start is not None:
+            stmt = stmt.where(model.date >= start)
+
+        if end is not None:
+            stmt = stmt.where(model.date <= end)
+
+        stmt = stmt.order_by(model.date)
+
+        return read_dataframe(self.session, stmt)
+
+    def rows_from_uid(
+        self,
+        uid: int,
+        *,
+        start=None,
+        end=None,
+    ) -> list[Any]:
+        model = self.model_for_uid(uid)
+
+        stmt = select(model).where(model.uid == uid)
+
+        if start is not None:
+            stmt = stmt.where(model.date >= start)
+
+        if end is not None:
+            stmt = stmt.where(model.date <= end)
+
+        return list(self.session.scalars(stmt.order_by(model.date)))
