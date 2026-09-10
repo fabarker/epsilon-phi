@@ -1,0 +1,688 @@
+from epsilonPhi.core.portfolio.Portfolio import CPortfolio
+from epsilonPhi.core.dataModel.enums.FrequencyType import Frequency
+from epsilonPhi.core.schema.Schema import ContextCreator
+from epsilonPhi.logging import *
+import pandas as pd
+from epsilonPhi.core.simulation.SimStructs import WealthFlows
+from typing import Optional, List
+
+class TaxInfo:
+    def __init__(self, is_taxable, tax_region, is_amt):
+        if not isinstance(is_taxable, bool) or not isinstance(is_amt, bool):
+            raise Exception("Expecting boolean value True/False for is_taxable/is_amt.")
+        self._isTaxable = is_taxable
+        self._taxRegion = tax_region
+        self._isAMT = is_amt
+
+    def get_tax_info(self):
+        return self._isTaxable, self._taxRegion, self._isAMT
+
+
+class SAAPortfolio(CPortfolio):
+    def __init__(self, 
+                 portfolio_name, 
+                 context,
+                 hedging_option=None, 
+                 tax_info=None
+                 ):
+        
+        # Call Constructor
+        super(SAAPortfolio, self).__init__(portfolio_name, context)
+
+        # Portfolio
+        self._reporting_name = None
+        self._hedging_option = None
+
+        # Tax Related Attributes
+        self._is_taxable = False
+        self._tax_region = None
+        self._is_amt = False
+        self._tax_rates = []
+        self._income_tax_rates = []
+
+        ###### Factor-Based Return Attributes
+        self._return_betas = None
+        self._risk_premias = None
+        self._risk_premias_curr_env = None
+
+        self._alphas = None
+
+        ###### Factor-Based Risk Attributes
+        self._risk_betas = None
+        self._sigma = None
+        self._systematic_sigma = None
+
+        # Historical Risk and Return Related
+        self._historical_risk_premia = None
+
+        # Leverage
+        self._lending_weight = 0
+
+        # Optimization Related Attributes
+        self._kappa = None
+        self._markowitz = None
+        self._t12 = None
+
+        # Reporting
+        self._reportingName = None
+
+        SAAPortfolio.check_tax_info_type(tax_info)
+        if isinstance(tax_info, TaxInfo) and tax_info is not None:
+            self.set_tax_info(*tax_info.get_tax_info())
+
+        # Set up the portfolio manager
+        self._hedgingOption = hedging_option if hedging_option else self.get_default_hedging_option()
+        self.setup()
+
+        # wealth flows
+        self._ws_inflows = None
+        self._ws_outflows = None
+
+    def reset_properties(self):
+        super().reset_properties()
+        self.reset_risk()
+        self.reset_return()
+
+    def reset_risk(self):
+        self._risk_betas = None
+        self._sigma = None
+        self._systematic_sigma = None
+        self._historical_risk_premia = []
+        self._kappa = None
+        self._markowitz = None
+        self._t12 = None
+
+    def reset_return(self):
+        self._return_betas = None
+        self._risk_premias = None
+        self._risk_premias_curr_env = None
+        self._alphas = None
+
+    def setup(self):
+        from epsilonPhi.core.portfolio.SAAPortfolioMgr import SAAPortfolioMgr
+        if not self._is_setup or self._portfolio_mgr is None:
+            self._portfolio_mgr = SAAPortfolioMgr(self._context)
+            self._portfolio_mgr.set_portfolio(self)
+            self._is_setup = True
+
+    ########## Public Properties ############
+
+    @property
+    def portfolio_mgr(self):
+        return self._portfolio_mgr
+
+    @property
+    def reporting_name(self):
+        return self._reportingName
+
+    @reporting_name.setter
+    def reporting_name(self, value):
+        self._reportingName = value
+
+    @property
+    def is_taxable(self):
+        return self._is_taxable
+
+
+    ############## Setter Methods #################
+
+    def set_taxable(self, taxable):
+        self._is_taxable = taxable
+
+    def set_kappa(self, kappa):
+        self._kappa = kappa
+
+    def set_markowitz(self, m):
+        self._markowitz = m
+
+    def set_lending_weight(self, weight):
+        self.get_portfolio_mgr().set_lending_weight(weight)
+
+    def set_tax_info(self, is_taxable, tax_region, is_amt):
+        if is_taxable is False or is_taxable == 'N':
+            self._is_taxable = False
+        elif is_taxable is True or is_taxable == 'Y':
+            if self._context.currency == 'USD':
+                self._is_taxable = True
+                self._tax_region = tax_region
+                self._is_amt = is_amt
+            else:
+                logger.error("Tax modeling only supported for USD perspective")
+                raise Exception("Invalid tax region for currency.")
+        else:
+            raise Exception("Unrecognized tax flag.")
+
+    def set_tax_rates(self, **kwargs):
+        pass
+
+    def set_ws_inflows(self, ws_inflows: List[float], type: str, reset=False) -> None:
+        if type not in {'nominal', 'real', 'percent'}:
+            raise ValueError(f"Invalid type: {type}")
+
+        if self._ws_inflows is None or reset:
+            self._ws_inflows = [WealthFlows() for _ in range(len(ws_inflows))]
+
+        for wf, val in zip(self._ws_inflows, ws_inflows):
+            setattr(wf, f'_{type}', val)
+
+    def set_ws_outflows(self, ws_outflows: List[float], type: str, reset=False) -> None:
+        if type not in {'nominal', 'real', 'percent'}:
+            raise ValueError(f"Invalid type: {type}")
+
+        if self._ws_outflows is None or reset:
+            self._ws_outflows = [WealthFlows() for _ in range(len(ws_outflows))]
+
+        for wf, val in zip(self._ws_outflows, ws_outflows):
+            setattr(wf, f'_{type}', val)
+
+
+    ################### Hedging Related ###################
+
+    def get_hedge_ratios_from_hedging_option(self, hedging_option):
+        return self.get_portfolio_mgr().get_hedge_ratios_from_hedging_option(hedging_option)
+
+    def get_hedging_option(self):
+        return self._hedgingOption
+
+    def get_default_hedging_option(self):
+        if self._context:
+            return 'Hedged'
+        else:
+            raise Exception("Context not set in Portfolio")
+
+    def set_hedging_ratios_from_hedging_option(self, hedging_option):
+        # Get each assets hedging ratio for the specified hedging option
+        ratios = self.get_hedge_ratios_from_hedging_option(hedging_option)
+
+        # Set hedge ratios in the portfolios
+        self.set_hedging_ratios(ratios)
+        self._hedging_option = hedging_option
+        return ratios
+
+    def set_hedging_option(self, hedging_option):
+        self.set_hedging_ratios_from_hedging_option(hedging_option)
+
+    ###################### Tax Related #######################
+
+    def get_tax_info(self):
+        return self._is_taxable, self._tax_region, self._is_amt
+
+    def get_tax_region(self):
+        return self._tax_region
+
+    ################### Factor Model Return Metrics ###################
+
+    def get_current_risk_free_rate(self):
+        return self.get_portfolio_mgr().get_current_risk_free_rate()
+
+    def get_risk_free_rate(self) -> float:
+        return self.get_portfolio_mgr().get_risk_free_rate()
+
+    def get_asset_total_return(self, asset_name, after_tax=False):
+        return self.get_portfolio_mgr().get_asset_total_return(asset_name, after_tax)
+
+    def get_assets_return_betas(self):
+        return self.get_portfolio_mgr().get_assets_return_betas()
+
+    def get_assets_total_return(self):
+        return self.get_portfolio_mgr().get_assets_total_return()
+
+    def get_asset_risk_premias(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_risk_premias(asset_name)
+
+    def get_assets_risk_premias(self):
+        return self.get_portfolio_mgr().get_assets_risk_premias()
+
+    def get_asset_total_risk_premia(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_total_risk_premia(asset_name)
+
+    def get_assets_total_risk_premia(self):
+        return self.get_portfolio_mgr().get_assets_total_risk_premia()
+
+    def get_total_return(self):
+        return self.get_portfolio_mgr().get_total_return()
+
+    def get_risk_premias(self):
+        return self.get_portfolio_mgr().get_risk_premias()
+
+    def get_risk_premia(self):
+        return self.get_portfolio_mgr().get_risk_premia()
+
+    def get_asset_current_env_total_return(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_current_env_total_return(asset_name)
+
+    def get_assets_current_env_total_return(self):
+        return self.get_portfolio_mgr().get_assets_current_env_total_return()
+
+    def get_asset_current_env_risk_premias(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_current_env_risk_premias(asset_name)
+
+    def get_assets_current_env_risk_premias(self):
+        return self.get_portfolio_mgr().get_assets_current_env_risk_premias()
+
+    def get_asset_total_current_env_risk_premia(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_total_current_env_risk_premia(asset_name)
+
+    def get_assets_total_current_env_risk_premia(self):
+        return self.get_portfolio_mgr().get_assets_total_current_env_risk_premia()
+
+    def get_current_env_total_return(self):
+        return self.get_portfolio_mgr().get_current_env_total_return()
+
+    def get_current_env_risk_premias(self):
+        return self.get_portfolio_mgr().get_current_env_risk_premias()
+
+    def get_current_env_risk_premia(self):
+        return self.get_portfolio_mgr().get_current_env_risk_premia()
+
+    def get_asset_sharpe_ratio(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_sharpe_ratio(asset_name)
+
+    def get_assets_sharpe_ratios(self):
+        return self.get_portfolio_mgr().get_assets_sharpe_ratios()
+
+    def get_assets_curr_env_sharpe_ratio(self):
+        return self.get_portfolio_mgr().get_assets_curr_env_sharpe_ratio()
+
+    def get_asset_curr_env_sharpe_ratio(self):
+        return self.get_portfolio_mgr().get_asset_curr_env_sharpe_ratio()
+
+    def get_sharpe_ratio(self):
+        return self.get_portfolio_mgr().get_sharpe_ratio()
+
+    def get_curr_env_sharpe_ratio(self):
+        return self.get_portfolio_mgr().get_curr_env_sharpe_ratio()
+
+    def get_current_environment_risk_premia_5yr(self):
+        return self.get_portfolio_mgr().get_current_environment_risk_premia_5yr()
+
+    def get_asset_return_medium(self):
+        return self.get_portfolio_mgr().get_asset_return_medium()
+
+    def get_medium_return(self):
+        return self.get_portfolio_mgr().get_medium_return()
+
+    def get_return_betas(self):
+        return self.get_portfolio_mgr().get_return_betas()
+
+    def get_alpha(self):
+        return self.get_portfolio_mgr().get_alpha()
+
+    def get_asset_alphas(self):
+        return self.get_portfolio_mgr().get_asset_alphas()
+
+    def get_implied_risk_aversion(self):
+        return self.get_portfolio_mgr().get_implied_risk_aversion()
+        ##return self.get_risk_premia() / self.get_total_variance()
+
+    def get_mean_variance_implied_returns(self, risk_aversion=None):
+        return self.get_portfolio_mgr().get_mean_variance_implied_returns(risk_aversion)
+
+
+    ################### Factor Model Risk Metrics ###################
+
+    def get_asset_risk(self):
+        return self.get_portfolio_mgr().get_asset_risk()
+
+    def get_asset_systematic_variance(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_systematic_variance(asset_name)
+
+    def get_asset_idio_variance(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_idio_variance(asset_name)
+
+    def get_assets_idio_variance(self):
+        return self.get_portfolio_mgr().get_assets_idio_variances()
+
+    def get_assets_risk(self):
+        return self.get_portfolio_mgr().get_assets_risk()
+
+    def get_assets_systematic_variances(self):
+        return self.get_portfolio_mgr().get_assets_systematic_variances()
+
+    def get_assets_idio_variances(self):
+        return self.get_portfolio_mgr().get_assets_idio_variances()
+
+    def get_sigma(self):
+        return self.get_portfolio_mgr().get_sigma()
+
+    def get_systematic_sigma(self):
+        return self.get_portfolio_mgr().get_systematic_sigma()
+
+    def get_risk(self):
+        return self.get_portfolio_mgr().get_risk()
+
+    def get_asset_risk_betas(self, asset_name):
+        return self.get_portfolio_mgr().get_asset_risk_betas(asset_name)
+
+    def get_assets_risk_betas(self):
+        return self.get_portfolio_mgr().get_assets_risk_betas()
+
+    def get_risk_betas(self):
+        return self.get_portfolio_mgr().get_risk_betas()
+
+    def get_systematic_risk(self):
+        return self.get_portfolio_mgr().get_systematic_risk()
+
+    def get_systematic_variance(self):
+        return self.get_portfolio_mgr().get_systematic_variance()
+
+    def get_idio_variance(self):
+        return self.get_portfolio_mgr().get_idio_variance()
+
+    def get_total_variance(self):
+        return self.get_portfolio_mgr().get_total_variance()
+
+    def get_risk_decomposition_factor(self):
+        return self.get_portfolio_mgr().get_risk_decomposition_factor()
+
+    def get_fx_risk_decomposition(self):
+        return self.get_portfolio_mgr().get_fx_risk_decomposition()
+
+    def get_marginal_asset_risk_contribution(self):
+        return self.get_portfolio_mgr().get_marginal_asset_risk_contribution()
+
+    def get_total_asset_risk_contribution(self):
+        return self.get_portfolio_mgr().get_total_asset_risk_contribution()
+
+    def get_risk_decomposition(self):
+        return self.get_portfolio_mgr().get_risk_decomposition()
+
+    def get_factor_stress_tests(self):
+        return self.get_portfolio_mgr().get_factor_stress_tests()
+
+    def get_factor_stress_tests_extended(self):
+        return self.get_portfolio_mgr().get_factor_stress_tests_extended()
+
+    def get_stress_multiplier(self):
+        return self.get_portfolio_mgr().get_stress_multiplier()
+
+    def get_portfolio_var_pol(self, confidence=0.99, loss=0):
+        return self.get_portfolio_mgr().get_portfolio_var_pol(confidence, loss)
+
+    def get_portfolio_var_pol_exc_ss(self, confidence=0.99, loss=0):
+        return self.get_portfolio_mgr().get_portfolio_var_pol_exc_ss(confidence, loss)
+
+    def get_tracking_error(self):
+        return self.get_portfolio_mgr().get_tracking_error()
+
+    def get_single_stock_risk_decomposition(self):
+        return self.get_portfolio_mgr().get_single_stock_risk_decomposition()
+
+    def get_correlation_matrix(self):
+        return self.get_portfolio_mgr().get_correlation_matrix()
+
+    ################### Optimization Related ###################
+
+    def set_uncertainty_matrix(self, matrix):
+        return self.get_portfolio_mgr().set_uncertainty_matrix(matrix)
+
+    def get_uncertainty_matrix(self):
+        return self.get_portfolio_mgr().get_uncertainty_matrix()
+
+    def get_portfolio_uncertainty(self):
+        return self.get_portfolio_mgr().get_portfolio_uncertainty()
+
+    def get_asset_data_length(self):
+        return self.get_portfolio_mgr().get_asset_data_length()
+
+    def optimize(self, target_vol=None, contstraints=None, lower_bounds=None, upper_bounds=None):
+        return self.get_portfolio_mgr().optimize(
+            target_vol or self.get_risk(),
+            contstraints,
+            lower_bounds,
+            upper_bounds
+        )
+
+    def optimize_target_return(self):
+        pass
+
+    def optimize_target_income(self):
+        pass
+
+    def optimze_risk_parity(self):
+        pass
+
+    def optimize_tracking_error(self):
+        pass
+
+    def optimize_max_diversification(self):
+        pass
+
+
+
+
+    ################### Simulation Related ###################
+
+    def get_factor_panels(self):
+        return self.get_portfolio_mgr().get_factor_panels()
+
+    def get_portfolio_simulated_returns_panel(self, frequency=Frequency.MONTHLY, long_term_shocks=False):
+        return self.get_portfolio_mgr().get_portfolio_simulated_returns_panel(frequency, long_term_shocks=long_term_shocks)
+
+    def get_stressed_returns_panel(self):
+        return self._portfolio_mgr.get_stressed_returns_panel()
+
+    def get_stressed_risk_panel(self):
+        return self.get_portfolio_mgr().get_stressed_risk_panel()
+
+    def get_portfolio_wealth_projection(self,
+                                        ws_inflows: Optional[List[WealthFlows]] = None,
+                                        ws_outflows: Optional[List[WealthFlows]] = None,
+                                        ptf_sim_order: Optional[List[int]] = None,
+                                        quantiles: Optional[List[float]] = None,
+                                        ptf_list: Optional[List[CPortfolio]] = None,
+                                        frequency=Frequency.YEARLY
+                                        ):
+
+        if ws_inflows is not None:
+            self._ws_inflows = ws_inflows
+
+        if ws_outflows is not None:
+            self._ws_outflows = ws_outflows
+
+        return self.get_portfolio_mgr().get_portfolio_wealth_projection(
+            ws_inflows=self._ws_inflows,
+            ws_outflows=self._ws_outflows,
+            ptf_sim_order=ptf_sim_order,
+            quantiles=quantiles,
+            ptf_list=ptf_list,
+            frequency=frequency
+        )
+
+    def get_factor_backfilled_assets_returns_panel(self):
+        return self.get_portfolio_mgr().get_factor_backfilled_assets_returns_panel()
+
+    def get_factor_backfilled_return_series(self):
+        return self.get_portfolio_mgr().get_factor_backfilled_return_series()
+
+
+    ################### Public Portfolio Methods ##################
+
+    def get_income_summary(self, assumption_version=None, income_version=None, df=None):
+        pass
+
+    def check_for_unhedged_put_writing(self):
+        self.get_portfolio_mgr().check_for_unhedged_put_writing()
+
+    def get_asset_reporting_names(self):
+        return self.get_portfolio_mgr().get_asset_reporting_names()
+
+    def get_total_liquid_asset_value(self):
+        return self.get_portfolio_mgr().get_total_liquid_asset_value()
+
+    def get_total_liquid_assets_weight(self):
+        return self.get_portfolio_mgr().get_total_liquid_assets_weight()
+
+    def get_total_private_assets_weight(self):
+        return self.get_portfolio_mgr().get_total_private_assets_weight()
+
+    def get_asset_categories(self):
+        return self.get_portfolio_mgr().get_asset_categories()
+
+    def get_private_equity_distribution_sub(
+            self,
+            liquid_current_asset_total,
+            subset_class_annual_commitments,
+            pe_current_assets,
+            pe_target_weights=None,
+            wealth_flows=None,
+            num_years=20,
+            multiplier=2,
+            shocks=None,
+            use_total_mv=False,
+            target_system=None
+    ):
+        pass
+
+
+    @staticmethod
+    def create_equal_weighted_portfolio(
+            asset_list,
+            portfolio_name="EqualWeightedPortfolio",
+            context=None,
+            tax_info=None
+    ):
+
+        if context is None:
+            raise Exception("Passed in None context...")
+
+        SAAPortfolio.check_tax_info_type(tax_info)
+        ptf = SAAPortfolio(
+            portfolio_name,
+            context,
+            tax_info=tax_info
+        )
+
+        n = len(asset_list)
+        for asset_name in asset_list:
+            ptf.add_asset_by_name(
+                asset_name,
+                1 / n,
+                0,
+            )
+
+        if isinstance(tax_info, TaxInfo) and tax_info is not None:
+            ptf.set_tax_info(*tax_info.get_tax_info())
+
+        # setup the portfolio
+        ptf.setup()
+        return ptf
+
+    #TODO - Fix this function so it works
+    def deepcopy(self, name: str = None, context = None):
+
+        """
+            Create a deep copy of the object. Optionally assign a new name.
+
+            Args:
+                name (str, optional): New name for the copied object.
+
+            Returns:
+                A fully independent deep copy of the object.
+        """
+
+        copyobj = super().deepcopy(name, context)
+        if name is not None:
+            copyobj.reporting_name = name
+        return copyobj
+
+    @staticmethod
+    def check_tax_info_type(tax_info, type_to_verify=TaxInfo):
+        if tax_info is not None:
+            if isinstance(tax_info, type_to_verify) is False:
+                raise TypeError("Expected type of tax_info is {} got {}".format(type_to_verify, type(tax_info)))
+
+
+    @staticmethod
+    def get_portfolios_from_template(
+            currency,
+            template_path,
+            schema=None,
+    ):
+
+        if schema is None:
+            schema = ContextCreator(
+                currency=currency,
+                start_date='30-Nov-1983',
+                end_date='31-Dec-2022'
+            ).create_context()
+
+        raw = pd.read_excel(
+            template_path,
+            sheet_name='RAW WEIGHTS',
+            index_col=0
+        )
+
+        is_total_row = raw.astype(str).apply(lambda row: row.str.contains("total", case=False)).any(axis=1)
+
+        # Extract metadata columns, excluding non-asset columns
+        metadata_cols = ['Hedge Ratios', 'Name', 'Category', 'Reporting Name']
+        asset_cols = [col for col in raw.columns if col not in metadata_cols]
+
+        # Prepare metadata series
+        hedge_ratios = raw.loc[~is_total_row, 'Hedge Ratios'].astype(float)
+        categories = raw.loc[~is_total_row, 'Category'].astype(str)
+        reporting_names = raw.loc[~is_total_row, 'Reporting Name'].astype(str)
+
+        portfolios = []
+
+        for col in asset_cols:
+            # Load and clean weights
+            weights = raw.loc[~is_total_row, col].replace("-", 0).astype(float)
+            weights /= weights.sum()  # normalize
+
+            # Create portfolio object
+            portfolio = SAAPortfolio.create_equal_weighted_portfolio(
+                weights.index,
+                portfolio_name=col,
+                context=schema
+            )
+
+            portfolio.set_weights(weights.values)
+            portfolio.set_hedging_ratios(hedge_ratios.values)
+
+            # Set reporting info
+            for asset in portfolio.get_assets():
+                asset_name = asset.name[0] if isinstance(asset.name, tuple) else asset.name
+                asset.set_reporting_info(
+                    reporting_name=reporting_names.loc[asset_name],
+                    category=categories.loc[asset_name]
+                )
+
+            portfolios.append(portfolio)
+
+        return portfolios
+
+if __name__ == "__main__":
+
+
+    schema = ContextCreator(
+        currency='USD',
+        start_date='30-Nov-1983',
+        end_date='31-Dec-2022'
+    ).create_context()
+
+
+
+    path = '/Users/francisbarker/Repositories/Python/epsilon-phi/epsilon-phi-core/src/python/epsilonPhi/core/reporting/formatted_excel.xlsx'
+
+    ptfs = SAAPortfolio.get_portfolios_from_template(
+        "USD",
+        path
+    )
+
+    ptf = ptfs[-2]
+
+    from epsilonPhi.core.simulation.privateAssets.PrivateUtils import CPrivateUtils
+
+    liq, pri = CPrivateUtils.split_portfolio_into_liquid_and_private_assets(ptf)
+
+
+    ext_schema = ptf.schema.get_extended_schema()
+    ptf_copy = ptf.deepcopy(context=ext_schema)
+
+    panel_1 = ptf.get_stressed_returns_panel()
+    panel_2 = ptf_copy.get_stressed_returns_panel()
+
+    df1 = pd.DataFrame(panel_1.get_ptf_systematic_index(), index=panel_1.dates, columns=['short'])
+    df2 = pd.DataFrame(panel_2.get_ptf_systematic_index(), index=panel_2.dates, columns=['long'])

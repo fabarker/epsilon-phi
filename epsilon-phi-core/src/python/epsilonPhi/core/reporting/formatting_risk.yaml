@@ -1,0 +1,309 @@
+row_styles:
+  1:
+    A:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: FFFFFFFF
+      fill:
+        type: solid
+        fgColor: FF092532
+      alignment:
+        horizontal: null
+        vertical: center
+        wrap_text: null
+        indent: 0.0
+      number_format: General
+      height: 20.0
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+    B:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: FFFFFFFF
+      fill:
+        type: solid
+        fgColor: FF092532
+      alignment:
+        horizontal: center
+        vertical: center
+        wrap_text: null
+        indent: 0.0
+      number_format: General
+      height: 20.0
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+  2:
+    A:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: null
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: null
+        vertical: null
+        wrap_text: null
+        indent: 0.0
+      number_format: General
+      height: 16
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+    B:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: null
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: center
+        vertical: null
+        wrap_text: null
+        indent: 0.0
+      number_format: 0.0%
+      height: 16
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+  3:
+    A:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: true
+        italic: false
+        color: FF092539
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: null
+        vertical: null
+        wrap_text: null
+        indent: 0.0
+      number_format: General
+      height: 16
+      border:
+        top:
+          style: "dotted"
+          color: "A9A9A9"
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+    B:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: null
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: center
+        vertical: null
+        wrap_text: null
+        indent: 0.0
+      number_format: General
+      height: 16
+      border:
+        top:
+          style: "dotted"
+          color: "A9A9A9"
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+  4:
+    A:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: null
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: left
+        vertical: null
+        wrap_text: null
+        indent: 1.0
+      number_format: General
+      height: 16
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+    B:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: null
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: center
+        vertical: null
+        wrap_text: null
+        indent: 0.0
+      number_format: 0.0%
+      height: 16
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+  5:
+    A:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: null
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: null
+        vertical: null
+        wrap_text: null
+        indent: 0.0
+      number_format: General
+      height: 16
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+    B:
+      font:
+        name: Aptos Narrow
+        size: 12.0
+        bold: false
+        italic: false
+        color: null
+      fill:
+        type: solid
+        fgColor: FFFFFFFF
+      alignment:
+        horizontal: center
+        vertical: null
+        wrap_text: null
+        indent: 0.0
+      number_format: General
+      height: 16
+      border:
+        top:
+          style: null
+          color: null
+        bottom:
+          style: null
+          color: null
+        left:
+          style: null
+          color: null
+        right:
+          style: null
+          color: null
+column_widths:
+  A: 40
+  B: 15

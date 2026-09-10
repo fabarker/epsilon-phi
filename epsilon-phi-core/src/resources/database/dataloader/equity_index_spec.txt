@@ -1,0 +1,511 @@
+17974	AEROSWD	World-Datastream Aerospace	World	Equity Index	Datastream	Datastream	AEROSWD	B	17974	USD	LOC	0
+17975	AERSPWD	World-Datastream Aerospace and Defence	World	Equity Index	Datastream	Datastream	AERSPWD	B	17975	USD	LOC	0
+17976	AIRLNWD	World-Datastream Airlines	World	Equity Index	Datastream	Datastream	AIRLNWD	B	17976	USD	LOC	0
+17977	ALTELWD	World-Datastream Alternative Electricity	World	Equity Index	Datastream	Datastream	ALTELWD	B	17977	USD	LOC	0
+17978	ALTENWD	World-Datastream Alternative Energy	World	Equity Index	Datastream	Datastream	ALTENWD	B	17978	USD	LOC	0
+17979	ALTFLWD	World-Datastream Alternative Fuels	World	Equity Index	Datastream	Datastream	ALTFLWD	B	17979	USD	LOC	0
+17980	ALUMNWD	World-Datastream Aluminum	World	Equity Index	Datastream	Datastream	ALUMNWD	B	17980	USD	LOC	0
+17981	APRETWD	World-Datastream Apparel Retailer	World	Equity Index	Datastream	Datastream	APRETWD	B	17981	USD	LOC	0
+17982	ASSETWD	World-Datastream Asset Managers and Custodians	World	Equity Index	Datastream	Datastream	ASSETWD	B	17982	USD	LOC	0
+17983	AUPRTWD	World-Datastream Auto Parts	World	Equity Index	Datastream	Datastream	AUPRTWD	B	17983	USD	LOC	0
+17984	AUSVSWD	World-Datastream Auto Services	World	Equity Index	Datastream	Datastream	AUSVSWD	B	17984	USD	LOC	0
+17985	AUTMBWD	World-Datastream Automobiles and Parts	World	Equity Index	Datastream	Datastream	AUTMBWD	B	17985	USD	LOC	0
+17986	AUTOSWD	World-Datastream Automobiles	World	Equity Index	Datastream	Datastream	AUTOSWD	B	17986	USD	LOC	0
+17987	BANKSWD	World-Datastream Banks	World	Equity Index	Datastream	Datastream	BANKSWD	B	17987	USD	LOC	0
+17988	BEVESWD	World-Datastream Beverages	World	Equity Index	Datastream	Datastream	BEVESWD	B	17988	USD	LOC	0
+17989	BIOTCWD	World-Datastream Biotechnology	World	Equity Index	Datastream	Datastream	BIOTCWD	B	17989	USD	LOC	0
+17990	BLDCCWD	World-Datastream Building: Climate Control	World	Equity Index	Datastream	Datastream	BLDCCWD	B	17990	USD	LOC	0
+17991	BLDRPWD	World-Datastream Building, Roofing/Wallboard and Plumbing	World	Equity Index	Datastream	Datastream	BLDRPWD	B	17991	USD	LOC	0
+17992	BMATRWD	World-Datastream Basic Materials	World	Equity Index	Datastream	Datastream	BMATRWD	B	17992	USD	LOC	0
+17993	BMATSWD	World-Datastream Building Materials : Other	World	Equity Index	Datastream	Datastream	BMATSWD	B	17993	USD	LOC	0
+17994	BRESRWD	World-Datastream Basic Resources	World	Equity Index	Datastream	Datastream	BRESRWD	B	17994	USD	LOC	0
+17995	BREWSWD	World-Datastream Brewers	World	Equity Index	Datastream	Datastream	BREWSWD	B	17995	USD	LOC	0
+17996	BUSTEWD	World-Datastream Business Training and Employment Agencies	World	Equity Index	Datastream	Datastream	BUSTEWD	B	17996	USD	LOC	0
+17997	CABTVWD	World-Datastream Cable Television Services	World	Equity Index	Datastream	Datastream	CABTVWD	B	17997	USD	LOC	0
+17998	CEINVWD	World-Datastream Closed End Investment 	World	Equity Index	Datastream	Datastream	CEINVWD	B	17998	USD	LOC	0
+17999	CEMNTWD	World-Datastream Cement	World	Equity Index	Datastream	Datastream	CEMNTWD	B	17999	USD	LOC	0
+18000	CHEMSWD	World-Datastream Chemicals : Diversified	World	Equity Index	Datastream	Datastream	CHEMSWD	B	18000	USD	LOC	0
+18001	CHMCLWD	World-Datastream Chemicals	World	Equity Index	Datastream	Datastream	CHMCLWD	B	18001	USD	LOC	0
+18002	CHMSFWD	World-Datastream Chemicals and Synthetic Fibers	World	Equity Index	Datastream	Datastream	CHMSFWD	B	18002	USD	LOC	0
+18003	CHMSPWD	World-Datastream Specialty Chemicals	World	Equity Index	Datastream	Datastream	CHMSPWD	B	18003	USD	LOC	0
+18004	CLTHGWD	World-Datastream Clothing, Accessories	World	Equity Index	Datastream	Datastream	CLTHGWD	B	18004	USD	LOC	0
+18005	CMPSVWD	World-Datastream Computer Services	World	Equity Index	Datastream	Datastream	CMPSVWD	B	18005	USD	LOC	0
+18006	CMTICWD	World-Datastream Cosmetics	World	Equity Index	Datastream	Datastream	CMTICWD	B	18006	USD	LOC	0
+18007	CNELEWD	World-Datastream Consumer Electronics	World	Equity Index	Datastream	Datastream	CNELEWD	B	18007	USD	LOC	0
+18008	CNSTMWD	World-Datastream Construction and Materials	World	Equity Index	Datastream	Datastream	CNSTMWD	B	18008	USD	LOC	0
+18009	CNSVSWD	World-Datastream Consumer Services	World	Equity Index	Datastream	Datastream	CNSVSWD	B	18009	USD	LOC	0
+18010	CNVELWD	World-Datastream Conventional Electricity	World	Equity Index	Datastream	Datastream	CNVELWD	B	18010	USD	LOC	0
+18011	COALMWD	World-Datastream Coal	World	Equity Index	Datastream	Datastream	COALMWD	B	18011	USD	LOC	0
+18012	CODGTWD	World-Datastream Consumer Digital Services	World	Equity Index	Datastream	Datastream	CODGTWD	B	18012	USD	LOC	0
+18013	CODISWD	World-Datastream Consumer Discretionary	World	Equity Index	Datastream	Datastream	CODISWD	B	18013	USD	LOC	0
+18014	COLNDWD	World-Datastream Consumer Lending	World	Equity Index	Datastream	Datastream	COLNDWD	B	18014	USD	LOC	0
+18015	COMMVWD	World-Datastream Commercial Vehicles and Parts	World	Equity Index	Datastream	Datastream	COMMVWD	B	18015	USD	LOC	0
+18016	COMPHWD	World-Datastream Computer Hardware	World	Equity Index	Datastream	Datastream	COMPHWD	B	18016	USD	LOC	0
+18017	COMVLWD	World-Datastream Commercial Vehicle-Equipment Leasing	World	Equity Index	Datastream	Datastream	COMVLWD	B	18017	USD	LOC	0
+18018	CONPKWD	World-Datastream Container and Packaging	World	Equity Index	Datastream	Datastream	CONPKWD	B	18018	USD	LOC	0
+18019	CONPSWD	World-Datastream Consumer Products, Services	World	Equity Index	Datastream	Datastream	CONPSWD	B	18019	USD	LOC	0
+18020	CONSTWD	World-Datastream Construction	World	Equity Index	Datastream	Datastream	CONSTWD	B	18020	USD	LOC	0
+18021	COPERWD	World-Datastream Copper	World	Equity Index	Datastream	Datastream	COPERWD	B	18021	USD	LOC	0
+18022	COSTPWD	World-Datastream Consumer Staples	World	Equity Index	Datastream	Datastream	COSTPWD	B	18022	USD	LOC	0
+18023	COSVMWD	World-Datastream Consumer Services: Misc.	World	Equity Index	Datastream	Datastream	COSVMWD	B	18023	USD	LOC	0
+18024	DEFENWD	World-Datastream Defense	World	Equity Index	Datastream	Datastream	DEFENWD	B	18024	USD	LOC	0
+18025	DELSVWD	World-Datastream Delivery Service	World	Equity Index	Datastream	Datastream	DELSVWD	B	18025	USD	LOC	0
+18026	DGRETWD	World-Datastream Drug Retailers	World	Equity Index	Datastream	Datastream	DGRETWD	B	18026	USD	LOC	0
+18027	DIAMDWD	World-Datastream Diamonds and Gemstones	World	Equity Index	Datastream	Datastream	DIAMDWD	B	18027	USD	LOC	0
+18028	DISTVWD	World-Datastream Distillers and Vintners	World	Equity Index	Datastream	Datastream	DISTVWD	B	18028	USD	LOC	0
+18029	DIVFSWD	World-Datastream Diversified Financial Services	World	Equity Index	Datastream	Datastream	DIVFSWD	B	18029	USD	LOC	0
+18030	DIVINWD	World-Datastream Diversified Industrials	World	Equity Index	Datastream	Datastream	DIVINWD	B	18030	USD	LOC	0
+18031	DVMATWD	World-Datastream Diversified Materials	World	Equity Index	Datastream	Datastream	DVMATWD	B	18031	USD	LOC	0
+18032	DVRETWD	World-Datastream Diversified Retailers	World	Equity Index	Datastream	Datastream	DVRETWD	B	18032	USD	LOC	0
+18033	EDSVSWD	World-Datastream Education Services	World	Equity Index	Datastream	Datastream	EDSVSWD	B	18033	USD	LOC	0
+18034	ELCLCWD	World-Datastream Electrical Components	World	Equity Index	Datastream	Datastream	ELCLCWD	B	18034	USD	LOC	0
+18035	ELECFWD	World-Datastream Electronic Equipment: Control and Filter	World	Equity Index	Datastream	Datastream	ELECFWD	B	18035	USD	LOC	0
+18036	ELECTWD	World-Datastream Electricity	World	Equity Index	Datastream	Datastream	ELECTWD	B	18036	USD	LOC	0
+18037	ELEGMWD	World-Datastream Electronic Equipment: Gauges and Meters	World	Equity Index	Datastream	Datastream	ELEGMWD	B	18037	USD	LOC	0
+18038	ELENTWD	World-Datastream Electronic Entertainment	World	Equity Index	Datastream	Datastream	ELENTWD	B	18038	USD	LOC	0
+18039	ELEOTWD	World-Datastream Electronic Equipment: Other	World	Equity Index	Datastream	Datastream	ELEOTWD	B	18039	USD	LOC	0
+18040	ELEPCWD	World-Datastream Electronic Equipment: Pollution Control	World	Equity Index	Datastream	Datastream	ELEPCWD	B	18040	USD	LOC	0
+18041	ELTCCWD	World-Datastream Electronic Components	World	Equity Index	Datastream	Datastream	ELTCCWD	B	18041	USD	LOC	0
+18042	ELTNCWD	World-Datastream Electronic and Electrical Equipment	World	Equity Index	Datastream	Datastream	ELTNCWD	B	18042	USD	LOC	0
+18043	ENEGYWD	World-Datastream Energy	World	Equity Index	Datastream	Datastream	ENEGYWD	B	18043	USD	LOC	0
+18044	ENGCSWD	World-Datastream Engineering and Contracting Services	World	Equity Index	Datastream	Datastream	ENGCSWD	B	18044	USD	LOC	0
+18045	ENTMTWD	World-Datastream Entertainment	World	Equity Index	Datastream	Datastream	ENTMTWD	B	18045	USD	LOC	0
+18046	FDBEVWD	World-Datastream Food, Beverage and Tobacco	World	Equity Index	Datastream	Datastream	FDBEVWD	B	18046	USD	LOC	0
+18047	FDPRDWD	World-Datastream Food Products	World	Equity Index	Datastream	Datastream	FDPRDWD	B	18047	USD	LOC	0
+18048	FDRETWD	World-Datastream Food Retailers and Wholesalers	World	Equity Index	Datastream	Datastream	FDRETWD	B	18048	USD	LOC	0
+18049	FGPRCWD	World-Datastream Fruit and Grain Processing	World	Equity Index	Datastream	Datastream	FGPRCWD	B	18049	USD	LOC	0
+18050	FINANWD	World-Datastream Financials	World	Equity Index	Datastream	Datastream	FINANWD	B	18050	USD	LOC	0
+18051	FINCSWD	World-Datastream Finance and Credit Services	World	Equity Index	Datastream	Datastream	FINCSWD	B	18051	USD	LOC	0
+18052	FINDPWD	World-Datastream Financial Data Providers	World	Equity Index	Datastream	Datastream	FINDPWD	B	18052	USD	LOC	0
+18053	FINSVWD	World-Datastream Financial Services	World	Equity Index	Datastream	Datastream	FINSVWD	B	18053	USD	LOC	0
+18054	FLINSWD	World-Datastream Full Line Insurance	World	Equity Index	Datastream	Datastream	FLINSWD	B	18054	USD	LOC	0
+18055	FMFSHWD	World-Datastream Farming, Fishing, Ranching and Plantations	World	Equity Index	Datastream	Datastream	FMFSHWD	B	18055	USD	LOC	0
+18056	FOODSWD	World-Datastream Food Producers	World	Equity Index	Datastream	Datastream	FOODSWD	B	18056	USD	LOC	0
+18057	FOOTWWD	World-Datastream Footwear	World	Equity Index	Datastream	Datastream	FOOTWWD	B	18057	USD	LOC	0
+18058	FORMSWD	World-Datastream Forms and Bulk Printing Services	World	Equity Index	Datastream	Datastream	FORMSWD	B	18058	USD	LOC	0
+18059	FORSTWD	World-Datastream Forestry	World	Equity Index	Datastream	Datastream	FORSTWD	B	18059	USD	LOC	0
+18060	FRTLZWD	World-Datastream Fertilizers	World	Equity Index	Datastream	Datastream	FRTLZWD	B	18060	USD	LOC	0
+18061	FUNRLWD	World-Datastream Funeral Parlors and Cemetery	World	Equity Index	Datastream	Datastream	FUNRLWD	B	18061	USD	LOC	0
+18062	FURNSWD	World-Datastream Household Furnishing	World	Equity Index	Datastream	Datastream	FURNSWD	B	18062	USD	LOC	0
+18063	GAMNGWD	World-Datastream Casinos / Gambling	World	Equity Index	Datastream	Datastream	GAMNGWD	B	18063	USD	LOC	0
+18064	GASDSWD	World-Datastream Gas Distribution	World	Equity Index	Datastream	Datastream	GASDSWD	B	18064	USD	LOC	0
+18065	GLASSWD	World-Datastream Glass	World	Equity Index	Datastream	Datastream	GLASSWD	B	18065	USD	LOC	0
+18066	GNINDWD	World-Datastream General Industrials	World	Equity Index	Datastream	Datastream	GNINDWD	B	18066	USD	LOC	0
+18067	GOLDSWD	World-Datastream Gold Mining	World	Equity Index	Datastream	Datastream	GOLDSWD	B	18067	USD	LOC	0
+18068	GPRR50E	GPR 250 Real Estate Investment Trusts (REITS) Europe United States Dollar	Europe	Equity Index	Global Property Research	Datastream	GPRR50E	B	18068	USD	LOC	0
+18069	GPRR50G	GPR 250 Real Estate Investment Trusts (REITS) World United States Dollar	World	Equity Index	Global Property Research	Datastream	GPRR50G	B	18069	USD	LOC	0
+18070	GPRR50U	GPR 250 Real Estate Investment Trusts (REITS) Americas United States Dollar	Americas	Equity Index	Global Property Research	Datastream	GPRR50U	B	18070	USD	LOC	0
+18071	GPRRAL$	GPR 250 Real Estate Investment Trusts (REITS) Australia (United States Dollar)	Australia	Equity Index	Global Property Research	Datastream	GPRRAL$	B	18071	USD	AUD	0
+18072	GPRRALE	GPR 250 Real Estate Investment Trusts (REITS) Australia (Euro)	Australia	Equity Index	Global Property Research	Datastream	GPRRALE	B	18072	EUR	AUD	0
+18073	GPRRALL	GPR 250 Real Estate Investment Trusts (REITS) Australia	Australia	Equity Index	Global Property Research	Datastream	GPRRALL	B	18073	AUD	AUD	0
+18074	GPRRAME	GPR 250 Real Estate Investment Trusts (REITS) Americas Euro	Americas	Equity Index	Global Property Research	Datastream	GPRRAME	B	18074	EUR	USD	0
+18075	GPRRAML	GPR 250 Real Estate Investment Trusts (REITS) Americas	Americas	Equity Index	Global Property Research	Datastream	GPRRAML	B	18075	USD	USD	0
+18076	GPRRCNL	GPR 250 Real Estate Investment Trusts (REITS) Canada	Canada	Equity Index	Global Property Research	Datastream	GPRRCNL	B	18076	CAD	CAD	0
+18077	GPRREUE	GPR 250 Real Estate Investment Trusts (REITS) Europe Euro	Europe	Equity Index	Global Property Research	Datastream	GPRREUE	B	18077	EUR	EUR	0
+18078	GPRREUL	GPR 250 Real Estate Investment Trusts (REITS) Europe	Europe	Equity Index	Global Property Research	Datastream	GPRREUL	B	18078	LOC	LOC	0
+18079	GPRRGLE	GPR 250 Real Estate Investment Trusts (REITS) World (Euro)	World	Equity Index	Global Property Research	Datastream	GPRRGLE	B	18079	EUR	LOC	0
+18080	GPRRGLL	GPR 250 Real Estate Investment Trusts (REITS) World	World	Equity Index	Global Property Research	Datastream	GPRRGLL	B	18080	LOC	LOC	0
+18081	GPRRGY$	GPR 250 Real Estate Investment Trusts (REITS) Germany United States Dollar	Germany	Equity Index	Global Property Research	Datastream	GPRRGY$	B	18081	USD	EUR	0
+18082	GPRRGYE	GPR 250 Real Estate Investment Trusts (REITS) Germany Euro	Germany	Equity Index	Global Property Research	Datastream	GPRRGYE	B	18082	EUR	EUR	0
+18083	GPRRGYL	GPR 250 Real Estate Investment Trusts (REITS) Germany	Germany	Equity Index	Global Property Research	Datastream	GPRRGYL	B	18083	EUR	EUR	0
+18084	GPRRNTE	GPR 250 Real Estate Investment Trusts (REITS) Netherlands (Euro)	Netherlands	Equity Index	Global Property Research	Datastream	GPRRNTE	B	18084	EUR	EUR	0
+18085	GPRRNTL	GPR 250 Real Estate Investment Trusts (REITS) Netherlands	Netherlands	Equity Index	Global Property Research	Datastream	GPRRNTL	B	18085	EUR	EUR	0
+18086	GPRRNZ$	GPR 250 Real Estate Investment Trusts (REITS) New Zealand (United States Dollar)	New Zealand	Equity Index	Global Property Research	Datastream	GPRRNZ$	B	18086	USD	NZD	0
+18087	GPRRNZE	GPR 250 Real Estate Investment Trusts (REITS) New Zealand (Euro)	New Zealand	Equity Index	Global Property Research	Datastream	GPRRNZE	B	18087	EUR	NZD	0
+18088	GPRRNZL	GPR 250 Real Estate Investment Trusts (REITS) New Zealand	New Zealand	Equity Index	Global Property Research	Datastream	GPRRNZL	B	18088	NZD	NZD	0
+18089	GPRROCE	GPR 250 Real Estate Investment Trusts (REITS) Oceania Euro	Oceania	Equity Index	Global Property Research	Datastream	GPRROCE	B	18089	EUR	LOC	0
+18090	GPRROCL	GPR 250 Real Estate Investment Trusts (REITS) Oceania	Oceania	Equity Index	Global Property Research	Datastream	GPRROCL	B	18090	USD	LOC	0
+18091	GPRRUS$	GPR 250 Real Estate Investment Trusts (REITS) United States (United States Dollar)	United States	Equity Index	Global Property Research	Datastream	GPRRUS$	B	18091	USD	USD	0
+18092	GPRRUSE	GPR 250 Real Estate Investment Trusts (REITS) United States (Euro)	United States	Equity Index	Global Property Research	Datastream	GPRRUSE	B	18092	EUR	USD	0
+18093	GPRRUSL	GPR 250 Real Estate Investment Trusts (REITS) United States	United States	Equity Index	Global Property Research	Datastream	GPRRUSL	B	18093	USD	USD	0
+18094	GWMUTWD	World-Datastream Gas, Water, Multi	World	Equity Index	Datastream	Datastream	GWMUTWD	B	18094	USD	LOC	0
+18095	HCFACWD	World-Datastream Health Care Facilities	World	Equity Index	Datastream	Datastream	HCFACWD	B	18095	USD	LOC	0
+18096	HHAPLWD	World-Datastream Household Appliance	World	Equity Index	Datastream	Datastream	HHAPLWD	B	18096	USD	LOC	0
+18097	HHEQPWD	World-Datastream Household Equipment and Products	World	Equity Index	Datastream	Datastream	HHEQPWD	B	18097	USD	LOC	0
+18098	HHOLDWD	World-Datastream Household Goods, Home Construction	World	Equity Index	Datastream	Datastream	HHOLDWD	B	18098	USD	LOC	0
+18099	HIMPRWD	World-Datastream Home Improvements Retail	World	Equity Index	Datastream	Datastream	HIMPRWD	B	18099	USD	LOC	0
+18100	HLTHCWD	World-Datastream Health Care	World	Equity Index	Datastream	Datastream	HLTHCWD	B	18100	USD	LOC	0
+18101	HLTMCWD	World-Datastream Health Care: Misc.	World	Equity Index	Datastream	Datastream	HLTMCWD	B	18101	USD	LOC	0
+18102	HLTMSWD	World-Datastream Health Care Management Services	World	Equity Index	Datastream	Datastream	HLTMSWD	B	18102	USD	LOC	0
+18103	HLTPRWD	World-Datastream Health Care Providers	World	Equity Index	Datastream	Datastream	HLTPRWD	B	18103	USD	LOC	0
+18104	HLTSVWD	World-Datastream Health Care Services	World	Equity Index	Datastream	Datastream	HLTSVWD	B	18104	USD	LOC	0
+18105	HOMESWD	World-Datastream Home Construction	World	Equity Index	Datastream	Datastream	HOMESWD	B	18105	USD	LOC	0
+18106	HOTELWD	World-Datastream Hotels and Motels	World	Equity Index	Datastream	Datastream	HOTELWD	B	18106	USD	LOC	0
+18107	IMACHWD	World-Datastream Machinery: Industrial	World	Equity Index	Datastream	Datastream	IMACHWD	B	18107	USD	LOC	0
+18108	INDENWD	World-Datastream Industrial Engineering	World	Equity Index	Datastream	Datastream	INDENWD	B	18108	USD	LOC	0
+18109	INDGSWD	World-Datastream Industrial Goods and Services	World	Equity Index	Datastream	Datastream	INDGSWD	B	18109	USD	LOC	0
+18110	INDMTWD	World-Datastream Industrial Metals and Mining	World	Equity Index	Datastream	Datastream	INDMTWD	B	18110	USD	LOC	0
+18111	INDTRWD	World-Datastream Industrial Transportation	World	Equity Index	Datastream	Datastream	INDTRWD	B	18111	USD	LOC	0
+18112	INDUSWD	World-Datastream Industrials	World	Equity Index	Datastream	Datastream	INDUSWD	B	18112	USD	LOC	0
+18113	INMATWD	World-Datastream Industrial Materials	World	Equity Index	Datastream	Datastream	INMATWD	B	18113	USD	LOC	0
+18114	INSBRWD	World-Datastream Insurance Brokers	World	Equity Index	Datastream	Datastream	INSBRWD	B	18114	USD	LOC	0
+18115	INSUPWD	World-Datastream Industrial Suppliers	World	Equity Index	Datastream	Datastream	INSUPWD	B	18115	USD	LOC	0
+18116	INSURWD	World-Datastream Insurance	World	Equity Index	Datastream	Datastream	INSURWD	B	18116	USD	LOC	0
+18117	INVBBWD	World-Datastream Investment Banking and Brokerage Services	World	Equity Index	Datastream	Datastream	INVBBWD	B	18117	USD	LOC	0
+18118	INVNKWD	World-Datastream Investment Companies 	World	Equity Index	Datastream	Datastream	INVNKWD	B	18118	USD	LOC	0
+18119	INVSVWD	World-Datastream Investment Services	World	Equity Index	Datastream	Datastream	INVSVWD	B	18119	USD	LOC	0
+18120	ITINTWD	World-Datastream Investment Trust	World	Equity Index	Datastream	Datastream	ITINTWD	B	18120	USD	LOC	0
+18121	LEISGWD	World-Datastream Leisure Goods	World	Equity Index	Datastream	Datastream	LEISGWD	B	18121	USD	LOC	0
+18122	LFINSWD	World-Datastream Life Insurance	World	Equity Index	Datastream	Datastream	LFINSWD	B	18122	USD	LOC	0
+18123	LUXITWD	World-Datastream Luxury Items	World	Equity Index	Datastream	Datastream	LUXITWD	B	18123	USD	LOC	0
+18124	MARINWD	World-Datastream Marine Transportation	World	Equity Index	Datastream	Datastream	MARINWD	B	18124	USD	LOC	0
+18125	MCHAGWD	World-Datastream Machinery : Agricultural 	World	Equity Index	Datastream	Datastream	MCHAGWD	B	18125	USD	LOC	0
+18126	MCHCHWD	World-Datastream Machinery: Construction and Handling	World	Equity Index	Datastream	Datastream	MCHCHWD	B	18126	USD	LOC	0
+18127	MCHENWD	World-Datastream Machinery: Engines	World	Equity Index	Datastream	Datastream	MCHENWD	B	18127	USD	LOC	0
+18128	MCHSPWD	World-Datastream Machinery: Specialty	World	Equity Index	Datastream	Datastream	MCHSPWD	B	18128	USD	LOC	0
+18129	MCHTLWD	World-Datastream Machinery : Tools	World	Equity Index	Datastream	Datastream	MCHTLWD	B	18129	USD	LOC	0
+18130	MEDAGWD	World-Datastream Media Agencies	World	Equity Index	Datastream	Datastream	MEDAGWD	B	18130	USD	LOC	0
+18131	MEDEQWD	World-Datastream Medical Equipment	World	Equity Index	Datastream	Datastream	MEDEQWD	B	18131	USD	LOC	0
+18132	MEDESWD	World-Datastream Medical Equipment and Services	World	Equity Index	Datastream	Datastream	MEDESWD	B	18132	USD	LOC	0
+18133	MEDIAWD	World-Datastream Media	World	Equity Index	Datastream	Datastream	MEDIAWD	B	18133	USD	LOC	0
+18134	MEDSPWD	World-Datastream Medical Supplies	World	Equity Index	Datastream	Datastream	MEDSPWD	B	18134	USD	LOC	0
+18135	MEDSVWD	World-Datastream Medical Services	World	Equity Index	Datastream	Datastream	MEDSVWD	B	18135	USD	LOC	0
+18136	METFBWD	World-Datastream Metal Fabricating	World	Equity Index	Datastream	Datastream	METFBWD	B	18136	USD	LOC	0
+18137	MINESWD	World-Datastream General Mining	World	Equity Index	Datastream	Datastream	MINESWD	B	18137	USD	LOC	0
+18138	MJPRDWD	World-Datastream Cannabis Products	World	Equity Index	Datastream	Datastream	MJPRDWD	B	18138	USD	LOC	0
+18139	MORTFWD	World-Datastream Mortgage Finance	World	Equity Index	Datastream	Datastream	MORTFWD	B	18139	USD	LOC	0
+18140	MSAAPF$	MSCI All Country Asia Pacific United States Dollar	AC Asia Pacific	Equity Index	MSCI	Datastream	MSAAPF$	B	18140	USD	AAP	0
+18141	MSAAPFL	MSCI All Country Asia Pacific	AC Asia Pacific	Equity Index	MSCI	Datastream	MSAAPFL	B	18141	AAP	AAP	0
+18142	MSAASF$	MSCI All Country Asia United States Dollar	AC Asia	Equity Index	MSCI	Datastream	MSAASF$	B	18142	USD	LOC	0
+18143	MSAASFL	MSCI All Country Asia	AC Asia	Equity Index	MSCI	Datastream	MSAASFL	B	18143	LOC	LOC	0
+18144	MSACWF$	MSCI All Country World United States Dollar	AC World	Equity Index	MSCI	Datastream	MSACWF$	B	18144	USD	ACW	0
+18145	MSACWFL	MSCI All Country World	AC World	Equity Index	MSCI	Datastream	MSACWFL	B	18145	ACW	ACW	0
+18146	MSAEME$	MSCI All Country Europe + Middle East United States Dollar	AC Europe and Middle East	Equity Index	MSCI	Datastream	MSAEME$	B	18146	USD	AEM	0
+18147	MSAEMEL	MSCI All Country Europe and Middle East	AC Europe and Middle East	Equity Index	MSCI	Datastream	MSAEMEL	B	18147	AEM	AEM	0
+18148	MSAFXJ$	MSCI All Country Asia Pacific Excluding Japan United States Dollar	AC Asia Pacific ex-Japan	Equity Index	MSCI	Datastream	MSAFXJ$	B	18148	USD	LOC	0
+18149	MSAFXJL	MSCI All Country Asia Pacific Excluding Japan	AC Asia Pacific ex-Japan	Equity Index	MSCI	Datastream	MSAFXJL	B	18149	LOC	LOC	0
+18150	MSASTR$	MSCI Austria United States Dollar	Austria	Equity Index	MSCI	Datastream	MSASTR$	B	18150	USD	EUR	0
+18151	MSASTRL	MSCI Austria	Austria	Equity Index	MSCI	Datastream	MSASTRL	B	18151	EUR	EUR	0
+18152	MSASXJ$	MSCI All Country Asia Excluding Japan United States Dollar	AC Asia ex-Japan	Equity Index	MSCI	Datastream	MSASXJ$	B	18152	USD	LOC	0
+18153	MSASXJL	MSCI All Country Asia Excluding Japan	AC Asia ex Japan	Equity Index	MSCI	Datastream	MSASXJL	B	18153	LOC	LOC	0
+18154	MSAUST$	MSCI Australia United States Dollar	Australia	Equity Index	MSCI	Datastream	MSAUST$	B	18154	USD	AUD	0
+18155	MSAUSTL	MSCI Australia	Australia	Equity Index	MSCI	Datastream	MSAUSTL	B	18155	AUD	AUD	0
+18156	MSBELG$	MSCI Belgium United States Dollar	Belgium	Equity Index	MSCI	Datastream	MSBELG$	B	18156	USD	EUR	0
+18157	MSBELGL	MSCI Belgium	Belgium	Equity Index	MSCI	Datastream	MSBELGL	B	18157	EUR	EUR	0
+18158	MSBRAZ$	MSCI Brazil United States Dollar	Brazil	Equity Index	MSCI	Datastream	MSBRAZ$	B	18158	USD	BRL	0
+18159	MSBRAZL	MSCI Brazil	Brazil	Equity Index	MSCI	Datastream	MSBRAZL	B	18159	BRL	BRL	0
+18160	MSCFEF$	MSCI All Country Far East United States Dollar	AC Far East	Equity Index	MSCI	Datastream	MSCFEF$	B	18160	USD	LOC	0
+18161	MSCFEFL	MSCI All Country Far East	AC Far East	Equity Index	MSCI	Datastream	MSCFEFL	B	18161	LOC	LOC	0
+18162	MSCHIL$	MSCI Chile United States Dollar	Chile	Equity Index	MSCI	Datastream	MSCHIL$	B	18162	USD	CLP	0
+18163	MSCHILL	MSCI Chile	Chile	Equity Index	MSCI	Datastream	MSCHILL	B	18163	CLP	CLP	0
+18164	MSCHIN$	MSCI China United States Dollar	China	Equity Index	MSCI	Datastream	MSCHIN$	B	18164	USD	CNY	0
+18165	MSCHINL	MSCI China	China	Equity Index	MSCI	Datastream	MSCHINL	B	18165	CNY	CNY	0
+18166	MSCMAF$	MSCI All Country Americas United States Dollar	AC Americas	Equity Index	MSCI	Datastream	MSCMAF$	B	18166	USD	ACA	0
+18167	MSCMAFL	MSCI All Country Americas	AC Americas	Equity Index	MSCI	Datastream	MSCMAFL	B	18167	ACA	ACA	0
+18168	MSCNDA$	MSCI Canada United States Dollar	Canada	Equity Index	MSCI	Datastream	MSCNDA$	B	18168	USD	CAD	0
+18169	MSCNDAL	MSCI Canada	Canada	Equity Index	MSCI	Datastream	MSCNDAL	B	18169	CAD	CAD	0
+18170	MSCOLM$	MSCI Colombia United States Dollar	Colombia	Equity Index	MSCI	Datastream	MSCOLM$	B	18170	USD	COP	0
+18171	MSCOLML	MSCI Colombia	Colombia	Equity Index	MSCI	Datastream	MSCOLML	B	18171	COP	COP	0
+18172	MSCPAF$	MSCI All Country Pacific United States Dollar	AC Pacific	Equity Index	MSCI	Datastream	MSCPAF$	B	18172	USD	LOC	0
+18173	MSCPAFL	MSCI All Country Pacific	AC Pacific	Equity Index	MSCI	Datastream	MSCPAFL	B	18173	LOC	LOC	0
+18174	MSCSGWD	World-Datastream Miscellaneous Consumer Staple Goods	World	Equity Index	Datastream	Datastream	MSCSGWD	B	18174	USD	LOC	0
+18175	MSCZCH$	MSCI Czech Republic Republic United States Dollar	Czech Republic	Equity Index	MSCI	Datastream	MSCZCH$	B	18175	USD	CZK	0
+18176	MSCZCHL	MSCI Czech Republic Republic	Czech Republic	Equity Index	MSCI	Datastream	MSCZCHL	B	18176	CZK	CZK	0
+18177	MSDNMK$	MSCI Denmark United States Dollar	Denmark	Equity Index	MSCI	Datastream	MSDNMK$	B	18177	USD	DKK	0
+18178	MSDNMKL	MSCI Denmark	Denmark	Equity Index	MSCI	Datastream	MSDNMKL	B	18178	DKK	DKK	0
+18179	MSEAFE$	MSCI EAFE United States Dollar	EAFE	Equity Index	MSCI	Datastream	MSEAFE$	B	18179	USD	EFE	0
+18180	MSEAFEL	MSCI EAFE	EAFE	Equity Index	MSCI	Datastream	MSEAFEL	B	18180	EFE	EFE	0
+18181	MSECOM$	MSCI European Union United States Dollar	European Union	Equity Index	MSCI	Datastream	MSECOM$	B	18181	USD	LOC	0
+18182	MSECOML	MSCI European Union	European Union	Equity Index	MSCI	Datastream	MSECOML	B	18182	LOC	LOC	0
+18183	MSEEUR$	MSCI Emerging Markets Europe United States Dollar	EM Europe	Equity Index	MSCI	Datastream	MSEEUR$	B	18183	USD	EEP	0
+18184	MSEEURL	MSCI Emerging Markets Europe	EM Europe	Equity Index	MSCI	Datastream	MSEEURL	B	18184	EEP	EEP	0
+18185	MSEFLA$	MSCI Emerging Markets Latin America United States Dollar	EM Latin America	Equity Index	MSCI	Datastream	MSEFLA$	B	18185	USD	ELA	0
+18186	MSEFLAL	MSCI Emerging Markets Latin America	EM Latin America	Equity Index	MSCI	Datastream	MSEFLAL	B	18186	ELA	ELA	0
+18187	MSEGYT$	MSCI Egypt United States Dollar	Egypt	Equity Index	MSCI	Datastream	MSEGYT$	B	18187	USD	EGP	0
+18188	MSEGYTL	MSCI Egypt	Egypt	Equity Index	MSCI	Datastream	MSEGYTL	B	18188	EGP	EGP	0
+18189	MSEIRE$	MSCI Ireland United States Dollar	Ireland	Equity Index	MSCI	Datastream	MSEIRE$	B	18189	USD	EUR	0
+18190	MSEIREL	MSCI Ireland	Ireland	Equity Index	MSCI	Datastream	MSEIREL	B	18190	EUR	EUR	0
+18191	MSEMEA$	MSCI Emerging Markets Europe + Middle East United States Dollar	EM Europe and Middle East	Equity Index	MSCI	Datastream	MSEMEA$	B	18191	USD	EME	0
+18192	MSEMEAL	MSCI Emerging Markets Europe and Middle East	EM Europe and Middle East	Equity Index	MSCI	Datastream	MSEMEAL	B	18192	EME	EME	0
+18193	MSEMFA$	MSCI Emerging Markets Asia United States Dollar	EM Asia	Equity Index	MSCI	Datastream	MSEMFA$	B	18193	USD	EMA	0
+18194	MSEMFAL	MSCI Emerging Markets Asia	EM Asia	Equity Index	MSCI	Datastream	MSEMFAL	B	18194	EMA	EMA	0
+18195	MSEMKF$	MSCI Emerging Markets United States Dollar	Emerging Markets	Equity Index	MSCI	Datastream	MSEMKF$	B	18195	USD	EMM	0
+18196	MSEMKFL	MSCI Emerging Markets	Emerging Markets	Equity Index	MSCI	Datastream	MSEMKFL	B	18196	EMM	EMM	0
+18197	MSEMUI$	MSCI Economic and Monetary Union (EMU) United States Dollar	Eurozone	Equity Index	MSCI	Datastream	MSEMUI$	B	18197	USD	EUR	0
+18198	MSEMUIL	MSCI Economic and Monetary Union (EMU)	Eurozone	Equity Index	MSCI	Datastream	MSEMUIL	B	18198	EMU	EMU	0
+18199	MSEROP$	MSCI Europe United States Dollar	Europe	Equity Index	MSCI	Datastream	MSEROP$	B	18199	USD	ERP	0
+18200	MSEROPL	MSCI Europe	Europe	Equity Index	MSCI	Datastream	MSEROPL	B	18200	ERP	ERP	0
+18201	MSEURO$	MSCI All Country Europe United States Dollar	AC Europe	Equity Index	MSCI	Datastream	MSEURO$	B	18201	USD	LOC	0
+18202	MSEUROL	MSCI All Country Europe	AC Europe	Equity Index	MSCI	Datastream	MSEUROL	B	18202	LOC	LOC	0
+18203	MSEXUK$	MSCI Europe Excluding United Kingdom United States Dollar	Europe	Equity Index	MSCI	Datastream	MSEXUK$	B	18203	USD	ERP	0
+18204	MSEXUKL	MSCI Europe Excluding United Kingdom	Europe ex-UK	Equity Index	MSCI	Datastream	MSEXUKL	B	18204	EXU	EXU	0
+18205	MSFIND$	MSCI Finland United States Dollar	Finland	Equity Index	MSCI	Datastream	MSFIND$	B	18205	USD	EUR	0
+18206	MSFINDL	MSCI Finland	Finland	Equity Index	MSCI	Datastream	MSFINDL	B	18206	EUR	EUR	0
+18207	MSFRNC$	MSCI France United States Dollar	France	Equity Index	MSCI	Datastream	MSFRNC$	B	18207	USD	EUR	0
+18208	MSFRNCL	MSCI France	France	Equity Index	MSCI	Datastream	MSFRNCL	B	18208	EUR	EUR	0
+18209	MSFXEA$	MSCI EAFE FX Hedge United States Dollar	EAFE	Equity Index	MSCI	Datastream	MSFXEA$	B	18209	USD	LOC	0
+18210	MSFXPC$	MSCI Pacific FX Hedge United States Dollar	Pacific	Equity Index	MSCI	Datastream	MSFXPC$	B	18210	USD	LOC	0
+18211	MSFXUR$	MSCI Europe FX Hedge United States Dollar	Europe	Equity Index	MSCI	Datastream	MSFXUR$	B	18211	USD	LOC	0
+18212	MSGEAF$	MSCI EAFE Growth United States Dollar	EAFE	Equity Index	MSCI	Datastream	MSGEAF$	B	18212	USD	LOC	0
+18213	MSGEAFL	MSCI EAFE Growth	EAFE	Equity Index	MSCI	Datastream	MSGEAFL	B	18213	LOC	LOC	0
+18214	MSGERM$	MSCI Germany United States Dollar	Germany	Equity Index	MSCI	Datastream	MSGERM$	B	18214	USD	EUR	0
+18215	MSGERML	MSCI Germany	Germany	Equity Index	MSCI	Datastream	MSGERML	B	18215	EUR	EUR	0
+18216	MSGEUR$	MSCI Europe Growth United States Dollar	Europe	Equity Index	MSCI	Datastream	MSGEUR$	B	18216	USD	LOC	0
+18217	MSGEURL	MSCI Europe Growth	Europe	Equity Index	MSCI	Datastream	MSGEURL	B	18217	LOC	LOC	0
+18218	MSGEUX$	MSCI Europe Excluding United Kingdom Growth United States Dollar	Europe ex-UK	Equity Index	MSCI	Datastream	MSGEUX$	B	18218	USD	EXU	0
+18219	MSGEUXL	MSCI Europe Excluding United Kingdom Growth	Europe ex-UK	Equity Index	MSCI	Datastream	MSGEUXL	B	18219	LOC	LOC	0
+18220	MSGPAC$	MSCI Pacific Growth United States Dollar	Pacific	Equity Index	MSCI	Datastream	MSGPAC$	B	18220	USD	LOC	0
+18221	MSGPACL	MSCI Pacific Growth	Pacific	Equity Index	MSCI	Datastream	MSGPACL	B	18221	LOC	LOC	0
+18222	MSGPCX$	MSCI Pacific Excluding Japan Growth United States Dollar	Pacific ex-Japan	Equity Index	MSCI	Datastream	MSGPCX$	B	18222	USD	LOC	0
+18223	MSGPCXL	MSCI Pacific Excluding Japan Growth	Pacific ex-Japan	Equity Index	MSCI	Datastream	MSGPCXL	B	18223	LOC	LOC	0
+18224	MSGREE$	MSCI Greece United States Dollar	Greece	Equity Index	MSCI	Datastream	MSGREE$	B	18224	USD	EUR	0
+18225	MSGREEL	MSCI Greece	Greece	Equity Index	MSCI	Datastream	MSGREEL	B	18225	EUR	EUR	0
+18226	MSGUKN$	MSCI United Kingdom Growth United States Dollar	United Kingdom	Equity Index	MSCI	Datastream	MSGUKN$	B	18226	USD	GBP	0
+18227	MSGUSA$	MSCI United States of America Growth United States Dollar	United States	Equity Index	MSCI	Datastream	MSGUSA$	B	18227	USD	USD	0
+18228	MSGUSAL	MSCI United States of America Growth	United States	Equity Index	MSCI	Datastream	MSGUSAL	B	18228	USD	USD	0
+18229	MSGWLD$	MSCI World Growth United States Dollar	World	Equity Index	MSCI	Datastream	MSGWLD$	B	18229	USD	LOC	0
+18230	MSGWLDL	MSCI World Growth	World	Equity Index	MSCI	Datastream	MSGWLDL	B	18230	LOC	LOC	0
+18231	MSHEAF$	MSCI EAFE Hedged United States Dollar	EAFE	Equity Index	MSCI	Datastream	MSHEAF$	B	18231	USD	LOC	0
+18232	MSHEUR$	MSCI Europe Hedged United States Dollar	Europe	Equity Index	MSCI	Datastream	MSHEUR$	B	18232	USD	LOC	0
+18233	MSHEUX$	MSCI Europe Excluding United Kingdom Hedged United States Dollar	Europe	Equity Index	MSCI	Datastream	MSHEUX$	B	18233	USD	LOC	0
+18234	MSHGKG$	MSCI Hong Kong United States Dollar	Hong Kong	Equity Index	MSCI	Datastream	MSHGKG$	B	18234	USD	HKD	0
+18235	MSHGKGL	MSCI Hong Kong	Hong Kong	Equity Index	MSCI	Datastream	MSHGKGL	B	18235	HKD	HKD	0
+18236	MSHPAC$	MSCI Pacific Hedged United States Dollar	Pacific	Equity Index	MSCI	Datastream	MSHPAC$	B	18236	USD	LOC	0
+18237	MSHPCX$	MSCI Pacific Excluding Japan Hedged United States Dollar	Pacific ex-Japan	Equity Index	MSCI	Datastream	MSHPCX$	B	18237	USD	LOC	0
+18238	MSHUNG$	MSCI Hungary United States Dollar	Hungary	Equity Index	MSCI	Datastream	MSHUNG$	B	18238	USD	HUF	0
+18239	MSHUNGL	MSCI Hungary	Hungary	Equity Index	MSCI	Datastream	MSHUNGL	B	18239	HUF	HUF	0
+18240	MSHWLD$	MSCI World Hedged United States Dollar	World	Equity Index	MSCI	Datastream	MSHWLD$	B	18240	USD	LOC	0
+18241	MSINDF$	MSCI Indonesia United States Dollar	Indonesia	Equity Index	MSCI	Datastream	MSINDF$	B	18241	USD	IDR	0
+18242	MSINDFL	MSCI Indonesia	Indonesia	Equity Index	MSCI	Datastream	MSINDFL	B	18242	IDR	IDR	0
+18243	MSINDI$	MSCI India United States Dollar	India	Equity Index	MSCI	Datastream	MSINDI$	B	18243	USD	INR	0
+18244	MSINDIL	MSCI India	India	Equity Index	MSCI	Datastream	MSINDIL	B	18244	INR	INR	0
+18245	MSISRL$	MSCI Israel United States Dollar	Israel	Equity Index	MSCI	Datastream	MSISRL$	B	18245	USD	ILS	0
+18246	MSISRLL	MSCI Israel Local Currency	Israel	Equity Index	MSCI	Datastream	MSISRLL	B	18246	ILS	ILS	0
+18247	MSITAL$	MSCI Italy United States Dollar	Italy	Equity Index	MSCI	Datastream	MSITAL$	B	18247	USD	EUR	0
+18248	MSITALL	MSCI Italy	Italy	Equity Index	MSCI	Datastream	MSITALL	B	18248	EUR	EUR	0
+18249	MSJPAN$	MSCI Japan United States Dollar	Japan	Equity Index	MSCI	Datastream	MSJPAN$	B	18249	USD	JPY	0
+18250	MSJPANL	MSCI Japan	Japan	Equity Index	MSCI	Datastream	MSJPANL	B	18250	JPY	JPY	0
+18251	MSKORE$	MSCI Korea United States Dollar	South Korea	Equity Index	MSCI	Datastream	MSKORE$	B	18251	USD	KRW	0
+18252	MSKOREL	MSCI Korea	South Korea	Equity Index	MSCI	Datastream	MSKOREL	B	18252	KRW	KRW	0
+18253	MSKUWA$	MSCI Kuwait United States Dollar	Kuwait	Equity Index	MSCI	Datastream	MSKUWA$	B	18253	USD	KWD	0
+18254	MSKUWAL	MSCI Kuwait	Kuwait	Equity Index	MSCI	Datastream	MSKUWAL	B	18254	KWD	KWD	0
+18255	MSMALF$	MSCI Malaysia (Emerging Markets) United States Dollar	Malaysia	Equity Index	MSCI	Datastream	MSMALF$	B	18255	USD	MYR	0
+18256	MSMALFL	MSCI Malaysia	Malaysia	Equity Index	MSCI	Datastream	MSMALFL	B	18256	MYR	MYR	0
+18257	MSMEXF$	MSCI Mexico United States Dollar	Mexico	Equity Index	MSCI	Datastream	MSMEXF$	B	18257	USD	MXN	0
+18258	MSMEXFL	MSCI Mexico	Mexico	Equity Index	MSCI	Datastream	MSMEXFL	B	18258	MXN	MXN	0
+18259	MSNETH$	MSCI Netherlands United States Dollar	Netherlands	Equity Index	MSCI	Datastream	MSNETH$	B	18259	USD	EUR	0
+18260	MSNETHL	MSCI Netherlands	Netherlands	Equity Index	MSCI	Datastream	MSNETHL	B	18260	EUR	EUR	0
+18261	MSNWAY$	MSCI Norway United States Dollar	Norway	Equity Index	MSCI	Datastream	MSNWAY$	B	18261	USD	NOK	0
+18262	MSNWAYL	MSCI Norway	Norway	Equity Index	MSCI	Datastream	MSNWAYL	B	18262	NOK	NOK	0
+18263	MSNZEA$	MSCI New Zealand United States Dollar	New Zealand	Equity Index	MSCI	Datastream	MSNZEA$	B	18263	USD	NZD	0
+18264	MSNZEAL	MSCI New Zealand	New Zealand	Equity Index	MSCI	Datastream	MSNZEAL	B	18264	NZD	NZD	0
+18265	MSPACF$	MSCI Pacific United States Dollar	Pacific	Equity Index	MSCI	Datastream	MSPACF$	B	18265	USD	PAC	0
+18266	MSPACFL	MSCI Pacific	Pacific	Equity Index	MSCI	Datastream	MSPACFL	B	18266	PAC	PAC	0
+18267	MSPERU$	MSCI Peru United States Dollar	Peru	Equity Index	MSCI	Datastream	MSPERU$	B	18267	USD	PEN	0
+18268	MSPERUL	MSCI Peru	Peru	Equity Index	MSCI	Datastream	MSPERUL	B	18268	PEN	PEN	0
+18269	MSPFXJ$	MSCI All Country Pacific Excluding Japan United States Dollar	AC Pacific ex-Japan	Equity Index	MSCI	Datastream	MSPFXJ$	B	18269	USD	LOC	0
+18270	MSPFXJL	MSCI All Country Pacific Excluding Japan	AC Pacific ex-Japan	Equity Index	MSCI	Datastream	MSPFXJL	B	18270	LOC	LOC	0
+18271	MSPHLF$	MSCI Philippines United States Dollar	Philippines	Equity Index	MSCI	Datastream	MSPHLF$	B	18271	USD	PHP	0
+18272	MSPHLFL	MSCI Philippines	Philippines	Equity Index	MSCI	Datastream	MSPHLFL	B	18272	PHP	PHP	0
+18273	MSPLND$	MSCI Poland United States Dollar	Poland	Equity Index	MSCI	Datastream	MSPLND$	B	18273	USD	PLN	0
+18274	MSPLNDL	MSCI Poland	Poland	Equity Index	MSCI	Datastream	MSPLNDL	B	18274	PLN	PLN	0
+18275	MSPORD$	MSCI Portugal United States Dollar	Portugal	Equity Index	MSCI	Datastream	MSPORD$	B	18275	USD	EUR	0
+18276	MSPORDL	MSCI Portugal	Portugal	Equity Index	MSCI	Datastream	MSPORDL	B	18276	EUR	EUR	0
+18277	MSPXJP$	MSCI Pacific Excluding Japan United States Dollar	Pacific ex-Japan	Equity Index	MSCI	Datastream	MSPXJP$	B	18277	USD	PXJ	0
+18278	MSPXJPL	MSCI Pacific Excluding Japan	Pacific ex-Japan	Equity Index	MSCI	Datastream	MSPXJPL	B	18278	PXJ	PXJ	0
+18279	MSQATA$	MSCI Qatar United States Dollar	Qatar	Equity Index	MSCI	Datastream	MSQATA$	B	18279	USD	QAR	0
+18280	MSQATAL	MSCI Qatar	Qatar	Equity Index	MSCI	Datastream	MSQATAL	B	18280	QAR	QAR	0
+18281	MSSARF$	MSCI South Africa United States Dollar	South Africa	Equity Index	MSCI	Datastream	MSSARF$	B	18281	USD	ZAR	0
+18282	MSSARFL	MSCI South Africa	South Africa	Equity Index	MSCI	Datastream	MSSARFL	B	18282	ZAR	ZAR	0
+18283	MSSAUD$	MSCI Saudi Arabia United States Dollar	Saudi Arabia	Equity Index	MSCI	Datastream	MSSAUD$	B	18283	USD	SAR	0
+18284	MSSAUDL	MSCI Saudi Arabia	Saudi Arabia	Equity Index	MSCI	Datastream	MSSAUDL	B	18284	SAR	SAR	0
+18285	MSSING$	MSCI Singapore United States Dollar	Singapore	Equity Index	MSCI	Datastream	MSSING$	B	18285	USD	SGD	0
+18286	MSSINGL	MSCI Singapore	Singapore	Equity Index	MSCI	Datastream	MSSINGL	B	18286	SGD	SGD	0
+18287	MSSPAN$	MSCI Spain United States Dollar	Spain	Equity Index	MSCI	Datastream	MSSPAN$	B	18287	USD	EUR	0
+18288	MSSPANL	MSCI Spain	Spain	Equity Index	MSCI	Datastream	MSSPANL	B	18288	EUR	EUR	0
+18289	MSSWDN$	MSCI Sweden United States Dollar	Sweden	Equity Index	MSCI	Datastream	MSSWDN$	B	18289	USD	SEK	0
+18290	MSSWDNL	MSCI Sweden	Sweden	Equity Index	MSCI	Datastream	MSSWDNL	B	18290	SEK	SEK	0
+18291	MSSWIT$	MSCI Switzerland United States Dollar	Switzerland	Equity Index	MSCI	Datastream	MSSWIT$	B	18291	USD	CHF	0
+18292	MSSWITL	MSCI Switzerland	Switzerland	Equity Index	MSCI	Datastream	MSSWITL	B	18292	CHF	CHF	0
+18293	MSTAIW$	MSCI Taiwan United States Dollar	Taiwan	Equity Index	MSCI	Datastream	MSTAIW$	B	18293	USD	TWD	0
+18294	MSTAIWL	MSCI Taiwan	Taiwan	Equity Index	MSCI	Datastream	MSTAIWL	B	18294	TWD	TWD	0
+18295	MSTHAF$	MSCI Thailand United States Dollar	Thailand	Equity Index	MSCI	Datastream	MSTHAF$	B	18295	USD	THB	0
+18296	MSTHAFL	MSCI Thailand	Thailand	Equity Index	MSCI	Datastream	MSTHAFL	B	18296	THB	THB	0
+18297	MSTURK$	MSCI Turkey United States Dollar	Turkey	Equity Index	MSCI	Datastream	MSTURK$	B	18297	USD	TRY	0
+18298	MSTURKL	MSCI Turkey	Turkey	Equity Index	MSCI	Datastream	MSTURKL	B	18298	TRY	TRY	0
+18299	MSUAEI$	MSCI United Arab Emirates United States Dollar	United Arab Emirates	Equity Index	MSCI	Datastream	MSUAEI$	B	18299	USD	AED	0
+18300	MSUAEIL	MSCI United Arab Emirates	United Arab Emirates	Equity Index	MSCI	Datastream	MSUAEIL	B	18300	AED	AED	0
+18301	MSUSAM$	MSCI United States of America United States Dollar	United States	Equity Index	MSCI	Datastream	MSUSAM$	B	18301	USD	USD	0
+18302	MSUSAML	MSCI United States of America	United States	Equity Index	MSCI	Datastream	MSUSAML	B	18302	USD	USD	0
+18303	MSUTDK$	MSCI United Kingdom United States Dollar	United Kingdom	Equity Index	MSCI	Datastream	MSUTDK$	B	18303	USD	GBP	0
+18304	MSUTDKL	MSCI United Kingdom	United Kingdom	Equity Index	MSCI	Datastream	MSUTDKL	B	18304	GBP	GBP	0
+18305	MSVEAF$	MSCI EAFE Value United States Dollar	EAFE	Equity Index	MSCI	Datastream	MSVEAF$	B	18305	USD	LOC	0
+18306	MSVEAFL	MSCI EAFE Value	EAFE	Equity Index	MSCI	Datastream	MSVEAFL	B	18306	LOC	LOC	0
+18307	MSVEUR$	MSCI Europe Value United States Dollar	Europe	Equity Index	MSCI	Datastream	MSVEUR$	B	18307	USD	LOC	0
+18308	MSVEURL	MSCI Europe Value	Europe	Equity Index	MSCI	Datastream	MSVEURL	B	18308	LOC	LOC	0
+18309	MSVEUX$	MSCI Europe Excluding United Kingdom Value United States Dollar	Europe ex-UK	Equity Index	MSCI	Datastream	MSVEUX$	B	18309	USD	LOC	0
+18310	MSVEUXL	MSCI Europe Excluding United Kingdom Value	Europe ex-UK	Equity Index	MSCI	Datastream	MSVEUXL	B	18310	LOC	LOC	0
+18311	MSVPAC$	MSCI Pacific Value United States Dollar	Pacific	Equity Index	MSCI	Datastream	MSVPAC$	B	18311	USD	LOC	0
+18312	MSVPACL	MSCI Pacific Value	Pacific	Equity Index	MSCI	Datastream	MSVPACL	B	18312	LOC	LOC	0
+18313	MSVPCX$	MSCI Pacific Excluding Japan Value United States Dollar	Pacific ex-Japan	Equity Index	MSCI	Datastream	MSVPCX$	B	18313	USD	LOC	0
+18314	MSVPCXL	MSCI Pacific Excluding Japan Value	Pacific ex-Japan	Equity Index	MSCI	Datastream	MSVPCXL	B	18314	LOC	LOC	0
+18315	MSVUKN$	MSCI United Kingdom Value United States Dollar	United Kingdom	Equity Index	MSCI	Datastream	MSVUKN$	B	18315	USD	GBP	0
+18316	MSVUSA$	MSCI United States of America Value United States Dollar	United States	Equity Index	MSCI	Datastream	MSVUSA$	B	18316	USD	USD	0
+18317	MSVUSAL	MSCI United States of America Value	United States	Equity Index	MSCI	Datastream	MSVUSAL	B	18317	USD	USD	0
+18318	MSVWLD$	MSCI World Value United States Dollar	World	Equity Index	MSCI	Datastream	MSVWLD$	B	18318	USD	LOC	0
+18319	MSVWLDL	MSCI World Value	World	Equity Index	MSCI	Datastream	MSVWLDL	B	18319	LOC	LOC	0
+18320	MSWFXU$	MSCI All Country World Excluding United States United States Dollar	AC World ex-US	Equity Index	MSCI	Datastream	MSWFXU$	B	18320	USD	LOC	0
+18321	MSWFXUL	MSCI All Country World Excluding United States	AC World ex-US	Equity Index	MSCI	Datastream	MSWFXUL	B	18321	LOC	LOC	0
+18322	MSWRLD$	MSCI World United States Dollar	World	Equity Index	MSCI	Datastream	MSWRLD$	B	18322	USD	WLD	0
+18323	MSWRLDL	MSCI World	World	Equity Index	MSCI	Datastream	MSWRLDL	B	18323	WLD	WLD	0
+18324	MSWXUS$	MSCI World Excluding United States United States Dollar	World	Equity Index	MSCI	Datastream	MSWXUS$	B	18324	USD	LOC	0
+18325	MSWXUSL	MSCI World Excluding United States	World	Equity Index	MSCI	Datastream	MSWXUSL	B	18325	LOC	LOC	0
+18326	MTUTLWD	World-Datastream Multi-Utilities	World	Equity Index	Datastream	Datastream	MTUTLWD	B	18326	USD	LOC	0
+18327	NAREQR$	FTSE NAREIT Equity Real Estate Investment Trusts (REITS) United States Dollar	United States	Equity Index	FTSE	Datastream	NAREQR$	B	18327	USD	USD	0
+18328	NDRHPWD	World-Datastream Non-Durable Household Products	World	Equity Index	Datastream	Datastream	NDRHPWD	B	18328	USD	LOC	0
+18329	NLINSWD	World-Datastream Non-life Insurance	World	Equity Index	Datastream	Datastream	NLINSWD	B	18329	USD	LOC	0
+18330	NOFMSWD	World-Datastream Nonferrous Metal	World	Equity Index	Datastream	Datastream	NOFMSWD	B	18330	USD	LOC	0
+18331	OFFDSWD	World-Datastream Offshore Drilling and Other Services	World	Equity Index	Datastream	Datastream	OFFDSWD	B	18331	USD	LOC	0
+18332	OFFEQWD	World-Datastream Electronic Office Equipment	World	Equity Index	Datastream	Datastream	OFFEQWD	B	18332	USD	LOC	0
+18333	OILCPWD	World-Datastream Oil: Crude Producers	World	Equity Index	Datastream	Datastream	OILCPWD	B	18333	USD	LOC	0
+18334	OILGCWD	World-Datastream Oil, Gas, Coal	World	Equity Index	Datastream	Datastream	OILGCWD	B	18334	USD	LOC	0
+18335	OILINWD	World-Datastream Integrated Oil and Gas	World	Equity Index	Datastream	Datastream	OILINWD	B	18335	USD	LOC	0
+18336	OILRMWD	World-Datastream Oil Refining and Marketing	World	Equity Index	Datastream	Datastream	OILRMWD	B	18336	USD	LOC	0
+18337	OILSVWD	World-Datastream Oil Equipment and Services	World	Equity Index	Datastream	Datastream	OILSVWD	B	18337	USD	LOC	0
+18338	PAINTWD	World-Datastream Paint and Coating	World	Equity Index	Datastream	Datastream	PAINTWD	B	18338	USD	LOC	0
+18339	PAPERWD	World-Datastream Paper	World	Equity Index	Datastream	Datastream	PAPERWD	B	18339	USD	LOC	0
+18340	PCDGSWD	World-Datastream Personal Care, Drug and Grocery Stores	World	Equity Index	Datastream	Datastream	PCDGSWD	B	18340	USD	LOC	0
+18341	PCINSWD	World-Datastream Property / Casualty Insurance	World	Equity Index	Datastream	Datastream	PCINSWD	B	18341	USD	LOC	0
+18342	PERSGWD	World-Datastream Personal Goods	World	Equity Index	Datastream	Datastream	PERSGWD	B	18342	USD	LOC	0
+18343	PHARMWD	World-Datastream Pharmaceutical and Biotechnology	World	Equity Index	Datastream	Datastream	PHARMWD	B	18343	USD	LOC	0
+18344	PHOTOWD	World-Datastream Photography	World	Equity Index	Datastream	Datastream	PHOTOWD	B	18344	USD	LOC	0
+18345	PHRMCWD	World-Datastream Pharmaceuticals	World	Equity Index	Datastream	Datastream	PHRMCWD	B	18345	USD	LOC	0
+18346	PIPELWD	World-Datastream Pipelines	World	Equity Index	Datastream	Datastream	PIPELWD	B	18346	USD	LOC	0
+18347	PLASTWD	World-Datastream Plastics	World	Equity Index	Datastream	Datastream	PLASTWD	B	18347	USD	LOC	0
+18348	PLTNMWD	World-Datastream Platinum and Precious Metals	World	Equity Index	Datastream	Datastream	PLTNMWD	B	18348	USD	LOC	0
+18349	PRBSSWD	World-Datastream Professional Business Support Services	World	Equity Index	Datastream	Datastream	PRBSSWD	B	18349	USD	LOC	0
+18350	PRCMMWD	World-Datastream Precious Metals and Mining	World	Equity Index	Datastream	Datastream	PRCMMWD	B	18350	USD	LOC	0
+18351	PRDTEWD	World-Datastream Production Technology Equipment	World	Equity Index	Datastream	Datastream	PRDTEWD	B	18351	USD	LOC	0
+18352	PRNTCWD	World-Datastream 'Dead' Printing and Company	World	Equity Index	Datastream	Datastream	PRNTCWD	B	18352	USD	LOC	0
+18353	PRSNLWD	World-Datastream Personal Product	World	Equity Index	Datastream	Datastream	PRSNLWD	B	18353	USD	LOC	0
+18354	PUBLSWD	World-Datastream Publishing	World	Equity Index	Datastream	Datastream	PUBLSWD	B	18354	USD	LOC	0
+18355	RAILSWD	World-Datastream Railroads	World	Equity Index	Datastream	Datastream	RAILSWD	B	18355	USD	LOC	0
+18356	RECPRWD	World-Datastream Recreational Products	World	Equity Index	Datastream	Datastream	RECPRWD	B	18356	USD	LOC	0
+18357	RECSVWD	World-Datastream Recreational Services	World	Equity Index	Datastream	Datastream	RECSVWD	B	18357	USD	LOC	0
+18358	RECVBWD	World-Datastream Recreational Vehicles and Boats	World	Equity Index	Datastream	Datastream	RECVBWD	B	18358	USD	LOC	0
+18359	REINSWD	World-Datastream Reinsurance	World	Equity Index	Datastream	Datastream	REINSWD	B	18359	USD	LOC	0
+18360	REITSWD	World-Datastream Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	REITSWD	B	18360	USD	LOC	0
+18361	RENEEWD	World-Datastream Renewable Energy Equipment	World	Equity Index	Datastream	Datastream	RENEEWD	B	18361	USD	LOC	0
+18362	RESTSWD	World-Datastream Restaurants and Bars	World	Equity Index	Datastream	Datastream	RESTSWD	B	18362	USD	LOC	0
+18363	RITDVWD	World-Datastream Diversified Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITDVWD	B	18363	USD	LOC	0
+18364	RITHCWD	World-Datastream Health Care Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITHCWD	B	18364	USD	LOC	0
+18365	RITHLWD	World-Datastream Hotel and Lodging REITs	World	Equity Index	Datastream	Datastream	RITHLWD	B	18365	USD	LOC	0
+18366	RITIFWD	World-Datastream Infrastructure REITs	World	Equity Index	Datastream	Datastream	RITIFWD	B	18366	USD	LOC	0
+18367	RITINWD	World-Datastream Industrial Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITINWD	B	18367	USD	LOC	0
+18368	RITMCWD	World-Datastream 'Dead' Mortgages Real Estate Investment Trusts (REITS) :	World	Equity Index	Datastream	Datastream	RITMCWD	B	18368	USD	LOC	0
+18369	RITMDWD	World-Datastream Mortgages Real Estate Investment Trusts (REITS) : Diversified	World	Equity Index	Datastream	Datastream	RITMDWD	B	18369	USD	LOC	0
+18370	RITMGWD	World-Datastream Mortgage Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITMGWD	B	18370	USD	LOC	0
+18371	RITMRWD	World-Datastream Mortgage REITs: Residential	World	Equity Index	Datastream	Datastream	RITMRWD	B	18371	USD	LOC	0
+18372	RITOFWD	World-Datastream Office Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITOFWD	B	18372	USD	LOC	0
+18373	RITOSWD	World-Datastream Other Specialty REITs	World	Equity Index	Datastream	Datastream	RITOSWD	B	18373	USD	LOC	0
+18374	RITRSAM	Americas-Datastream Residential Real Estate Investment Trusts (REITS)	Americas	Equity Index	Datastream	Datastream	RITRSAM	B	18374	USD	USD	0
+18375	RITRSDV	Developed Markets-Datastream Residential Real Estate Investment Trusts (REITS)	Developed Markets	Equity Index	Datastream	Datastream	RITRSDV	B	18375	USD	USD	0
+18376	RITRSER	Europe-Datastream Residential Real Estate Investment Trusts (REITS)	Europe	Equity Index	Datastream	Datastream	RITRSER	B	18376	USD	USD	0
+18377	RITRSUS	United States-Datastream Residential Real Estate Investment Trusts (REITS)	United States	Equity Index	Datastream	Datastream	RITRSUS	B	18377	USD	USD	0
+18378	RITRSWD	World-Datastream Residential Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITRSWD	B	18378	USD	LOC	0
+18379	RITRTWD	World-Datastream Retail Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITRTWD	B	18379	USD	LOC	0
+18380	RITSTWD	World-Datastream Storage Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITSTWD	B	18380	USD	LOC	0
+18381	RITTMWD	World-Datastream Timber Real Estate Investment Trusts (REITS)	World	Equity Index	Datastream	Datastream	RITTMWD	B	18381	USD	LOC	0
+18382	RLDEVWD	World-Datastream Real Estate Holding and Development	World	Equity Index	Datastream	Datastream	RLDEVWD	B	18382	USD	LOC	0
+18383	RLESTWD	World-Datastream Real Estate	World	Equity Index	Datastream	Datastream	RLESTWD	B	18383	USD	LOC	0
+18384	RLISVWD	World-Datastream Real Estate Investment Services	World	Equity Index	Datastream	Datastream	RLISVWD	B	18384	USD	LOC	0
+18385	RLSCOWD	World-Datastream Rental and Leasing Services: Consumer	World	Equity Index	Datastream	Datastream	RLSCOWD	B	18385	USD	LOC	0
+18386	RLSRVWD	World-Datastream Real Estate Service	World	Equity Index	Datastream	Datastream	RLSRVWD	B	18386	USD	LOC	0
+18387	RREQPWD	World-Datastream Railroad Equipment	World	Equity Index	Datastream	Datastream	RREQPWD	B	18387	USD	LOC	0
+18388	RTAILWD	World-Datastream Retailers	World	Equity Index	Datastream	Datastream	RTAILWD	B	18388	USD	LOC	0
+18389	RTVBCWD	World-Datastream Radio and TV Broadcasters	World	Equity Index	Datastream	Datastream	RTVBCWD	B	18389	USD	LOC	0
+18390	FRUS1GR	Russell 1000 (EOD) Growth	United States	Equity Index	Russell	Datastream	FRUS1GR	B	18390	USD	USD	0
+18391	FRUS1VA	Russell 1000 (EOD) Value	United States	Equity Index	Russell	Datastream	FRUS1VA	B	18391	USD	USD	0
+18392	FRUS250	Russell 2500 (EOD) 	United States	Equity Index	Russell	Datastream	FRUS250	B	18392	USD	USD	0
+18393	FRUS25G	Russell 2500 (EOD) Growth	United States	Equity Index	Russell	Datastream	FRUS25G	B	18393	USD	USD	0
+18394	FRUS25V	Russell 2500 (EOD) Value	United States	Equity Index	Russell	Datastream	FRUS25V	B	18394	USD	USD	0
+18395	FRUS2GR	Russell 2000 (EOD) Growth	United States	Equity Index	Russell	Datastream	FRUS2GR	B	18395	USD	USD	0
+18396	FRUS2VA	Russell 2000 (EOD) Value	United States	Equity Index	Russell	Datastream	FRUS2VA	B	18396	USD	USD	0
+18397	FRUS3GR	Russell 3000 (EOD) Growth	United States	Equity Index	Russell	Datastream	FRUS3GR	B	18397	USD	USD	0
+18398	FRUS3VA	Russell 3000 (EOD) Value	United States	Equity Index	Russell	Datastream	FRUS3VA	B	18398	USD	USD	0
+18399	FRUSMID	Russell Mid Cap (EOD) 	United States	Equity Index	Russell	Datastream	FRUSMID	B	18399	USD	USD	0
+18400	FRUSMIG	Russell Mid Cap Growth (EOD) 	United States	Equity Index	Russell	Datastream	FRUSMIG	B	18400	USD	USD	0
+18401	FRUSMIV	Russell Mid Cap Value (EOD) 	United States	Equity Index	Russell	Datastream	FRUSMIV	B	18401	USD	USD	0
+18402	FRUSS1L	Russell 1000 (EOD) 	United States	Equity Index	Russell	Datastream	FRUSS1L	B	18402	USD	USD	0
+18403	FRUSS2L	Russell 2000 (EOD) 	United States	Equity Index	Russell	Datastream	FRUSS2L	B	18403	USD	USD	0
+18404	FRUSS3L	Russell 3000 (EOD) 	United States	Equity Index	Russell	Datastream	FRUSS3L	B	18404	USD	USD	0
+18405	S&PCOMP	Standard and Poor's 500 Composite	United States	Equity Index	S&P	Datastream	S&PCOMP	B	18405	USD	USD	0
+18406	SBBRAML	Standard and Poor's Americas Real Estate Investment Trusts (REITS)	Americas	Equity Index	Standard and Poors (S&P)	Datastream	SBBRAML	B	18406	LOC	LOC	0
+18407	SBBRAP$	Standard and Poor's Asia Pacific Real Estate Investment Trusts (REITS) United States Dollar	Global Asia Pacific	Equity Index	Standard and Poors (S&P)	Datastream	SBBRAP$	B	18407	USD	LOC	0
+18408	SBBRAPL	Standard and Poor's Asia Pacific Real Estate Investment Trusts (REITS)	Global Asia Pacific	Equity Index	Standard and Poors (S&P)	Datastream	SBBRAPL	B	18408	LOC	LOC	0
+18409	SBBRAU$	Standard and Poor's Australia Real Estate Investment Trusts (REITS) United States Dollar	Australia	Equity Index	Standard and Poors (S&P)	Datastream	SBBRAU$	B	18409	USD	AUD	0
+18410	SBBRAUL	Standard and Poor's Australia Real Estate Investment Trusts (REITS)	Australia	Equity Index	Standard and Poors (S&P)	Datastream	SBBRAUL	B	18410	AUD	AUD	0
+18411	SBBREU$	Standard and Poor's Europe Real Estate Investment Trusts (REITS) United States Dollar	Global Europe	Equity Index	Standard and Poors (S&P)	Datastream	SBBREU$	B	18411	USD	LOC	0
+18412	SBBREUL	Standard and Poor's Europe Real Estate Investment Trusts (REITS)	Global Europe	Equity Index	Standard and Poors (S&P)	Datastream	SBBREUL	B	18412	LOC	LOC	0
+18413	SBBREZ$	Standard and Poor's Eurozone Real Estate Investment Trusts (REITS) United States Dollar	Global	Equity Index	Standard and Poors (S&P)	Datastream	SBBREZ$	B	18413	USD	LOC	0
+18414	SBBREZL	Standard and Poor's Eurozone Real Estate Investment Trusts (REITS)	Global	Equity Index	Standard and Poors (S&P)	Datastream	SBBREZL	B	18414	LOC	LOC	0
+18415	SBBRGLL	Standard and Poor's Global Real Estate Investment Trusts (REITS)	Global	Equity Index	Standard and Poors (S&P)	Datastream	SBBRGLL	B	18415	USD	USD	0
+18416	SBBRNA$	Standard and Poor's North America Real Estate Investment Trusts (REITS) United States Dollar	Global North Americas	Equity Index	Standard and Poors (S&P)	Datastream	SBBRNA$	B	18416	USD	LOC	0
+18417	SBBRNL$	Standard and Poor's Netherlands Real Estate Investment Trusts (REITS) United States Dollar	Netherlands	Equity Index	Standard and Poors (S&P)	Datastream	SBBRNL$	B	18417	USD	EUR	0
+18418	SBBRNLE	Standard and Poor's Netherlands Real Estate Investment Trusts (REITS)	Netherlands	Equity Index	Standard and Poors (S&P)	Datastream	SBBRNLE	B	18418	EUR	EUR	0
+18419	SBBRNZ$	Standard and Poor's New Zealand Real Estate Investment Trusts (REITS) United States Dollar	New Zealand	Equity Index	Standard and Poors (S&P)	Datastream	SBBRNZ$	B	18419	USD	NZD	0
+18420	SBBRUSL	Standard and Poor's United States Real Estate Investment Trusts (REITS) United States Dollar	United States	Equity Index	Standard and Poors (S&P)	Datastream	SBBRUSL	B	18420	USD	USD	0
+18421	SBBRWL$	Standard and Poor's Developed Real Estate Investment Trusts (REITS) United States Dollar	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBBRWL$	B	18421	USD	LOC	0
+18422	SBBRWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS)	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBBRWLL	B	18422	LOC	LOC	0
+18423	SBBRZZ$	Standard and Poor's Europe and Asia Pacific Real Estate Investment Trusts (REITS) United States Dollar	Global Europe and Asia Pacific	Equity Index	Standard and Poors (S&P)	Datastream	SBBRZZ$	B	18423	USD	LOC	0
+18424	SBHRAU$	SPGI Broad Market Index (BMI) Australia Real Estate Investment Trusts (REITS) Hedge United States Dollar	Australia	Equity Index	S&P Citigroup	Datastream	SBHRAU$	B	18424	USD	AUD	0
+18425	SBHREU$	SPGI Broad Market Index (BMI) Europe Real Estate Investment Trusts (REITS) Hedge United States Dollar	Global	Equity Index	S&P Citigroup	Datastream	SBHREU$	B	18425	USD	LOC	0
+18426	SBHRGL$	SPGI Broad Market Index (BMI) Global Real Estate Investment Trusts (REITS) Hedge United States Dollar	Global	Equity Index	S&P Citigroup	Datastream	SBHRGL$	B	18426	USD	LOC	0
+18427	SBHRUS$	SPGI Broad Market Index (BMI) United States Real Estate Investment Trusts (REITS) Hedge United States Dollar	United States	Equity Index	S&P Citigroup	Datastream	SBHRUS$	B	18427	USD	USD	0
+18428	SBHRWL$	SPGI Broad Market Index (BMI) World Real Estate Investment Trusts (REITS) Hedge United States Dollar	Global	Equity Index	S&P Citigroup	Datastream	SBHRWL$	B	18428	USD	LOC	0
+18429	SBHRZJ$	SPGI Broad Market Index (BMI) Europe and Asia Pacific excluding Japan Real Estate Investment Trusts (REITS) Hedge United States Dollar	Global	Equity Index	S&P Citigroup	Datastream	SBHRZJ$	B	18429	USD	LOC	0
+18430	SBRDWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS) Diversified	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBRDWLL	B	18430	LOC	LOC	0
+18431	SBREWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS) Specialised	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBREWLL	B	18431	LOC	LOC	0
+18432	SBRHWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS) Health Care	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBRHWLL	B	18432	LOC	LOC	0
+18433	SBROWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS) OFC Space	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBROWLL	B	18433	LOC	LOC	0
+18434	SBRRWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS) Resources	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBRRWLL	B	18434	LOC	LOC	0
+18435	SBRTWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS) Retail	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBRTWLL	B	18435	LOC	LOC	0
+18436	SBRZWLL	Standard and Poor's Developed Real Estate Investment Trusts (REITS) Storage	Global Developed	Equity Index	Standard and Poors (S&P)	Datastream	SBRZWLL	B	18436	LOC	LOC	0
+18437	SECSVWD	World-Datastream Security Services	World	Equity Index	Datastream	Datastream	SECSVWD	B	18437	USD	LOC	0
+18438	SEMICWD	World-Datastream Semiconductors	World	Equity Index	Datastream	Datastream	SEMICWD	B	18438	USD	LOC	0
+18439	SFTCSWD	World-Datastream Software and Computer Services	World	Equity Index	Datastream	Datastream	SFTCSWD	B	18439	USD	LOC	0
+18440	SOFTDWD	World-Datastream Soft Drinks	World	Equity Index	Datastream	Datastream	SOFTDWD	B	18440	USD	LOC	0
+18441	SOFTWWD	World-Datastream Software	World	Equity Index	Datastream	Datastream	SOFTWWD	B	18441	USD	LOC	0
+18442	SP05SGR	Standard and Poor's 500 Growth	United States	Equity Index	S&P	Datastream	SP05SGR	B	18442	USD	USD	0
+18443	SP05SVA	Standard and Poor's 500 Value	United States	Equity Index	S&P	Datastream	SP05SVA	B	18443	USD	USD	0
+18444	SP5ECOD	Standard and Poor's 500 Economic Sector Consumer Discretionary	United States	Equity Index	S&P	Datastream	SP5ECOD	B	18444	USD	USD	0
+18445	SP5ECST	Standard and Poor's 500 Economic Sector Consumer Staples	United States	Equity Index	S&P	Datastream	SP5ECST	B	18445	USD	USD	0
+18446	SP5EENE	Standard and Poor's 500 Economic Sector Energy	United States	Equity Index	S&P	Datastream	SP5EENE	B	18446	USD	USD	0
+18447	SP5EFIN	Standard and Poor's 500 Economic Sector Financials	United States	Equity Index	S&P	Datastream	SP5EFIN	B	18447	USD	USD	0
+18448	SP5EHCR	Standard and Poor's 500 Economic Sector Health Care	United States	Equity Index	S&P	Datastream	SP5EHCR	B	18448	USD	USD	0
+18449	SP5EIND	Standard and Poor's 500 Economic Sector Industrials	United States	Equity Index	S&P	Datastream	SP5EIND	B	18449	USD	USD	0
+18450	SP5EINT	Standard and Poor's 500 Economic Sector Information Technology	United States	Equity Index	S&P	Datastream	SP5EINT	B	18450	USD	USD	0
+18451	SP5EMAT	Standard and Poor's 500 Economic Sector Materials	United States	Equity Index	S&P	Datastream	SP5EMAT	B	18451	USD	USD	0
+18452	SP5ER11	Standard and Poor's 500 Economic Sector Real Estate	United States	Equity Index	S&P	Datastream	SP5ER11	B	18452	USD	USD	0
+18453	SP5ETEL	Standard and Poor's 500 Economic Sector Communication Services	United States	Equity Index	S&P	Datastream	SP5ETEL	B	18453	USD	USD	0
+18454	SP5EUTL	Standard and Poor's 500 Economic Sector Utilities	United States	Equity Index	S&P	Datastream	SP5EUTL	B	18454	USD	USD	0
+25735	NASCOMP	Nasdaq Composite	United States	Equity Index	NASDAQ Stock Market	Datastream	NASCOMP	B	25735	USD	USD	0
+40171	MSARGT$	MSCI Argentina United States Dollar	Argentina	Equity Index	MSCI	Datastream	MSARGT$	B	40171	USD	ARS	0
+40172	MSARGTL	MSCI Argentina	Argentina	Equity Index	MSCI	Datastream	MSARGTL	B	40172	ARS	ARS	0
+40173	MSJORD$	MSCI Jordan United States Dollar	Jordan	Equity Index	MSCI	Datastream	MSJORD$	B	40173	USD	JOD	0
+40174	MSJORDL	MSCI Jordan	Jordan	Equity Index	MSCI	Datastream	MSJORDL	B	40174	JOD	JOD	0
+40175	MSLUXB$	MSCI Luxembourg United States Dollar 'Dead'	Luxembourg	Equity Index	MSCI	Datastream	MSLUXB$	B	40175	USD	EUR	0
+40176	MSLUXBL	MSCI Luxembourg 'Dead'	Luxembourg	Equity Index	MSCI	Datastream	MSLUXBL	B	40176	EUR	LUF	0
+40177	MSMORC$	MSCI Morocco United States Dollar	Morocco	Equity Index	MSCI	Datastream	MSMORC$	B	40177	USD	MAD	0
+40178	MSMORCL	MSCI Morocco	Morocco	Equity Index	MSCI	Datastream	MSMORCL	B	40178	MAD	MAD	0
+40179	MSPAKI$	MSCI Pakistan United States Dollar	Pakistan	Equity Index	MSCI	Datastream	MSPAKI$	B	40179	USD	PKR	0
+40180	MSPAKIL	MSCI Pakistan	Pakistan	Equity Index	MSCI	Datastream	MSPAKIL	B	40180	PKR	PKR	0
+40181	MSRUSS$	MSCI Russia United States Dollar 'Dead'	Russia	Equity Index	MSCI	Datastream	MSRUSS$	B	40181	USD	RUB	0
+40182	MSRUSSL	MSCI Russia 'Dead'	Russia	Equity Index	MSCI	Datastream	MSRUSSL	B	40182	RUB	RUB	0
+40183	MSSRIL$	MSCI Sri Lanka United States Dollar	Sri Lanka	Equity Index	MSCI	Datastream	MSSRIL$	B	40183	USD	LKR	0
+40184	MSSRILL	MSCI Sri Lanka	Sri Lanka	Equity Index	MSCI	Datastream	MSSRILL	B	40184	LKR	LKR	0
+40185	MSVENF$	MSCI Venezuela United States Dollar 'Dead'	Venezuela	Equity Index	MSCI	Datastream	MSVENF$	B	40185	USD	VEB	0
+40186	MSVENFL	MSCI Venezuela 'Dead'	Venezuela	Equity Index	MSCI	Datastream	MSVENFL	B	40186	VEB	VEB	0
+40187	MSFXDW$	MSCI World FX Hedge United States Dollar	World	Equity Index	MSCI	Datastream	MSFXDW$	B	40187	USD	WLD	0
+40396	TOTMSA$	SOUTH AFRICA-DS MARKET $	South Africa	Equity Index	Datastream	Datastream	TOTMSA$	B	40396	USD	ZAR	0
+40397	WIMXCO$	FTSE W MEXICO $	Mexico	Equity Index	FTSE	Datastream	WIMXCO$	B	40397	USD	MXN	0
+40398	WISAFR$	FTSE SOUTH AFRICA $	South Africa	Equity Index	FTSE	Datastream	WISAFR$	B	40398	USD	ZAR	0
+40399	IFGWMX$	S&P/IFCG W MEXICO $ DEAD	Mexico	Equity Index	S&P/IFC	Datastream	IFGWMX$	B	40399	USD	MXN	0
+40400	GOLDSSA$	South Africa Gold Miners	South Africa	Equity Index	Datastream	Datastream	GOLDSSA$	B	40400	USD	ZAR	0
+40401	IFGMMX$	S&P/IFCG M MEXICO $ DEAD	Mexico	Equity Index	S&P/IFC	Datastream	IFGMMX$	B	40401	USD	MXN	0
+41310	ACEMLPT	ALERIAN MLP Index	United States	Equity Index	Alerian	Datastream	ACEMLPT	B	41310	USD	USD	0
+41311	MSWDIF$	MSCI World Infrastructure	Global	Equity Index	MSCI	Datastream	MSWDIF$	B	41311	USD	LOC	0
+41312	MSWDIFL	MSCI World Infrastructure	Global	Equity Index	MSCI	Datastream	MSWDIFL	B	41312	USD	USD	0
+41313	SBBRGL$	S&P Global REITs	Global	Equity Index	S&P Citigroup	Datastream	SBBRGL$	B	41313	USD	LOC	0
+41315	SBBRWL$	S&P Global Developed REITs	Global	Equity Index	S&P Citigroup	Datastream	SBBRWL$	B	41315	USD	LOC	0
+41316	SBRDWLL	S&P Global Developed REITs	Global	Equity Index	S&P Citigroup	Datastream	SBRDWLL	B	41316	LOC	LOC	0

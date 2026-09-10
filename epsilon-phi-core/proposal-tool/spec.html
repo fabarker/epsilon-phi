@@ -1,0 +1,2649 @@
+<title>Epsilon Phi Proposal Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1F4F7; --surface:#FFFFFF; --surface-2:#F6F8FA;
+  --ink:#16202B; --ink-2:#4A5A6B; --ink-3:#7B8B9C;
+  --line:#E1E7EC; --line-strong:#C7D2DC;
+  --accent:#1F5FBF; --accent-soft:#E3EBFA; --accent-ink:#1E4FA3;
+  --navy:#16243A; --navy-ink:#FFFFFF;
+  --code-bg:#F4F7F9; --code-ink:#20303F;
+  --note-bg:#FFFBEB; --note-line:#D4A017; --note-ink:#4A3B10; --note-head:#92600A;
+  --ok-bg:#E7F4EC; --ok-line:#B7E0C5; --ok-ink:#176A33;
+  --warn-bg:#FEF3C7; --warn-line:#F3D48A; --warn-ink:#B45309;
+  --bad-bg:#FDE8E8; --bad-line:#F1B8B2; --bad-ink:#9B1C1C;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 12px 30px -14px rgba(16,24,40,.16);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D141C; --surface:#151F2B; --surface-2:#1B2733;
+    --ink:#E5EBF1; --ink-2:#A7B6C4; --ink-3:#7A8B9B;
+    --line:#22303F; --line-strong:#35485C;
+    --accent:#6FA3F5; --accent-soft:#1B2C45; --accent-ink:#9CC2FA;
+    --navy:#0A121C; --navy-ink:#E5EBF1;
+    --code-bg:#101A24; --code-ink:#C9D6E2;
+    --note-bg:#231D0C; --note-line:#B78F1F; --note-ink:#EBDCB4; --note-head:#D9B44A;
+    --ok-bg:#12291C; --ok-line:#255F3B; --ok-ink:#8FD9AC;
+    --warn-bg:#2B2110; --warn-line:#6B5320; --warn-ink:#EFC475;
+    --bad-bg:#2C1616; --bad-line:#6D2F2C; --bad-ink:#F3A9A2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D141C; --surface:#151F2B; --surface-2:#1B2733;
+  --ink:#E5EBF1; --ink-2:#A7B6C4; --ink-3:#7A8B9B;
+  --line:#22303F; --line-strong:#35485C;
+  --accent:#6FA3F5; --accent-soft:#1B2C45; --accent-ink:#9CC2FA;
+  --navy:#0A121C; --navy-ink:#E5EBF1;
+  --code-bg:#101A24; --code-ink:#C9D6E2;
+  --note-bg:#231D0C; --note-line:#B78F1F; --note-ink:#EBDCB4; --note-head:#D9B44A;
+  --ok-bg:#12291C; --ok-line:#255F3B; --ok-ink:#8FD9AC;
+  --warn-bg:#2B2110; --warn-line:#6B5320; --warn-ink:#EFC475;
+  --bad-bg:#2C1616; --bad-line:#6D2F2C; --bad-ink:#F3A9A2;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.6);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Serif",Georgia,serif;font-size:16px;line-height:1.62;
+  -webkit-font-smoothing:antialiased}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ── masthead ── */
+.mast{background:var(--navy);color:var(--navy-ink);padding:clamp(30px,5vw,54px) clamp(18px,4vw,52px)}
+.mast-in{max-width:1320px;margin:0 auto}
+.mast .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:#8FB0CC;margin:0 0 12px}
+.mast h1{font-family:"IBM Plex Sans",system-ui,sans-serif;font-weight:600;
+  font-size:clamp(28px,4.6vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 14px;
+  text-wrap:balance;max-width:20ch}
+.mast p{margin:0;max-width:62ch;color:#C3D3E3;font-size:clamp(15px,1.6vw,17px)}
+.mast-meta{display:flex;flex-wrap:wrap;gap:10px 26px;margin:24px 0 0;
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;color:#8FB0CC}
+.mast-meta b{color:#FFFFFF;font-weight:500}
+
+/* ── shell ── */
+.shell{max-width:1320px;margin:0 auto;padding:0 clamp(18px,4vw,52px) 120px;
+  display:grid;grid-template-columns:1fr;gap:0}
+@media (min-width:1060px){
+  .shell{grid-template-columns:246px minmax(0,1fr);gap:56px}
+}
+nav.toc{padding:32px 0 0}
+@media (min-width:1060px){
+  nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;
+    padding:44px 0 40px}
+}
+nav.toc h2{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 12px;font-weight:600}
+nav.toc ol{list-style:none;margin:0;padding:0;font-family:"IBM Plex Sans",sans-serif;font-size:13.5px}
+nav.toc li{margin:0 0 1px}
+nav.toc a{display:flex;gap:9px;padding:5px 8px;border-radius:4px;text-decoration:none;
+  color:var(--ink-2);line-height:1.35}
+nav.toc a:hover{background:var(--surface-2);color:var(--ink)}
+nav.toc a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+nav.toc .n{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3);
+  flex-shrink:0;padding-top:1px}
+main{padding:36px 0 0;min-width:0}
+@media (min-width:1060px){main{padding:44px 0 0}}
+
+/* ── typography ── */
+h2.sec{font-family:"IBM Plex Sans",sans-serif;font-size:clamp(21px,2.7vw,28px);font-weight:600;
+  letter-spacing:-.02em;line-height:1.2;margin:0 0 6px;text-wrap:balance;
+  display:flex;gap:14px;align-items:baseline}
+h2.sec .n{font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--accent);
+  font-weight:500;flex-shrink:0}
+h3{font-family:"IBM Plex Sans",sans-serif;font-size:17px;font-weight:600;letter-spacing:-.01em;
+  margin:34px 0 8px;color:var(--ink);display:flex;gap:11px;align-items:baseline}
+h3 .n{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-3);font-weight:500}
+h4{font-family:"IBM Plex Sans",sans-serif;font-size:14px;font-weight:600;margin:22px 0 6px;
+  letter-spacing:.01em;color:var(--ink)}
+section.block{padding:0 0 8px;margin:0 0 52px;border-bottom:1px solid var(--line)}
+section.block:last-of-type{border-bottom:none}
+.lede{font-size:17px;color:var(--ink-2);max-width:64ch;margin:0 0 22px}
+p{margin:0 0 15px;max-width:68ch}
+ul,ol.body{margin:0 0 16px;padding-left:22px;max-width:66ch}
+li{margin:0 0 6px}
+strong{font-weight:600;color:var(--ink)}
+em{font-style:italic}
+a{color:var(--accent)}
+code{font-family:"IBM Plex Mono",monospace;font-size:.87em;background:var(--code-bg);
+  border:1px solid var(--line);border-radius:3px;padding:1px 5px;color:var(--code-ink);
+  white-space:nowrap}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:6px;
+  padding:16px 18px;overflow-x:auto;margin:0 0 18px;
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.55;color:var(--code-ink)}
+pre code{background:none;border:0;padding:0;font-size:inherit;white-space:pre}
+pre.wire{font-size:12px;line-height:1.45;background:var(--surface);border-color:var(--line-strong)}
+
+/* ── tables ── */
+.tw{overflow-x:auto;margin:0 0 20px;border:1px solid var(--line-strong);border-radius:6px;
+  background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-family:"IBM Plex Sans",sans-serif;font-size:13.5px}
+th,td{text-align:left;padding:9px 14px;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{background:var(--surface-2);font-weight:600;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-2);white-space:nowrap;
+  border-bottom:1px solid var(--line-strong)}
+tbody tr:last-child td{border-bottom:none}
+td code,th code{white-space:nowrap}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+
+/* ── callouts ── */
+.note{background:var(--note-bg);border:1.5px dashed var(--note-line);border-radius:6px;
+  padding:14px 18px;margin:0 0 20px;color:var(--note-ink);font-size:14.5px}
+.note h4{margin:0 0 7px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--note-head);font-family:"IBM Plex Mono",monospace;font-weight:600}
+.note p{margin:0 0 9px;color:inherit;max-width:64ch}
+.note p:last-child{margin:0}
+.note code{background:rgba(212,160,23,.13);border-color:rgba(212,160,23,.32);color:inherit}
+.rule{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:0 5px 5px 0;
+  padding:13px 18px;margin:0 0 20px;font-size:14.5px;color:var(--ink)}
+.rule strong{color:var(--accent-ink)}
+.rule p{margin:0;max-width:64ch}
+
+/* ── chips ── */
+.bdg{display:inline-block;font-family:"IBM Plex Sans",sans-serif;font-size:10.5px;font-weight:600;
+  padding:2px 8px;border-radius:9px;letter-spacing:.03em;white-space:nowrap;vertical-align:middle}
+.b-ok{background:var(--ok-bg);color:var(--ok-ink);border:1px solid var(--ok-line)}
+.b-warn{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line)}
+.b-bad{background:var(--bad-bg);color:var(--bad-ink);border:1px solid var(--bad-line)}
+.b-info{background:var(--accent-soft);color:var(--accent-ink);border:1px solid var(--line-strong)}
+
+/* ── swatches: literal product colours, never themed ── */
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px;
+  margin:0 0 20px}
+.sw{border:1px solid var(--line-strong);border-radius:5px;overflow:hidden;background:var(--surface)}
+.sw .chip{height:46px;border-bottom:1px solid var(--line-strong)}
+.sw .meta{padding:7px 10px;font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.45}
+.sw .meta b{display:block;font-weight:600;color:var(--ink);font-size:11.5px}
+.sw .meta span{color:var(--ink-3)}
+
+.cols{display:grid;grid-template-columns:1fr;gap:20px;margin:0 0 20px}
+@media (min-width:820px){.cols.two{grid-template-columns:1fr 1fr}}
+.foot{max-width:1320px;margin:0 auto;padding:0 clamp(18px,4vw,52px) 70px;
+  font-family:"IBM Plex Sans",sans-serif;font-size:13px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <p class="eyebrow">Production build specification &middot; revision 6 &middot; as built</p>
+    <h1>Epsilon Phi Proposal Tool</h1>
+    <p>A page for Goldman Sachs PMG. A Private Wealth Advisor defines a model portfolio from a
+      client mandate, compares it against up to three alternatives, then attaches sleeves of
+      investible products to build the implementation model. Delivered as a page folder inside the
+      existing PMG dashboard: plain HTML and JavaScript, no build step, no framework.</p>
+    <div class="mast-meta">
+      <span>Audience <b>Web designer &amp; software engineer</b></span>
+      <span>Host <b>cyrus_pmg.dashboard</b></span>
+      <span>Conformance <b>WCAG 2.2 AA</b></span>
+      <span>Prototype <b>proposalTool/</b></span>
+      <span>Decision log <b>DECISIONS.md</b></span>
+      <span>Deviations <b>service/DEVIATIONS.md</b></span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+<nav class="toc" aria-label="Contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span><span>Purpose &amp; scope</span></a></li>
+    <li><a href="#s2"><span class="n">2</span><span>Domain model</span></a></li>
+    <li><a href="#s3"><span class="n">3</span><span>Host integration</span></a></li>
+    <li><a href="#s4"><span class="n">4</span><span>The port</span></a></li>
+    <li><a href="#s5"><span class="n">5</span><span>Front-end architecture</span></a></li>
+    <li><a href="#s6"><span class="n">6</span><span>Design system</span></a></li>
+    <li><a href="#s7"><span class="n">7</span><span>Step 1 &mdash; allocation</span></a></li>
+    <li><a href="#s8"><span class="n">8</span><span>Step 2 &mdash; implementation</span></a></li>
+    <li><a href="#s9"><span class="n">9</span><span>Components</span></a></li>
+    <li><a href="#s10"><span class="n">10</span><span>State matrix</span></a></li>
+    <li><a href="#s11"><span class="n">11</span><span>Interaction &amp; data flow</span></a></li>
+    <li><a href="#s12"><span class="n">12</span><span>Responsive behaviour</span></a></li>
+    <li><a href="#s13"><span class="n">13</span><span>Accessibility</span></a></li>
+    <li><a href="#s14"><span class="n">14</span><span>Excel export</span></a></li>
+    <li><a href="#s15"><span class="n">15</span><span>Implementation traps</span></a></li>
+    <li><a href="#s16"><span class="n">16</span><span>Open items</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section class="block" id="s1">
+  <h2 class="sec"><span class="n">1</span>Purpose &amp; scope</h2>
+  <p class="lede">This document is the complete build reference. Nothing in it is left for the
+    implementer to invent; where a decision is still open it is listed in &sect;16 and marked as
+    such.</p>
+
+  <h3><span class="n">1.1</span>Who this is for</h3>
+  <p>The service belongs to the <strong>Portfolio Management Group (PMG)</strong> at Goldman Sachs.
+    Its users are <strong>Private Wealth Advisors (PWAs)</strong>, who use it to build portfolio
+    implementation models and submit them to be invested in. Output reaches end clients, so the page
+    is treated as client-facing throughout.</p>
+
+  <h3><span class="n">1.2</span>The two steps</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Step</th><th>What the PWA does</th><th>Output</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1 &mdash; Asset allocation</strong></td>
+        <td>Enters the client mandate, sets the scenario basis, defines a base portfolio, and
+          compares it against up to three alternatives.</td>
+        <td>Allocation table, two summary charts, three-section risk dashboard.</td></tr>
+      <tr><td><strong>2 &mdash; Implementation</strong></td>
+        <td>Attaches one PMG-authored sleeve of investible products to each category of the
+          <em>base</em> portfolio.</td>
+        <td>Product-level model with weights, fees and notional, exported to Excel.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>Both steps live in one page.</strong> They share mandate, basis and
+    portfolio state, and the host has no shared JavaScript store &mdash; two page folders could not
+    have shared it. The steps are tabs inside a single document.</p></div>
+
+  <h3><span class="n">1.3</span>What it is called</h3>
+  <p>The product is the <strong>Epsilon Phi Proposal Tool</strong>, shortened to
+    <strong>Proposal Tool</strong> in the interface. That name appears on the landing (&sect;7.1),
+    in the rail's brand block, in the page folder and route (<code>proposalTool/</code>), and on
+    this document.</p>
+  <div class="rule"><p><strong>A &ldquo;scenario&rdquo; is what a PWA builds; the Proposal Tool is
+    what builds it.</strong> The domain noun is unchanged and stays everywhere it already is
+    &mdash; <code>scenarioId</code>, the <code>/api/scenario/&hellip;</code> surface,
+    <code>ScenarioPort</code>, the <em>Scenario basis</em> rail tier, the <em>New scenario</em>
+    dialog and the export filename. Renaming the product does not rename the thing it produces,
+    and conflating the two would churn the whole HTTP contract for a cosmetic change.</p></div>
+  <div class="rule"><p><strong>&ldquo;Variant&rdquo; now means two things, so it is never used
+    bare.</strong> Everywhere before &sect;8 it means an <em>allocation variant</em> &mdash; one
+    of the six of &sect;2.1, the thing a portfolio key selects. From &sect;8 it can also mean an
+    <em>implementation type</em> (D29), one of the four product universes a book is
+    implemented from. They are unrelated: the allocation variant decides what the portfolio
+    holds, the implementation type decides which products may hold it, and neither
+    constrains the other. Qualify it every time. Where this document said only
+    &ldquo;the variant&rdquo; before revision 5, it meant the allocation variant.</p></div>
+
+  <h3><span class="n">1.4</span>Out of scope</h3>
+  <ul>
+    <li><strong>Simulation.</strong> No wealth simulation, no path generation. The export must pass
+      <code>include_wealth_simulations=False</code>.</li>
+    <li><strong>Optimisation.</strong> Weights are looked up, not solved.</li>
+    <li><strong>Submission.</strong> Not in this UI. The terminal action downloads the tables to Excel.</li>
+    <li><strong>PMG accounts.</strong> There is no account concept on this page; the mandate is entered
+      directly.</li>
+    <li><strong>ISG schema scoping.</strong> The data is not schema-scoped. No
+      <code>isgCodeSelector.js</code>, no <code>schemaCode</code> parameter.</li>
+    <li><strong>Roles.</strong> One role. &sect;10.4 specifies the extension point.</li>
+    <li><strong>Link sharing.</strong> Deferred.</li>
+  </ul>
+
+  <div class="note">
+    <h4>Provenance</h4>
+    <p>Every decision here traces to a numbered exchange in <code>DECISIONS.md</code>. Where this
+      document states a rule without qualification, that rule was confirmed. Where it says
+      <em>assumption</em>, it was not &mdash; challenge those first.</p>
+  </div>
+
+  <h3><span class="n">1.5</span>What revisions 4 to 6 changed</h3>
+  <p>Revisions 1 to 3 specified a system that did not yet exist. <strong>This revision describes
+    the one that does.</strong> Where the two differ the text now states what was built and, in
+    italics, what it replaced; the reasoning for each lives in
+    <code>service/DEVIATIONS.md</code> under the reference given.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Section</th><th>Now says</th><th>Ref</th></tr></thead>
+    <tbody>
+      <tr><td><strong>&sect;8.1</strong></td><td><strong>Revision 5.</strong> Implementation
+        Types: step 2 opens on a required choice of one of four, and no sleeve can be attached
+        before it. <code>list_sleeves</code> takes it, the schema carries the names, the workbook
+        records it, and &sect;1.3 disambiguates it from the allocation variant.</td>
+        <td>D29</td></tr>
+      <tr><td><strong>&sect;2.3</strong></td><td><strong>Revision 6.</strong> Portfolio names
+        read currency, risk level, allocation, exclusions, with the risk level printed as its
+        display label. Derived from the key, never from a stored name.</td><td>D35, D36</td></tr>
+      <tr><td><strong>&sect;7.1</strong></td><td><strong>Revision 6.</strong> The page asks one
+        question at a time: basis, then base portfolio, then implementation. Each is inert and
+        un-ringed until its turn.</td><td>D45</td></tr>
+      <tr><td><strong>&sect;9.1</strong>,
+        <strong>&sect;9.2</strong></td><td><strong>Revision 6.</strong> Table typography and
+        chrome; the risk dashboard sizes on auto layout with column one pinned and the wrapper
+        scrolling.</td><td>D37, D38</td></tr>
+      <tr><td><strong>&sect;9.5</strong></td><td><strong>Revision 6.</strong> The category chart
+        is vertical, in a frame that does not change size with the portfolio
+        count.</td><td>D39</td></tr>
+      <tr><td><strong>&sect;10.1</strong></td><td><strong>Revision 6.</strong> A display gate
+        distinct from readiness: a re-resolving column keeps its figures. Waiting is a spinner,
+        not a pill.</td><td>D43, D44</td></tr>
+      <tr><td><strong>&sect;12</strong></td><td><strong>Revision 6.</strong> A motion system for
+        change &mdash; columns, rows, values and the document's first
+        appearance.</td><td>D42</td></tr>
+      <tr><td><strong>&sect;9.1</strong></td><td><strong>Revision 5.</strong> The allocation
+        table's heading reads <em>Strategic Asset Allocation</em> over a standfirst, both taking
+        <code>proposalToolv2</code>'s stage-heading type; the notices strip above it becomes
+        exception-only.</td><td>D33, D34</td></tr>
+      <tr><td><strong>&sect;7.2</strong></td><td><strong>Revision 5.</strong> The step nav is
+        numbered circles with a stage name over a description, joined by a connector and centred
+        &mdash; the treatment from <code>proposalToolv2</code>. Appearance only: the tablist
+        semantics of &sect;13.2 are unchanged.</td><td>D32</td></tr>
+      <tr><td><strong>&sect;8.5</strong></td><td><strong>Revision 5.</strong> A row of five
+        composition doughnuts between the implementation table and the download, which moves
+        below them. New subsection.</td><td>D31</td></tr>
+      <tr><td><strong>&sect;7.2</strong></td><td><strong>Revision 5.</strong> The rail's fold is
+        animated; its content is clipped rather than reflowed, and the columns are sized once
+        when it settles.</td><td>D30</td></tr>
+      <tr><td>&sect;3.4</td><td><code>PUT /api/scenario/{id}</code> added; capabilities and
+        describe ride the schema</td><td>D2, D4</td></tr>
+      <tr><td>&sect;4.5</td><td>Three corrections to the analytics chain: the context's dates,
+        hedging as per-asset ratios, zero-padded portfolios</td><td>D1, D3, D13</td></tr>
+      <tr><td>&sect;4.6</td><td><strong>New.</strong> Three adapters, and why the analytics are
+        precomputed rather than computed per request</td><td>D17</td></tr>
+      <tr><td>&sect;6.1, &sect;7.1</td><td>One ground colour for landing and workspace</td>
+        <td>D20</td></tr>
+      <tr><td>&sect;7.2</td><td>No topbar; the rail renamed and collapsible</td>
+        <td>D27, D28</td></tr>
+      <tr><td>&sect;9.1</td><td>The base column headed <em>Proposed Portfolio</em>; columns
+        measured, equal and capped; a remove control per column</td><td>D21&ndash;D23, D28</td></tr>
+      <tr><td>&sect;9.2</td><td>Nominal/Real moved into the body; premia banded by measure;
+        colour only on the stress rows</td><td>D24&ndash;D26</td></tr>
+      <tr><td>&sect;9.3</td><td>Both pinned columns sized to content, the second's offset
+        measured</td><td>D21</td></tr>
+      <tr><td>&sect;14</td><td>The assumptions sheet dropped; a database-free export path</td>
+        <td>D14, D18</td></tr>
+      <tr><td>&sect;15</td><td>Three further traps, all found by measuring rather than
+        looking</td><td>&mdash;</td></tr>
+      <tr><td>&sect;16</td><td>Item 14 corrected; items 15&ndash;17 opened</td><td>&mdash;</td></tr>
+    </tbody>
+  </table></div>
+  <p>Unchanged, and worth saying so: the domain model (&sect;2), the port's eight methods
+    (&sect;4), the state matrix (&sect;10), the interaction flows (&sect;11), the rounding rule
+    (&sect;8.4) and the accessibility standard (&sect;13) all survived the build as written.</p>
+</section>
+
+<section class="block" id="s2">
+  <h2 class="sec"><span class="n">2</span>Domain model</h2>
+  <p class="lede">A small, closed combination space. Understanding it is the difference between
+    building this correctly and building a generic form.</p>
+
+  <h3><span class="n">2.1</span>What identifies a portfolio</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Field</th><th>Scope</th><th>Values</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Currency</strong></td><td>Scenario &mdash; fixed across all columns</td>
+        <td><code>CHF</code> <code>USD</code> <code>GBP</code> <code>EUR</code></td></tr>
+      <tr><td><strong>Hedging Policy</strong></td><td>Scenario &mdash; fixed across all columns</td>
+        <td><code>Hedged</code> <code>ISG Hedged</code> <code>Unhedged</code>
+            <code>Equity Not Hedged</code></td></tr>
+      <tr><td><strong>Allocation</strong></td><td>Per portfolio</td>
+        <td><code>Full</code> <code>Core</code> <code>Ex HFs</code> <code>Ex Alts</code></td></tr>
+      <tr><td><strong>Exclude Real Estate</strong></td><td>Per portfolio</td>
+        <td>Tick box. Enabled only for Full and Ex HFs</td></tr>
+      <tr><td><strong>Exclude Tactical Asset Allocation</strong></td><td>Per portfolio</td>
+        <td>Tick box. Always enabled, off by default</td></tr>
+      <tr><td><strong>Risk Level</strong></td><td>Per portfolio</td>
+        <td><code>Low Vol</code> <code>Cons</code> <code>Cons Mod</code> <code>Mod</code>
+            <code>Mod Agg</code> <code>Agg</code> <code>All Equity</code></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>6 allocation variants &times; 2 TAA states &times; 7 risk levels = 84 combinations per
+    scenario.</strong> Not every combination has a stored portfolio; &sect;3.4 specifies how the UI
+    learns which exist.</p>
+
+  <h3><span class="n">2.2</span>Categories and asset classes</h3>
+  <div class="rule"><p><strong>Neither list is fixed. Both are whatever the selected portfolio
+    holds.</strong> The allocation table is built from the resolved portfolio's own rows &mdash; not
+    from a category list in the UI, and not from a union across portfolios. Hardcode either and the
+    table lies the first time a variant or a risk level changes what is held.</p></div>
+  <p>Every row comes from the weight source (&sect;4.5), which carries both labels:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Level</th><th>Column in the weights</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>Category row</td><td><code>category</code></td><td>Other Private Assets</td></tr>
+      <tr><td>Asset class row, indented beneath it</td><td><code>reporting_name</code></td>
+        <td>Private Credit, Core Real Estate</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>Never show an asset code in the UI.</strong> The weights carry a
+    <code>code</code> column &mdash; <code>LHTRYIN</code>, <code>MSEMKF$</code>,
+    <code>PE_BUYOUT</code>. It is a join key, not a label. Every table, chart, tooltip and export
+    header shows <code>reporting_name</code>. The code never reaches the screen.</p></div>
+  <p>Across the whole universe there are seven categories and nineteen asset classes. <strong>A
+    single portfolio holds between two and seven categories.</strong> What the supplied weights
+    currently yield, with tactical tilts included:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Allocation</th><th>Categories held</th></tr></thead>
+    <tbody>
+      <tr><td>Full &mdash; with or without RE</td><td>7</td></tr>
+      <tr><td>Ex HFs &mdash; with or without RE</td><td>6</td></tr>
+      <tr><td>Core</td><td>5</td></tr>
+      <tr><td>Ex Alts</td><td>4</td></tr>
+      <tr><td>The narrowest in the universe &mdash; CHF Ex Alts All Equity ex TAA</td><td><strong>2</strong>
+        &mdash; Other Fixed Income and Public Equity</td></tr>
+    </tbody>
+  </table></div>
+  <p>Read that table as <em>what the data currently is</em>, not as a rule to encode. Excluding
+    tactical tilts removes a category outright; risk level can empty one. Ask the portfolio.</p>
+  <div class="rule"><p><strong><em>Exclude Real Estate</em> does not remove <em>Other Private
+    Assets</em>.</strong> That category holds Private Credit as well as Core Real Estate, so
+    excluding RE narrows it to Private Credit rather than dropping it. Only <em>Core</em> and
+    <em>Ex Alts</em> drop the category entirely, because neither admits private assets at all.</p></div>
+  <div class="rule"><p><strong>Real Estate is not a category.</strong> It is an asset class inside
+    <em>Other Private Assets</em>. <strong>Ex HFs and Core are near-mirrors</strong> &mdash; one
+    drops hedge funds and keeps private equity, the other does the reverse &mdash; and their names
+    do not signal that. Never abbreviate them in a control or a column header.</p></div>
+  <p>A category a variant does not have <strong>disappears from that column</strong>. It does not
+    render as a dash. A dash means &ldquo;holds none of this asset class&rdquo;; an absent category
+    means the variant has no such concept.</p>
+
+  <h3><span class="n">2.3</span>Portfolio naming</h3>
+  <pre><code>{currency} {risk_level_label} {allocation}[ " ex RE" ][ " ex TAA" ]</code></pre>
+  <p>Names are <strong>derived and not editable</strong>. The <code>ex RE</code> suffix applies
+    <strong>only where real estate was possible but excluded</strong> &mdash; Full and Ex HFs. Core
+    and Ex Alts never carry it. Currency is constant across every column, so it is
+    <strong>omitted from column headers</strong> and shown once in the rail; the full name is used in
+    the export, in tooltips and in <code>aria-label</code>s.</p>
+  <div class="rule"><p><strong>The risk level prints as a label, and the key keeps the
+    value.</strong> <em>Moderate-Aggressive</em> on screen, <code>Mod Agg</code> in the key.
+    The short form is the fourth field of the canonical key, so it is what the availability
+    set, every stored scenario and all 272 baked payloads are keyed on; renaming it in the data
+    would invalidate the bake. The schema therefore carries
+    <code>options.riskLevelLabels</code> beside <code>options.riskLevels</code>, and the UI
+    renders one while submitting the other &mdash; &sect;4.3's rule applied to a name rather
+    than an option list. Deviation D35.</p></div>
+  <div class="rule"><p><strong>Every displayed name is derived from the KEY, never from a
+    stored one.</strong> <code>PortfolioResult</code> carries <code>name</code> and
+    <code>header</code>, and both are frozen into the baked slices &mdash; so a page that read
+    them would show a naming change on some surfaces and not others until a re-bake. The page
+    builds its own from the key instead, and the two agree the moment the rule changes.
+    Deviation D36.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Allocation</th><th>Exclusions</th><th>Column header</th></tr></thead>
+    <tbody>
+      <tr><td>Full</td><td>&mdash;</td><td>Full Mod</td></tr>
+      <tr><td>Full</td><td>RE</td><td>Full Mod ex RE</td></tr>
+      <tr><td>Full</td><td>RE and TAA</td><td>Full Mod ex RE ex TAA</td></tr>
+      <tr><td>Core</td><td>TAA</td><td>Core Mod ex TAA</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">2.4</span>Mandate</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Field</th><th>Control</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Top Account Size</strong></td><td>Currency amount, USD</td>
+        <td>Required. Positive.</td></tr>
+      <tr><td><strong>Mandate Size</strong></td><td>Currency amount, USD</td>
+        <td>Required. <strong>&ge; $5,000,000 &mdash; hard block.</strong> Must be &le; Top Account
+          Size. <strong>Drives the $20m rule below and the notional column in step 2.</strong></td></tr>
+      <tr><td><strong>Primary PWA</strong></td><td>Typeahead</td>
+        <td>Required. Must resolve to a directory entry.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">2.5</span>The $20m private-assets rule</h3>
+  <div class="rule"><p><strong>Private assets are blocked for mandates under $20,000,000.</strong>
+    Private assets means Private Equity and Other Private Assets. <strong>Hedge funds are not
+    private assets.</strong> This gates which allocations exist in step 1; at implementation there is
+    no further gating.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Allocation</th><th>Private assets held</th><th>Under $20m</th></tr></thead>
+    <tbody>
+      <tr><td>Full (with or without RE)</td><td>Private Equity, Other Private Assets</td><td><strong>blocked</strong></td></tr>
+      <tr><td>Ex HFs (with or without RE)</td><td>Private Equity, Other Private Assets</td><td><strong>blocked</strong></td></tr>
+      <tr><td>Core</td><td>Hedge Funds only &mdash; not private</td><td>available</td></tr>
+      <tr><td>Ex Alts</td><td>none</td><td>available</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>A sub-$20m mandate has two allocations available out of six.</strong> The availability
+    set is therefore a function of <code>(currency, hedging, mandateSize)</code>, not of currency and
+    hedging alone.</p>
+
+  <h3><span class="n">2.6</span>Sleeves</h3>
+  <div class="tw"><table>
+    <thead><tr><th></th><th></th></tr></thead>
+    <tbody>
+      <tr><td><strong>Source</strong></td><td>A library authored by PMG</td></tr>
+      <tr><td><strong>Assembly</strong></td><td><strong>No one can assemble sleeves.</strong> PWAs select only</td></tr>
+      <tr><td><strong>Choice</strong></td><td>Around five per category</td></tr>
+      <tr><td><strong>Identity</strong></td><td><code>(category, name)</code>. The name carries the entire
+        differentiation &mdash; it describes the implementation vehicle, e.g.
+        <code>GSAM Separately Managed Account</code>, <code>Funds Only</code>,
+        <code>ETF &amp; Mutual Funds</code> for IGFI; <code>Active-Passive</code>,
+        <code>Passive</code>, <code>Concentrated Active</code> for Public Equity</td></tr>
+      <tr><td><strong>Mutability</strong></td><td><strong>A sleeve is a fixed block.</strong> Weights
+        cannot be edited, products cannot be added or dropped</td></tr>
+      <tr><td><strong>Completeness</strong></td><td><strong>Every category must carry a sleeve before
+        the model can be exported</strong></td></tr>
+      <tr><td><strong><em>Asset Allocation Strategies</em></strong></td>
+        <td><strong>One sleeve, attached automatically.</strong> Its single product is the
+          <strong>Tactical Tilt Fund</strong>. The category exists only when tactical tilts are
+          included, and whenever it exists this sleeve is already on it</td></tr>
+    </tbody>
+  </table></div>
+  <p>A sleeve's product weights sum to 1. The category's weight in the asset allocation is
+    distributed proportionally across them.</p>
+  <div class="rule"><p><strong><em>Asset Allocation Strategies</em> is never a choice.</strong> It
+    has exactly one sleeve, carrying the Tactical Tilt Fund, and it is attached the moment the
+    category appears. Render it attached and read-only &mdash; not as an empty picker the PWA has to
+    satisfy, and not as a <code>.b-warn</code> &ldquo;No sleeve attached&rdquo; row. Ticking
+    <em>Exclude Tactical Asset Allocation</em> removes the category and the sleeve with it. It never
+    blocks the completeness gate.</p></div>
+  <div class="rule"><p><strong>The implementation screen is a picker with a completeness gate, not
+    an editable grid.</strong> This is the single largest simplification in the module. Because the
+    name carries all the differentiation, a plain select per category is the honest control &mdash; a
+    card list would invent hierarchy that does not exist.</p></div>
+
+  <h3><span class="n">2.7</span>Comparison rules</h3>
+  <ul>
+    <li><strong>Four portfolios maximum</strong> &mdash; one base plus three comparisons.</li>
+    <li>The <strong>base is pinned to the first column</strong>, cannot be removed, only changed, and
+      is <strong>the only portfolio that gets implemented</strong>.</li>
+    <li><strong>No deltas.</strong> No difference column, no change highlighting.</li>
+    <li>A combination already on screen cannot be added again.</li>
+    <li>Column order is <strong>insertion order</strong>, never completion order (&sect;15.3).</li>
+  </ul>
+</section>
+
+<section class="block" id="s3">
+  <h2 class="sec"><span class="n">3</span>Host integration</h2>
+  <p class="lede">The receiving project is the PMG dashboard in
+    <code>isg-cyrus-pmg/src/cyrus_pmg/dashboard/</code>. This section describes what it is and how
+    this page drops into it.</p>
+
+  <h3><span class="n">3.1</span>What the host is</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Concern</th><th>How the host does it</th></tr></thead>
+    <tbody>
+      <tr><td>Serving</td><td><strong>Flask</strong> (<code>dashboardFrontend.py</code>, port 8001)
+        via <code>send_from_directory</code>. No templating.</td></tr>
+      <tr><td>API</td><td><strong>FastAPI</strong> &mdash; <code>pmgService</code> (8002),
+        <code>optimizationService</code> (8003). Endpoints on <code>dashboardRouter.py</code>.</td></tr>
+      <tr><td>Proxy</td><td>One wildcard Flask route rewrites <code>/api/&lt;x&gt;</code> to
+        <code>/api/v1/&lt;x&gt;</code>. <code>timeout=300</code>,
+        <code>allow_redirects=False</code>.</td></tr>
+      <tr><td>Pages</td><td>One folder per page:
+        <code>pageName/pageName.html</code> + <code>static/{css,js}/pageName.{css,js}</code>.</td></tr>
+      <tr><td>Routing</td><td>One hand-written <code>@app.route</code> per folder.
+        <strong>No auto-discovery.</strong></td></tr>
+      <tr><td>Navigation</td><td>Hard-coded <code>&lt;a&gt;</code> tags in <code>index.html</code>.
+        No registry.</td></tr>
+      <tr><td>JavaScript</td><td><strong>No module system.</strong> Globals on <code>window</code>;
+        <code>&lt;script src&gt;</code> order is load-bearing.</td></tr>
+      <tr><td>State</td><td>Module-level <code>let</code>. <strong>No shared store.</strong></td></tr>
+      <tr><td>Rendering</td><td>Direct DOM writes. No framework, no re-render model.</td></tr>
+      <tr><td>Auth</td><td>Kerberos allowlist in a Flask <code>before_request</code> gate;
+        <code>accessGate.js</code> probes <code>/api/whoami</code>; FastAPI re-enforces with
+        <code>Depends(requireAuth)</code> and <code>Depends(requireEditor)</code> on writes.</td></tr>
+      <tr><td>Errors</td><td>Non-2xx JSON carries <code>error</code>; 401 carries
+        <code>loginUrl</code>. Pages render into <code>#alertArea</code>.</td></tr>
+      <tr><td>Deployment</td><td>GitLab CI zips the package; GS internal <code>gns</code>
+        distributes. No Docker, no Kubernetes.</td></tr>
+      <tr><td>Tests</td><td><strong>The dashboard package is untested.</strong> No safety net.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.2</span>What this page ships as</h3>
+<pre><code>cyrus_pmg/dashboard/proposalTool/
+  proposalTool.html
+  static/
+    css/proposalTool.css
+    js/proposalTool.js
+    fonts/*.woff2</code></pre>
+  <p>Folder, HTML, CSS and JS share the name, per the convention in <code>preferredProducts/</code>.
+    <strong>Adoption is three steps</strong> and touches no existing file beyond two additions.</p>
+
+  <h4>Register the route</h4>
+<pre><code>@app.route('/proposalTool/&lt;path:filename&gt;')
+def serve_proposal_tool(filename):
+    """Serve Proposal Tool static files."""
+    return send_from_directory(os.path.join(DASHBOARD_DIR, 'proposalTool'), filename)</code></pre>
+  <p>Restart the Flask process &mdash; there is no hot reload for Python changes.</p>
+
+  <h4>Add the nav link</h4>
+  <p>In <code>index.html</code>, inside the header flex block, copying the surrounding inline styles
+    verbatim so the button matches its neighbours.</p>
+
+  <h3><span class="n">3.3</span>Deliberate deviations from host convention</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Deviation</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>No <code>&larr; Back to Dashboard</code> link, no host header shape. Fixed left rail
+        instead.</td><td>Confirmed: this page is independent of the others.</td></tr>
+      <tr><td>No <code>onegsTheme.css</code> or <code>dashboard.css</code>. Self-contained
+        stylesheet.</td><td>Theme shift happens at port time. Every colour resolves through
+        <code>:root</code> custom properties, so retheming to <code>--gs-*</code> is a token change,
+        not a hunt through component CSS.</td></tr>
+      <tr><td>No <code>isgCodeSelector.js</code>.</td><td>Confirmed not schema-scoped.</td></tr>
+      <tr><td>Inline SVG charts, not Chart.js from CDN.</td><td>Self-contained, so nothing breaks on
+        a network that blocks <code>cdn.jsdelivr.net</code>.</td></tr>
+      <tr><td>Local woff2 fonts rather than the system stack.</td><td>The house faces.
+        <code>@font-face</code> URLs are <code>../fonts/*</code>, relative to the stylesheet, which
+        resolves identically under the Flask route and from <code>file://</code>.</td></tr>
+      <tr><td>Relative <code>href</code>/<code>src</code> rather than absolute
+        <code>/proposalTool/&hellip;</code>.</td><td>Same URL under the Flask route, and the page
+        stays openable from disk for review.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">3.4</span>HTTP surface</h3>
+  <p>The browser calls <code>/api/&lt;x&gt;</code>; Flask rewrites to <code>/api/v1/&lt;x&gt;</code>.
+    Endpoints live on the existing <code>dashboardRouter.py</code>, which is already
+    <code>include_router</code>-ed &mdash; no change to <code>isgPMGService.py</code>.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Method &amp; path (as the page calls it)</th><th>Purpose</th><th>Latency</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /api/scenario/schema</code></td>
+        <td>Field definitions, option values, validation rules, and the <strong>availability
+          set</strong> for <code>(currency, hedging, mandateSize)</code>.</td><td>Fast</td></tr>
+      <tr><td><code>GET /api/scenario/advisors?q=</code></td><td>Primary PWA typeahead.</td><td>Fast</td></tr>
+      <tr><td><code>POST /api/scenario</code></td><td>Create a scenario. Returns an id.</td><td>Fast</td></tr>
+      <tr><td><code>GET /api/scenario/{id}</code></td><td>Rehydrate after refresh.</td><td>Fast</td></tr>
+      <tr><td><code>POST /api/scenario/{id}/portfolio</code></td>
+        <td>Resolve one portfolio: weights, category subtotals, metrics, stress rows, risk premia.
+          <strong>The expensive call.</strong></td><td><strong>up to ~5s</strong></td></tr>
+      <tr><td><code>DELETE /api/scenario/{id}/portfolio/{key}</code></td><td>Remove a column.</td><td>Fast</td></tr>
+      <tr><td><code>PUT /api/scenario/{id}</code></td>
+        <td>Persist any subset of <code>{mandate, basis, variant, sleeves}</code>.
+          <strong>Added at build time</strong>: &sect;11.8 restores all of them after a refresh,
+          but the surface above provides writes only for columns, so without this they cannot
+          survive one. Sleeve maps validate against the implementation type in force
+          <em>after</em> the update; a variant change on its own clears the map (D29).</td>
+        <td>Fast</td></tr>
+      <tr><td><code>GET /api/scenario/sleeves?category=&amp;variant=</code></td>
+        <td>The sleeve library for a category under one implementation type, with product
+          detail. <code>variant</code> is required: an absent or unknown one is a 422 naming the
+          field, never a default library (D29).</td><td>Fast</td></tr>
+      <tr><td><code>POST /api/scenario/{id}/export</code></td>
+        <td>Excel workbook. <code>Content-Disposition: attachment</code>.</td><td>Moderate</td></tr>
+    </tbody>
+  </table></div>
+  <p>The proxy's 300s timeout comfortably covers the analytics call. Writes need
+    <code>Depends(requireEditor)</code>; reads inherit <code>requireAuth</code> from the router.</p>
+  <div class="rule"><p><strong><code>capabilities()</code> and <code>describe()</code> ride the
+    schema response.</strong> The port defines both but this surface gives them no transport,
+    and the footer needs <code>describe()</code> from first render. They arrive as the
+    <code>capabilities</code> and <code>dataInfo</code> blocks of
+    <code>GET /api/scenario/schema</code>, which is fetched on open anyway (&sect;11.1).</p></div>
+
+  <div class="note">
+    <h4>Why availability is fetched up front</h4>
+    <p>The combination space is only 84 wide. Fetching which combinations exist when the scenario
+      opens lets the UI render the rest as unselectable, which means <strong>&ldquo;no portfolio
+      matches your parameters&rdquo; never occurs as an error</strong>. One request removes an entire
+      failure mode. Do not implement a no-match error path; implement the availability set.</p>
+  </div>
+
+  <h3><span class="n">3.5</span>Error contract</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Condition</th><th>HTTP</th><th>Body</th><th>UI treatment</th></tr></thead>
+    <tbody>
+      <tr><td>Validation</td><td>422</td><td><code>{error, field}</code></td>
+        <td>Inline field error, form stays open</td></tr>
+      <tr><td>Not authenticated</td><td>401</td><td><code>{loginUrl}</code></td>
+        <td><code>window.location = body.loginUrl</code> &mdash; GSSSO re-auth</td></tr>
+      <tr><td>Not allowlisted</td><td>403</td><td><code>{error}</code></td>
+        <td>Full-page message; the page cannot function</td></tr>
+      <tr><td>Scenario gone</td><td>404</td><td><code>{error}</code></td>
+        <td>Return to the empty state with an explanation</td></tr>
+      <tr><td>Analytics failed</td><td>502</td><td><code>{error}</code></td>
+        <td>Column error state with <strong>Retry</strong></td></tr>
+      <tr><td>Backend down</td><td>502</td><td><code>{error}</code> from the Flask proxy</td>
+        <td><code>#alertArea</code></td></tr>
+      <tr><td>Backend timeout</td><td>504</td><td><code>{error}</code> from the Flask proxy</td>
+        <td>Column error state with <strong>Retry</strong></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="block" id="s4">
+  <h2 class="sec"><span class="n">4</span>The port</h2>
+  <p class="lede">Everything project-specific sits behind one Protocol. This is the contract the
+    host must satisfy.</p>
+
+<pre><code># the adapter the host implements
+from typing import Protocol, Sequence
+
+class ScenarioPort(Protocol):
+    """Everything the UI needs from the host. Eight methods, no more."""
+
+    def get_schema(self, basis: BasisInput, mandate: MandateInput) -> Schema:
+        """Field definitions, option values, validation rules, and the set of
+        (allocation, excludeRE, excludeTAA, riskLevel) combinations that have a
+        stored portfolio for this currency, hedging policy AND mandate size.
+
+        Mandate size matters: private assets are blocked under $20m, which
+        removes four of the six allocation variants. Must be cheap - called on
+        scenario open and whenever the basis or the mandate changes."""
+
+    def search_advisors(self, query: str, limit: int = 20) -> Sequence[Advisor]:
+        """Typeahead over the Primary PWA directory. The reference adapter reads
+        an Excel file; production reads a database table."""
+
+    def validate_mandate(self, mandate: MandateInput) -> None:
+        """Raise ValidationError with a field name and message if invalid. The UI
+        enforces the same rules client-side for immediacy; the server is
+        authoritative."""
+
+    def resolve_portfolio(
+        self, basis: BasisInput, key: PortfolioKey
+    ) -> PortfolioResult:
+        """Look up the stored allocation, construct the portfolio, compute the
+        analytics, return everything the tables need. THE EXPENSIVE CALL - may
+        take seconds. Implementations should cache."""
+
+    def list_sleeves(
+        self, category: str, basis: BasisInput, variant: str
+    ) -> Sequence[Sleeve]:
+        """The PMG-authored sleeve library for one category, under one
+        implementation type. A sleeve is a fixed block: name plus products
+        whose weights sum to 1.
+
+        *variant* is one of options.implementationVariants and decides both
+        which sleeves the category offers and what they contain (D29). It has
+        no default. An empty sequence is a legitimate answer.
+        """
+
+    def build_export(
+        self, basis: BasisInput, mandate: MandateInput,
+        portfolios: Sequence[PortfolioResult],
+        implementation: Implementation | None,
+    ) -> bytes:
+        """Return an .xlsx byte stream. The reference adapter calls
+        Reporting.generate_report(include_wealth_simulations=False)."""
+
+    def capabilities(self) -> dict:
+        """{"canExport": bool, "canEdit": bool}. One role today; this is the seam."""
+
+    def describe(self) -> dict:
+        """Data version, source, as-of date. Surfaced in the footer for support
+        and reproducibility."""</code></pre>
+
+  <h3><span class="n">4.1</span>Product record</h3>
+  <p>Each product inside a sleeve carries eleven fields. Four were added when the implementation
+    table grew; all are required.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>name</code></td><td>str</td><td>Display name</td></tr>
+      <tr><td><code>ticker</code></td><td>str</td><td>Em dash where the vehicle has none, e.g. an SMA</td></tr>
+      <tr><td><code>assetClass</code></td><td>str</td><td>Sub-asset class beneath the category</td></tr>
+      <tr><td><code>style</code></td><td>enum</td><td><code>Active</code> | <code>Passive</code></td></tr>
+      <tr><td><code>vehicle</code></td><td>enum</td><td><code>SMA</code> | <code>ETF</code> | <code>Mutual Fund</code></td></tr>
+      <tr><td><code>source</code></td><td>enum</td><td><code>Internal</code> | <code>External</code></td></tr>
+      <tr><td><code>liquidity</code></td><td>enum</td><td><code>Daily</code> | <code>Monthly</code> | <code>Quarterly</code> | <code>Drawdown</code></td></tr>
+      <tr><td><code>exposureCurrency</code></td><td>str</td><td>e.g. <code>USD</code>, <code>EUR</code>, <code>Local</code></td></tr>
+      <tr><td><code>productCost</code></td><td>float</td><td>Percent</td></tr>
+      <tr><td><code>managementFee</code></td><td>float</td><td>Percent. The GS advisory fee, <strong>additive</strong> on product cost</td></tr>
+      <tr><td><code>weight</code></td><td>float</td><td>Weight within the sleeve. Sleeve weights sum to 1</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">4.2</span>What the receiving project must provide</h3>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Obligation</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>A class implementing <code>ScenarioPort</code></td>
+        <td>The only code the host writes. Eight methods.</td></tr>
+      <tr><td>2</td><td>One Flask route and one nav link</td><td>&sect;3.2</td></tr>
+      <tr><td>3</td><td>Endpoints on <code>dashboardRouter.py</code> under <code>/api/v1/</code></td>
+        <td>Router is already mounted</td></tr>
+      <tr><td>4</td><td>A source of stored model allocations &mdash; supplied, see &sect;4.5</td>
+        <td>Keyed by currency, hedging, allocation, RE, TAA, risk level</td></tr>
+      <tr><td>5</td><td>An analytics engine behind <code>resolve_portfolio</code></td>
+        <td>Here, <code>epsilonPhi</code></td></tr>
+      <tr><td>6</td><td>The PMG sleeve library</td><td>~5 sleeves per category, fixed blocks</td></tr>
+      <tr><td>7</td><td>An advisor directory</td><td>Excel in the reference adapter, DB in production</td></tr>
+      <tr><td>8</td><td>An Excel writer</td><td>Reference adapter calls <code>Reporting.generate_report()</code></td></tr>
+      <tr><td>9</td><td>The <code>fonts/</code> assets carried across</td>
+        <td>Five woff2 files under <code>static/fonts/</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">4.3</span>What must stay generic</h3>
+  <div class="rule"><p><strong>The schema is data, not code.</strong> Option values, labels,
+    validation thresholds, the sleeve library and the availability set all arrive from the port and
+    are rendered from the response. The <code>$5,000,000</code> floor, the <code>$20,000,000</code>
+    private-assets threshold, the category set and the six allocation variants are
+    <em>this firm's product rules</em>. If they live in JavaScript, the transplant means editing
+    screen code.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Must be server-supplied</th><th>May be hardcoded in the UI</th></tr></thead>
+    <tbody>
+      <tr><td>Allocation, risk level, currency, hedging options</td><td>Table structure &mdash; the three risk-dashboard sections</td></tr>
+      <tr><td>Category and asset-class names, their order, and <em>which of them a given portfolio
+        holds</em> (&sect;2.2)</td><td>The four-portfolio cap</td></tr>
+      <tr><td>Mandate thresholds ($5m, $20m)</td><td>The Nominal/Real column pairing</td></tr>
+      <tr><td>The availability set</td><td>Breakpoints, focus order, ARIA wiring</td></tr>
+      <tr><td>The sleeve library and every product field, and the four implementation-variant
+        names that select between libraries (D29)</td><td>Chart forms and the categorical palette</td></tr>
+      <tr><td>Fee values</td><td>The naming <em>template</em>, and the rounding rule (&sect;8.4)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">4.4</span>The fixtures adapter</h3>
+  <p>A static-data adapter is not a testing nicety &mdash; it is how the UI was built, demonstrated
+    and handed over <strong>with no Python analytics running at all</strong>. Every screen and every
+    state in &sect;10 must be reachable through it, including the error and timeout states. The
+    prototype is exactly this: all data generated client-side, with
+    <code>apiFetch()</code> as the seam the real adapter replaces.</p>
+</section>
+
+  <h3><span class="n">4.5</span>The weight source</h3>
+  <p>The stored allocations are <strong>supplied</strong>, not something the implementer sources.
+    <code>backend/portfolio_weights.py</code> builds the complete universe and
+    <code>backend/portfolio_weights.xlsx</code> is the same data as a workbook. This is what sits
+    behind <code>resolve_portfolio</code>.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Fact</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Combinations per currency</td><td><strong>84</strong> &mdash; 6 allocation variants
+        &times; 2 TAA states &times; 7 risk levels, exactly as &sect;2.1</td></tr>
+      <tr><td>Of those, with a stored portfolio</td><td><strong>68</strong>. The remaining 16 are the
+        <code>UI_MISSING</code> set: 8 (variant, risk) pairs across both TAA states</td></tr>
+      <tr><td>Total across four currencies</td><td>336 portfolios, <strong>272 available</strong>,
+        6,384 long-form rows</td></tr>
+      <tr><td>Assets</td><td>19 codes, each carrying a reporting name and a category</td></tr>
+      <tr><td>Weights</td><td>Decimal. Every available portfolio sums to <strong>exactly
+        1.0</strong> &mdash; verified across all 272</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The loader already speaks the port's vocabulary. <code>load_portfolio_weights_from_ui()</code>
+    takes the payload shape of <code>resolve_portfolio(basis, key)</code> directly:</p>
+<pre><code># wiring resolve_portfolio to the supplied weights
+from portfolio_weights import load_portfolio_weights_from_ui
+
+rows = load_portfolio_weights_from_ui({
+    "basis": {"currency": "GBP"},
+    "key": {
+        "allocation": "Full",
+        "excludeRE":  True,
+        "excludeTAA": False,
+        "riskLevel":  "Mod Agg",
+    },
+})
+# -&gt; long-form rows: code, reporting_name, category, weight, weight_pct,
+#    category_weight, category_weight_pct, is_held</code></pre>
+
+  <p>Also available: <code>get_context()</code> and <code>get_portfolio()</code> for the analytics
+    objects below, <code>load_portfolio_weight_map()</code> for a plain
+    <code>{asset_code: weight}</code> dict, <code>load_portfolio_weights()</code> for explicit
+    keyword arguments, <code>portfolio_weights_wide()</code> for one row per portfolio, and
+    <code>validate_portfolio_weights()</code>, which raises if the arithmetic or the exclusions
+    drift. Run that in a test.</p>
+
+  <div class="rule"><p><strong>The <code>ui_available</code> column is the availability set of
+    &sect;3.4.</strong> <code>get_schema</code> must derive its availability response from it rather
+    than from a second hand-maintained list, or the UI will offer combinations that
+    <code>resolve_portfolio</code> then refuses. Pass <code>require_ui_available=True</code> and let
+    the loader be the single authority.</p></div>
+
+  <h4>From a UI selection to analytics</h4>
+  <p>The loader now carries the whole chain. <code>get_context(currency)</code> builds the
+    epsilonPhi analytics context, and <code>get_portfolio(currency, weights, hedging_option)</code>
+    returns an <code>SAAPortfolio</code> built against it. <strong>That portfolio object is the
+    source of every number the tool displays</strong> &mdash; the metrics band, the charts and all
+    three sections of the risk dashboard read off it.</p>
+  <p>Both are memoised, because both are expensive: the context is cached per currency, of which
+    there are four, and the portfolio is cached on
+    <code>(currency, weights, hedging_option)</code>. <code>get_context</code> is named for what it
+    returns and is <em>not</em> <code>ScenarioPort.get_schema()</code> &mdash; that one returns the
+    UI's fields, options and availability set, and the two have nothing in common but a former
+    name.</p>
+<pre><code># the entire resolve_portfolio path
+from portfolio_weights import load_portfolio_weight_map, get_portfolio
+
+weights = load_portfolio_weight_map(          # 1. weights for the selection
+    currency="USD", allocation="Core", risk_level="Mod",
+    exclude_real_estate=True, exclude_tactical_asset_allocation=False,
+)                                             #    -&gt; {asset_code: decimal weight}
+
+portfolio = get_portfolio(                    # 2. SAAPortfolio, built against
+    "USD", weights, hedging_option=hedging,   #    get_context(currency), with the
+)                                             #    basis hedging already applied
+
+portfolio.get_total_return()                  # 3. read the analytics off it
+portfolio.get_risk()
+portfolio.get_sharpe_ratio()</code></pre>
+
+  <p>Hedging is an argument, not a later setter, and it is part of the cache key. That is
+    deliberate &mdash; see &sect;15.1a. It reaches the numbers here rather than in the weights
+    (open item 14).</p>
+
+  <h4>Three corrections found while building this</h4>
+  <div class="tw"><table>
+    <thead><tr><th>As written</th><th>As built</th></tr></thead>
+    <tbody>
+      <tr><td><code>get_context(currency)</code></td>
+        <td>Could not run: <code>ContextCreator</code> defaults its dates to <code>None</code>,
+          which <code>CContext</code> cannot parse. It now passes the canonical case study's
+          window, <code>30-Nov-1983</code> to <code>31-Dec-2022</code>, matching the 20221231
+          model set.</td></tr>
+      <tr><td><code>set_hedging_option()</code> applies the basis hedging</td>
+        <td><strong>A dead path in this snapshot.</strong> It reaches
+          <code>SAAHedging</code>, a class that exists nowhere in the repo. Hedging is applied
+          instead as per-asset FX ratios through <code>set_hedging_ratios</code>, inside the
+          cached build so it stays part of the cache key. Hedged 1.0, Unhedged 0.0, Equity Not
+          Hedged 0.0 on Public Equity; <strong>ISG Hedged is a stand-in</strong> awaiting PMG's
+          house ratios (open item 15).</td></tr>
+      <tr><td>Build the portfolio from the held weights</td>
+        <td>Built zero-padded to all nineteen codes. It changes no number &mdash; verified equal
+          to 1e-12 &mdash; and gives every portfolio the same asset set, which is what lets
+          <code>Reporting</code> union portfolios that hold different things. The screen payload
+          still carries held rows only, so &sect;2.2's blank-versus-dash is untouched.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">4.6</span>The three adapters, and why the analytics are precomputed</h3>
+  <p>The port is implemented three times. Which one answers is one environment variable,
+    <code>SCENARIO_ADAPTER</code>.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Adapter</th><th>Data</th><th>Cold resolve</th><th>Database</th></tr></thead>
+    <tbody>
+      <tr><td><code>fixtures</code></td><td>The supplied weights, synthetic analytics (&sect;4.4)</td>
+        <td>~0ms</td><td>no</td></tr>
+      <tr><td><code>epsilonphi</code></td><td>Live analytics, the chain above</td>
+        <td><strong>~97s</strong></td><td>yes</td></tr>
+      <tr><td><code>baked</code></td><td>Precomputed epsilonPhi results, read from disk</td>
+        <td><strong>~15ms</strong></td><td>no</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>This is a lookup, not a solve</strong> &mdash; the premise of the
+    whole product, settled at Q2 &mdash; and its input space is closed: 68 combinations per
+    currency &times; 4 hedging policies. Nothing a PWA can select is unknown in advance, so the
+    analytics are computed once per <code>dataversion</code> by an offline bake and served from
+    disk. A cold process answers any of them in milliseconds, and the read path needs no
+    database. Anything unbaked falls through to the live adapter, so correctness never depends
+    on the bake being complete.</p></div>
+  <p>A cold portfolio originally cost <strong>255 seconds</strong>, two thirds of it inside one
+    estimator function repeating work that depends on neither the portfolio nor the asset.
+    Fixing that took it to 96.6s; baking took it to 15ms. The profile, its four causes and the
+    measurements are recorded in <code>service/PERFORMANCE.md</code>; the consequence for this
+    document is &sect;10.1's skeleton threshold, which is now never reached.</p>
+
+  <h4>Where each figure on screen comes from</h4>
+  <div class="tw"><table>
+    <thead><tr><th>On screen</th><th>Method on <code>SAAPortfolio</code></th></tr></thead>
+    <tbody>
+      <tr><td>Expected return</td><td><code>get_total_return()</code></td></tr>
+      <tr><td>Volatility</td><td><code>get_risk()</code></td></tr>
+      <tr><td>Sharpe ratio</td><td><code>get_sharpe_ratio()</code></td></tr>
+      <tr><td>Risk premia</td><td><code>get_risk_premia()</code>, per asset
+        <code>get_assets_risk_premias()</code></td></tr>
+      <tr><td>Crisis periods, nominal and real (&sect;9)</td><td><code>get_factor_stress_tests()</code>
+        &mdash; <code>_extended()</code> for the longer set</td></tr>
+      <tr><td>Value at risk / CVaR / probability of loss</td>
+        <td><code>get_portfolio_var_pol(confidence=0.99, loss=0)</code> returns a risk object;
+          read <code>.get_VaR(p)</code>, <code>.get_CVaR(p)</code>, <code>.get_PoL(p)</code> for
+          <code>p</code> in <code>0, 11, 33</code> &mdash; 1 month, 1 year, 3 years. Each returns
+          <em>[Nominal, Real]</em>.</td></tr>
+      <tr><td>Risk decomposition</td><td><code>get_risk_decomposition()</code>,
+        <code>get_marginal_asset_risk_contribution()</code></td></tr>
+      <tr><td>Category weights</td><td><code>get_asset_categories()</code>, with
+        <code>get_asset_reporting_names()</code> for labels</td></tr>
+      <tr><td>The $20m private-assets test (&sect;2.5)</td><td><code>get_total_private_assets_weight()</code></td></tr>
+      <tr><td>Hedging</td><td><code>set_hedging_option()</code>,
+        <code>get_default_hedging_option()</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>Everything on screen comes from the portfolio object.</strong> Do
+    not build the screen out of <code>Reporting</code>'s table builders. They exist to lay out a
+    workbook &mdash; they return multi-indexed frames shaped for Excel, with presentation folded in,
+    and unpicking that for HTML costs more than reading the figures directly. Compose the three
+    risk-dashboard sections (&sect;9) from the methods above, per portfolio.</p></div>
+  <p>The one place <code>Reporting</code> still belongs is the Excel export (&sect;14), because
+    producing a styled workbook is what it is for and the portfolio has no export of its own.</p>
+
+  <div class="rule"><p><strong>Two things in the supplied weights do not match this document.</strong>
+    They are recorded as open items 12 and 13 rather than reconciled here, because each is a
+    product decision and not an implementation detail. Read them before building the allocation
+    table &mdash; both change it. Item 14 is now answered: see the chain above.</p></div>
+
+<section class="block" id="s5">
+  <h2 class="sec"><span class="n">5</span>Front-end architecture</h2>
+  <p class="lede">Plain browser JavaScript. No framework, no bundler, no module system &mdash;
+    because the host has none.</p>
+
+  <h3><span class="n">5.1</span>One file, ordered layers</h3>
+  <div class="rule"><p><strong>There is no <code>import</code>.</strong> The host loads scripts with
+    <code>&lt;script src&gt;</code> and order is load-bearing. This page ships one JavaScript file
+    whose <em>internal</em> order is the dependency graph.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Layer</th><th>Provides</th><th>Depends on</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Host prelude</td>
+        <td><code>API_BASE</code> guard, <code>showAlert</code>, <code>clearAlert</code>,
+          <code>apiFetch</code></td><td>&mdash;</td></tr>
+      <tr><td>2</td><td>Core</td>
+        <td><code>App</code>: domain data, state, table and chart renderers, mandate/basis/base tiers</td>
+        <td>1</td></tr>
+      <tr><td>3</td><td>Option helpers</td><td>Allocation and risk-level option builders</td><td>2</td></tr>
+      <tr><td>4</td><td>Picker</td><td>The <code>+</code> column and its popover</td><td>2, 3</td></tr>
+      <tr><td>5</td><td>Implementation</td><td>Sleeve library, sleeve tier, product table</td><td>2, 3</td></tr>
+      <tr><td>6</td><td>Boot</td><td><code>App.refresh()</code> on <code>DOMContentLoaded</code></td><td>all</td></tr>
+    </tbody>
+  </table></div>
+  <p>Layers 4 and 5 attach themselves to the core through
+    <code>App.setPicker()</code> and <code>App.addRenderer()</code>; the core calls back into them on
+    every refresh. That keeps the dependency one-way and lets either be removed without touching the
+    core.</p>
+
+  <h3><span class="n">5.2</span>The host prelude</h3>
+<pre><code>'use strict';
+
+// The Flask frontend proxies /api/* to FastAPI, rewriting /api/&lt;x&gt; to
+// /api/v1/&lt;x&gt;. On a host page globals.js has already set API_BASE; this
+// guard keeps the page working when opened standalone.
+if (typeof API_BASE === 'undefined') {
+    window.API_BASE = window.location.origin + '/api';
+}
+
+async function apiFetch(path, opts) {
+    // read off window rather than the bare global: identical in a browser,
+    // and it does not depend on window === globalThis
+    var resp = await fetch(window.API_BASE + path,
+                           Object.assign({credentials: 'same-origin'}, opts || {}));
+    if (!resp.ok) {
+        var msg = 'Request failed (' + resp.status + ')';
+        try {
+            var body = await resp.json();
+            if (body &amp;&amp; body.loginUrl) { window.location = body.loginUrl; return; }
+            if (body &amp;&amp; body.error) msg = body.error;
+        } catch (e) { /* non-JSON error body */ }
+        throw new Error(msg);
+    }
+    return resp.json();
+}</code></pre>
+  <p><code>credentials: 'same-origin'</code> matters: the page is served from inside the host app, so
+    the kerberos cookie travels automatically. The UI never handles a token.</p>
+
+  <h3><span class="n">5.3</span>State shape</h3>
+<pre><code>{
+  phase:   "landing" | "workspace",  // precedes any mandate; see &sect;7.1
+  scenarioId: "sc_7fa2…",
+  mandate: { topAccountSize, mandateSize, primaryPwa, editing, error },
+  basis:   { currency: "USD", hedging: "Hedged" },
+  schema:  { allocations[], riskLevels[], implementationVariants[], categories[],
+             availability: Set, rules },
+  step:    "aa" | "impl",
+  columns: [                       // index 0 is always the base
+    { key: {allocation, excludeRE, excludeTAA, riskLevel},
+      status: "loading" | "ready" | "error",
+      requestedAt: 1724920000000,  // drives the 200ms skeleton threshold
+      error: null,
+      data: { name, weights, categories, has, metrics, stress[], premia[] } }
+  ],
+  sleeves: { "&lt;category&gt;": "&lt;sleeve name&gt;" | null },
+  export:  { status: "idle" | "working" | "error" }
+}</code></pre>
+  <div class="rule"><p><strong>Every column carries its own status.</strong> There is no global
+    loading flag. Three columns can be resolving while a fourth shows an error and the base is ready
+    &mdash; and the tables must render all four states at once without special-casing.</p></div>
+
+  <h3><span class="n">5.4</span>Rendering</h3>
+  <p>Direct DOM writes, matching the host. Two rules keep it correct without a virtual DOM:</p>
+  <ul>
+    <li><strong>Delegate events at the document</strong>, never bind to elements that re-render.</li>
+    <li><strong>Preserve focus across re-render.</strong> Record
+      <code>document.activeElement.id</code> and the selection range before replacing markup;
+      restore after. Without this, the typeahead loses the caret every time a column resolves.</li>
+  </ul>
+
+  <h3><span class="n">5.5</span>Adding a second page later</h3>
+  <p>If the product ever needs one, follow the host's convention rather than introducing a router:
+    a new folder, a new Flask route, a new nav link. Shared logic moves to
+    <code>dashboard/static/js/</code> and is included by both pages in the correct order.
+    <strong>Do not add a client-side router</strong> &mdash; it would be the only one in the host and
+    would fight the back button.</p>
+</section>
+
+<section class="block" id="s6">
+  <h2 class="sec"><span class="n">6</span>Design system</h2>
+  <p class="lede">Taken from <code>model-management/mpo-ui/assets/app.css</code>. Two values are
+    changed, both for contrast, both documented. The palette is provisional &mdash; see &sect;6.5.</p>
+
+  <h3><span class="n">6.1</span>Colour tokens</h3>
+  <div class="sw-grid">
+    <div class="sw"><div class="chip" style="background:#16243a"></div>
+      <div class="meta"><b>--navy</b><span>#16243a &middot; rail, bands</span></div></div>
+    <div class="sw"><div class="chip" style="background:#1d2f4b"></div>
+      <div class="meta"><b>--navy2</b><span>#1d2f4b &middot; rail inputs</span></div></div>
+    <div class="sw"><div class="chip" style="background:#fbfcfe"></div>
+      <div class="meta"><b>--bg</b><span>#fbfcfe &middot; page ground, landing and workspace
+        alike. Was <code>#eceef1</code>.</span></div></div>
+    <div class="sw"><div class="chip" style="background:#ffffff"></div>
+      <div class="meta"><b>--panel</b><span>#ffffff &middot; surfaces</span></div></div>
+    <div class="sw"><div class="chip" style="background:#d4dae2"></div>
+      <div class="meta"><b>--line</b><span>#d4dae2 &middot; structural</span></div></div>
+    <div class="sw"><div class="chip" style="background:#eef1f4"></div>
+      <div class="meta"><b>--line2</b><span>#eef1f4 &middot; per-row</span></div></div>
+    <div class="sw"><div class="chip" style="background:#1c2733"></div>
+      <div class="meta"><b>--ink</b><span>#1c2733 &middot; body text</span></div></div>
+    <div class="sw"><div class="chip" style="background:#5b6b7c"></div>
+      <div class="meta"><b>--mut</b><span>#5b6b7c &middot; secondary</span></div></div>
+    <div class="sw"><div class="chip" style="background:#1f5fbf"></div>
+      <div class="meta"><b>--blu</b><span>#1f5fbf &middot; primary action</span></div></div>
+    <div class="sw"><div class="chip" style="background:#e3ebfa"></div>
+      <div class="meta"><b>--blubg</b><span>#e3ebfa &middot; info tint</span></div></div>
+    <div class="sw"><div class="chip" style="background:#1a7f37"></div>
+      <div class="meta"><b>--grn</b><span>#1a7f37 &middot; positive</span></div></div>
+    <div class="sw"><div class="chip" style="background:#e7f4ec"></div>
+      <div class="meta"><b>--grnbg</b><span>#e7f4ec</span></div></div>
+    <div class="sw"><div class="chip" style="background:#b42318"></div>
+      <div class="meta"><b>--red</b><span>#b42318 &middot; negative</span></div></div>
+    <div class="sw"><div class="chip" style="background:#fde8e8"></div>
+      <div class="meta"><b>--redbg</b><span>#fde8e8</span></div></div>
+    <div class="sw"><div class="chip" style="background:#b45309"></div>
+      <div class="meta"><b>--amb</b><span>#b45309 &middot; warning</span></div></div>
+    <div class="sw"><div class="chip" style="background:#fef3c7"></div>
+      <div class="meta"><b>--ambbg</b><span>#fef3c7</span></div></div>
+    <div class="sw"><div class="chip" style="background:#d4a017"></div>
+      <div class="meta"><b>--spec</b><span>#d4a017 &middot; annotation</span></div></div>
+    <div class="sw"><div class="chip" style="background:#fffbeb"></div>
+      <div class="meta"><b>--specbg</b><span>#fffbeb</span></div></div>
+  </div>
+
+  <h3><span class="n">6.2</span>Two documented deviations</h3>
+  <p>Both house values fail WCAG 1.4.11 non-text contrast against the navy rail. Both are replaced,
+    and the replacements are part of this specification.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Element</th><th>House value</th><th>Specified value</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>Rail input border</td><td><code>#2e4468</code> &mdash; 1.59:1</td>
+        <td><code>#52739c</code> &mdash; <strong>3.18:1</strong></td>
+        <td>Below 3:1 the field boundary is invisible against the rail.</td></tr>
+      <tr><td>Rail primary button</td><td><code>#1f5fbf</code> &mdash; 2.56:1 vs rail</td>
+        <td><code>#2a6ad0</code> &mdash; <strong>3.02:1</strong> vs rail, 5.16:1 with white text</td>
+        <td>The only candidate clearing both thresholds.</td></tr>
+    </tbody>
+  </table></div>
+  <p><code>#1f5fbf</code> remains the accent everywhere in the document body, where it measures
+    6.09:1 on white. All 22 audited pairs pass.</p>
+  <div class="note">
+    <h4>One accepted exception</h4>
+    <p>The <code>.spec</code> dashed border (<code>#d4a017</code> on <code>#fffbeb</code>) measures
+      2.29:1. It is retained at the house value because <code>.spec</code> is the <em>annotation</em>
+      layer &mdash; in <code>mpo-ui</code> it is toggled off with &ldquo;Hide annotations&rdquo; and
+      never ships in the product. <strong>If any of it becomes product chrome, darken the
+      border.</strong></p>
+  </div>
+
+  <h3><span class="n">6.3</span>Typography</h3>
+  <p>House faces, served locally from <code>static/fonts/</code>. <strong>No network request.</strong>
+    This supersedes the earlier system-stack rule inherited from <code>mpo-ui</code>.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Role</th><th>Face</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Wordmark &amp; landing display</td><td><strong>Goldman Sans</strong></td>
+        <td>Regular only. Used at <strong>400</strong> and never asked for bold &mdash; a synthesised
+          bold would look wrong. Carries the landing title at
+          <code>clamp(53px,6vw,99px)</code> with <code>-.045em</code> tracking (&sect;7.1); this is
+          the only place in the product it is set above 21px.</td></tr>
+      <tr><td>Headings &amp; body</td><td><strong>GS Sans</strong></td>
+        <td>Variable, <code>wght 250&ndash;700</code></td></tr>
+      <tr><td>Tables &amp; data</td><td><strong>GS Sans Condensed</strong></td>
+        <td>Variable, <code>wght 300&ndash;900</code>. Narrow enough for the thirteen-column
+          implementation table, and it echoes Aptos Narrow in the Excel risk sheet.</td></tr>
+      <tr><td>Fallback</td><td><strong>Roboto</strong></td>
+        <td>1250 glyphs against GS Sans's 500</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>All five faces carry <code>tnum</code>.</strong> The comparison design
+    depends on <code>font-variant-numeric: tabular-nums</code> throughout &mdash; proportional digits
+    make a comparison column impossible to scan vertically. This was verified before the faces were
+    adopted; had the house face lacked it, the numeric role would have gone to Roboto.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Role</th><th>Size</th><th>Weight</th><th>Treatment</th></tr></thead>
+    <tbody>
+      <tr><td>Page heading</td><td>22px</td><td>400</td><td>Goldman Sans, <code>--navy</code></td></tr>
+      <tr><td>Section heading</td><td>15px</td><td>700</td><td><code>--navy</code></td></tr>
+      <tr><td>Body / controls</td><td>14&ndash;15.5px</td><td>400&ndash;600</td><td><code>--ink</code></td></tr>
+      <tr><td>Table data</td><td>15px</td><td>400</td><td>Condensed, <code>tabular-nums</code></td></tr>
+      <tr><td>Table header</td><td>12.5px</td><td>600</td><td>Uppercase, <code>.06em</code>, <code>--mut</code></td></tr>
+      <tr><td>Rail group label</td><td>11px</td><td>700</td><td>Uppercase, <code>.16em</code></td></tr>
+      <tr><td>Badge</td><td>12px</td><td>700</td><td>Pill, tinted fill + darker border</td></tr>
+    </tbody>
+  </table></div>
+  <p>Nothing sits below 11px, and what is there is uppercase micro-labels with letter-spacing.</p>
+
+  <h3><span class="n">6.4</span>Status vocabulary</h3>
+  <p>Adopt the <code>mpo-ui</code> badge set unchanged. It already covers every state this product
+    needs.</p>
+  <p>
+    <span class="bdg b-ok">Matched</span>
+    <span class="bdg b-warn">Constrained</span>
+    <span class="bdg b-bad">Below minimum</span>
+    <span class="bdg b-info">Binding</span>
+  </p>
+  <div class="tw"><table>
+    <thead><tr><th>Class</th><th>Fill / border / ink</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><code>.b-ok</code></td><td><code>#e7f4ec</code> / <code>#b7e0c5</code> / <code>#176a33</code></td>
+        <td>Lookup matched; all categories implemented; export complete</td></tr>
+      <tr><td><code>.b-warn</code></td><td><code>#fef3c7</code> / <code>#f3d48a</code> / <code>#b45309</code></td>
+        <td>Constraint in force; categories still needing a sleeve</td></tr>
+      <tr><td><code>.b-breach</code></td><td><code>#fde8e8</code> / <code>#f1b8b2</code> / <code>#9b1c1c</code></td>
+        <td>Mandate below minimum; column failed to resolve</td></tr>
+      <tr><td><code>.b-bind</code></td><td><code>#e3ebfa</code> / <code>#b9cdf0</code> / <code>#1e4fa3</code></td>
+        <td>Portfolio count; base column tag</td></tr>
+      <tr><td><code>.b-slack</code></td><td><code>#eef1f4</code> / <code>#d8dee6</code> / <code>#5b6b7c</code></td>
+        <td>Not applicable</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>Status colour never carries meaning alone.</strong> Every badge ships
+    with its label. Positive and negative figures show their sign as well as their colour.</p></div>
+
+  <h3><span class="n">6.5</span>Retheming at port time</h3>
+  <div class="note">
+    <h4>The palette above is provisional</h4>
+    <p>The host's own theme is <code>static/css/onegsTheme.css</code>, which exposes
+      <code>--gs-*</code> variables. The palette specified here comes from
+      <code>model-management/mpo-ui</code>, a <em>different</em> internal project, and the theme will
+      be shifted once the page is ported.</p>
+    <p>The build is arranged so that this is a token change, not a rewrite: <strong>every colour in
+      the stylesheet resolves through a <code>:root</code> custom property</strong>, and no component
+      rule contains a literal hex except the chart palette (&sect;9.5) and the two contrast fixes
+      above. Retheming means replacing the token block and re-running the contrast audit.</p>
+  </div>
+
+  <h3><span class="n">6.6</span>Chart palette</h3>
+  <p>Seven categorical slots for the seven categories in the universe, assigned in <strong>fixed
+    order, never cycled</strong>.</p>
+  <div class="rule"><p><strong>A slot belongs to a category, not to a position.</strong> Portfolios
+    hold between two and seven categories (&sect;2.2), so the set on screen changes with the
+    selection. Key the palette on the category <em>name</em>. Hand slots out by position in whatever
+    list a portfolio happens to have, and Public Equity changes colour the moment a comparison
+    without hedge funds is added &mdash; a colour that moves is worse than no colour at all.</p></div>
+  <p>Slot 1 previously carried Cash/MMF, which the supplied weights do not have (&sect;2.2). It now
+    carries <em>Asset Allocation Strategies</em>. Every other category keeps the colour it had, and
+    the seven hex values are unchanged, so the validation below still stands.</p>
+  <div class="sw-grid">
+    <div class="sw"><div class="chip" style="background:#2a78d6"></div>
+      <div class="meta"><b>slot 1</b><span>#2a78d6 &middot; Asset Alloc Strat</span></div></div>
+    <div class="sw"><div class="chip" style="background:#eb6834"></div>
+      <div class="meta"><b>slot 2</b><span>#eb6834 &middot; IGFI</span></div></div>
+    <div class="sw"><div class="chip" style="background:#1baf7a"></div>
+      <div class="meta"><b>slot 3</b><span>#1baf7a &middot; Other FI</span></div></div>
+    <div class="sw"><div class="chip" style="background:#eda100"></div>
+      <div class="meta"><b>slot 4</b><span>#eda100 &middot; Public Equity</span></div></div>
+    <div class="sw"><div class="chip" style="background:#e87ba4"></div>
+      <div class="meta"><b>slot 5</b><span>#e87ba4 &middot; Hedge Funds</span></div></div>
+    <div class="sw"><div class="chip" style="background:#4a3aa7"></div>
+      <div class="meta"><b>slot 6</b><span>#4a3aa7 &middot; Private Equity</span></div></div>
+    <div class="sw"><div class="chip" style="background:#e34948"></div>
+      <div class="meta"><b>slot 7</b><span>#e34948 &middot; Other Private</span></div></div>
+  </div>
+<pre><code>Validated against the #FFFFFF panel, seven slots:
+  [PASS] Lightness band        all 7 inside L 0.43–0.77
+  [PASS] Chroma floor          all 7 &gt;= 0.1
+  [PASS] CVD separation        worst adjacent ΔE 9.1 (protan)
+  [PASS] Normal-vision floor   worst adjacent ΔE 19.6
+  [WARN] Contrast vs surface   3 slots below 3:1 — relief required</code></pre>
+  <p>The contrast warning is <strong>discharged, not dismissed</strong>: the allocation table sits
+    directly beneath the chart with exact values, and segments wider than 46px carry direct labels.</p>
+  <div class="rule"><p><strong>The house green, amber and red are excluded from the series
+    palette.</strong> They are reserved as status colours. A status hue impersonating a data series
+    is how a chart starts lying.</p></div>
+</section>
+
+<section class="block" id="s7">
+  <h2 class="sec"><span class="n">7</span>Step 1 &mdash; allocation</h2>
+  <p class="lede">A fixed rail carrying every input, and a scrolling document carrying every output.
+    Wireframes are to scale in structure, not in pixels; measurements are in &sect;12.</p>
+
+  <h3><span class="n">7.1</span>The landing, and the mandate dialog</h3>
+  <p>The page opens on a <strong>landing phase</strong>, not on the workspace. Until a mandate
+    exists there is nothing to put in the rail and nothing to put in the document, so the rail
+    and the step nav are both hidden and the page shows a single front door.</p>
+  <div class="rule"><p><strong>The page asks one question at a time.</strong> On arrival the
+    scenario basis is unanswered &mdash; currency and hedging both read <em>Select&hellip;</em>
+    &mdash; and its tier carries the ring. The base portfolio's controls are disabled and its
+    tier is <em>not</em> ringed: two rings competing say nothing about which to answer first.
+    Answering the basis enables the base tier and moves the ring to it; resolving an allocation
+    reveals the document and unlocks step 2, which then pulses until it is opened. The scenario
+    always holds a basis &mdash; the schema is fetched against one &mdash; so the unanswered
+    state is presentation rather than absence, and answering either half settles the pair with
+    no rebuild confirmation, because nothing is built yet to rebuild. A rehydrated scenario that
+    already has columns skips the sequence entirely. Deviation D45.</p></div>
+  <div class="rule"><p><strong>Nothing is titled until there is something under it.</strong>
+    The stage heading, its standfirst and the whole risk dashboard stay hidden until an
+    allocation resolves. Until then the document is one panel saying what to do; a title over an
+    empty page is furniture.</p></div>
+  <div class="rule"><p><strong>The landing is a phase, not a route.</strong> It is the same
+    document and the same page folder, entered and left by toggling <code>phase</code>
+    (&sect;5.3) and a <code>body.phase-landing</code> class. Nothing navigates. This matters at
+    port time: the host registers one Flask route for this page (&sect;3.2), and a landing that
+    needed its own URL would break that.</p></div>
+<pre class="wire"><code>          ┌────────────────────────────────────────────────────────┐
+          │ ══════════════════════════════════════════════════════ │ 2px rule, draws L&rarr;R
+          │                                                        │
+          │ GOLDMAN SACHS · PRIVATE WEALTH MANAGEMENT              │
+          │                                                        │
+          │ Portfolio Management Group                             │ Goldman Sans 400
+          │ Proposal Tool                                          │ accent, own line
+          │                                                        │
+          │ ▓▓▓▓▓ ▓▓▓▓▓ ▓▓▓▓▓ ▓▓▓▓▓ ▓▓▓▓▓ ▓▓▓▓▓ ▓▓▓▓▓              │ the 7 categories
+          │ ────────────────────────────────────────────────────── │
+          │                                                        │
+          │ Build a model portfolio from     MANDATE  Top account  │
+          │ a client mandate. Compare it     ADVISER  Primary PWA  │
+          │ against up to three…             MINIMUM  &ge; $5,000,000 │
+          │                                                        │
+          │ ┌──────────────────┐                                   │
+          │ │  Start Here   &rarr;  │                                   │
+          │ └──────────────────┘                                   │
+          └────────────────────────────────────────────────────────┘</code></pre>
+  <p>Ground is <code>#FBFCFE</code>. It was originally held just off the workspace canvas so the
+    threshold read as its own surface; <strong>the workspace now shares it</strong> &mdash;
+    <code>--bg</code> carries the value and the landing reads the token, so the two cannot drift
+    apart at retheme time. The title is Goldman Sans at <code>clamp(53px,6vw,99px)</code>, tracking
+    <code>-.045em</code>, in two blocks with the second in <code>#446cce</code>.</p>
+  <div class="rule"><p><strong>The seven-colour rule is the category palette, not decoration.</strong>
+    Its segments are drawn from <code>var(--cat-1&hellip;7)</code> &mdash; the same custom properties
+    the allocation table and the charts use (&sect;6.6). Hard-coding the hexes here would let the
+    front door and the tables drift apart on the first retheme.</p></div>
+  <p><strong>Start Here</strong> is the only control on the landing, and it carries
+    <code>--btn-case: none</code>: it is sentence case where every other button in the product is
+    uppercase. Activating it opens the mandate dialog below; committing the dialog is the only
+    way into the workspace.</p>
+<pre class="wire"><code>          ┌────────────────────────────────────────────┐
+          │  New scenario                          ✕   │
+          │  Mandate details for this client           │
+          │                                            │
+          │  Top account size                          │
+          │  ┌──────────────────────────────────────┐  │
+          │  │ $48,500,000                          │  │
+          │  └──────────────────────────────────────┘  │
+          │  Mandate size                              │
+          │  ┌──────────────────────────────────────┐  │
+          │  │ $4,000,000                           │  │  aria-invalid when blocked
+          │  └──────────────────────────────────────┘  │
+          │  ┌──────────────────────────────────────┐  │
+          │  │ Mandate size must be at least        │  │  role="alert"
+          │  │ $5,000,000.                          │  │
+          │  └──────────────────────────────────────┘  │
+          │  Primary PWA                               │
+          │  ┌──────────────────────────────────────┐  │
+          │  │ Ald▏                          3 found│  │  combobox
+          │  ├──────────────────────────────────────┤  │
+          │  │ M. Aldridge — Zurich                 │  │  aria-activedescendant
+          │  └──────────────────────────────────────┘  │
+          │             ┌──────────┐  ┌─────────────┐  │
+          │             │  Cancel  │  │   Continue  │  │  disabled until valid
+          │             └──────────┘  └─────────────┘  │
+          └────────────────────────────────────────────┘</code></pre>
+  <ul>
+    <li><strong>Validation on blur and on submit</strong>, never on every keystroke &mdash; a user
+      typing <code>4</code> on the way to <code>40,000,000</code> must not be told they are wrong.</li>
+    <li>Amounts accept typed separators and symbols; parse with
+      <code>replace(/[^0-9.]/g,"")</code> and re-format on blur.</li>
+    <li>Cross-field rule: mandate size cannot exceed top account size. Attached to the mandate size
+      field; revalidate when either changes.</li>
+    <li><strong>Mandate size also drives the $20m rule</strong> (&sect;2.5). On save, refetch the
+      schema &mdash; the available allocations may have changed.</li>
+  </ul>
+  <h4>Dialog mechanics &mdash; apply to every modal</h4>
+  <ul>
+    <li><code>role="dialog"</code>, <code>aria-modal="true"</code>, <code>aria-labelledby</code> on the title.</li>
+    <li><strong>Focus moves to the first field on open</strong> and returns to the invoking control on close.</li>
+    <li><strong>Focus is trapped</strong> while open. Escape closes. Clicking the scrim closes only
+      if no field has been edited.</li>
+    <li>Background content gets <code>inert</code> where supported.</li>
+  </ul>
+
+  <h3><span class="n">7.2</span>The workspace</h3>
+<pre class="wire"><code>┌── RAIL 352px, fixed, own scroll ──┐┌── DOCUMENT ────────────────────────────────┐
+│ ▌Portfolio Management Group   ⟨«⟩ ││  #alertArea                                │
+│  PROPOSAL TOOL                    ││                                            │
+├───────────────────────────────────┤├────────────────────────────────────────────┤
+│ MANDATE                    Edit   ││                                            │
+│ Top account $48,500,000           ││ (1) Asset allocation ── (2) Implementation │
+│ Mandate $26,000,000               ││     Build & compare        Sleeves & export│
+│ M. Aldridge — Zurich              ││                                            │
+├───────────────────────────────────┤│ ⟨Matched⟩ ⟨RE unavailable⟩ ⟨3 of 4⟩        │
+│ SCENARIO BASIS                    ││                                            │
+│ Currency      Hedging             ││  Allocation                                │
+│ ┌────────┐    ┌────────────┐      ││  ┌──────────────┬───────┬───────┬───────┬─┐│
+│ │ USD  ▾ │    │ Hedged   ▾ │      ││  │ Asset        │Core Md│Full MA│ExHf A │+││
+│ └────────┘    └────────────┘      ││  ├──────────────┼───────┼───────┼───────┼─┤│
+│ Fixed across every column.        ││  │ Cash, Dep &  │   3.2 │   3.2 │   3.2 │ ││
+│ Changing either rebuilds all.     ││  │ IG Fixed Inc │  36.3 │  31.0 │  28.4 │ ││
+├───────────────────────────────────┤│  │ Public Equity│  41.7 │  35.4 │  44.2 │ ││
+│ BASE PORTFOLIO         Column 1   ││  │ Hedge Funds  │   6.1 │   6.1 │       │ ││ blank = absent
+│ Allocation                        ││  │ Private Eq   │       │   7.9 │   7.9 │ ││
+│ ┌───────────────────────────────┐ ││  │ Total        │ 100.0 │ 100.0 │ 100.0 │ ││
+│ │ Core                        ▾ │ ││  │ Est. Return  │  4.67 │  5.19 │  5.85 │ ││
+│ └───────────────────────────────┘ ││  │ Sharpe Ratio │  0.29 │  0.30 │  0.29 │ ││
+│ ☑ Exclude Real Estate  (disabled) ││  │ Volatility   │  9.15 │ 10.57 │ 13.44 │ ││
+│   Not available — Core holds no   ││  └──────────────┴───────┴───────┴───────┴─┘│
+│   real estate.                    ││                                            │
+│ ☐ Exclude Tactical Asset Alloc.   ││  At a glance                               │
+│   TAA is included by default.     ││  ┌────────────────────┐ ┌─────────────────┐│
+│ Risk level                        ││  │ stacked bars       │ │ return vs vol   ││
+│ ┌───────────────────────────────┐ ││  └────────────────────┘ └─────────────────┘│
+│ │ Mod                         ▾ │ ││                                            │
+│ └───────────────────────────────┘ ││  Risk dashboard                            │
+├───────────────────────────────────┤│  ┌──────────────┬───────────────┬─────────┐│
+│ COMPARISONS              2 of 3   ││  │              │   Core Mod    │ Full MA ││
+│ Add from the + column at the      ││  │              │ Nominal│ Real │ Nom│Real││
+│ right of the allocation table.    ││  │ FACTOR BASED RISK ANALYTICS          ││
+│                                   ││  │ Public Equity│    41.7      │  35.4   ││ colspan 2
+│ ┌───────────────────────────────┐ ││  │ PREDICTED PERFORMANCE OVER STRESS…   ││
+│ │ Core Mod              [Base]  │ ││  │ GFC 2008     │ -28.1 │-30.5 │-31.0│-33││
+│ │ Full Mod Agg              ✕   │ ││  │ PORTFOLIO RISK PREMIA                ││
+│ │ Ex HFs Agg                ✕   │ ││  │ VaR 99% · 1M │  -6.4 │ -6.7 │ -7.4│-7.││
+│ └───────────────────────────────┘ ││  └──────────────┴───────┴──────┴────┴────┘│
+└───────────────────────────────────┘└────────────────────────────────────────────┘</code></pre>
+
+  <div class="rule"><p><strong>There is no topbar.</strong> The document opens on the step nav.
+    The product name it carried is now the rail's brand block, and the status it carried
+    survives only where it says something: <em>Rebuilding</em> and <em>n columns failed</em>
+    are the first chip of the notices strip, while the settled <em>Lookup matched</em> and the
+    portfolio count were dropped in revision 5 (D34). The strip is exception-only &mdash; with
+    nothing to report it renders nothing and takes no room, so the document opens straight onto
+    its own heading.</p></div>
+  <div class="rule"><p><strong>The rail collapses.</strong> A control in the brand block folds it
+    to a 48px strip that still carries the control, so the way back is always in view, and the
+    document reclaims the width. The preference persists in <code>localStorage</code>, because
+    this page rehydrates through a refresh and the choice should survive it. Below 1040px, where
+    the rail is already a stacked block, collapsing hides the tiers instead.</p></div>
+  <div class="rule"><p><strong>Change is animated, on four timings.</strong>
+    <code>--col-motion</code> 420ms carries a column width; <code>--row-motion</code> 900ms a
+    row arriving or leaving; <code>--value-motion</code> 900ms <em>linear</em> a figure changing
+    in place; <code>--reveal-motion</code> 700ms the document's first appearance. The value fade
+    is linear where the rest is eased because the shared curve is front-loaded: a moving row
+    still reads as travelling through its tail, but a fade is perceptually over by 0.9 opacity,
+    so on the same curve the number looked finished while the row was still going. A row cannot
+    be transitioned &mdash; <code>display:table-row</code> does not interpolate &mdash; so what
+    moves is each cell's padding, line-height and border, and the max-height of a wrapper inside
+    it. Reduced motion gets every finished state and no animation. Deviation D42.</p></div>
+  <div class="rule"><p><strong>The first appearance is one movement, not a sequence.</strong>
+    Rows are not animated into a table that was empty: opening each from collapsed made the
+    allocation table grow under the sections below it and shove them down the page. Everything
+    is at its final size before anything becomes visible, and the document fades in whole.</p></div>
+  <div class="rule"><p><strong>The fold is animated, and the tier content is clipped rather than
+    reflowed.</strong> 280ms on <code>cubic-bezier(.4,0,.2,1)</code>, carrying the rail's width
+    and the document's margin together. Everything inside the rail is held at the expanded width
+    so that narrowing slides it out of view behind <code>overflow-x</code>; letting 352px of form
+    controls reflow through every width down to 48px looks like the fields crushing themselves
+    and costs a full relayout per frame. The tiers fade and take
+    <code>visibility:hidden</code> at the end of the fold, not the start, so they leave the tab
+    order only once they have gone. Reduced motion gets the finished layout and no animation
+    (&sect;13).</p></div>
+  <div class="rule"><p><strong>The columns are sized once, when the fold settles.</strong> Not per
+    frame: one pass over the allocation and risk tables measures at about 18ms, past the frame
+    budget on its own, and it usually has nothing to do &mdash; the data columns sit at their cap
+    whenever the document has room, so widening it changes nothing. Where the columns are
+    share-constrained the width moves once, as the slide comes to rest. The pass is bounded by a
+    timer as well as by <code>transitionend</code>, which does not arrive if the transition never
+    starts.</p></div>
+
+  <h4>Rail tiers</h4>
+  <div class="tw"><table>
+    <thead><tr><th>Tier</th><th>Contains</th><th>On change</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Mandate</strong></td><td>Read-only summary + <em>Edit</em></td>
+        <td>Re-opens the dialog. Saving refetches the schema, since mandate size gates the $20m
+          rule; any column now invalid is <strong>dropped with an announcement</strong>.</td></tr>
+      <tr><td><strong>Scenario basis</strong></td><td>Currency, Hedging</td>
+        <td><strong>Rebuilds every column</strong> &mdash; confirmation required, &sect;11.4</td></tr>
+      <tr><td><strong>Base portfolio</strong></td>
+        <td>Allocation select, Exclude RE tick box, Exclude TAA tick box, Risk level</td>
+        <td>Replaces column 1. A comparison duplicating it is dropped. <strong>Invalidates any
+          implementation</strong> (&sect;11.6).</td></tr>
+      <tr><td><strong>Comparisons</strong></td><td>Count, built list with remove</td>
+        <td>Removal frees a slot and returns the <code>+</code> column</td></tr>
+      <tr><td><strong>Sleeves</strong></td><td>Hidden on this step</td><td>See &sect;8</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>The two tick boxes</h4>
+  <div class="tw"><table>
+    <thead><tr><th>Allocation</th><th>Exclude RE</th><th>Exclude TAA</th></tr></thead>
+    <tbody>
+      <tr><td>Full, Ex HFs</td><td>Enabled. Unticked means real estate is held.</td><td>Enabled, unticked</td></tr>
+      <tr><td>Core, Ex Alts</td><td><strong>Checked and disabled</strong>, with the reason stated
+        beneath: those allocations hold no real estate, so the exclusion is <em>true</em> rather than
+        not-applicable. Unchecked-and-greyed would imply it could be turned on.</td>
+        <td>Enabled, unticked</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">7.3</span>Add-comparison popover</h3>
+  <p>Anchored to the <code>+</code> column header. <strong>Adding happens here</strong> &mdash; there
+    is no queue and no separate confirm step.</p>
+  <ul>
+    <li><strong>Add to table</strong> inserts the column immediately and <strong>the popover stays
+      open</strong> with the risk select cleared, so three comparisons are three presses.</li>
+    <li>The new column header is highlighted for 1.4s, suppressed under
+      <code>prefers-reduced-motion</code>. Both tables scroll to reveal it.</li>
+    <li>Options with no stored portfolio are <strong>disabled and suffixed &ldquo;&mdash;
+      unavailable&rdquo;</strong>; those already on screen, &ldquo;&mdash; already added&rdquo;.</li>
+    <li>At the cap the popover replaces its controls with an explanation pointing at the rail, and
+      the <code>+</code> column disappears until a slot is freed.</li>
+    <li><strong>Non-modal:</strong> <code>role="dialog"</code>, <code>aria-modal="false"</code>.
+      Focus moves in on open, returns to <code>+</code> on close, Escape closes, outside click closes.</li>
+  </ul>
+</section>
+
+<section class="block" id="s8">
+  <h2 class="sec"><span class="n">8</span>Step 2 &mdash; implementation</h2>
+  <p class="lede">Attach one sleeve per category of the base portfolio. A picker with a completeness
+    gate, not an editable grid.</p>
+
+  <h3><span class="n">8.1</span>The screen</h3>
+<pre class="wire"><code>┌── RAIL ───────────────────────────┐┌── DOCUMENT ────────────────────────────────┐
+│ (mandate, basis, base as step 1)  ││ (1) Asset allocation ── (2) Implementation │
+├───────────────────────────────────┤│     Build & compare        Sleeves & export│
+│ SLEEVES                    3 of 5 ││                                            │
+│ Implementation Type            ││                                            │
+│ ┌───────────────────────────────┐ ││                                            │
+│ │ PMG Multi-Asset Portfolio   ▾ │ ││                                            │
+│ └───────────────────────────────┘ ││                                            │
+│ Sleeves below are those PMG       ││                                            │
+│ Multi-Asset Portfolio can hold.   ││                                            │
+│ ───────────────────────────────── ││                                            │
+│ Investment Grade Fixed Inc 42.5%  ││  Implementing Core Mod against a mandate   │
+│ ┌───────────────────────────────┐ ││  of $26,000,000.                           │
+│ │ Funds Only                  ▾ │ ││  ⟨2 categories still need a sleeve⟩        │
+│ └───────────────────────────────┘ ││                                            │
+│ Public Equity              41.9%  ││  ┌────────────┬────────┬──────┬───┬───┬──┐ │
+│ ┌───────────────────────────────┐ ││  │Categories &│Products│Alloc │Tkr│Sty│…│ │
+│ │ Active-Passive              ▾ │ ││  ├────────────┼────────┼──────┼───┼───┼──┤ │
+│ └───────────────────────────────┘ ││  │IG Fixed Inc│Funds…  │42.48%│   │   │  │ │ category
+│ Hedge Funds                 5.3%  ││  │ US Dollar D│GS US C │42.48%│GSU│Act│  │ │ product
+│ ┌───────────────────────────────┐ ││  │Public Eq   │Active-…│41.89%│   │   │  │ │
+│ │ Select a sleeve…            ▾ │ ││  │ US Lg Cap G│GS Grow │ 8.12%│GSG│Act│  │ │
+│ └───────────────────────────────┘ ││  │ Emerging Mk│GS EM   │ 3.44%│GEM│Act│  │ │
+│ Other Fixed Income          5.3%  ││  │ …          │        │      │   │   │  │ │
+│ ┌───────────────────────────────┐ ││  │Hedge Funds │—       │ 5.31%│   │   │  │ │ no sleeve
+│ │ Select a sleeve…            ▾ │ ││  │Other Fixed │—       │ 5.31%│   │   │  │ │ no sleeve
+│ └───────────────────────────────┘ ││  │Asset Alloc │Tactical│ 5.00%│   │   │  │ │ auto
+│ Asset Alloc Strategies      5.0%  ││  │ Tactical Ti│Tactical│ 5.00%│TTF│Act│  │ │
+│ ┌───────────────────────────────┐ ││  │Total       │        │100.00│   │   │  │ │
+│ │ Tactical Tilt Fund       🔒   │ ││  └────────────┴────────┴──────┴───┴───┴──┘ │
+│ └───────────────────────────────┘ ││                                            │
+│ Attached automatically with TAA.  ││  Composition of the Implemented Model      │
+│                                   ││  ╭────╮ ╭────╮ ╭────╮ ╭────╮ ╭────╮        │
+│ 3 of 5 categories have a sleeve.  ││  │ ◍  │ │ ◍  │ │ ◍  │ │ ◍  │ │ ◍  │        │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░               ││  ╰────╯ ╰────╯ ╰────╯ ╰────╯ ╰────╯        │
+│                                   ││  Style  Vehic. Source Liquid. Exp ccy      │
+│                                   ││                                            │
+│                                   ││  [ Download .xlsx ]  Attach a sleeve to    │
+│                                   ││  every category to enable the download.    │
+└───────────────────────────────────┘└────────────────────────────────────────────┘</code></pre>
+  <p>Real figures, from USD / Core / Mod with tactical tilts included. Five categories, because
+    that is what Core holds &mdash; not because five is the number. <em>Asset Allocation
+    Strategies</em> shows as already attached and locked (&sect;2.6); it counts toward the gate and
+    can never fail it.</p>
+
+  <div class="rule"><p><strong>The implementation type comes first, and nothing works before it.</strong>
+    Step 2 opens on a required choice of an <em>implementation type</em> &mdash; the four in
+    <code>options.implementationVariants</code>. Until one is set the sleeve pickers are not
+    rendered at all (a disabled control invites a click that has nothing behind it), the
+    automatic sleeve of &sect;2.6 does not attach, no library is fetched, and the document shows
+    a single panel pointing at the rail. It decides <em>both</em> which sleeves a
+    category offers and what those sleeves contain, so a library fetched without one would be
+    the wrong library rather than an incomplete one. Deviation D29.</p></div>
+  <div class="rule"><p><strong>Changing it clears every sleeve choice.</strong> Sleeve names are
+    only meaningful under the implementation type they were chosen from &mdash;
+    <em>Concentrated Active</em>
+    exists under US Onshore and not under Irish Onshore &mdash; so the map is dropped rather
+    than revalidated name by name, on the client and in the store, in the same write as the
+    variant. The count is announced in a live region (&sect;13.4), because work disappears.
+    This is the harder-edged sibling of &sect;11.6's basis-change rule, which keeps what still
+    validates; here almost nothing does.</p></div>
+  <div class="rule"><p><strong>An implementation type may reach no sleeve for a held category.</strong> That
+    is a legitimate state, not an error: the category simply cannot be implemented under that
+    variant, and the completeness gate says so rather than waiting for a choice that cannot be
+    made. The four libraries as they stand all cover all seven categories, so the state is
+    unreachable today &mdash; it is specified because the library is data and will not stay
+    that way by accident.</p></div>
+
+  <h3><span class="n">8.2</span>Rules</h3>
+  <ul>
+    <li><strong>Only the base portfolio is implemented.</strong> The comparison columns exist to
+      choose an allocation; once chosen, the base is the thing implemented.</li>
+    <li>Only the categories the base's variant <em>has</em> are offered. Core offers five; Full + RE
+      offers seven.</li>
+    <li>One sleeve per category. Changing a sleeve replaces its product rows immediately.</li>
+    <li><strong>Every category must carry a sleeve</strong> before the download is enabled. The rail
+      shows a count and a progress bar; the table flags unfilled categories with a
+      <code>.b-warn</code> badge.</li>
+    <li>The download sits <strong>beneath the table</strong>, with the reason shown inline while it
+      is disabled (<code>aria-describedby</code>, so the reason reaches assistive tech too).</li>
+  </ul>
+
+  <h3><span class="n">8.3</span>Fee model</h3>
+  <div class="rule"><p>The management fee is the <strong>GS advisory fee, layered on top of</strong>
+    the product cost &mdash; additive, not nested.</p></div>
+<pre><code>all-in per product  = product cost + management fee
+weighted fee        = (product cost + management fee) × weight
+portfolio total fee = Σ weighted fee</code></pre>
+  <p>Product cost and management fee display as <strong>2dp percent</strong>. The
+    <strong>weighted fee displays in basis points to one decimal</strong>, and this is a deliberate
+    departure: at 2dp a thinly-weighted product renders a real fee as <code>0.00%</code> &mdash;
+    0.33% all-in on a 1.40% weight is 0.0046%. A fee of zero on a client-facing document generates a
+    phone call.</p>
+
+  <h3><span class="n">8.4</span>The rounding rule</h3>
+  <div class="rule"><p><strong>Every printed figure derives from the printed weight.</strong> A
+    client-facing table must reconcile against what it shows, not against what it computed. Rounding
+    the output is not the same as rounding the input &mdash; only the second survives someone with a
+    calculator.</p></div>
+  <ol class="body">
+    <li><strong>Round each weight to 2dp by largest remainder</strong>, so the column sums to exactly
+      <code>100.00%</code> rather than 99.99% or 100.01%.</li>
+    <li><strong>Derive notional from that rounded weight</strong> against the mandate size, then
+      round to the nearest $100.</li>
+    <li><strong>Derive the weighted fee from that rounded weight</strong> too.</li>
+  </ol>
+  <p>For a mandate that is a round million, step 2's rounding is a no-op:
+    <code>mandate / 10000</code> is already a multiple of 100, so notional lands on a hundred by
+    construction.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Invariant</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td>Every line is a multiple of $100</td><td>yes</td></tr>
+      <tr><td>Lines sum to the mandate exactly</td><td>yes</td></tr>
+      <tr><td>Category subtotals sum to the mandate</td><td>yes</td></tr>
+      <tr><td>Weights sum to exactly <code>100.00%</code></td><td>yes</td></tr>
+      <tr><td><strong>Printed weight &times; mandate = printed notional</strong></td><td><strong>zero drift</strong></td></tr>
+      <tr><td>Printed (cost + mgmt) &times; printed weight = printed weighted fee</td><td>zero mismatches</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Notional is taken against the mandate size, not the top account size.</strong></p>
+
+  <h3><span class="n">8.5</span>Composition doughnuts</h3>
+  <p>A row of five small multiples between the table and the download, showing how the
+    implemented money divides across each product attribute: <em>Style</em>, <em>Vehicle</em>,
+    <em>Source</em>, <em>Liquidity</em>, <em>Exposure currency</em>. They summarise the table
+    above them and are not a second source of anything &mdash; every arc is a sum of the
+    <em>printed</em> weights of &sect;8.4, so a reader can add the rows up and arrive at the
+    slice. Deviation D31.</p>
+  <div class="rule"><p><strong>Colour is keyed to the value's name, never to the slice's
+    position.</strong> The same rule &sect;6.6 sets for the category charts, and for the same
+    reason: slices are ordered by weight, so a colour tied to position would change
+    <em>Passive</em>'s hue the moment it overtook <em>Active</em>. Names are ranked
+    alphabetically to choose a palette slot, which is stable for a given set of values and
+    independent of which sleeves happen to be attached. The palette is the categorical
+    <code>--cat-1</code>&hellip;<code>--cat-7</code> of &sect;6.6; with more distinct values than
+    slots it repeats, and the legend disambiguates.</p></div>
+  <div class="rule"><p><strong>The shares are of what is attached, and the chart says so.</strong>
+    Normalising to the attached total keeps the ring closed while categories are still empty,
+    but that is a different number from a share of the portfolio, so the note carries the figure
+    covered until the model is complete. Percentages print to one decimal by largest remainder
+    (&sect;8.4's rule at 0.1 rather than 0.01) so the legend sums to exactly
+    <code>100.0</code>; the arcs keep the exact fractions.</p></div>
+  <div class="rule"><p><strong>The download sits below the charts.</strong> The row is part of
+    the model being reviewed, not an appendix to it, so the button that commits the model to a
+    workbook comes after everything the reviewer is meant to have read. The gate and its reason
+    (&sect;8.2) are unchanged and travel with the button.</p></div>
+</section>
+
+<section class="block" id="s9">
+  <h2 class="sec"><span class="n">9</span>Components</h2>
+
+  <h3><span class="n">9.1</span>Allocation table</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Row type</th><th>Class</th><th>Treatment</th></tr></thead>
+    <tbody>
+      <tr><td>Category subtotal</td><td><code>tr.cat</code></td>
+        <td>Fill <code>#e9edf2</code>, weight 700, bottom rule <code>--line</code></td></tr>
+      <tr><td>Asset class</td><td><code>tr.asset</code></td>
+        <td>Indented 32px, <code>--mut</code>, bottom rule <code>--line2</code></td></tr>
+      <tr><td><code>Total</code></td><td><code>tr.total</code></td>
+        <td>Fill <code>#f0f2f5</code>, rules above and below, always <code>100.0%</code></td></tr>
+      <tr><td>Metrics band</td><td><code>tr.metric</code></td>
+        <td>Estimated Mean Return, Sharpe Ratio, Volatility &mdash; weight 700</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>Three cell states, not two.</strong> A value; an em dash
+    <code>&mdash;</code> meaning the portfolio holds none of this asset class; or
+    <strong>blank</strong>, meaning the allocation variant does not have this category at all. If no
+    portfolio on screen has a category, its rows are omitted entirely.</p></div>
+  <ul>
+    <li>First column <code>position: sticky; left: 0</code> with a right rule.</li>
+    <li><code>thead th</code> is <code>position: sticky; top: 0</code>.</li>
+    <li>The base column is headed <strong>Proposed Portfolio</strong> &mdash; it is the portfolio
+      being proposed, and the comparisons are what it is proposed against. Its derived name is
+      the hover tooltip and the <code>aria-label</code>, so it reaches assistive tech without a
+      hover. <em>Was: the derived name plus a <code>.b-bind</code> chip reading Base.</em></li>
+    <li><strong>Every portfolio column is exactly the same width</strong>, capped at 260px and
+      floored at 120px; the row header sizes to its longest label. A comparison table whose
+      columns differ in width reads as though the numbers differ in kind, and an uncapped
+      single column stretches across the whole document. See the sizing note below.</li>
+    <li>The <code>+</code> column is present only while fewer than four portfolios exist, and
+      each comparison column carries a <code>&times;</code> in its own header
+      (<code>aria-label="Remove Full Mod Agg"</code>). The base has none: it cannot be removed,
+      only changed.</li>
+  </ul>
+  <div class="note">
+    <h4>Column widths are measured, not declared</h4>
+    <p>Auto table layout cannot promise equal columns &mdash; it honours each column's own
+      content minimum, so they land within a few pixels of each other but never equal. Both
+      comparison tables are therefore laid out <code>fixed</code> from widths measured after
+      render: the row header at its content width, the data columns at an equal share of what
+      is left, clamped between the floor and the cap. The table is then pinned to that total,
+      because a fixed-layout table with <code>width:auto</code> is still at least as wide as its
+      container, and any surplus would be shared back out across the columns and undo the cap.
+      <code>.tblwrap</code> is <code>fit-content</code>, so the frame follows the table rather
+      than stranding its surface to the right.</p>
+    <p>Two consequences worth knowing. Width now changes when the columns do &mdash; adding,
+      removing, or changing the base &mdash; and the sizing pass re-runs on window resize and on
+      rail collapse, since the share depends on the room the document has. And the measurement
+      must neutralise the widths it published last time, or each pass measures the previous
+      pass's answer and the column can only ever grow.</p>
+  </div>
+
+  <h3><span class="n">9.2</span>Risk dashboard</h3>
+  <div class="rule"><p><strong>This table lays out automatically, and pins its first column.
+    </strong> Column one holds the crisis names, so it is fixed by <code>width</code>,
+    <code>min-width</code> and <code>max-width</code> together to its widest cell plus a gutter;
+    the data cells state only a floor and share what is left; below that floor the table stops
+    shrinking and the wrapper scrolls. Fixed layout was tried and does not work here: with
+    <code>colspan="2"</code> header pairs neither a width on <code>&lt;col&gt;</code> nor one on
+    the first cell moved the column &mdash; the browser distributed the width itself and let the
+    last column absorb the surplus. Deviation D38.</p></div>
+  <p>Three sections in one table. The column structure is <strong>not uniform</strong>, and this is
+    the most error-prone part of the build.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Section</th><th>Source</th><th>Column structure</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Factor Based Risk Analytics</strong></td>
+        <td><code>get_total_return()</code>, <code>get_risk()</code>,
+          <code>get_sharpe_ratio()</code>; category rows from <code>get_assets()</code> and
+          <code>get_flattened_weights()</code></td>
+        <td>One value per portfolio, <code>colspan="2"</code></td></tr>
+      <tr><td><strong>Predicted Performance Over Stress Periods</strong></td>
+        <td><code>get_factor_stress_tests()</code> &mdash; <code>{period: s}</code>, with
+          <code>s.total</code> as Nominal and <code>s.real</code> as Real</td>
+        <td>Nominal and Real, separate cells</td></tr>
+      <tr><td><strong>Value at Risk with 99% Confidence</strong>, then
+          <strong>Conditional Value at Risk with 99% Confidence</strong>, then
+          <strong>Probability of Loss</strong> &mdash; three banded blocks, each over rows
+          reading <em>Over 1 Month</em>, <em>Over 1 Year</em>, <em>Over 3 Years</em></td>
+        <td><code>get_portfolio_var_pol()</code>, then <code>.get_VaR(p)</code>,
+          <code>.get_CVaR(p)</code>, <code>.get_PoL(p)</code> for <code>p</code> in
+          <code>0, 11, 33</code></td>
+        <td>Nominal and Real, separate cells</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>Column arithmetic, for <em>n</em> portfolios:</strong> every row
+    occupies <code>n &times; 2 + 1</code> grid columns, except the Nominal/Real strip which occupies
+    <code>n &times; 2</code> because its label cell is empty. Section bands use
+    <code>colspan="n &times; 2 + 1"</code>. <strong>Assert this at n = 1, 2, 3 and 4, and again
+    after a removal.</strong></p></div>
+  <div class="rule"><p><strong>The Nominal/Real strip is in the body, not the header.</strong> It
+    sits directly beneath the <em>Predicted Performance Over Stress Periods</em> band, because
+    that is where the split begins: the factor analytics above it span both sub-columns, so a
+    header strip would claim a division those rows do not have. The table declares its columns
+    with a <code>&lt;colgroup&gt;</code> &mdash; under fixed layout that is the only way to
+    guarantee the two halves of a pair are exactly equal, since every header cell spans its
+    pair.</p></div>
+  <ul>
+    <li><strong>Stress-period rows are data-driven</strong>, resolved from <code>crises_config</code>
+      by date range. Never hardcode the crisis list. The premia blocks are equally data-driven:
+      each entry carries its <code>group</code> and <code>horizon</code>, and the UI renders
+      whatever groups arrive, in order.</li>
+    <li>Section bands are <code>--navy</code> with white text, sticky to the left edge.</li>
+    <li><strong>Only the stress rows are coloured</strong> &mdash; losses <code>--red</code>,
+      gains green, both keeping their sign. The three measure blocks are not: a Value at Risk
+      block is losses by definition, so colouring all of it carries no information.
+      <em>Was: all negative figures take <code>--red</code>.</em></li>
+    <li>The measure blocks run tight &mdash; 25px rows against the factor section's 31px &mdash;
+      because they are long runs of single figures.</li>
+  </ul>
+
+  <h3><span class="n">9.3</span>Implementation table</h3>
+  <p>Thirteen columns. Minimum width <strong>1690px</strong>, so it scrolls horizontally on anything
+    short of a wide desktop.</p>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Column</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Categories &amp; Asset Classes</strong></td>
+        <td>Row header. <code>category</code> on category rows, <code>reporting_name</code> indented on
+        product rows (&sect;2.2). Never the asset code.
+          <strong>Pinned</strong>, sized to its longest label
+          (<em>was: 248px</em>)</td></tr>
+      <tr><td>2</td><td><strong>Products</strong></td>
+        <td>Product name. On category rows, the sleeve name. <strong>Also pinned</strong>, and
+          sized to its longest label. Its offset can no longer be the constant
+          <code>left: 248px</code>: the renderer measures column 1 after each paint and
+          publishes it as <code>--impl-c1</code>, which this column's <code>left</code> reads.
+          248px survives as the fallback until the first measurement lands.</td></tr>
+      <tr><td>3</td><td>Allocation (%)</td><td>2dp, largest-remainder rounded</td></tr>
+      <tr><td>4</td><td>Ticker</td><td>Em dash where the vehicle has none</td></tr>
+      <tr><td>5</td><td>Style</td><td>Pill: Active / Passive</td></tr>
+      <tr><td>6</td><td>Vehicle</td><td>Pill: SMA / ETF / Mutual Fund</td></tr>
+      <tr><td>7</td><td>Source</td><td>Pill: Internal / External</td></tr>
+      <tr><td>8</td><td>Liquidity</td><td>Daily / Monthly / Quarterly / Drawdown</td></tr>
+      <tr><td>9</td><td>Exposure ccy</td><td>USD / EUR / Local</td></tr>
+      <tr><td>10</td><td>Cost</td><td>2dp %</td></tr>
+      <tr><td>11</td><td>Mgmt fee</td><td>2dp %</td></tr>
+      <tr><td>12</td><td>Wtd fee</td><td>bp to 1dp</td></tr>
+      <tr><td>13</td><td>Notional</td><td>Derived from the printed weight</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Both identity columns are pinned</strong>, so category, asset class and product name
+    stay visible while the attribute and money columns scroll. Category rows span columns 3&ndash;9
+    for the sleeve name; the grand total row spans 3&ndash;11. <strong>Every row occupies exactly 13
+    grid columns</strong> &mdash; assert it.</p>
+
+  <h3><span class="n">9.4</span>Sleeve picker</h3>
+  <p>One <code>&lt;select&gt;</code> per category in the rail, labelled with the category name and
+    its allocation weight. A plain select is the honest control: the sleeve name carries all the
+    differentiation, so a card list would invent hierarchy that does not exist.</p>
+  <ul>
+    <li>Placeholder option: <em>&ldquo;Select a sleeve&hellip;&rdquo;</em>.</li>
+    <li>A filled row is visually distinguished from an unfilled one.</li>
+    <li>Beneath: <em>&ldquo;<em>n</em> of <em>m</em> categories have a sleeve&rdquo;</em> and a
+      progress bar. The bar respects <code>prefers-reduced-motion</code>.</li>
+  </ul>
+
+  <h3><span class="n">9.5</span>Charts</h3>
+  <p>Inline SVG, no library, between the two step-1 tables in an <strong>At a glance</strong>
+    section. Both summarise; neither replaces a table.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Chart</th><th>Form</th><th>Specification</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Allocation by category</strong></td><td>Horizontal stacked bars</td>
+        <td>One row per portfolio. 2px surface gap between segments. Gridlines at 0/25/50/75/100%.
+          Direct label inside segments wider than 46px only. A category the variant lacks is
+          skipped, not drawn at zero.</td></tr>
+      <tr><td><strong>Return against volatility</strong></td><td>Scatter</td>
+        <td>Volatility on x, return on y. Markers &ge; 12px with a 2px surface ring; base marker
+          larger and <code>--navy</code>, comparisons <code>--blu</code>. All points direct-labelled.</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>Responsive through <code>viewBox</code>; never a fixed pixel width.</li>
+    <li>Per-mark hover tooltip. Legend always present.</li>
+    <li><code>role="img"</code> with an <code>aria-label</code> naming the measure and pointing at
+      the table for exact values.</li>
+    <li>A column in <code>loading</code> state is omitted from both charts rather than drawn at zero.</li>
+  </ul>
+
+  <h3><span class="n">9.6</span>Typeahead &mdash; Primary PWA</h3>
+  <p>Build it as a <strong>combobox</strong>, not an <code>&lt;input list&gt;</code> &mdash; native
+    datalist gives no control over the loading and no-results states, and its keyboard behaviour
+    differs across browsers.</p>
+<pre><code>&lt;label for="pwa"&gt;Primary PWA&lt;/label&gt;
+&lt;input id="pwa" type="text" role="combobox" autocomplete="off"
+       aria-expanded="false" aria-controls="pwa-list" aria-autocomplete="list"&gt;
+&lt;ul id="pwa-list" role="listbox" aria-label="Matching advisors"&gt;
+  &lt;li role="option" id="pwa-o1" aria-selected="false"&gt;M. Aldridge — Zurich&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+  <ul>
+    <li><strong>Debounce 250ms.</strong> Abort the in-flight request when a newer keystroke lands.</li>
+    <li>Minimum 2 characters; below that show the hint, not an empty list.</li>
+    <li><code>aria-activedescendant</code> tracks the highlight. <strong>Arrow keys move the
+      highlight without moving focus</strong> out of the input.</li>
+    <li>Enter selects; Escape closes and keeps the typed text.</li>
+    <li>Free text matching no advisor is <strong>invalid</strong>.</li>
+  </ul>
+</section>
+
+<section class="block" id="s10">
+  <h2 class="sec"><span class="n">10</span>State matrix</h2>
+  <p class="lede">Every state, per surface. If a cell is not specified here it is a gap in this
+    document, not a decision for the implementer.</p>
+
+  <h3><span class="n">10.1</span>Loading</h3>
+  <div class="rule"><p><strong>The 200ms rule.</strong> A column requests its data immediately and
+    shows a skeleton <em>only after 200ms have elapsed</em>. A cached response arrives before the
+    threshold and the skeleton never appears; an uncached one shows the skeleton and fills on
+    arrival. One code path, correct whether the analytics take 40ms or 5s. Implement it as a timer
+    cancelled by the response, not as a minimum display duration.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Surface</th><th>Treatment</th></tr></thead>
+    <tbody>
+      <tr><td>Column, first 200ms</td><td>Nothing. Header shows the derived name.</td></tr>
+      <tr><td>Column, after 200ms</td><td>Header shows the name plus an animated ellipsis; every cell
+        in that column shows a shimmer bar at 60% width; <code>aria-busy="true"</code>.</td></tr>
+      <tr><td>Charts</td><td>Loading columns omitted, not drawn at zero.</td></tr>
+      <tr><td>Mandate dialog submit</td><td>Continue shows a spinner and reads <em>Working&hellip;</em>;
+        fields disabled; dialog does not close.</td></tr>
+      <tr><td>Typeahead</td><td>After the debounce, a single <em>Searching&hellip;</em> row.</td></tr>
+      <tr><td>Sleeve library</td><td>Select shows <em>Loading sleeves&hellip;</em> and is disabled.
+        Every category's library loads independently, so one can be loading while another has
+        failed and a third is ready &mdash; the per-column rule of &sect;10.1 applies here too.</td></tr>
+      <tr><td>Export</td><td>Button reads <em>Preparing&hellip;</em> with a spinner, disabled.</td></tr>
+      <tr><td>Full rebuild</td><td>All columns enter loading together; a <code>.b-bind</code> chip
+        reads <em>Rebuilding 4 portfolios&hellip;</em> &mdash; in the notices strip, since there
+        is no topbar.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Shimmer respects <code>prefers-reduced-motion</code>: a static tint of the same colour.</p>
+  <div class="rule"><p><strong>Showing is not the same as being ready.</strong> A column that is
+    re-resolving still holds the figures from last time, and it keeps showing them. Judging on
+    status alone emptied the row union, blanked every cell, emptied the risk dashboard and hid
+    the charts &mdash; the whole document collapsing and springing back for the twenty
+    milliseconds a re-resolve takes. A column that has never resolved has nothing to show and
+    still skeletons, so the rule above holds for a genuinely new column. Deviation D43.</p></div>
+  <div class="rule"><p><strong>Waiting is a spinner, not a pill.</strong> The notices strip is
+    hidden when empty, so a transient pill grew it &mdash; its own height plus its margin
+    &mdash; above the table, and shifted the document down and back on every resolve. The
+    spinner is absolutely positioned in the stage heading and cannot move anything. A failure
+    keeps its pill: it is persistent and worth the space. Deviation D44.</p></div>
+  <div class="note">
+    <h4>As built, the threshold is never reached</h4>
+    <p>Against the baked adapter a resolve returns in about 15ms, so the 200ms timer is always
+      cancelled first and the skeleton never appears. The rule is unchanged and still correct
+      &mdash; it is what makes the live adapter bearable, and it is the only thing standing
+      between a cache miss and a page that looks broken. The case it was written for has simply
+      stopped being the common one.</p>
+  </div>
+
+  <h3><span class="n">10.2</span>Empty</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Surface</th><th>Condition</th><th>Treatment</th></tr></thead>
+    <tbody>
+      <tr><td>Whole page</td><td>No mandate yet &mdash; <code>phase: "landing"</code></td>
+        <td>Rail and step nav hidden; the landing (&sect;7.1) is the only surface. This is
+          not an empty state waiting to be filled &mdash; it is a distinct phase with one
+          control.</td></tr>
+      <tr><td>Document, step 1</td><td>Mandate set, no base chosen</td>
+        <td>Table area replaced by a centred panel: <strong>&ldquo;Choose a base portfolio&rdquo;</strong>
+          with <em>&ldquo;Pick an allocation and risk level in the rail to build the first
+          column.&rdquo;</em> The rail's Base tier gets a 2px <code>--blu</code> ring.</td></tr>
+      <tr><td>Charts</td><td>Fewer than one ready column</td><td>Section hidden entirely.</td></tr>
+      <tr><td>Comparisons list</td><td>Base only</td>
+        <td><em>&ldquo;No comparisons yet. Add up to three from the + column.&rdquo;</em></td></tr>
+      <tr><td>Document, step 2</td><td>No base portfolio</td>
+        <td><strong>&ldquo;No base portfolio yet&rdquo;</strong> with a sentence directing the user to
+          the rail. The sleeve tier says the same.</td></tr>
+      <tr><td>Document, step 2</td><td>Base ready, no implementation type</td>
+        <td><strong>&ldquo;Choose an implementation type&rdquo;</strong>, naming the base
+          portfolio and saying that the variant decides which sleeves its categories can hold.
+          The rail carries the control; the sleeve list is not drawn at all (D29).</td></tr>
+      <tr><td>Implementation table</td><td>Variant chosen, no sleeves</td>
+        <td>Category rows render with their weights and a <code>.b-warn</code> badge reading
+          <em>&ldquo;No sleeve attached&rdquo;</em>. Not an empty table &mdash; the structure is the
+          instruction.</td></tr>
+      <tr><td>Typeahead</td><td>No matches</td>
+        <td>One non-selectable row: <em>&ldquo;No advisor matches &lsquo;xyz&rsquo;.&rdquo;</em></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">10.3</span>Error</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Surface</th><th>Trigger</th><th>Treatment</th></tr></thead>
+    <tbody>
+      <tr><td>Column</td><td>502 / 504</td>
+        <td>Cells show <code>&mdash;</code>; header carries a <code>.b-breach</code> chip reading
+          <strong>Failed</strong>; a <strong>Retry</strong> button under the header.
+          <strong>Other columns unaffected.</strong></td></tr>
+      <tr><td>Mandate field</td><td>Below $5m, or mandate &gt; top account</td>
+        <td><code>aria-invalid="true"</code>, <code>aria-describedby</code> pointing at a
+          <code>role="alert"</code> message. Submit blocked.</td></tr>
+      <tr><td>Schema</td><td>Fails on load</td>
+        <td>Page cannot render. Full-page message with <strong>Retry</strong>; the rail is not drawn,
+          since its options come from the schema.</td></tr>
+      <tr><td>Sleeve library</td><td>Fails</td>
+        <td>Select disabled with <em>&ldquo;Could not load sleeves&rdquo;</em>; a retry control beside
+          it. Other categories unaffected.</td></tr>
+      <tr><td>Export</td><td>Any failure</td>
+        <td>Inline <code>.b-breach</code> beside the button. Button returns to idle. No modal.</td></tr>
+      <tr><td>Backend down</td><td>502 from the Flask proxy</td>
+        <td><code>#alertArea</code> at the top of the document.</td></tr>
+      <tr><td>Not authenticated</td><td>401</td>
+        <td><code>window.location = body.loginUrl</code>. No UI state &mdash; the browser leaves.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule"><p><strong>Errors never take the whole screen when they belong to one
+    column.</strong> A failed comparison must leave the base and the other comparisons readable.
+    This is the practical reason column state is per-column rather than global.</p></div>
+
+  <h3><span class="n">10.4</span>Permissions</h3>
+  <p>One role. <strong>Do not build a permissions system</strong> &mdash; build the seam for one:</p>
+  <ul>
+    <li><code>capabilities()</code> returns <code>{canExport, canEdit}</code>. Today the adapter
+      hardcodes both to <code>true</code>.</li>
+    <li>A capability that is <code>false</code> renders the control <strong>disabled with a reason
+      tooltip</strong>, never hidden. A hidden control is indistinguishable from a broken one.</li>
+    <li>Unauthenticated is not a UI state &mdash; the host's <code>before_request</code> gate handles
+      it before the page is reached.</li>
+  </ul>
+
+  <h3><span class="n">10.5</span>Cap and constraint</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Condition</th><th>Treatment</th></tr></thead>
+    <tbody>
+      <tr><td>Four portfolios present</td><td><code>+</code> column removed; popover cannot open;
+        Comparisons reads <em>3 of 3</em>.</td></tr>
+      <tr><td>Popover open when the cap is reached</td>
+        <td>Controls replaced by <em>&ldquo;All three comparison slots are in use. Remove one from the
+          rail to free a slot.&rdquo;</em> plus <strong>Done</strong>.</td></tr>
+      <tr><td>Combination unavailable</td><td>Option disabled, suffixed <em>&ldquo;&mdash; unavailable&rdquo;</em>.</td></tr>
+      <tr><td>Combination already on screen</td><td>Option disabled, suffixed <em>&ldquo;&mdash; already added&rdquo;</em>.</td></tr>
+      <tr><td>Mandate under $20m</td><td>Full and Ex HFs absent from the Allocation select entirely
+        &mdash; not disabled options. The schema simply does not offer them.</td></tr>
+      <tr><td>Exclude RE not applicable</td><td>Checked and disabled with the reason stated (&sect;7.2).</td></tr>
+      <tr><td>Categories unfilled</td><td>Export disabled; the reason shown inline and wired with
+        <code>aria-describedby</code>.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="block" id="s11">
+  <h2 class="sec"><span class="n">11</span>Interaction &amp; data flow</h2>
+  <p class="lede">Each flow as a sequence. Where a step can fail, the failure is named.</p>
+
+  <h3><span class="n">11.1</span>Opening the page</h3>
+<pre class="wire"><code>Browser          Page                    Flask :8001          FastAPI :8002
+ │  GET page      │                          │                     │
+ ├───────────────▶│  DOMContentLoaded        │                     │
+ │                ├── GET /api/scenario/schema ──▶ /api/v1/… ──────▶ get_schema()
+ │                │◀── options + availability ───────────────────────┤
+ │                │  render rail; document EMPTY (§10.2)            │
+ │                │  open mandate dialog                            │</code></pre>
+
+  <h3><span class="n">11.2</span>Saving the mandate</h3>
+  <ol class="body">
+    <li>Client-side validation on blur; server is authoritative on submit.</li>
+    <li><code>POST /api/scenario</code>. If <code>validate_mandate()</code> raises, the dialog stays
+      open and the message attaches to the named field.</li>
+    <li><strong>Refetch the schema</strong> &mdash; mandate size gates the $20m rule, so the
+      available allocations may have changed.</li>
+    <li>If an existing column is now invalid it is <strong>dropped, and the user is told which</strong>.</li>
+  </ol>
+
+  <h3><span class="n">11.3</span>Building and adding portfolios</h3>
+  <ol class="body">
+    <li>Column inserted in <code>loading</code> state <em>with its derived name</em> &mdash; the name
+      needs no server call.</li>
+    <li><code>POST /api/scenario/{id}/portfolio</code> fires; a 200ms timer starts.</li>
+    <li>Whichever lands first wins: response before timer means no skeleton ever appears.</li>
+    <li>On success the column becomes <code>ready</code>; tables and charts re-render.</li>
+    <li>On failure it becomes <code>error</code> with Retry. Others unaffected.</li>
+    <li><strong>Concurrent adds may return out of order.</strong> Columns hold their array position,
+      keyed by <code>{allocation, excludeRE, excludeTAA, riskLevel}</code>; a late response is
+      matched to its column, and one for a removed column is discarded silently.</li>
+  </ol>
+
+  <h3><span class="n">11.4</span>Rebuild on basis change</h3>
+  <div class="rule"><p><strong>Changing currency or hedging must not fire on the select's change
+    event.</strong> At up to 5s per portfolio, a four-column rebuild is a twenty-second operation. It
+    requires explicit confirmation.</p></div>
+  <ol class="body">
+    <li>The select updates optimistically; <strong>no request fires</strong>.</li>
+    <li>An inline confirmation appears in the tier: <em>&ldquo;Rebuild 4 portfolios in
+      CHF?&rdquo;</em> with <strong>Rebuild</strong> and <strong>Cancel</strong>. Cancel restores the
+      previous value.</li>
+    <li>On Rebuild: fetch the new schema first. Any combination unavailable under the new basis is
+      <strong>dropped and named</strong> &mdash; <em>&ldquo;Ex Alts Low Vol is not available in CHF
+      and has been removed.&rdquo;</em></li>
+    <li>Surviving columns enter <code>loading</code> together and re-resolve, keeping their
+      allocation, exclusions and risk level. Order is preserved; the base stays the base.</li>
+    <li><strong>Any attached sleeves are invalidated</strong> (&sect;11.6).</li>
+  </ol>
+
+  <h3><span class="n">11.5</span>Changing the base</h3>
+  <ol class="body">
+    <li>Column 0 is replaced and re-resolves.</li>
+    <li>If a comparison now duplicates the new base it is <strong>removed and announced</strong>
+      &mdash; silent disappearance of a column the user built is unacceptable.</li>
+    <li>Comparisons are otherwise untouched; they are independent combinations.</li>
+    <li>Changing the Allocation select recomputes the Exclude RE tick box: if the new allocation
+      cannot hold real estate, the box becomes checked and disabled.</li>
+    <li>If the current risk level is unavailable for the new allocation, fall to the first that is.</li>
+  </ol>
+
+  <h3><span class="n">11.6</span>Invalidating the implementation</h3>
+  <div class="rule"><p>Sleeves attach to <em>the base portfolio's categories</em>. Anything that
+    changes those categories or their weights invalidates the attached sleeves.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Change</th><th>Effect on attached sleeves</th></tr></thead>
+    <tbody>
+      <tr><td>Base allocation changed</td>
+        <td>Category set may change. <strong>Sleeves for categories that survive are kept; sleeves for
+          categories that disappear are dropped.</strong> The user is told what was dropped.</td></tr>
+      <tr><td>Base risk level changed</td>
+        <td>Categories unchanged, weights change. <strong>Sleeves are kept</strong>; product weights
+          and notionals recompute.</td></tr>
+      <tr><td>Exclude RE toggled</td>
+        <td>Other Private Assets appears or disappears. Its sleeve is dropped when it disappears.</td></tr>
+      <tr><td>Exclude TAA toggled</td><td>Categories unchanged. <strong>Sleeves kept.</strong></td></tr>
+      <tr><td>Scenario basis changed</td>
+        <td>Weights change and the sleeve library may differ. <strong>Sleeves kept, re-validated
+          against the new library</strong>; any no longer offered are dropped and named.</td></tr>
+      <tr><td>Mandate size changed</td>
+        <td>Categories unchanged. Sleeves kept; <strong>every notional recomputes</strong>.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Whenever a sleeve is dropped the completeness gate re-closes and the export disables again.</p>
+
+  <h3><span class="n">11.7</span>Attaching a sleeve</h3>
+  <ol class="body">
+    <li>The PWA picks an <strong>implementation type</strong>. Nothing below happens before
+      this: no library is fetched and no picker is drawn (&sect;8.1, D29). The control sits above
+      the category list and stays there, so the choice can be revisited.</li>
+    <li>Every category's library is fetched for that variant, in parallel, each carrying its own
+      loading and error state exactly as a column does (&sect;10.1).</li>
+    <li>The rail lists only the categories the base's allocation variant has, each with its
+      allocation weight.</li>
+    <li>Selecting a sleeve inserts its product rows immediately &mdash; the library is cached, so
+      this is not a round trip.</li>
+    <li>Weights, fees and notionals recompute across the whole table, because the largest-remainder
+      rounding is global (&sect;8.4).</li>
+    <li>When the last category is filled the export enables and the badge flips to
+      <code>.b-ok</code>.</li>
+    <li>Changing the implementation type returns to step 2 above: the cached libraries are
+      discarded, every choice is cleared and announced, and the export re-gates.</li>
+  </ol>
+
+  <h3><span class="n">11.8</span>Removal and refresh</h3>
+  <ul>
+    <li>Remove works on any comparison in any state, <strong>including one still loading</strong>
+      &mdash; abort the in-flight request rather than waiting. It is offered in two places: the
+      rail's built list, and a <code>&times;</code> in the column's own header.</li>
+    <li>The base cannot be removed. Its row shows the <strong>Base</strong> chip where the remove
+      control would be, not a disabled control.</li>
+    <li>On load with a scenario id, <code>GET /api/scenario/{id}</code> restores mandate, basis,
+      columns and sleeves. Columns come back <code>loading</code> and re-resolve.</li>
+  </ul>
+</section>
+
+<section class="block" id="s12">
+  <h2 class="sec"><span class="n">12</span>Responsive behaviour</h2>
+  <p class="lede">Three breakpoints. The rail is the pivot: fixed above 1040px, stacked below.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Breakpoint</th><th>Rail</th><th>Document</th><th>Tables</th><th>Charts</th></tr></thead>
+    <tbody>
+      <tr><td><strong>&ge; 1180px</strong><br><span style="color:var(--ink-3)">desktop</span></td>
+        <td>Fixed left, <strong>352px</strong>, own scroll, brand block sticky</td>
+        <td>Offset by 352px, max-width 1320px</td>
+        <td>Allocation full width; implementation scrolls past ~1690px</td>
+        <td>Side by side, 1.35fr / 1fr</td></tr>
+      <tr><td><strong>1040&ndash;1179px</strong></td>
+        <td>Fixed left, 352px</td><td>Offset by 352px</td>
+        <td>Both scroll horizontally; sticky columns earn their keep</td>
+        <td>Stacked, full width</td></tr>
+      <tr><td><strong>&lt; 1040px</strong></td>
+        <td><strong>Static block above the document.</strong> Full width, bottom rule instead of
+          right rule. Field grid returns to multi-column; buttons stop being full-width.</td>
+        <td>Full width, no offset</td>
+        <td>Horizontal scroll; sticky columns essential</td>
+        <td>Stacked, full width</td></tr>
+    </tbody>
+  </table></div>
+  <h4>The landing</h4>
+  <p>The landing (&sect;7.1) has no rail, so the breakpoints above do not apply to it. It has two
+    of its own:</p>
+  <ul>
+    <li><strong>&ge; 900px</strong> &mdash; the lede and the requirements list sit side by side at
+      <code>1.4fr / 1fr</code>.</li>
+    <li><strong>&lt; 900px</strong> &mdash; they stack, lede first, button between them.</li>
+    <li><strong>&lt; 560px</strong> &mdash; the title drops to
+      <code>clamp(40px,11vw,55px)</code> and releases its <code>15ch</code> measure; the
+      requirements list narrows its label column from 96px to 84px.</li>
+  </ul>
+
+  <p>The rail also collapses at any width, to a 48px strip that keeps its control (&sect;7.2).
+    The document reclaims the width, and because the comparison tables share what the document
+    has, both re-size when it happens.</p>
+
+  <h4>Rules that hold at every width</h4>
+  <ul>
+    <li>The <strong>page body never scrolls sideways.</strong> Each table sits in its own
+      <code>overflow-x: auto</code> container.</li>
+    <li>Sticky columns need an <strong>opaque background matching their row state</strong> &mdash;
+      category, total, metric and alternating rows each have their own fill.</li>
+    <li>Charts scale by <code>viewBox</code>; text inside never falls below 10px.</li>
+    <li>Touch targets at least 44 &times; 44px below 1040px. The <code>+</code> button and the popover
+      close control are the ones that fail this if built to desktop sizes.</li>
+    <li>The add-comparison popover repositions to stay in the viewport; below 1040px it becomes a
+      <strong>bottom sheet</strong>.</li>
+  </ul>
+  <div class="note">
+    <h4>Deliberate limit</h4>
+    <p>This is a desk tool. The implementation table is thirteen columns and the risk dashboard is
+      eight; below roughly 720px both are scrolling frames &mdash; usable, not pleasant.
+      <strong>No card-per-portfolio phone layout is specified</strong>, because a comparison table
+      that cannot be seen side by side has lost its purpose. If phone use becomes real, that is a new
+      screen, not a reflow.</p>
+  </div>
+</section>
+
+<section class="block" id="s13">
+  <h2 class="sec"><span class="n">13</span>Accessibility</h2>
+  <p class="lede">Target <strong>WCAG 2.2 AA</strong>. No formal audit is scheduled, so the
+    obligations below are the standard, not a checklist for someone else.</p>
+
+  <h3><span class="n">13.1</span>Semantics</h3>
+  <ul>
+    <li>All three tables are real <code>&lt;table&gt;</code> elements with
+      <code>&lt;caption class="sr-only"&gt;</code>, <code>scope="col"</code> / <code>row</code>,
+      <code>scope="colgroup"</code> on portfolio groups and <code>scope="rowgroup"</code> on section
+      bands.</li>
+    <li>The rail is <code>&lt;aside aria-label="Scenario"&gt;</code>; rail tiers use
+      <code>&lt;h3&gt;</code>, not styled divs.</li>
+    <li>The landing's seven-colour rule is <code>aria-hidden="true"</code>. It repeats the category
+      palette as ornament and carries nothing the copy does not already say; announcing seven
+      unlabelled spans would be noise. The landing itself is a single
+      <code>&lt;h1&gt;</code> and one button.</li>
+    <li>The step nav is <code>role="tablist"</code> with <code>role="tab"</code> and
+      <code>aria-selected</code>; arrow keys move between tabs.</li>
+    <li>The base column is headed <em>Proposed Portfolio</em> visually, but carries its derived
+      name as the <code>aria-label</code> &mdash; the name is not hover-only.</li>
+    <li>Currency amounts carry <code>inputmode="numeric"</code>, not <code>type="number"</code>
+      &mdash; number inputs reject formatted values and add spinners nobody wants.</li>
+    <li>The tick boxes are real <code>&lt;input type="checkbox"&gt;</code> with
+      <code>&lt;label for&gt;</code>; the disabled Exclude RE box is wired to its reason with
+      <code>aria-describedby</code>.</li>
+  </ul>
+
+  <h3><span class="n">13.2</span>Keyboard</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Context</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>Global</td><td>Skip link to <code>&lt;main&gt;</code> as the first focusable element.</td></tr>
+      <tr><td>Step nav</td><td>Arrow keys move between tabs; Enter or Space activates.</td></tr>
+      <tr><td>Modal dialog</td><td>Focus moves in, is trapped, returns to the invoker. Escape closes.</td></tr>
+      <tr><td>Popover</td><td>Non-modal. Focus moves in; Escape and outside click close; focus returns
+        to <code>+</code>.</td></tr>
+      <tr><td>Typeahead</td><td>Arrow keys move <code>aria-activedescendant</code> without moving
+        focus. Enter selects, Escape closes and keeps typed text.</td></tr>
+      <tr><td>Tables</td><td>Scroll containers are focusable (<code>tabindex="0"</code>) with an
+        <code>aria-label</code>, so a keyboard user can scroll them horizontally.</td></tr>
+      <tr><td>Remove controls</td><td>Labelled <code>aria-label="Remove Full Mod Agg"</code> &mdash;
+        never a bare &ldquo;&times;&rdquo;.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Focus is visible everywhere:</strong> 2px solid <code>--blu</code> with 2px offset on
+    light grounds, <code>#8fb4ff</code> on the navy rail. Never <code>outline: none</code> without a
+    replacement.</p>
+
+  <h3><span class="n">13.3</span>Live regions</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Event</th><th>Announcement</th><th>Politeness</th></tr></thead>
+    <tbody>
+      <tr><td>Column added</td><td>&ldquo;Full Mod Agg added. 2 slots remaining.&rdquo;</td><td>polite</td></tr>
+      <tr><td>Column resolved</td><td>&ldquo;Full Mod Agg ready.&rdquo;</td><td>polite</td></tr>
+      <tr><td>Column failed</td><td>&ldquo;Full Mod Agg could not be built. Retry available.&rdquo;</td><td>assertive</td></tr>
+      <tr><td>Column removed</td><td>&ldquo;Full Mod Agg removed. 3 slots remaining.&rdquo;</td><td>polite</td></tr>
+      <tr><td>Dropped on rebuild</td><td>&ldquo;Ex Alts Low Vol is not available in CHF and has been removed.&rdquo;</td><td>assertive</td></tr>
+      <tr><td>Sleeve dropped</td><td>&ldquo;The Private Equity sleeve was removed because the base no longer holds private equity.&rdquo;</td><td>assertive</td></tr>
+      <tr><td>Step changed</td><td>&ldquo;Implementation step.&rdquo;</td><td>polite</td></tr>
+      <tr><td>Validation failure</td><td>The message, via <code>role="alert"</code></td><td>assertive</td></tr>
+      <tr><td>Export ready</td><td>&ldquo;Workbook downloaded.&rdquo;</td><td>polite</td></tr>
+    </tbody>
+  </table></div>
+  <p>One <code>aria-live="polite"</code> and one <code>aria-live="assertive"</code> region, both
+    <code>sr-only</code>, both present from first paint &mdash; a live region added to the DOM at the
+    moment of the message is not announced.</p>
+
+  <h3><span class="n">13.4</span>Colour and contrast</h3>
+  <ul>
+    <li>All 22 audited pairs pass at AA; the two adjustments are in &sect;6.2.</li>
+    <li><strong>Colour is never the only channel.</strong> Negatives keep their minus sign; badges
+      carry labels; chart series carry a legend and direct labels; unavailable options carry the word
+      &ldquo;unavailable&rdquo;; Style, Vehicle and Source pills carry their text.</li>
+    <li>Chart contrast relief is the adjacent table (&sect;6.6) &mdash; which means the table may
+      never be removed in favour of the chart.</li>
+  </ul>
+
+  <h3><span class="n">13.5</span>Motion</h3>
+  <p>Under <code>prefers-reduced-motion: reduce</code>: the column-landing highlight does not
+    animate, skeleton shimmer becomes a static tint, the sleeve progress bar does not transition, and
+    smooth scrolling becomes instant. Nothing conveys information through motion alone.</p>
+
+  <h3><span class="n">13.6</span>Optional hardening</h3>
+  <ul>
+    <li>A <strong>table view toggle</strong> beneath each chart.</li>
+    <li><code>aria-describedby</code> on every field with a hint, not only on fields in error.</li>
+    <li>A visible text alternative for the base-column chip.</li>
+  </ul>
+</section>
+
+<section class="block" id="s14">
+  <h2 class="sec"><span class="n">14</span>Excel export</h2>
+  <p class="lede">The workbook and the screen must read as the same document. A client who receives
+    both should recognise them instantly.</p>
+
+  <h3><span class="n">14.1</span>Behaviour</h3>
+  <ul>
+    <li>Triggered from <strong>beneath the implementation table</strong>. There is no separate export
+      on step 1 &mdash; one document, one download.</li>
+    <li><strong>Disabled while any category lacks a sleeve, or any column is loading or in
+      error.</strong> An incomplete workbook is worse than no workbook. The reason is shown inline
+      and wired with <code>aria-describedby</code>.</li>
+    <li>Contains what is on screen: the allocation table, the risk dashboard, and the implementation
+      model.</li>
+    <li><code>include_wealth_simulations=False</code> &mdash; simulation is out of scope, and the
+      default would silently pull it in. The <code>assumptions</code> sheet
+      <code>generate_report()</code> always writes is removed too, on open item 6's reading
+      that the workbook is the three on-screen tables and nothing else.</li>
+    <li>Running database-free (the baked adapter with no live fallback) the workbook is written
+      from the payloads instead of by <code>Reporting</code> &mdash; same three sheets, same
+      figures. Either path shares one writer for the implementation sheet, so &sect;8.4's
+      rounding cannot diverge between them.</li>
+    <li>Delivered as a browser download, <code>Content-Disposition: attachment</code>.</li>
+  </ul>
+
+  <h3><span class="n">14.2</span>Filename</h3>
+<pre><code>EpsilonPhi_Scenario_{CURRENCY}_{HEDGING}_{YYYY-MM-DD}.xlsx
+e.g. EpsilonPhi_Scenario_USD_Hedged_2026-08-29.xlsx</code></pre>
+  <p>Hedging is slugged: <code>Equity Not Hedged</code> &rarr; <code>EquityNotHedged</code>. The date
+    is the generation date in the host's timezone.</p>
+
+  <h3><span class="n">14.3</span>Styling &mdash; from the existing report</h3>
+  <p>Use <code>Reporting.generate_report()</code>. Its formatting lives in
+    <code>formatting_portfolios.yaml</code> and <code>formatting_risk.yaml</code>, recorded here so
+    the screen can be checked against it.</p>
+  <div class="tw"><table>
+    <thead><tr><th></th><th>Portfolios sheet</th><th>Risk sheet</th></tr></thead>
+    <tbody>
+      <tr><td>Typeface</td><td>Calibri Light 12.5</td><td>Aptos Narrow 12.0</td></tr>
+      <tr><td>Header</td><td>White fill, dotted bottom rule, height 37</td>
+        <td><code>#092532</code> fill, white text, height 20</td></tr>
+      <tr><td>Category row</td><td>Fill <code>#D3DDEA</code>, height 17</td>
+        <td>Bold <code>#092539</code>, dotted top rule <code>#A9A9A9</code></td></tr>
+      <tr><td>Asset row</td><td>White, number format <code>0.0</code></td>
+        <td>White, indent 1, <code>0.0%</code></td></tr>
+      <tr><td>Total row</td><td>Dotted top rule, height 23, <code>0.0%</code></td><td>&mdash;</td></tr>
+      <tr><td>Metrics band</td><td>Fill <code>#0F243E</code>, white text, height 23</td><td>&mdash;</td></tr>
+      <tr><td>Number alignment</td><td>Right, indent 4</td><td>Centred</td></tr>
+      <tr><td>Column widths</td><td>A 40, B 18</td><td>A 40, B 15</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">
+    <h4>A real detail, easily lost</h4>
+    <p>Asset rows use number format <code>0.0</code> while category and total rows use
+      <code>0.0%</code>. This is not an inconsistency: <code>get_portfolios_table()</code> multiplies
+      asset weights by 100 and leaves category totals as fractions. Preserve it, or the workbook's
+      numbers change meaning.</p>
+  </div>
+
+  <h3><span class="n">14.4</span>The implementation sheet</h3>
+  <p>A new sheet is added rather than a second file, so the proposal stays one document. It carries
+    the thirteen columns of &sect;9.3 in the same order, grouped by category with subtotals, and the
+    grand total row. <strong>The rounding rule of &sect;8.4 must be applied in the workbook exactly
+    as on screen</strong> &mdash; if the sheet recomputes from full precision, the two documents will
+    disagree in the fourth digit and the client will find it.</p>
+
+  <h3><span class="n">14.5</span>Two house palettes</h3>
+  <div class="rule"><p>The Excel report uses navy <code>#0F243E</code> with band
+    <code>#D3DDEA</code>; the UI uses navy <code>#16243A</code> with band <code>#E9EDF2</code>. Close
+    enough to look like a mistake, far enough apart to be visibly inconsistent side by side.
+    <strong>This is unresolved (&sect;16).</strong> The recommendation is that the Excel palette wins
+    &mdash; it is what reaches clients &mdash; and the UI's structural conventions win. Until decided,
+    each surface follows its own, and neither is edited to chase the other. Note this interacts with
+    the OneGS retheme (&sect;6.5): resolve both together.</p></div>
+</section>
+
+<section class="block" id="s15">
+  <h2 class="sec"><span class="n">15</span>Implementation traps</h2>
+  <p class="lede">Each of these was hit while building the prototype. Every one is a silent failure
+    &mdash; the code works and the output is wrong.</p>
+
+  <h3><span class="n">15.1</span>The <code>background</code> shorthand destroys the select caret</h3>
+  <p>The dropdown arrow is a background image. Any later rule setting the <code>background</code>
+    <strong>shorthand</strong> on a select resets <code>background-repeat</code> to
+    <code>repeat</code> and <code>background-position</code> to <code>0% 0%</code> &mdash; and the
+    11 &times; 7px chevron tiles across the whole control.</p>
+<pre><code>/* WRONG — the caret tiles */
+.rail select { background: var(--rail-input-bg); }
+
+/* RIGHT */
+.rail select { background-color: var(--rail-input-bg); }</code></pre>
+  <p>Defensively, set <code>background-size: 11px 7px</code> on the base rule. The control still works
+    when this breaks, so it survives functional testing and is found by a user.</p>
+
+  <h3><span class="n">15.1a</span>The cached portfolio is shared &mdash; do not mutate it</h3>
+  <p><code>get_portfolio()</code> is memoised, because building an <code>SAAPortfolio</code> is
+    expensive. It therefore hands the <strong>same instance</strong> to every caller with the same
+    <code>(currency, weights, hedging)</code>. <code>SAAPortfolio</code> is mutable and memoises its
+    own analytics &mdash; <code>_sigma</code>, <code>_risk_betas</code>,
+    <code>_risk_premias</code> &mdash; so mutating it changes the numbers every other holder sees.
+    With four columns on screen, that is one column silently reporting another's risk.</p>
+  <p>This is why <strong>hedging is a constructor argument and part of the cache key</strong>,
+    rather than a <code>set_hedging_option()</code> call the caller makes afterwards. Ask for the
+    hedging you want:</p>
+<pre><code>portfolio = get_portfolio(currency, weights, hedging_option=basis.hedging)</code></pre>
+  <p>If you genuinely need to change a portfolio, take a copy first with <code>deepcopy()</code>.
+    Treat what comes back from the cache as read-only.</p>
+
+  <h3><span class="n">15.2</span>Column arithmetic</h3>
+  <p>The risk dashboard's mixed colspan (&sect;9.2) and the implementation table's thirteen columns
+    (&sect;9.3) are both easy to get right at one portfolio count and wrong at another.
+    <strong>Write the assertions.</strong></p>
+
+  <h3><span class="n">15.3</span>Concurrent adds return out of order</h3>
+  <p>Three columns added in quick succession are three concurrent requests; the third may resolve
+    first. <strong>Columns must hold their array position</strong>, keyed by their combination, and a
+    late response must be matched to its column rather than appended. A response for a column the
+    user has already removed is discarded silently.</p>
+
+  <h3><span class="n">15.4</span>Zero, dash and blank are three different things</h3>
+  <p><code>0.0%</code> is a holding rounded to nothing. <code>&mdash;</code> is a sleeve the portfolio
+    does not contain. <strong>Blank</strong> is a category the allocation variant does not have.
+    Collapsing any two of these loses information the comparison depends on.</p>
+
+  <h3><span class="n">15.5</span>Sticky columns need an opaque background per row state</h3>
+  <p>A sticky column with a transparent background lets data scroll underneath it. Every sticky cell
+    needs an explicit background from the same token as its row &mdash; including category, total,
+    metric and alternating rows, which each have their own fill. With <em>two</em> pinned columns in
+    the implementation table, this doubles.</p>
+
+  <h3><span class="n">15.6</span>Focus loss on re-render</h3>
+  <p>Columns resolve asynchronously and re-render the tables. If the user is typing in the rail when
+    a response lands, a naive <code>innerHTML</code> replacement destroys focus and caret position.
+    &sect;5.4 specifies the save-and-restore; it is not optional.</p>
+
+  <h3><span class="n">15.7</span>The skeleton flash</h3>
+  <p>Showing a skeleton immediately makes a 40ms cached response flash. Never showing it makes a 5s
+    response look broken. The 200ms threshold is the resolution &mdash; implement it as a timer
+    cancelled by the response, not as a minimum display duration.</p>
+
+  <h3><span class="n">15.8</span>Renaming weight keys breaks metrics silently</h3>
+  <p>When the category model changed from five invented categories to the seven real ones, the weight
+    keys changed with it. Three formulas &mdash; return, volatility and the crisis calculation
+    &mdash; still referenced the old keys, so they produced <code>NaN</code>.</p>
+  <div class="rule"><p><strong>Every test passed throughout.</strong> They checked structure and
+    reconciliation &mdash; column counts, weights summing to 100%, notionals totalling the mandate
+    &mdash; and never that the numbers were finite. One assertion even passed spuriously, because
+    <code>NaN !== NaN</code> is true. <strong>Ship a finiteness guard</strong> over the whole
+    combination space plus a check that no rendered surface contains <code>NaN</code> or
+    <code>undefined</code>. Reconciliation tests pass happily on nonsense.</p></div>
+
+  <h3><span class="n">15.9</span>Rounding the output is not rounding the input</h3>
+  <p>Rounding the notional to the nearest $100 makes the figures look deliberate but does not make
+    them reconcile: the drift comes from the <em>weight's</em> 2dp rounding. Printed
+    <code>7.02%</code> &times; $26m is $1,825,200 while the true weight is 7.0150%. Only deriving
+    every figure from the printed weight (&sect;8.4) closes it.</p>
+
+  <h3><span class="n">15.10</span><code>'use strict'</code> and the global object</h3>
+  <p>The host's convention is to reference the bare global <code>API_BASE</code>, which works only
+    because <code>window === globalThis</code> in a browser. Read <code>window.API_BASE</code>
+    instead: identical at runtime, and testable outside one.</p>
+  <h3><span class="n">15.10a</span>A row rule outranks a bare status class</h3>
+  <p><code>tr.asset td</code> sets the muted row colour, and at (0,1,2) it is more specific than
+    a bare <code>.neg</code> at (0,1,0). So &sect;9.2's &ldquo;negative figures take
+    <code>--red</code>&rdquo; <strong>never rendered at all</strong> &mdash; not in the
+    prototype, not in the build, until it was measured rather than looked at. The rule needs the
+    extra class: <code>.tbl td.neg</code>. Anything that colours a figure inside a themed row
+    has this problem; check the computed colour, not the markup.</p>
+
+  <h3><span class="n">15.10b</span>A fixed-layout table will not shrink below its container</h3>
+  <p>Give a table <code>table-layout:fixed</code> and <code>width:auto</code>, expecting it to
+    size to its columns, and it will still fill its container: CSS 2.1 &sect;17.5.2.1 makes the
+    used width at least the containing block's. The surplus is then distributed back across the
+    columns, quietly undoing any cap. The width has to be stated. Related: measuring a column's
+    &ldquo;natural&rdquo; width while the table is stretched to <code>100%</code> measures the
+    stretch, not the content.</p>
+
+  <h3><span class="n">15.10c</span>A measuring pass that reads its own last answer</h3>
+  <p>Publish a measured column width as a custom property, then measure again on the next
+    render, and the second measurement sees the first one's width still applied. The column can
+    then only ever grow &mdash; it latched 145px too wide before this was caught. Neutralise the
+    properties (<code>auto</code>) before measuring. The same trap bites the container: once
+    <code>.tblwrap</code> shrink-wraps its table, asking it how much room is available measures
+    the table you are about to size.</p>
+
+</section>
+
+<section class="block" id="s16">
+  <h2 class="sec"><span class="n">16</span>Open items</h2>
+  <p class="lede">Everything unresolved. Nothing here blocks starting the build.</p>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Item</th><th>Status</th><th>Blocks</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Theme.</strong> The palette is from <code>mpo-ui</code>; the host's is
+        OneGS. Retheme at port time (&sect;6.5).</td>
+        <td><span class="bdg b-info">Scheduled</span></td>
+        <td>Nothing &mdash; it is a token change by construction.</td></tr>
+      <tr><td>2</td><td><strong>Two house palettes.</strong> Excel <code>#0F243E</code>/<code>#D3DDEA</code>
+        vs UI <code>#16243A</code>/<code>#E9EDF2</code> (&sect;14.5).</td>
+        <td><span class="bdg b-warn">Decision needed</span></td>
+        <td>Nothing. Resolve alongside item 1.</td></tr>
+      <tr><td>3</td><td><strong>TAA modelling.</strong> <s>Assumed not to add or remove a
+        category.</s> <strong>Settled by the supplied weights, against the assumption.</strong> The
+        tactical tilt (<code>LHUT1T3</code>, &ldquo;Tactical Tilt Fund&rdquo;) is its own category,
+        <em>Asset Allocation Strategies</em>. Ticking Exclude TAA drops a category outright &mdash;
+        measured on USD / Core / Mod, five categories become four.</td>
+        <td><span class="bdg b-ok">Resolved &mdash; tables change</span></td>
+        <td>The allocation table gains a category that appears and disappears with a tick box, and
+          &sect;8's &ldquo;every category needs a sleeve&rdquo; rule has to say whether this one
+          does. See open item 12.</td></tr>
+      <tr><td>4</td><td><strong>Equity risk beta</strong> &mdash; <code>get_risk_betas()</code> or
+        <code>get_return_betas()</code>?</td><td><span class="bdg b-warn">Parked</span></td>
+        <td>A fourth row in the metrics band, if wanted.</td></tr>
+      <tr><td>5</td><td><strong>Exposure currency</strong> shows <code>Local</code> for
+        internationally-diversified products. If PMG expects a specific currency or a breakdown, that
+        column needs different treatment.</td>
+        <td><span class="bdg b-warn">Assumption</span></td><td>One column's rendering.</td></tr>
+      <tr><td>6</td><td><strong>Export contents</strong> &mdash; assumed to be the three on-screen
+        tables and nothing else.</td><td><span class="bdg b-info">Assumption</span></td>
+        <td>Confirm before the export adapter is written.</td></tr>
+      <tr><td>7</td><td><strong>Advisor directory scope</strong> &mdash; all advisors, or only the
+        user's own?</td><td><span class="bdg b-info">Assumption</span></td>
+        <td>Adapter only. The UI is unaffected.</td></tr>
+      <tr><td>8</td><td><strong>Scenario retention</strong> &mdash; how long does a scenario id stay
+        valid?</td><td><span class="bdg b-warn">Decision needed</span></td>
+        <td>Only the wording of the &ldquo;no longer available&rdquo; message.</td></tr>
+      <tr><td>9</td><td><strong><code>dataversion</code>.</strong> Every <code>epsilonPhi</code> config
+        table is keyed on <code>currency</code> + <code>dataversion</code>. No control surfaces which
+        version the adapter reads.</td>
+        <td><span class="bdg b-warn">Decision needed</span></td>
+        <td>Nothing today. It becomes visible if two versions must be compared.</td></tr>
+      <tr><td>10</td><td><strong>Tests.</strong> The host's dashboard package has none, and this page
+        adds none to it.</td><td><span class="bdg b-warn">Gap</span></td>
+        <td>Nothing, but there is no safety net.</td></tr>
+      <tr><td>11</td><td><strong>Link sharing.</strong></td><td><span class="bdg b-info">Deferred</span></td>
+        <td>Nothing.</td></tr>
+      <tr><td>12</td><td><strong>Does <em>Asset Allocation Strategies</em> take a sleeve?</strong>
+        <strong>Resolved: yes, and it is never chosen.</strong> One sleeve, one product &mdash; the
+        Tactical Tilt Fund &mdash; attached automatically whenever the category is present. See
+        &sect;2.6.</td>
+        <td><span class="bdg b-ok">Resolved</span></td>
+        <td>Nothing. It must not appear as an unsatisfied picker in the completeness gate.</td></tr>
+      <tr><td>13</td><td><strong>No cash category in the supplied weights.</strong>
+        <strong>Resolved, and the question was the wrong shape.</strong> There is no fixed category
+        list to be missing from: categories and asset classes are whatever the selected portfolio
+        holds, read from the weights (&sect;2.2). Cash is simply not in this universe. The palette
+        slot it held now carries <em>Asset Allocation Strategies</em> (&sect;6.6).</td>
+        <td><span class="bdg b-ok">Resolved</span></td>
+        <td>Nothing &mdash; but any hardcoded category list in the UI is now a defect.</td></tr>
+      <tr><td>14</td><td><strong>Hedging policy does not vary the weights.</strong>
+        <strong>Resolved.</strong> Hedging is an <em>analytics</em> input, not an allocation one,
+        which is why the weight loader has no hedging parameter and is correct not to.
+        <strong>Corrected at build time:</strong> it is <em>not</em> applied with
+        <code>SAAPortfolio.set_hedging_option()</code>, which is a dead path in this snapshot
+        &mdash; it reaches <code>SAAHedging</code>, a class absent from the repo. It is applied
+        as per-asset FX ratios inside the cached build. See &sect;4.5.</td>
+        <td><span class="bdg b-ok">Resolved</span></td>
+        <td>Nothing &mdash; but the ratios must be applied inside the cached build, or every
+          column silently returns default-hedged numbers.</td></tr>
+
+      <tr><td>15</td><td><strong>ISG Hedged's per-asset ratios.</strong> Hedged, Unhedged and
+        Equity Not Hedged carry their conventional meanings; ISG Hedged is implemented as 0.5 on
+        Public Equity and 1.0 elsewhere, <strong>a stand-in</strong> awaiting PMG's house
+        numbers.</td>
+        <td><span class="bdg b-warn">Decision needed</span></td>
+        <td>Nothing structural &mdash; one table in <code>portfolio_weights.py</code>. But every
+          ISG Hedged figure on screen is provisional until it is answered.</td></tr>
+      <tr><td>16</td><td><strong>Return betas do not vary with the hedge.</strong> Verified
+        identical at ratios 0.0, 0.5 and 1.0: <code>calc_return_betas</code> computes a
+        currency-converted asset and then discards it, so the parameter has never reached the
+        result. Whether that is intended is a model question, not a performance one.</td>
+        <td><span class="bdg b-warn">Decision needed</span></td>
+        <td>Nothing today. If betas should vary with the hedge, the estimator's cache key must
+          regain the ratio in the same change.</td></tr>
+      <tr><td>17</td><td><strong>Currency coverage.</strong> The development database carries
+        currency and simulation configs for <strong>USD and GBP only</strong> at dataversion 1;
+        CHF and EUR cannot resolve at all. The UI offers four because the supplied weights carry
+        four.</td>
+        <td><span class="bdg b-warn">Decision needed</span></td>
+        <td>Two of the four currencies. Either load the missing rows or narrow the option list
+          &mdash; which is a schema change, not a UI one (&sect;4.3).</td></tr>
+      <tr><td>18</td><td><strong>The implementation types' sleeve libraries are stub data.</strong>
+        The four variants and the gate around them are built (D29), but which sleeves each one
+        offers, and the products inside them, are illustrative &mdash; authored to exercise the
+        mechanism, not supplied by PMG. The Multi-Asset library is the one the prototype
+        demonstrated; the ESG, US Onshore and Irish Onshore libraries are invented.</td>
+        <td><span class="bdg b-warn">Decision needed</span></td>
+        <td>Nothing structural &mdash; the shape is proven and replacing
+          <code>sleeves.py</code> behind its three functions is the whole change. But no
+          product, fee or vehicle on a variant other than Multi-Asset should be shown to anyone
+          until PMG supplies the real libraries.</td></tr>
+      <tr><td>19</td><td><strong>Do the variants restrict allocations, or only products?</strong>
+        Built on the assumption that they are independent: any implementation type may
+        implement any allocation variant, and the variant changes no figure in step 1. If, say,
+        an Irish Onshore book cannot hold the private-asset allocations at all, that is an
+        availability rule in step 1 rather than a sleeve rule in step 2, and it would want the
+        variant chosen before the base portfolio rather than after.</td>
+        <td><span class="bdg b-warn">Decision needed</span></td>
+        <td>The order of the two steps. Cheap to change now, expensive once PWAs learn the
+          flow.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="n">16.1</span>Reference material</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Artifact</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>proposalTool/</code></td>
+        <td>The working prototype, in the host's page-folder layout. Interactive.</td></tr>
+      <tr><td><code>PORTING.md</code></td>
+        <td>Drop-in steps: copy the folder, add one route, add one nav link.</td></tr>
+      <tr><td><code>generator/*.py</code></td>
+        <td>The generator. A development tool &mdash; what ships is the generated static files.</td></tr>
+      <tr><td><code>backend/portfolio_weights.py</code></td>
+        <td>The supplied weight universe and its loader (&sect;4.5). Runnable; also a CLI.</td></tr>
+      <tr><td><code>backend/portfolio_weights.xlsx</code></td>
+        <td>The same data as a workbook &mdash; long, wide, metadata and assumption sheets.</td></tr>
+      <tr><td><code>backend/scenario_port.py</code></td>
+        <td>The eight-method adapter the host implements, extracted from &sect;4.2 as an importable
+          module.</td></tr>
+      <tr><td><code>reference/landing-swiss.html</code></td>
+        <td>The chosen landing as a standalone page, the design reference for &sect;7.1.</td></tr>
+      <tr><td><code>DECISIONS.md</code></td>
+        <td>The full decision log, Q1 to Q50, with the reasoning behind every rule here. Q49 is
+          the analytics profile; Q50 the interface refinements this revision folds in.</td></tr>
+      <tr><td><code>service/</code></td>
+        <td>The back end as built, in the host's own shape. <code>README.md</code> runs it,
+          <code>TRANSPLANT.md</code> is the porting list, <code>DEVIATIONS.md</code> records
+          every departure from this document (D1&ndash;D28) and every gap found in it
+          (G1&ndash;G8), <code>PERFORMANCE.md</code> the analytics profile.</td></tr>
+      <tr><td><code>HOST_AUDIT.md</code></td>
+        <td>The host codebase audit that &sect;3 is derived from. Required reading: it carries the
+          conventions, the add-a-page recipe and the gotchas that &sect;3 only summarises.</td></tr>
+      <tr><td><code>epsilonPhi/core/reporting/formatting_*.yaml</code></td>
+        <td>Source of truth for the Excel styling in &sect;14.3.</td></tr>
+      <tr><td><code>model-management/mpo-ui/assets/app.css</code></td>
+        <td>Source of the design tokens in &sect;6.1.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+</main>
+</div>
+
+<footer class="foot">
+  <p>Epsilon Phi Proposal Tool &middot; production build specification, revision 6 &middot;
+    revised 31 August 2026. Revision 5 added implementation types (&sect;8.1), the animated
+    rail fold and restyled step nav (&sect;7.2) and the composition doughnuts (&sect;8.5).
+    Revision 6 records the interface as it now stands: naming, the sizing and motion rules, and
+    the order the page asks its questions in &mdash; D29 to D46. Revision 4 brought the document
+    in line with the system as built. Decisions trace to <code>DECISIONS.md</code>. Items marked
+    <em>assumption</em> were not confirmed and should be challenged before they are built.</p>
+</footer>

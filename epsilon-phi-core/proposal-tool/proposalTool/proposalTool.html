@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proposal Tool</title>
+<meta name="description" content="Both steps in one page. Choose an asset allocation and compare up to four portfolios, then switch to Implementation and attach a sleeve of products to each category of the base.">
+<link rel="stylesheet" href="static/css/proposalTool.css">
+</head>
+<body class="has-rail">
+<!-- Host convention: accessGate.js first so the sign-in overlay can render,
+     then globals.js which sets API_BASE. Absolute paths, served by the host's
+     Flask process; opened from file:// they 404 harmlessly and the page's own
+     typeof guard keeps API_BASE working. -->
+<script src="/static/js/accessGate.js"></script>
+<script src="/static/js/globals.js"></script>
+<a class="skip-link" href="#main">Skip to content</a>
+<!-- Live regions: present from first paint, or they are never announced. -->
+<div id="live-polite" class="sr-only" aria-live="polite"></div>
+<div id="live-assertive" class="sr-only" aria-live="assertive"></div>
+<!-- Admin glyphs (D62). One copy each, referenced with <use> so the navy
+     rail and the white landing page share them and take their colour from
+     currentColor. Two glyphs do not justify an icon font or a sprite fetch. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <g id="i-sleeves" fill="none" stroke="currentColor" stroke-width="1.6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 2.2 17.5 6 10 9.8 2.5 6z"/><path d="M2.5 10 10 13.8 17.5 10"/>
+      <path d="M2.5 14 10 17.8 17.5 14"/>
+    </g>
+    <g id="i-catalogue" fill="none" stroke="currentColor" stroke-width="1.6"
+       stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2.5" y="3" width="15" height="14" rx="2"/>
+      <path d="M2.5 7.6h15M8 7.6V17M2.5 12.3h15"/>
+    </g>
+  </defs>
+</svg>
+
+<aside class="rail" aria-label="Scenario">
+  <div class="rail-brand">
+    <b>Portfolio Management Group</b>
+    <span>Proposal Tool</span>
+    <button type="button" class="rail-toggle" id="railtoggle" aria-expanded="true"
+            aria-controls="rail-tiers" aria-label="Collapse the scenario panel"
+            title="Collapse the scenario panel"><span aria-hidden="true">&#171;</span></button>
+  </div>
+  <div class="rail-tiers" id="rail-tiers">
+    <div class="tier" id="tier-mandate"></div>
+    <div class="tier" id="tier-basis"></div>
+    <div class="tier" id="tier-base"></div>
+
+    <div class="tier" id="tier-sleeves" hidden></div>
+  </div>
+
+  <!-- Administration (D62): outside the masthead, which fades on collapse, and
+       sticky to the foot so a long rail cannot scroll it away. Collapsed, the
+       caption goes and the two glyphs stack - which is what a 48px rail is for. -->
+  <div class="rail-admin-bar" id="railadmin" hidden>
+    <span class="rail-admin-cap">Admin</span>
+    <a href="#repository" class="rail-admin-btn" id="repolink"
+       aria-label="Sleeve repository" title="Sleeve repository">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#i-sleeves"/></svg></a>
+    <a href="#catalogue" class="rail-admin-btn" id="catlink"
+       aria-label="Product catalogue" title="Product catalogue">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><use href="#i-catalogue"/></svg></a>
+  </div>
+</aside>
+
+<main class="shell" id="main">
+  <!-- Degraded (D64, option F): the service is not answering but the last
+       good render is cached, so the proposal stays on screen, read only.
+       Announced politely rather than assertively - nothing has gone wrong
+       with what is displayed, only with what can be done to it. -->
+  <div class="degraded" id="degraded" role="status" hidden>
+    <span class="st"><span class="dot" aria-hidden="true"></span>Read only</span>
+    <span class="degraded-txt"><b>Saving and export are unavailable</b> — the scenario
+      service is not responding. What you can see is the last version loaded and is safe to show.</span>
+    <span class="degraded-sp"></span>
+    <span class="degraded-retry" id="degraded-retry"></span>
+    <button type="button" class="degraded-now" id="degraded-now">Try now</button>
+  </div>
+
+  <!-- Host convention: every page surfaces API errors here. -->
+  <div id="alertArea"></div>
+
+  <!-- Schema failure: the page cannot render without field options, so this
+       replaces everything until Retry succeeds (spec 10.3). -->
+  <!-- The service is not answering and there is nothing cached to show, so
+       there is no proposal to fall back to (D64, option G). Warm by choice:
+       the two facts a PWA needs - that their work is safe, and that the page
+       is trying again by itself - are kept inside the friendlier frame
+       rather than dropped, because an error page that cannot be acted on is
+       just a picture. -->
+  <section id="view-schema-error" hidden>
+    <div class="down">
+      <div class="down-art" aria-hidden="true">
+        <svg viewBox="0 0 96 72" width="96" height="72" role="img">
+          <ellipse cx="48" cy="64" rx="30" ry="4" fill="#E3E7EC"/>
+          <path d="M26 26h36a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H26a6 6 0 0 1-6-6V32a6 6 0 0 1 6-6z"
+                fill="#fff" stroke="#C7D0DB" stroke-width="2.5"/>
+          <path d="M68 36h4a7 7 0 0 1 0 14h-4" fill="none" stroke="#C7D0DB" stroke-width="2.5"/>
+          <path d="M32 20c0-4 3-6 5-4M42 17c0-5 4-7 6-4M52 20c0-4 3-6 5-4"
+                fill="none" stroke="#B9CDF0" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="38" cy="42" r="2.6" fill="#5B6B7C"/><circle cx="54" cy="42" r="2.6" fill="#5B6B7C"/>
+          <path d="M39 52c3-3 12-3 15 0" fill="none" stroke="#5B6B7C" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2>We can’t reach the Proposal Tool right now</h2>
+      <p class="down-sub">Sorry — this one is on us, not on you. The service that
+        builds portfolios isn’t answering, so nothing can be resolved, priced
+        or exported until it’s back.</p>
+      <p class="down-safe" id="down-safe" hidden></p>
+      <p class="down-retry" id="down-retry">Trying again automatically…</p>
+      <div class="down-actions">
+        <button type="button" class="btn btn-primary" id="schema-retry">Try now</button>
+      </div>
+      <p class="down-detail"><button type="button" class="down-toggle" id="down-more">Technical detail</button>
+        <span class="down-reason" id="schema-error-reason" hidden></span></p>
+    </div>
+  </section>
+
+  <!-- Landing. The page is its own front door. The hero is not decoration: it is a
+       real output of the tool - three allocations compared, drawn with the same
+       category colours the allocation table uses. -->
+  <section id="view-landing">
+    <div class="lp-inner">
+      <div class="lp-rule"></div>
+      <div class="lp-copy">
+        <p class="lp-eyebrow">An ISG <b>Cyrus</b> Application</p>
+        <h1 class="lp-title"><span>Portfolio Management Group</span><span class="lp-accent">Proposal Tool</span></h1>
+        <div class="lp-spec" aria-hidden="true">
+          <span style="background:var(--cat-1)"></span>
+          <span style="background:var(--cat-2)"></span>
+          <span style="background:var(--cat-3)"></span>
+          <span style="background:var(--cat-4)"></span>
+          <span style="background:var(--cat-5)"></span>
+          <span style="background:var(--cat-6)"></span>
+          <span style="background:var(--cat-7)"></span>
+        </div>
+      </div>
+      <div class="lp-grid">
+        <div>
+          <ul class="lp-points">
+            <li>Compare Different Portfolio Allocation and Implementation Options</li>
+            <li>Finesse Pricing Levels via a Range of Pre-Set Plans or Set Your Own Bespoke Pricing</li>
+          </ul>
+          <button type="button" class="btn btn-primary lp-cta" id="startbtn">Start Here</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="steps" id="steps" role="tablist" aria-label="Scenario steps">
+    <button type="button" class="step" data-step="aa" role="tab" aria-selected="true">
+      <span class="step-index" aria-hidden="true">1</span>
+      <span class="step-label"><strong>Asset allocation</strong><small>Build &amp; compare</small></span>
+    </button>
+    <span class="step-connector" aria-hidden="true"></span>
+    <button type="button" class="step" data-step="impl" role="tab" aria-selected="false">
+      <span class="step-index" aria-hidden="true">2</span>
+      <span class="step-label"><strong>Implementation</strong><small>Sleeves &amp; export</small></span>
+    </button>
+  </div>
+
+<div id="view-aa">
+
+
+  <!-- Mandate set, no base chosen yet: the rail's Base tier carries a ring
+       and this panel says what to do (spec 10.2). -->
+  <div class="doc-empty" id="doc-empty" hidden>
+    <h3>Choose a base portfolio</h3>
+    <p>Pick an allocation and risk level in the rail to build the first column.</p>
+  </div>
+
+  <section class="sec">
+    <div class="sec-head stage-head">
+      <div>
+        <p class="eyebrow">Step 1 of 2</p>
+        <h2 class="stage-title">Strategic Asset Allocation</h2>
+        <p class="stage-sub">Comparing Portfolio Risk and Return Characteristics</p>
+      </div>
+      <span class="resolving" id="resolving" aria-hidden="true" hidden></span>
+    </div>
+    <div class="tblwrap accent-top" tabindex="0" aria-label="Allocation table, scrolls horizontally">
+      <table class="tbl alloc" id="alloc"></table></div>
+  </section>
+
+  <section class="sec viz">
+    <div class="viz-grid">
+      <div class="viz-card">
+        <h3>Allocation by category</h3>
+        <p class="sub">Share of each portfolio, 0 to 100%.</p>
+        <div class="viz-legend" id="viz-key"></div>
+        <div id="viz-comp"></div>
+      </div>
+      <div class="viz-card">
+        <h3>Return against volatility</h3>
+        <p class="sub">Where each portfolio sits on the risk and return plane.</p>
+        <div class="viz-legend" id="viz-key2"></div>
+        <div id="viz-rr"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-head stage-head">
+      <div>
+        <h2 class="stage-title">Risk Dashboard</h2>
+      </div>
+    </div>
+    <div class="tblwrap" tabindex="0" aria-label="Risk dashboard, scrolls horizontally">
+      <table class="tbl risk" id="risk"></table></div>
+  </section>
+
+</div>
+
+<div id="view-impl-wrap" hidden>
+  <section class="sec" id="view-impl"></section>
+</div>
+
+  <!-- describe(): data version, source, as-of - for support and
+       reproducibility (spec 4, the port's describe method). -->
+  <p class="doc-foot" id="doc-foot" hidden></p>
+</main>
+<!-- Page JS last so every node it touches already exists. No module system in the
+     host, so load order is load-bearing: this file defines App, then the picker and
+     implementation layers attach to it. -->
+<!-- Mandate dialog, rendered on demand. -->
+<div id="mandateDialog" hidden></div>
+<!-- Account opening request (D76), rendered on demand. -->
+<div id="accountDialog" hidden></div>
+<div id="feeDialog" hidden></div>
+<div id="priceDialog" hidden></div>
+<div id="repoDialog" hidden></div>
+
+<script src="static/js/proposalTool.js"></script>
+</body>
+</html>

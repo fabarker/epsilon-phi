@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CsvFileAttributes">
+    <option name="attributeMap">
+      <map>
+        <entry key="/src/Scripts/test_cpp_dates.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/curves/abstractCurve/AbstractCurve.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/VolSurface.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/VolSurfaceMgr.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/interpolators/cubicSpline/CubicSpline.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/interpolators/cubicSpline/cubicSpline2.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/impliedVolatility/interpolators/gaussianKernelSmoother/GaussianKernel.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/dataModel/dataSources/vendor/GSQuant.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/utils/MathUtils.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/core/utils/OptionUtils.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/ep_strategies/futures/main.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/ep_strategies/fx/non_linear/SurfaceStatArb.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/src/python/epsilonPhi/ep_strategies/volatility/SmileStatArb.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

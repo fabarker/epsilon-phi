@@ -1,0 +1,2016 @@
+:root{
+  --radius:4px;
+  --radius-sm:3px;
+  --shadow:none;
+  --cell-pad:9px 14px;
+  --surface-2:var(--surface);
+  --input-bg:var(--surface-2);
+  --ink-2:var(--ink);
+  --ink-3:var(--ink-2);
+  --ink-row:var(--ink-2);
+  --line-mid:var(--line-strong);
+  --line-strong:var(--line);
+  --cat-bg:transparent;
+  --metric-bg:transparent;
+  --row-hover:transparent;
+  --head-bg:var(--surface);
+  --head-ink:var(--ink);
+  --band-bg:var(--ink);
+  --band-ink:var(--surface);
+  --accent-ink:#ffffff;
+  --neg:#B3261E;
+  --panel-border:1px solid var(--line);
+  --rail-w:320px;
+  --rail-motion:280ms cubic-bezier(.4,0,.2,1);
+  --col-motion:420ms cubic-bezier(.4,0,.2,1);
+  --row-motion:900ms cubic-bezier(.25,.8,.25,1);
+  --value-motion:900ms linear;
+  --reveal-motion:700ms;
+  --rail-bg:var(--surface);
+  --rail-ink:var(--ink);
+  --rail-ink-2:var(--ink-2);
+  --rail-ink-3:var(--ink-3);
+  --rail-line:var(--line);
+  --rail-line-strong:var(--line-strong);
+  --bg:#FBFCFE;
+  --surface:#FFFFFF;
+  --surface-2:#F0F2F5;
+  --ink:#1C2733;
+  --ink-2:#5B6B7C;
+  --ink-3:#8494A4;
+  --ink-row:#4B5A6A;
+  --line:#EEF1F4;
+  --line-strong:#D4DAE2;
+  --line-mid:#AFBAC7;
+  --accent:#1F5FBF;
+  --accent-ink:#FFFFFF;
+  --neg:#B42318;
+  --radius:6px;
+  --radius-sm:4px;
+  --shadow:0 1px 2px rgba(16,24,40,.05);
+  --cell-pad:4px 15px;
+  --head-bg:#FFFFFF;
+  --head-ink:#5B6B7C;
+  --band-bg:#FFFFFF;
+  --band-ink:#1F5FBF;
+  --cat-bg:#E9EDF2;
+  --metric-bg:#F0F2F5;
+  --row-hover:#F7F9FB;
+  --brand-weight:400;
+  --f-display:'GS Sans','Roboto',system-ui,-apple-system,sans-serif;
+  --f-body:'GS Sans','Roboto',system-ui,-apple-system,sans-serif;
+  --f-num:'GS Sans Condensed','GS Sans','Roboto',system-ui,-apple-system,sans-serif;
+  --rail-w:352px;
+  --rail-motion:280ms cubic-bezier(.4,0,.2,1);
+  --col-motion:420ms cubic-bezier(.4,0,.2,1);
+  --row-motion:900ms cubic-bezier(.25,.8,.25,1);
+  --value-motion:900ms linear;
+  --reveal-motion:700ms;
+  --rail-bg:#12233f;
+  --rail-ink:#FFFFFF;
+  --rail-ink-2:#B6C2D2;
+  --rail-ink-3:#7E90A8;
+  --rail-line:#233754;
+  --rail-line-strong:#233754;
+  --rail-eyebrow:#F3C46B;
+  --rail-input-bg:#1D2F4B;
+  --rail-input-border:#52739C;
+  --rail-accent:#2A6AD0;
+  --rail-accent-ink:#FFFFFF;
+  --rail-btn-border:#5590E4;
+  --rail-focus:#8FB4FF;
+  --rail-caret-color:#8FA2BC;
+  --caret:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%238494A4' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  --rail-caret:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%238FA2BC' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* ── house typefaces, served locally: no network, no fallback surprise ──
+   GS Sans and GS Sans Condensed are variable; the weight ranges below let the
+   browser interpolate rather than synthesising. Goldman Sans ships regular only,
+   so it is used at 400 for the wordmark and nowhere a bold is asked for.
+   Roboto is the fallback: 1250 glyphs against GS Sans's 500. */
+@font-face{font-family:"GS Sans";src:url("../fonts/gs-sans-variable.woff2") format("woff2");
+  font-weight:250 700;font-style:normal;font-display:swap}
+@font-face{font-family:"GS Sans Condensed";
+  src:url("../fonts/gs-sans-condensed-variable.woff2") format("woff2");
+  font-weight:300 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Goldman Sans";src:url("../fonts/goldman-sans-regular.woff2") format("woff2");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Roboto";src:url("../fonts/roboto-regular.woff2") format("woff2");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Roboto";src:url("../fonts/roboto-medium.woff2") format("woff2");
+  font-weight:500;font-style:normal;font-display:swap}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);
+  font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* The UA rule for [hidden] is display:none at low precedence, so any author rule
+   that sets display - .steps{display:flex}, #view-landing{display:flex} - silently
+   beats it and the element stays visible. */
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* No topbar: the workspace opens straight onto the step nav. The top padding
+   is what the topbar used to contribute - enough that the first control is
+   not flush against the viewport edge. */
+.shell{max-width:1500px;margin:0 auto;padding:clamp(14px,2vw,24px) clamp(16px,3vw,44px) 96px}
+
+.sec{margin-bottom:clamp(26px,4vw,50px)}
+/* The charts close with a rule, so the Risk Dashboard title below reads as a
+   new part of the document rather than as a caption to them. Padding holds it
+   off the cards; .sec's own margin carries the space beneath it. */
+.sec.viz{padding-bottom:clamp(26px,4vw,50px);border-bottom:1px solid var(--line-strong)}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  margin-bottom:14px;flex-wrap:wrap}
+h1,h2{margin:0;font-family:var(--f-display);font-weight:var(--head-weight,600);color:var(--ink)}
+h1{font-size:clamp(28.5px,3.5vw,41.5px);letter-spacing:var(--head-ls,-.015em);line-height:1.15}
+h2{font-size:clamp(18.5px,1.9vw,23px);letter-spacing:var(--head-ls,-.01em)}
+/* The stage title over the allocation table, matching proposalToolv2's
+   .stage-heading h1 declaration for declaration: GS Sans Condensed - which is
+   this page's --f-num - at 39px/1.08, weight 480, -.012em, no margin. The
+   condensed face is variable across 300-900, so 480 is a real weight here
+   rather than a synthesised one. Colour is not in v2's rule either; it
+   inherits, and ours inherits the same near-black navy from the theme.
+   Specificity (0,1,1) carries it over the h1,h2 and h2 rules above. */
+h2.stage-title{font-family:var(--f-num);font-size:39px;font-weight:480;
+  letter-spacing:-.012em;line-height:1.08;margin:0}
+/* Its standfirst, from the same v2 rule set (.stage-heading>div>p:last-child):
+   750px measure, 10px above, 16px, muted - our --ink-2 in place of v2's
+   --muted, the two being the same grey to within a point per channel. */
+.stage-sub{max-width:750px;margin:10px 0 0;color:var(--ink-2);font-size:16px}
+/* v2's .eyebrow, with its .stage-heading margin override folded in - ours only
+   ever appears above a stage title. --accent stands in for v2's --blue-600,
+   the two being the same mid blue in the same role. */
+.eyebrow{margin:0 0 8px;color:var(--accent);font-family:var(--f-num);font-size:12px;
+  font-weight:720;letter-spacing:.115em;text-transform:uppercase}
+/* The stage heading stands off its table further than a section head does:
+   it is a 39px title with a standfirst under it, not a 23px label. Scoped so
+   At a glance and Risk dashboard keep the 14px of .sec-head. */
+.sec-head.stage-head{margin-bottom:30px;position:relative}
+/* The waiting indicator. Absolutely positioned on purpose: the pill it
+   replaces lived in the notices strip, which is hidden when empty, so every
+   resolve grew the strip - its own height plus a 20-30px margin - and pushed
+   the whole document down and back. That shift above the table was the flash.
+   Taken out of flow, this cannot move anything. */
+.resolving{position:absolute;right:0;bottom:6px;width:18px;height:18px;
+  border:2px solid var(--line-strong);border-top-color:var(--accent);
+  border-radius:50%;animation:resolvespin .7s linear infinite}
+@keyframes resolvespin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .resolving{animation:none;border-top-color:var(--accent);opacity:.7}
+}
+@media (max-width:640px){h2.stage-title{font-size:32px}.stage-sub{font-size:14px}}
+.sec-note{font-size:14.5px;color:var(--ink-3);max-width:52ch}
+.lede{font-size:16.5px;color:var(--ink-2);max-width:62ch;margin:10px 0 0}
+
+.panel{background:var(--surface);border:var(--panel-border,1px solid var(--line));
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(18px,2.6vw,30px)}
+
+.scenario{display:grid;gap:clamp(18px,2.4vw,26px)}
+.grp{border:0;padding:0;margin:0;min-width:0}
+.grp+.grp{border-top:1px dashed var(--line-strong);padding-top:clamp(18px,2.4vw,26px)}
+legend{padding:0;margin-bottom:13px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;width:100%}
+.grp-idx{font-family:var(--f-num);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);font-weight:700}
+.grp-hint{font-size:14px;color:var(--ink-3)}
+.fieldgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:14px 18px}
+.field{display:flex;flex-direction:column;gap:6px;position:relative;min-width:0}
+.field label{font-size:13px;letter-spacing:.03em;color:var(--ink-2);font-weight:600}
+input[type=text],select{font:inherit;font-family:var(--f-num);font-size:15.5px;color:var(--ink);
+  background:var(--input-bg);border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  padding:9px 11px;width:100%;appearance:none;transition:border-color .15s,box-shadow .15s}
+select{background-image:var(--caret);background-repeat:no-repeat;
+  background-position:right 11px center;background-size:11px 7px;padding-right:30px}
+input[type=text]:hover,select:hover{border-color:var(--accent)}
+input:focus-visible,select:focus-visible,.btn:focus-visible,.toggle:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+.ta-hint{position:absolute;right:11px;top:32px;font-family:var(--f-num);font-size:11.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);pointer-events:none}
+.field-note{font-size:12.5px;color:var(--ink-3);line-height:1.35}
+.is-disabled{opacity:.48}
+.toggle{width:42px;height:23px;border-radius:99px;background:var(--surface-2);
+  border:1px solid var(--line-strong);position:relative}
+.knob{position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--ink-3)}
+.formactions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-family:var(--f-num);font-size:14px;letter-spacing:.07em;
+  text-transform:var(--btn-case,uppercase);font-weight:700;padding:11px 24px;
+  border-radius:var(--radius-sm);border:1px solid transparent;cursor:pointer;transition:.15s}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn-primary:hover:not(:disabled){filter:brightness(1.1)}
+/* There was no :disabled rule, so a disabled button looked identical to a
+   live one - the export button in particular sat there fully green while
+   refusing to be pressed. Matches .step:disabled, already the page's idiom. */
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--ink-2);border-color:var(--line-strong)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* The frame follows the table. A capped table is narrower than the document,
+   and a full-width wrapper would leave its surface and border stranded out to
+   the right of the last column. fit-content shrinks to the table and still
+   stops at the document edge, where overflow-x takes over and it scrolls. */
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);
+  width:fit-content;max-width:100%}
+.tbl{width:100%;border-collapse:collapse;font-family:var(--f-display);font-size:15px;min-width:850px}
+.tbl th,.tbl td{text-align:left;padding:var(--cell-pad);white-space:nowrap}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.tbl thead th{background:var(--head-bg);color:var(--head-ink);font-weight:700;font-size:12.5px;
+  letter-spacing:.09em;text-transform:uppercase;border-bottom:2px solid var(--line-strong);
+  position:sticky;top:0;z-index:2}
+.tbl thead th.sub{font-size:12px;letter-spacing:.11em;opacity:.78;border-bottom-width:1px;font-weight:600}
+.rowhead{text-align:left!important;position:sticky;left:0;z-index:3;background:var(--head-bg)}
+/* The pinned column's HEADER sits above the scrolling headers, which it did
+   not: `.tbl thead th` (0,1,2) outranks `.rowhead` (0,1,0), so the corner cell
+   was taking the scrolling headers' own z-index of 2 and losing to them on
+   document order as the table scrolled right. Specificity, not the value, was
+   the bug - and the background is already opaque. */
+.tbl thead th.rowhead{z-index:5}
+/* The row-header column sizes to its longest label - category names and
+   indented reporting names - and the numeric columns share the rest. In an
+   auto-layout table a small percentage width resolves to the content's
+   minimum, and cells are already nowrap. The implementation table is excluded:
+   its first two columns are pinned at their specified widths (spec 9.3). */
+/* The risk table sizes its own columns through <col> (sizeRiskColumns), so
+   it must not also carry the shrink-to-content width the allocation table
+   uses - the two disagree and fixed layout picks the cell. */
+/* The strategic allocation table reads a shade smaller and tighter than the
+   others: it is the longest table on the page and the one most often read as
+   a whole. Scoped to .alloc so the risk dashboard and the implementation
+   table keep the shared 15px and the theme's own cell padding. */
+.tbl.alloc{font-size:14px}
+.tbl.alloc th,.tbl.alloc td{padding-top:2px;padding-bottom:2px}
+.tbl.alloc .rowhead,.tbl.alloc tbody th{width:1%}
+/* Every portfolio column exactly the same width, whatever the column count
+   and however long the derived names are - a comparison table whose columns
+   differ in width reads as though the numbers differ in kind. Auto layout
+   cannot promise that: it honours each column's own content minimum, so the
+   columns come out within a few pixels of each other but never equal. Fixed
+   layout divides the remaining space equally by definition, so the table
+   takes it, with the row header pinned to the measured content width the
+   renderer publishes as --alloc-c1 and a min-width that keeps the equal
+   columns wide enough for the longest header (see sizeAllocColumns). */
+.tbl.alloc{table-layout:fixed}
+/* Adding or removing a column changes three measured pixel values at once -
+   the table's own width and the two column widths the renderer publishes.
+   Registering the custom properties as lengths is what lets them interpolate;
+   unregistered they are just strings and jump. Browsers without @property
+   simply keep today's instant change, so this is additive. */
+@property --fixed-c1{syntax:'<length>';inherits:true;initial-value:0px}
+@property --fixed-col{syntax:'<length>';inherits:true;initial-value:0px}
+.tbl.alloc{transition:width var(--col-motion),
+  --fixed-c1 var(--col-motion),--fixed-col var(--col-motion)}
+@media (prefers-reduced-motion:reduce){.tbl.alloc{transition:none}}
+/* The risk table lays out automatically and takes its geometry from these two
+   measured values (sizeRiskColumns). Column one is pinned exactly - min and
+   max together - so the crisis names cannot be clipped and cannot push into
+   the first portfolio's Nominal column. The data cells only state a floor, so
+   they share whatever is left; when the floor wins, the table outgrows the
+   wrapper and it scrolls. */
+.tbl.risk th:first-child,.tbl.risk td:first-child{
+  width:var(--risk-c1,auto);min-width:var(--risk-c1,auto);max-width:var(--risk-c1,auto)}
+.tbl.risk tbody tr.band th,.tbl.risk tbody tr.band td{
+  width:auto;min-width:0;max-width:none}
+.tbl.risk thead th.num,.tbl.risk tbody td.num,.tbl.risk thead th.sub{
+  min-width:var(--risk-col,auto)}
+/* Twice the standard header height (37px measured), stated rather than padded
+   so it holds whatever the tallest cell contains - the base column carries a
+   tooltip and the comparisons a remove control, so their natural heights
+   differ. Scoped to the allocation table; the risk dashboard's header is two
+   rows already. */
+.tbl.alloc thead th{height:74px;vertical-align:middle}
+/* Same for the risk dashboard's first header row - the one carrying the
+   portfolio names. Its second row is the Nominal/Real pairing and keeps its
+   own height, so the rule is pinned to the first row rather than to thead. */
+.tbl.risk thead tr:first-child th{height:54px;vertical-align:middle}
+/* The export card is marked by a rule down its leading edge; the allocation
+   table and the two chart cards take the same device in the accent blue, so
+   the three read as one family. 3px against the card's 4px because the table
+   carries it across its full width, not down a short edge. An explicit class
+   rather than :has(.tbl.alloc) - this ships to a managed browser estate and
+   the selector is not worth the bet. */
+.tblwrap.accent-top{border-top:1px solid var(--accent)}
+/* Left-aligned, growing rightward as columns are added. Centring was tried
+   and abandoned: at one column the table sat hundreds of pixels from the
+   heading above it, and the section read as two alignments stacked. */
+.tbl.alloc thead th.rowhead{width:var(--fixed-c1,25%)}
+.tbl.alloc thead th.num:not(.addcol){width:var(--fixed-col,auto)}
+/* At the column cap a long derived name wraps rather than forcing the column
+   wider - the cap is the point. Data cells stay nowrap. */
+.tbl.alloc thead th.num,.tbl.risk thead th.num{white-space:normal}
+/* The risk table declares its columns: its header cells span Nominal/Real
+   pairs, and <col> widths are the only way to split a pair exactly evenly
+   under fixed layout. */
+/* widths are written onto these by sizeRiskColumns, in pixels */
+/* Section bands wrap instead of forcing the first column wide enough to hold
+   "Conditional Value at Risk with 99% Confidence". */
+tr.band th{white-space:normal}
+/* the Nominal/Real strip sits in the body, where the split begins */
+/* Nominal/Real. The .78 opacity is gone rather than the colour changed: it
+   was fading the text and its underline together, so lifting it darkens both
+   at once and the two stay in step. */
+tr.subhead th{background:var(--head-bg);color:var(--head-ink);font-weight:600;
+  font-size:12px;letter-spacing:.11em;text-transform:uppercase;
+  border-bottom:1px solid var(--line-mid,var(--line-strong))}
+tr.subhead td{background:var(--surface);position:sticky;left:0;z-index:1}
+.tbl tbody th{position:sticky;left:0;background:var(--surface);z-index:1;font-weight:400;
+  color:var(--ink-2);text-align:left}
+.base-tag{display:inline-block;margin-left:7px;font-size:11.5px;letter-spacing:.11em;padding:2px 5px;
+  border-radius:var(--radius-sm);background:var(--accent);color:var(--accent-ink);vertical-align:middle}
+tr.cat th,tr.cat td{font-weight:700;color:var(--ink);background:var(--cat-bg);
+  border-top:1px solid var(--line-strong)}
+/* Cell content wrapper - the thing that can actually be collapsed when a row
+   comes or goes. inline-block so it shrink-wraps: sizeFixedColumns measures
+   the columns in auto layout, and a block child would claim the whole column
+   and wreck the measurement. */
+.cw{display:inline-block;vertical-align:top;overflow:hidden;max-width:100%}
+tr.asset th{padding-left:16px}
+tr.asset td,tr.asset th{color:var(--ink-row,var(--ink-2))}
+tr.total th,tr.total td{font-weight:800;color:var(--ink);background:var(--cat-bg);
+  border-top:2px solid var(--line-strong);border-bottom:2px solid var(--line-strong)}
+tr.metric th,tr.metric td{font-weight:700;color:var(--ink);background:var(--metric-bg)}
+tr.band th{background:var(--band-bg);color:var(--band-ink);font-size:11.5px;letter-spacing:.18em;
+  text-transform:uppercase;font-weight:800;padding:12px 14px;position:sticky;left:0}
+.tbl tbody tr:not(.band):hover td,.tbl tbody tr:not(.band):hover th{background:var(--row-hover)}
+.neg{color:var(--neg)}
+.span2{border-left:1px solid var(--line)}
+/* host convention: #alertArea carries API errors */
+#alertArea:empty{display:none}
+.alert{padding:11px 15px;border-radius:var(--radius-sm);margin:0 0 16px;font-size:14px;border:1px solid}
+.alert-error{background:#FDE8E8;border-color:#F1B8B2;color:#9B1C1C}
+.alert-warning{background:#FEF3C7;border-color:#F3D48A;color:#B45309}
+.alert-success{background:#E7F4EC;border-color:#B7E0C5;color:#176A33}
+
+@media (max-width:900px){.tbl{font-size:14px;min-width:740px}}
+@media (max-width:560px){
+  .shell{padding-bottom:60px}
+  .fieldgrid{grid-template-columns:1fr}
+  .btn{width:100%;text-align:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+
+
+/* ── scrollbars ──────────────────────────────────────────────────────────────
+   Left to the platform, these are not the same page on two machines: macOS
+   draws thin overlay bars that fade when idle, Windows draws classic ones that
+   are wider, opaque and always present. The rail's track and the
+   implementation table's horizontal bar carried real width on the host and the
+   whole document read heavier for it (D88).
+
+   So the bar is stated rather than inherited. Both syntaxes are needed: the
+   standard properties serve Firefox and current Chromium, the -webkit-
+   pseudo-elements everything else. The thumb is drawn inside a transparent
+   border with background-clip, which is what makes a 10px gutter carry a 4px
+   bar - narrower than any scrollbar-width keyword allows on its own.
+
+   The rail is the exception and needs its own: it is navy, and a thumb in the
+   document's line colour would be nearly invisible on it. */
+*{scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border:3px solid transparent;
+  background-clip:content-box;border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-3);background-clip:content-box}
+
+.rail{scrollbar-color:rgba(255,255,255,.28) transparent}
+.rail::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);background-clip:content-box}
+.rail::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.45);background-clip:content-box}
+
+.rail{position:fixed;top:0;left:0;bottom:0;width:var(--rail-w);background:var(--rail-bg);
+  border-right:1px solid var(--rail-line-strong);overflow-y:auto;z-index:50;
+  display:flex;flex-direction:column}
+.rail-brand{padding:18px 20px 14px;border-bottom:1px solid var(--rail-line);position:sticky;top:0;
+  background:var(--rail-bg);z-index:2}
+.rail-brand>b{display:block;font-family:var(--f-num);font-size:22px;color:var(--rail-ink);
+  font-weight:var(--brand-weight,700);letter-spacing:-.01em}
+/* The product line under the group name is styled to match the
+   placeholder-rates flag exactly, on request: the same 12px semibold gold at
+   the same line height, sentence case and unspaced, inheriting the body face
+   as the flag does. It mirrors .fee-flag in implementation.py, and the values
+   are repeated rather than shared so that restyling the warning does not
+   silently restyle the brand. display:block is the one addition, and is
+   structural - .fee-flag is a <p>, this a <span>. */
+.rail-brand>span{display:block;margin:2px 0 0;font-size:15px;font-weight:600;
+  color:var(--rail-eyebrow,#F3C46B);line-height:1.4}
+.rail-body{padding:16px 20px 30px;flex:1}
+.rail-grp{font-family:var(--f-num);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--rail-ink-3);font-weight:700;margin:0 0 4px}
+.rail-note{font-size:13px;color:var(--rail-ink-2);margin:0 0 16px;line-height:1.45}
+.rail .field label{color:var(--rail-ink-2)}
+.rail .grp-hint,.rail .field-note,.rail .ta-hint{color:var(--rail-ink-3)}
+.rail .grp-idx{color:var(--rail-accent,var(--accent))}
+.rail .grp+.grp{border-top-color:var(--rail-line)}
+.rail input[type=text],.rail select{background-color:var(--rail-input-bg,var(--input-bg));
+  border-color:var(--rail-input-border,var(--line-strong));color:var(--rail-ink)}
+.rail select{background-image:var(--rail-caret,var(--caret));background-repeat:no-repeat;
+  background-position:right 11px center}
+.rail input[type=text]:hover,.rail select:hover{border-color:var(--rail-accent,var(--accent))}
+.rail input:focus-visible,.rail select:focus-visible,.rail .btn:focus-visible{
+  outline-color:var(--rail-focus,var(--accent))}
+.rail .toggle{background-color:var(--rail-input-bg,var(--surface-2));
+  border-color:var(--rail-input-border,var(--line-strong))}
+.rail .knob{background:var(--rail-ink-3)}
+.rail .btn-primary{background:var(--rail-accent,var(--accent));
+  border-color:var(--rail-btn-border,var(--rail-accent,var(--accent)));
+  color:var(--rail-accent-ink,var(--accent-ink))}
+.rail .btn-ghost{color:var(--rail-ink-2);border-color:var(--rail-input-border,var(--line-strong))}
+.rail .btn-ghost:hover{color:var(--rail-ink);border-color:var(--rail-accent,var(--accent))}
+.rail .fieldgrid{grid-template-columns:1fr;gap:12px}
+.rail .scenario{gap:18px}
+.rail legend{margin-bottom:10px}
+.rail .formactions{margin-top:2px}
+.rail .formactions .btn{width:100%;text-align:center}
+.rail-foot{padding:14px 20px;border-top:1px solid var(--rail-line);font-family:var(--f-num);
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--rail-ink-3)}
+body.has-rail .shell{margin-left:var(--rail-w);max-width:1320px}
+@media (max-width:1040px){
+  .rail{position:static;width:auto;border-right:none;border-bottom:1px solid var(--rail-line-strong)}
+  .rail-brand{position:static}
+  .rail .fieldgrid{grid-template-columns:repeat(auto-fit,minmax(205px,1fr))}
+  .rail .formactions .btn{width:auto}
+  body.has-rail .shell{margin-left:0}
+}
+
+
+.rail-tiers{flex:1}
+.tier{padding:14px 20px;border-bottom:1px solid var(--rail-line)}
+.tier:last-of-type{border-bottom:none}
+.tier-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 9px}
+.tier-h h3{margin:0;font-family:var(--f-num);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--rail-ink-3);font-weight:700}
+.tier-count{font-family:var(--f-num);font-size:11.5px;letter-spacing:.08em;color:var(--rail-ink-2);
+  font-weight:700}
+/* ── rolling a tier up ──
+   The base portfolio's settings are answered by the time step 2 opens, so the
+   tier rolls up there and the chevron reopens it. max-height is the animatable
+   stand-in for auto height; 520px clears the tier at its tallest (variant,
+   allocation, risk, the exclusion and its note). visibility follows on a delay
+   so the controls leave the tab order once they are out of sight, and arrives
+   immediately on the way back in. */
+.tier-roll{appearance:none;background:none;border:0;padding:0;margin:0 0 0 auto;
+  width:22px;height:22px;display:grid;place-items:center;cursor:pointer;align-self:center;
+  color:var(--rail-ink-3);font-size:15px;line-height:1;border-radius:4px;
+  transform:rotate(90deg);transition:transform 320ms cubic-bezier(.4,0,.2,1),
+  color 150ms linear}
+.tier-roll:hover{color:var(--rail-ink)}
+.tier-roll:focus-visible{outline:2px solid var(--rail-focus);outline-offset:2px}
+.tier.is-rolled .tier-roll{transform:rotate(0deg)}
+.tier-body{overflow:hidden;max-height:520px;opacity:1;visibility:visible;
+  transition:max-height 420ms cubic-bezier(.4,0,.2,1),opacity 240ms linear 60ms,
+  visibility 0s linear 0s}
+.tier.is-rolled .tier-body{max-height:0;opacity:0;visibility:hidden;
+  transition:max-height 420ms cubic-bezier(.4,0,.2,1),opacity 200ms linear,
+  visibility 0s linear 420ms}
+/* the frame in which the renderer paints the outgoing state, before it flips */
+.tier-body.no-roll{transition:none}
+@media (prefers-reduced-motion:reduce){
+  .tier-roll,.tier-body,.tier.is-rolled .tier-body{transition:none}}
+.tier-edit{background:none;border:0;padding:0;font:inherit;font-size:12px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--rail-accent);cursor:pointer;font-weight:700}
+.tier-edit:hover{text-decoration:underline}
+.tier-edit:focus-visible{outline:2px solid var(--rail-focus);outline-offset:2px}
+.summary{font-size:14.5px;color:var(--rail-ink);line-height:1.5;margin:0}
+.summary span{display:block;color:var(--rail-ink-2);font-size:13px}
+/* The mandate as three labelled rows - label muted, value in the rail's ink -
+   so a PWA reads "Top Account: $30,000,000" rather than a figure they have to
+   name themselves. One grid, so the values line up whatever the label length. */
+dl.md-kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;align-items:baseline;
+  font-size:13.5px;line-height:1.45}
+dl.md-kv dt{color:var(--rail-ink-2);white-space:nowrap}
+dl.md-kv dd{margin:0;color:var(--rail-ink);font-weight:500;overflow-wrap:anywhere}
+.basis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.basis .field label{font-size:12px}
+
+.preview{margin:12px 0 0;font-size:14px;color:var(--rail-ink-2)}
+.preview p{margin:0}
+.preview ol{margin:6px 0 0;padding:0;list-style:none}
+.preview li{display:flex;gap:8px;align-items:center;padding:4px 0;color:var(--rail-ink)}
+.preview li b{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+  border-radius:3px;background:var(--rail-accent);color:#fff;font-size:11px;flex-shrink:0}
+.preview .none{color:var(--rail-ink-3);font-size:13px;line-height:1.45}
+.pk-actions{margin:14px 0 0;display:grid;gap:8px}
+.built{margin:12px 0 0;display:grid;gap:5px}
+.built-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;
+  background:var(--rail-input-bg);border:1px solid var(--rail-input-border);font-size:13px;
+  color:var(--rail-ink)}
+.built-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.built-row .tag{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--rail-ink-3);
+  font-weight:700}
+.rm{background:none;border:0;color:var(--rail-ink-3);cursor:pointer;font:inherit;font-size:17px;
+  line-height:1;padding:0 2px}
+.rm:hover{color:#FF8A80}
+.rm:focus-visible{outline:2px solid var(--rail-focus);outline-offset:2px}
+.colcount{font-family:var(--f-num);font-size:12.5px;color:var(--ink-2)}
+
+/* ── charts ───────────────────────────────────────────────────────────────
+   Categorical slots are the validated default theme, assigned in fixed order.
+   The house green/amber/red are NOT used here: they are reserved as status
+   colours, and a status hue must never impersonate a series. */
+:root{--cat-1:#2a78d6;--cat-2:#eb6834;--cat-3:#1baf7a;--cat-4:#eda100;--cat-5:#e87ba4;
+  --cat-6:#4a3aa7;--cat-7:#e34948}
+.viz{--viz-grid:#E4EAF0;--viz-axis:#C3CDD8;--viz-ink:var(--ink);--viz-mut:var(--ink-2)}
+.viz-grid{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:1180px){.viz-grid{grid-template-columns:1fr 1fr}}
+.viz-card{background:var(--surface);border:1px solid var(--line-strong);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:16px 18px 14px;min-width:0}
+.viz-card h3{margin:0 0 2px;font-size:15px;font-weight:700;color:#16243A;
+  font-family:var(--f-display)}
+.viz-card .sub{margin:0 0 12px;font-size:13px;color:var(--ink-3)}
+.viz-legend{display:flex;flex-wrap:wrap;gap:10px 14px;margin:0 0 12px;font-size:12.5px;
+  color:var(--ink-2)}
+.viz-legend i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.viz-legend .sw{width:11px;height:11px;border-radius:2px;display:inline-block}
+.viz svg{width:100%;height:auto;display:block;overflow:visible}
+.viz text{font-family:var(--f-num);fill:var(--viz-mut)}
+.viz .ax{stroke:var(--viz-axis);stroke-width:1}
+.viz .gl{stroke:var(--viz-grid);stroke-width:1}
+.viz .seg{stroke:var(--surface);stroke-width:2}
+.viz .seg:hover{filter:brightness(1.08)}
+.viz .dot{stroke:var(--surface);stroke-width:2}
+.viz .lbl{font-size:12px;fill:#fff;font-weight:700}
+.viz .plbl{font-size:12.5px;fill:var(--ink);font-weight:600}
+.viz .tick{font-size:11.5px;fill:var(--ink-3)}
+.viz-tip{position:fixed;z-index:90;pointer-events:none;background:#16243A;color:#fff;
+  border-radius:4px;padding:6px 9px;font-family:var(--f-num);font-size:13px;
+  box-shadow:0 6px 18px -4px rgba(16,24,40,.4);display:none;white-space:nowrap}
+.viz-tip.on{display:block}
+.viz-tip b{color:#8FB4FF;font-weight:700}
+.viz-empty{padding:26px 0;font-size:14px;color:var(--ink-3);text-align:center}
+@media (prefers-reduced-motion:reduce){.viz .seg:hover{filter:none}}
+.tbl thead th.just-added{animation:landed 1.4s ease-out}
+@keyframes landed{0%{background:#E3EBFA}60%{background:#E3EBFA}100%{background:var(--head-bg)}}
+@media (prefers-reduced-motion:reduce){.tbl thead th.just-added{animation:none}}
+.pk-note{font-size:12.5px;color:var(--rail-ink-3);line-height:1.45;margin:10px 0 0}
+/* ── landing ─────────────────────────────────────────────────────────────────
+   The Swiss direction, chosen 30 Aug 2026. There is no hero artefact: the type
+   is the design, and the only colour is the seven-category rule, drawn from the
+   same validated palette the allocation table uses. The ground is a near-white
+   the same ground as the workspace: both read --bg, so the two surfaces
+   cannot drift apart on a retheme. */
+body.phase-landing{background:var(--bg)}
+body.phase-landing .rail{display:none}
+body.phase-landing .shell{margin-left:0;max-width:none;padding:0}
+body.phase-landing #alertArea{padding:0 clamp(20px,6vw,80px)}
+#view-landing{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr);
+  align-content:center;padding:clamp(32px,5vh,72px) clamp(20px,6vw,80px);background:var(--bg)}
+.lp-inner{width:100%;max-width:1120px;margin:0 auto}
+.lp-rule{height:2px;background:#16243A;margin:0 0 18px;transform-origin:left;
+  animation:lp-grow .7s both}
+
+/* the copy column arrives top to bottom, then holds still */
+.lp-copy>*{animation:lp-rise .7s cubic-bezier(.2,.8,.2,1) both}
+.lp-copy>:nth-child(1){animation-delay:.05s}
+.lp-copy>:nth-child(2){animation-delay:.14s}
+.lp-copy>:nth-child(3){animation-delay:.24s}
+
+.lp-eyebrow{font-family:var(--f-num);font-size:11.5px;letter-spacing:.24em;
+  text-transform:uppercase;color:#7C8B9C;margin:0 0 26px;font-weight:600}
+/* The host gets its name in the accent rather than the eyebrow's grey. It is
+   a credit, and a credit nobody reads is not one - this is the only word on
+   the line that has to carry. */
+.lp-eyebrow b{color:var(--accent);font-weight:700}
+.lp-title{font-family:'Goldman Sans','GS Sans','Roboto',system-ui,sans-serif;font-weight:400;
+  font-size:clamp(53px,6vw,99px);line-height:.96;letter-spacing:-.045em;color:#152135;
+  max-width:15ch;margin:0}
+.lp-title span{display:block}
+.lp-title .lp-accent{color:#446cce}
+
+.lp-spec{display:flex;gap:2px;height:16px;border-radius:2px;overflow:hidden;
+  position:relative;margin:26px 0 0}
+.lp-spec span{flex:1;transform-origin:left;animation:lp-grow .55s cubic-bezier(.2,.8,.2,1) both}
+.lp-spec span:nth-child(2){animation-delay:.06s}
+.lp-spec span:nth-child(3){animation-delay:.12s}
+.lp-spec span:nth-child(4){animation-delay:.18s}
+.lp-spec span:nth-child(5){animation-delay:.24s}
+.lp-spec span:nth-child(6){animation-delay:.30s}
+.lp-spec span:nth-child(7){animation-delay:.36s}
+.lp-spec::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);
+  transform:translateX(-100%);animation:lp-sheen 7s 2.6s infinite}
+
+.lp-grid{display:grid;gap:36px;grid-template-columns:1fr;margin-top:26px;padding-top:22px;
+  border-top:1px solid var(--line-strong)}
+.lp-lede{font-size:16.5px;line-height:1.62;color:var(--ink-2);max-width:46ch;margin:0 0 34px}
+/* What the tool is for, in two lines. The marker is a square in the accent,
+   which is the same rectilinear language as the colour bars above it - a
+   round bullet would be the only curve on the page. */
+.lp-points{list-style:none;margin:0 0 34px;padding:0;display:grid;gap:15px;max-width:88ch}
+.lp-points li{position:relative;padding-left:24px;font-size:16.5px;line-height:1.5;
+  color:var(--ink-2)}
+.lp-points li::before{content:"";position:absolute;left:0;top:.55em;width:9px;height:9px;
+  background:var(--accent)}
+
+.lp-cta{font-size:16px;padding:16px 30px 16px 36px;border-radius:0;letter-spacing:.02em;
+  position:relative;display:inline-flex;align-items:center;gap:14px;
+  --btn-case:none;                       /* the landing CTA is sentence case, unlike app buttons */
+  animation:lp-pulse 2.8s .9s ease-in-out infinite}
+.lp-cta::after{content:"\2192";font-family:'GS Sans','Roboto',sans-serif;font-weight:400;
+  transition:transform .25s}
+.lp-cta:hover::after{transform:translateX(5px)}
+.lp-cta::before{content:"";position:absolute;inset:-1px;border:1.5px solid currentColor;
+  pointer-events:none;opacity:0;animation:lp-halo 2.8s .9s ease-out infinite}
+.lp-cta:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+@media (max-width:560px){
+  .lp-title{font-size:clamp(40px,11vw,55px);line-height:.98;max-width:100%}
+}
+@keyframes lp-grow{from{transform:scaleX(0)}}
+@keyframes lp-rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes lp-sheen{0%{transform:translateX(-100%)}22%,100%{transform:translateX(100%)}}
+@keyframes lp-pulse{
+  0%,100%{box-shadow:0 12px 30px -10px rgba(31,95,191,.55),0 0 0 0 rgba(31,95,191,0)}
+  50%{box-shadow:0 18px 40px -8px rgba(31,95,191,.72),0 0 0 10px rgba(31,95,191,.12)}}
+@keyframes lp-halo{0%{transform:scale(1);opacity:.34}72%,100%{transform:scale(1.13,1.3);opacity:0}}
+.landing{max-width:660px;margin:0 auto;padding:clamp(48px,11vh,120px) 0 80px}
+.landing .eyebrow{font-family:var(--f-num);font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 16px;font-weight:700}
+.landing h1{font-family:var(--f-display);font-size:clamp(30px,4.6vw,46px);line-height:1.1;
+  letter-spacing:-.02em;color:#16243A;margin:0 0 18px;font-weight:400;text-wrap:balance}
+.landing .lede{font-size:17px;line-height:1.6;color:var(--ink-2);max-width:56ch;margin:0 0 32px}
+.landing .btn{font-size:16px;padding:15px 34px}
+.landing-need{margin:52px 0 0;padding:22px 0 0;border-top:1px solid var(--line-strong)}
+.landing-need h2{font-family:var(--f-num);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 12px;font-weight:700}
+.landing-need ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.landing-need li{font-size:14.5px;color:var(--ink-2);padding-left:20px;position:relative}
+.landing-need li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;
+  border-radius:50%;background:var(--accent)}
+
+/* ── mandate dialog ── */
+#mandateDialog[hidden],#accountDialog[hidden]{display:none}
+.scrim{position:fixed;inset:0;background:rgba(16,24,40,.42);z-index:90}
+.dialog{position:fixed;z-index:91;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow-y:auto;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);
+  box-shadow:0 24px 60px -12px rgba(16,24,40,.4);padding:24px 26px 22px}
+/* 20px below, the gap the dropped standfirst used to carry. */
+.dialog h2{margin:0 0 20px;font-size:19px;color:#16243A;font-family:var(--f-display)}
+/* Capitals through text-transform rather than in the markup, so the
+   accessible name stays "Start a proposal" - some screen readers spell out an
+   all-capitals string as an acronym. */
+.dialog h2.dlg-shout{text-transform:uppercase;letter-spacing:.07em;font-size:17px;
+  font-family:var(--f-num);font-weight:700}
+.dialog .field{margin:0 0 16px}
+.dialog .field label{font-size:13px;color:var(--ink-2);font-weight:600}
+.dialog input[type=text]{background:var(--surface);border-color:var(--line-strong);
+  color:var(--ink);font-size:15.5px;padding:10px 12px}
+.dialog input[aria-invalid="true"]{border-color:#B42318}
+.field-hint{display:block;margin-top:5px;font-size:12px;color:var(--ink-3);line-height:1.4}
+.dlg-close{position:absolute;top:14px;right:16px;background:none;border:0;font-size:22px;
+  line-height:1;color:var(--ink-3);cursor:pointer;padding:2px 6px;border-radius:4px}
+.dlg-close:hover{color:var(--ink)}
+.dlg-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dlg-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.dialog .md-err{margin:0;padding:9px 12px;border-radius:4px;background:#FDE8E8;
+  border:1px solid #F1B8B2;color:#9B1C1C;font-size:13px;line-height:1.45;font-weight:600}
+
+/* ── the landing card's third action, and the account opening request (D76) ── */
+/* The landing card seats three buttons on one line: Continue and Cancel far
+   left as a group, Create Account Opening Request right. 460px cannot hold
+   them; 600px can. Edit mandate keeps the 460px card and its right-aligned
+   pair. */
+.dialog.start{width:min(600px,calc(100vw - 32px))}
+.dlg-actions.split{justify-content:space-between;align-items:center;flex-wrap:wrap}
+.dlg-grp{display:flex;gap:10px;align-items:center;min-width:0}
+.dialog.account{width:min(560px,calc(100vw - 32px))}
+.dlg-sub{margin:-14px 0 18px;font-size:13px;color:var(--ink-3);line-height:1.4}
+/* the UID box's own error sits under it, as its hint would */
+.dialog .field .md-err.dlg-uiderr{margin-top:6px}
+.dlg-sect{display:flex;align-items:center;gap:10px;margin:6px 0 10px;font-family:var(--f-num);
+  font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.dlg-sect::after{content:"";flex:1;height:1px;background:var(--line)}
+.dlg-sect .dlg-tag{color:#176A33;font-size:10.5px;letter-spacing:.08em}
+.dlg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin:0 0 16px}
+.dlg-grid .field{margin:0}
+.dlg-grid .field.wide{grid-column:1 / -1}
+.dialog .req{color:#B42318;margin-left:3px;font-weight:700}
+/* Filled from the proposal: greyed, legible, and not editable. readonly rather
+   than disabled, so the value stays readable to assistive tech and copyable. */
+.dialog input[readonly].ro{background:var(--surface-2);border-color:var(--line);color:var(--ink-2);
+  cursor:default;text-overflow:ellipsis}
+.dialog input[readonly].ro:hover{border-color:var(--line)}
+.dialog input[readonly].ro:focus-visible{outline-color:var(--ink-3)}
+.dialog .dlg-muted{opacity:.42}
+.dialog .dlg-muted *{pointer-events:none}
+.dialog select,.dialog input[type=date],.dialog textarea{font:inherit;font-family:var(--f-num);font-size:15.5px;
+  color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  padding:10px 12px;width:100%}
+.dialog select{padding-right:30px}
+.dialog textarea{min-height:64px;resize:vertical;font-family:var(--f-body);font-size:14px;line-height:1.4}
+.dialog select[aria-invalid="true"],.dialog input[type=date][aria-invalid="true"]{border-color:#B42318}
+.dlg-sleeves{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);
+  padding:6px 12px;font-size:13px;color:var(--ink-2)}
+.dlg-sleeves div{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px dashed var(--line-strong)}
+.dlg-sleeves div:last-child{border-bottom:0}
+.dlg-sleeves span:last-child{font-family:var(--f-num);color:var(--ink);text-align:right}
+.dlg-sleeves em{font-style:normal;color:var(--ink-3);font-size:11.5px;margin-left:6px}
+.dlg-sleeves .none{color:var(--ink-3);padding:6px 0}
+.dlg-status{font-size:12.5px;color:var(--ink-3);line-height:1.4;min-width:0;flex:1 1 200px}
+.dlg-status.ok{color:#176A33}
+.field-hint.ok{color:#176A33;font-weight:600}
+.field-hint.busy{color:var(--ink-2)}
+.dlg-tick{width:44px;height:44px;border-radius:50%;background:#EAF5EE;color:#176A33;display:grid;
+  place-items:center;font-size:22px;margin:0 0 14px}
+.dlg-receipt{font-size:14px;color:var(--ink-2);line-height:1.6;margin:0}
+.dlg-receipt code{font-family:var(--f-num);font-size:15px;color:var(--ink);background:var(--surface-2);
+  padding:2px 7px;border-radius:3px}
+.btn-link{background:none;border-color:transparent;color:var(--accent);padding:11px 4px}
+.btn-link:hover:not(:disabled){text-decoration:underline}
+@media (max-width:600px){.dlg-grid{grid-template-columns:1fr}}
+
+/* ── combobox ── */
+.combo{position:relative}
+.combo-count{position:absolute;right:12px;top:36px;font-family:var(--f-num);font-size:11.5px;
+  color:var(--ink-3);pointer-events:none}
+.combo-list{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  box-shadow:0 12px 28px -10px rgba(16,24,40,.28);max-height:196px;overflow-y:auto;z-index:2}
+.combo-list[hidden]{display:none}
+.combo-opt{padding:8px 10px;border-radius:4px;font-size:14px;color:var(--ink);cursor:pointer}
+.combo-opt:hover,.combo-opt.on{background:var(--accent-soft,#E3EBFA);color:#1E4FA3}
+.combo-opt.none{color:var(--ink-3);cursor:default;font-size:13px}
+.combo-opt.none:hover{background:none;color:var(--ink-3)}
+
+.md-form{display:grid;gap:10px}
+.md-actions{display:grid;gap:8px;margin-top:2px}
+.md-actions .btn{width:100%}
+.md-err{margin:0;padding:7px 9px;border-radius:4px;background:#FDE8E8;border:1px solid #F1B8B2;
+  color:#9B1C1C;font-size:13px;line-height:1.4;font-weight:600}
+.chk{display:flex;align-items:flex-start;gap:9px;padding:1px 0}
+/* The exclusions stand off the selects above them: the selects are the choice
+   and the tick boxes narrow what it produced, so they read as a second group
+   rather than as a fourth field. On top of the .basis grid gap. */
+.basis>.chk{margin-top:8px}
+.chk input{appearance:none;-webkit-appearance:none;width:16px;height:16px;border-radius:3px;
+  border:1px solid var(--rail-input-border);background:var(--rail-input-bg);flex-shrink:0;
+  margin:1px 0 0;cursor:pointer;position:relative}
+.chk input:checked{background:var(--rail-accent);border-color:var(--rail-accent)}
+.chk input:checked::after{content:"";position:absolute;left:4.5px;top:1px;width:4px;height:9px;
+  border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.chk input:focus-visible{outline:2px solid var(--rail-focus);outline-offset:2px}
+.chk input:disabled{cursor:not-allowed;opacity:.5}
+.chk label{font-size:14px;color:var(--rail-ink-2);cursor:pointer;line-height:1.35}
+.chk input:disabled + label{opacity:.55;cursor:not-allowed}
+/* Flush with the tick box's own left edge, not indented under its label:
+   every line in the rail starts on the same rule, and a note that steps
+   in reads as a second column. The popover keeps its indent (below). */
+.chk-note{font-size:12.5px;color:var(--rail-ink-3);margin:1px 0 4px;line-height:1.4}
+.rail input[aria-invalid="true"]{border-color:#E0796D}
+
+
+main{display:block}
+.skip-link{position:absolute;left:-9999px;top:0;z-index:200;background:var(--accent);
+  color:#fff;padding:9px 16px;border-radius:0 0 6px 0;font-family:var(--f-num);font-size:13px}
+.skip-link:focus{left:0}
+
+/* skeleton cells (spec 10.1): a 60%-width shimmer bar; static tint under
+   reduced motion */
+.skel{display:inline-block;width:60%;min-width:42px;height:12px;border-radius:3px;
+  background:linear-gradient(90deg,var(--line) 25%,var(--surface-2) 42%,var(--line) 60%);
+  background-size:200% 100%;animation:skel-sweep 1.1s linear infinite}
+@keyframes skel-sweep{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none;background:var(--line)}}
+.col-ellipsis{display:inline-block;margin-left:5px;animation:skel-blink 1.2s steps(4,end) infinite}
+@keyframes skel-blink{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
+@media (prefers-reduced-motion:reduce){.col-ellipsis{animation:none}}
+
+/* ── the service being down (D64) ──
+   Two surfaces. The banner is for a workspace that survived on its cache -
+   the proposal is intact, only the writes are gone - so it is a quiet strip
+   in the warning colour, not a takeover. The page below it is for a cold
+   landing with nothing cached: warm by choice, and still carrying the two
+   things that make an error page usable - that the work is safe, and that
+   the page is trying again by itself. */
+.degraded{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:#FEF3C7;border-bottom:1px solid #F3D48A;color:#7A4A0A;
+  padding:9px 20px;font-size:13px;position:sticky;top:0;z-index:60}
+.degraded .st{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.72);
+  border-radius:10px;padding:2px 9px;font-family:var(--f-num);font-size:11px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.degraded .st .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.degraded-txt b{font-weight:700}
+.degraded-sp{flex:1}
+.degraded-retry{font-family:var(--f-num);font-size:12px;color:#92600A;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.degraded-now{appearance:none;border:1px solid #E0B25C;background:rgba(255,255,255,.7);color:#7A4A0A;
+  border-radius:4px;padding:4px 10px;font-family:var(--f-num);font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.degraded-now:hover{background:#fff}
+.degraded-now:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* the cold-landing page */
+.down{max-width:520px;margin:0 auto;padding:56px 20px 64px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.down-art{line-height:0}
+.down h2{margin:0;font-size:25px;font-weight:700;letter-spacing:-.01em;color:var(--ink);text-wrap:balance}
+.down-sub{margin:0;font-size:15px;color:var(--ink-2);max-width:44ch;line-height:1.55}
+.down-safe{margin:0;font-size:13.5px;color:var(--ok);background:var(--ok-soft,#E7F4EC);
+  border-radius:5px;padding:8px 14px;max-width:44ch}
+.down-retry{margin:0;font-family:var(--f-num);font-size:13px;color:var(--ink-3);
+  font-variant-numeric:tabular-nums}
+.down-actions{display:flex;gap:9px;margin-top:2px}
+.down-detail{margin:8px 0 0;font-size:12px}
+.down-toggle{appearance:none;background:none;border:0;padding:0;font-family:var(--f-num);font-size:12px;
+  letter-spacing:.05em;color:var(--ink-3);cursor:pointer;text-decoration:underline}
+.down-toggle:hover{color:var(--ink-2)}
+.down-reason{display:block;margin-top:7px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11.5px;color:var(--ink-3);word-break:break-word}
+@media (prefers-reduced-motion:reduce){.degraded{transition:none}}
+/* the failed column (spec 10.3): Failed chip in the header, Retry beneath it */
+.tbl thead th .bdg{margin-left:7px;vertical-align:middle}
+.col-retry{display:block;margin:4px 0 0 auto;font:inherit;font-family:var(--f-num);
+  font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--accent);background:none;border:1px solid var(--line-strong);border-radius:3px;
+  padding:2px 8px;cursor:pointer}
+.col-retry:hover{border-color:var(--accent)}
+
+/* choose-a-base / cannot-render panels (spec 10.2, 10.3) */
+.doc-empty{background:var(--surface);border:1px dashed var(--line-strong);
+  border-radius:var(--radius);padding:44px 30px;text-align:center;
+  margin:0 0 clamp(26px,4vw,50px)}
+.doc-empty h3{margin:0 0 8px;font-family:var(--f-display);font-size:19px;color:#16243A}
+.doc-empty p{margin:0 auto;max-width:46ch;color:var(--ink-2);font-size:14.5px}
+.doc-empty .btn{margin-top:16px}
+.doc-empty-detail{margin-top:8px;color:var(--ink-3);font-size:13px}
+
+/* the Base tier's ring while no base exists (spec 10.2). The spec names the
+   accent for it; on the navy rail the accessible focus blue is the same
+   adjustment section 6.2 makes for the rail button. */
+/* The ring that marks the tier still waiting for an answer (spec 10.2).
+
+   Drawn as a pseudo-element inset INSIDE the tier's padding rather than as an
+   outline on the box. An outline sits on the border edge, which for a tier is
+   the rail's own right edge - the ring's right side landed against the white
+   document and effectively disappeared. The insets here are independent, so
+   it can sit within the 20px horizontal padding without clipping the fields
+   vertically.
+
+   It breathes slowly to draw the eye, since it is the one thing on the page
+   the user has to act on before anything else works. */
+/* The document arriving for the first time: one fade, everything together.
+   No translate - a rising document would move the sections relative to each
+   other again, which is the thing being fixed. */
+.doc-reveal{animation:docreveal var(--reveal-motion) ease-out both}
+@keyframes docreveal{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.doc-reveal{animation:none}}
+
+.tier-ring{position:relative}
+.tier-ring::after{content:"";position:absolute;inset:6px 11px;pointer-events:none;
+  border:2px solid var(--rail-focus,#8FB4FF);border-radius:5px;
+  animation:tierpulse 2.6s ease-in-out infinite}
+@keyframes tierpulse{0%,100%{opacity:.22}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .tier-ring::after{animation:none;opacity:.85}
+}
+
+/* basis rebuild confirmation (spec 11.4) */
+.basis-confirm{margin-top:10px;background:var(--rail-input-bg,#1D2F4B);
+  border:1px solid var(--rail-input-border,#52739C);border-radius:5px;padding:10px 12px}
+.basis-confirm p{margin:0 0 9px;font-size:13.5px;color:var(--rail-ink,#fff)}
+.basis-confirm div{display:flex;gap:8px}
+.basis-confirm .btn{padding:7px 12px;font-size:12.5px;flex:1}
+
+/* built-list status notes */
+.built-status{font-size:11.5px;color:var(--rail-ink-3);margin-left:6px}
+.built-status.err{color:#F3A9A2}
+
+/* describe() footer */
+.doc-foot{margin:26px 0 0;font-family:var(--f-num);font-size:12px;letter-spacing:.04em;
+  color:var(--ink-3)}
+
+/* popover checkboxes sit on a light ground; the .chk defaults are rail-scoped */
+.pop .chk{margin:0 0 9px}
+.pop .chk label{color:var(--ink-2)}
+.pop .chk input{background:var(--surface);border:1px solid var(--line-strong)}
+.pop .chk input:checked{background:var(--accent);border-color:var(--accent)}
+.pop .chk input:focus-visible{outline-color:var(--accent)}
+.pop .chk-note{color:var(--ink-3);margin-left:25px}
+.pop-added{color:#176A33}
+
+/* below 1040px the popover becomes a bottom sheet, and the small controls
+   grow to touch size (spec 12) */
+@media (max-width:1039px){
+  .pop.sheet{left:0!important;right:0;bottom:0;top:auto!important;width:auto;
+    border-radius:12px 12px 0 0;box-shadow:0 -8px 30px rgba(16,24,40,.25)}
+  .plus{width:44px;height:44px}
+  .pop-close{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+}
+
+/* keyboard users can scroll the wide tables (spec 13.2) */
+.tblwrap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* sleeve tier: the per-select retry. The auto-attached row it used to carry
+   is gone - a category whose sleeve is fixed by rule and put there by a
+   toggle needs no control in the rail, only the note that says it is in the
+   model (D53). */
+.sl-retry{font:inherit;font-size:12px;color:var(--rail-focus,#8FB4FF);background:none;
+  border:1px solid var(--rail-input-border,#52739C);border-radius:4px;padding:4px 8px;
+  cursor:pointer;justify-self:start}
+
+/* Signed figures. These need the extra class to outrank `tr.asset td`, which
+   sets the muted row colour and is more specific than a bare .neg - which is
+   why spec 9.2's "negative figures take --red" had never actually rendered.
+   Only the stress rows carry these classes: a Value at Risk block is losses
+   by definition, so painting all of it red says nothing. */
+.tbl td.neg{color:var(--neg,#B42318)}
+.tbl td.pos{color:#1A7F37}
+
+/* The measure blocks - stress periods, VaR, CVaR, probability of loss - are
+   long runs of single figures and read better tight. The factor analytics
+   rows above them keep the standard height. */
+.tbl.risk tbody tr.asset th,.tbl.risk tbody tr.asset td{padding-top:1px;padding-bottom:1px}
+.tbl.risk tbody tr.subhead th{padding-top:2px;padding-bottom:2px}
+/* Half the 12px the shared band rule sets: these three section bands are the
+   risk dashboard's own structure, and at full height they cost more vertical
+   room than the rows they introduce. */
+.tbl.risk tbody tr.band th{padding-top:6px;padding-bottom:6px}
+
+/* Remove a comparison from its own column header. The base has none: it
+   cannot be removed, only changed (spec 2.7). */
+.tbl thead th.num{position:relative}
+/* Inline, immediately after the column's name rather than pinned to the
+   corner of the cell. 24px square for the WCAG 2.2 target-size minimum
+   (spec 13), but with no fill until hover, so what reads is the glyph beside
+   the label and not a button. Faint until wanted: a remove control on every
+   comparison column should not be the loudest thing in the header. */
+/* The label and the control are laid out together rather than the control
+   being hung off the baseline: vertical-align could only ever approximate
+   this, because the button is a 24px box and the label is 12.5px uppercase
+   with its own line box. A flex row centres the two on each other exactly. */
+.col-head{display:inline-flex;align-items:center;justify-content:flex-end;gap:1px;
+  max-width:100%;text-align:right}
+.col-rm{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:24px;height:24px;padding:0;margin:0 -4px 0 1px;
+  border:0;border-radius:3px;background:none;color:var(--neg,#B42318);
+  font-family:var(--f-num);font-size:15px;line-height:1;cursor:pointer;
+  transition:background .12s ease}
+.col-rm:hover{background:var(--surface-2)}
+.col-rm:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+@media (prefers-reduced-motion:reduce){.col-rm{transition:none}}
+
+/* Collapsing the rail. It folds to a strip that still carries the control, so
+   the way back is always in view, and the document reclaims the width. */
+.rail-brand{position:relative;padding-right:44px}
+/* --rail-input-border is the value spec 6.2 substituted for the house one
+   precisely because it clears 3:1 against the navy; the rail's own divider
+   colour would leave this control invisible. */
+.rail-toggle{position:absolute;top:14px;right:8px;width:28px;height:28px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--rail-input-border,#52739C);
+  border-radius:4px;background:none;color:var(--rail-ink-2);font-size:14px;line-height:1;
+  cursor:pointer}
+.rail-toggle:hover{color:var(--rail-ink);background:var(--rail-input-bg,#1D2F4B)}
+.rail-toggle:focus-visible{outline:2px solid var(--rail-focus,#8FB4FF);outline-offset:2px}
+
+/* The fold is animated, and the technique matters: everything inside the rail
+   is held at the EXPANDED width so that narrowing the rail clips it, rather
+   than reflowing 352px of form controls through every width down to 48px. The
+   rail's own overflow-x does the clipping. Without this the collapse reads as
+   the fields crushing themselves, which is both ugly and expensive - a full
+   relayout of the tier content on every frame. */
+.rail{overflow-x:hidden;transition:width var(--rail-motion)}
+.rail-tiers{width:var(--rail-w);transition:opacity 190ms linear 70ms}
+.rail-brand{transition:padding var(--rail-motion)}
+/* nowrap rather than a fixed width: the brand lines already fit on one line at
+   the expanded width, so this holds them there and lets the rail clip them. */
+/* Child combinator throughout: the toggle button lives inside .rail-brand and
+   carries its own <span> for the chevron, which a descendant selector reaches
+   too - fading the brand lines would fade the control's glyph with them. */
+.rail-brand>b,.rail-brand>span{white-space:nowrap;transition:opacity 150ms linear}
+body.has-rail .shell{transition:margin-left var(--rail-motion)}
+/* The control sits against the rail's right edge in both states, so it is
+   carried inward by the same animation instead of jumping between two
+   positions. At 48px wide, right:10px leaves it centred in the strip. */
+.rail-toggle{right:10px}
+
+body.rail-collapsed .rail{width:var(--rail-w-collapsed,48px)}
+/* visibility, not display: display cannot transition, and dropping the tiers
+   instantly would empty the rail before it had begun to move. The 0s delay
+   holds them in the accessibility tree and the tab order until the fold has
+   finished, and removes them the instant it does. */
+body.rail-collapsed .rail-tiers{opacity:0;visibility:hidden;
+  transition:opacity 150ms linear,visibility 0s 150ms}
+body.rail-collapsed .rail-brand{padding:14px 10px 12px;border-bottom:none}
+body.rail-collapsed .rail-brand>b,body.rail-collapsed .rail-brand>span{opacity:0;
+  transition:opacity 110ms linear}
+body.has-rail.rail-collapsed .shell{margin-left:var(--rail-w-collapsed,48px);max-width:none}
+
+/* Spec 13: reduced motion gets the finished layout and no animation. */
+@media (prefers-reduced-motion:reduce){
+  .rail,.rail-tiers,.rail-brand,.rail-brand>b,.rail-brand>span,
+  body.has-rail .shell,body.rail-collapsed .rail-tiers,
+  body.rail-collapsed .rail-brand>b,body.rail-collapsed .rail-brand>span{transition:none}
+  body.rail-collapsed .rail-tiers{visibility:hidden}
+}
+@media (max-width:1039px){
+  /* Stacked: the rail is static and full width, so there is no fold to slide.
+     Collapsing hides the tiers and nothing animates sideways. */
+  .rail,body.has-rail .shell{transition:none}
+  body.rail-collapsed .rail{width:auto}
+  body.rail-collapsed .rail-tiers{width:auto}
+  body.has-rail.rail-collapsed .shell{margin-left:0}
+}
+
+.alert-info{background:#E3EBFA;border-color:#B9CDF0;color:#1E4FA3}
+
+
+.addcol{width:46px;min-width:46px}
+.plus{width:28px;height:28px;border-radius:4px;border:1px dashed var(--line-strong);
+  background:var(--surface);color:var(--accent);font:inherit;font-size:19.5px;line-height:1;
+  cursor:pointer;font-weight:700}
+.plus:hover{border-style:solid;border-color:var(--accent);background:#EEF3FB}
+.plus:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pop{position:fixed;z-index:80;width:280px;background:var(--surface);
+  border:1px solid var(--line-strong);border-radius:var(--radius);
+  box-shadow:0 14px 38px -8px rgba(16,24,40,.32);padding:15px 16px 16px;display:none}
+.pop.on{display:block}
+.pop h4{margin:0 0 3px;font-family:var(--f-num);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-2);font-weight:700}
+.pop .slots{margin:0 0 12px;font-size:13px;color:var(--ink-3)}
+.pop .field{margin:0 0 11px}
+.pop .field label{color:var(--ink-2)}
+.pop-actions{display:grid;gap:8px}
+.pop-actions .btn{width:100%;padding:9px 12px}
+.pop-close{position:absolute;top:9px;right:10px;background:none;border:0;color:var(--ink-3);
+  font-size:19.5px;line-height:1;cursor:pointer;padding:0}
+.pop-close:hover{color:var(--ink)}
+.pop-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pop-done{margin:0;font-size:13px;color:#176A33;display:none}
+.pop.added .pop-done{display:block}
+.pop-full{margin:0 0 11px;font-size:14px;color:var(--ink-2);line-height:1.45}
+
+
+/* ── step nav ──
+   The numbered-circle treatment from proposalToolv2: a numeral in a ring, the
+   stage name over a one-line description, the two joined by a connector and
+   centred over the document. Ported to this page's own tokens rather than
+   v2's, so the theme swap of spec 6.5 stays a token change (D32).
+
+   The SEMANTICS are unchanged and deliberately not v2's. v2 marks these
+   aria-current="step", which describes a linear wizard; spec 13.2 fixes this
+   nav as role="tablist" with aria-selected and arrow-key movement, which is
+   what it is - two panels of one workspace, reachable in either order. Only
+   the appearance is borrowed.
+
+   .steps keeps display:flex, so the [hidden] !important rule above is still
+   what hides it on the landing (spec 15.1). */
+.steps{display:flex;align-items:center;justify-content:center;
+  margin:0 0 clamp(25px,3.75vw,35px);padding:15px 0 20px;
+  border-bottom:1px solid var(--line-strong)}
+.step{appearance:none;background:none;border:0;font:inherit;color:var(--ink-2);
+  display:flex;align-items:center;gap:12.5px;text-align:left;
+  padding:11px 16px;border-radius:var(--radius-sm);cursor:pointer}
+.step:hover{background:var(--surface-2);color:var(--ink)}
+.step:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.step:disabled{opacity:.4;cursor:not-allowed}
+.step:disabled:hover{background:none}
+/* Once step 2 is reachable it breathes until it has been opened, so the PWA
+   is told the next stage has unlocked rather than having to notice. The pulse
+   is on the numeral, not the whole tab: a moving block of text is harder to
+   read than a moving disc beside it - that much is unchanged, and it is why
+   none of what follows touches the label.
+
+   It is loud on purpose. The first version was a single faint ring on a slow
+   cycle, which read as a rendering artefact rather than an invitation; this
+   one carries a tinted disc, two rings leaving at different rates, and a small
+   swell of the disc itself, on a cycle short enough to catch the eye without
+   nagging. Reduced motion keeps the tint and a static double ring, so the
+   affordance survives with the movement removed. */
+.step-beckon .step-index{animation:stepbeckon 1.6s ease-in-out infinite;
+  border-color:var(--accent);color:var(--accent);background:#EAF1FC}
+@keyframes stepbeckon{
+  0%,100%{box-shadow:0 0 0 0 rgba(31,95,191,.55),0 0 0 0 rgba(31,95,191,.3);
+    transform:scale(1)}
+  50%{box-shadow:0 0 0 10px rgba(31,95,191,0),0 0 0 17px rgba(31,95,191,0);
+    transform:scale(1.09)}
+}
+@media (prefers-reduced-motion:reduce){
+  .step-beckon .step-index{animation:none;transform:none;
+    box-shadow:0 0 0 4px rgba(31,95,191,.34),0 0 0 8px rgba(31,95,191,.16)}
+}
+.step:disabled:hover{background:none}
+.step-index{width:37.5px;height:37.5px;flex:0 0 auto;display:grid;place-items:center;
+  border:1px solid var(--line-strong);border-radius:50%;background:var(--surface);
+  font-family:var(--f-num);font-size:15px;font-weight:700;color:var(--ink-3);
+  transition:background .15s ease,color .15s ease,border-color .15s ease}
+.step-label{display:grid}
+.step-label strong{font-family:var(--f-num);font-size:17px;font-weight:600;line-height:1.25}
+.step-label small{font-size:13.5px;color:var(--ink-3);margin-top:1px;line-height:1.25}
+.step[aria-selected="true"]{color:#16243A}
+.step[aria-selected="true"] .step-index{background:#16243A;color:#fff;border-color:#16243A}
+.step[aria-selected="true"] .step-label strong{font-weight:700}
+.step-connector{width:100px;height:1px;flex:0 0 auto;background:var(--line-strong);margin:0 12.5px}
+@media (prefers-reduced-motion:reduce){.step-index{transition:none}}
+/* Narrow: the descriptions go before the stage names do, and the connector
+   shrinks rather than pushing the second stage off the edge. */
+@media (max-width:719px){
+  .step-connector{width:30px;margin:0 5px}
+  .step-label small{display:none}
+}
+
+/* The note under a segmented control or a level grid. It outlived the
+   read-only variant summary this file used to open with: the variant is
+   chosen with the base portfolio and step 2 no longer restates it. */
+.vr-note{margin:1px 0 0;font-size:12.5px;color:var(--rail-ink-3);line-height:1.45}
+/* the tactical tilt toggle: an implementation choice, so it sits with the
+   sleeves rather than in the strategic tier (D50) */
+.tilt-field{display:grid;gap:4px;margin:0 0 14px;padding:0 0 14px;
+  border-bottom:1px solid var(--rail-line)}
+.tilt-field .chk{margin:0}
+.tilt-field.done label{color:var(--rail-ink)}
+.tilt-field .chk-note{margin:0}
+/* ── pricing: fee schedule and fee level (D51) ──
+   The schedule is a two-way segmented control with nothing pressed until a
+   PWA presses it; the level is a two-by-three grid, one row per source, so
+   the six levels read as the band they are rather than as a list. Both sit
+   with the sleeves because they price the sheet the sleeves build.
+
+   They close the tier, below the pickers, and the group carries its own label
+   because the tier heading says Sleeves and a fee schedule is not one. The
+   rule is on TOP of the group here - between the sleeve list and pricing -
+   and the last field drops its own, so the group's last line is not a rule
+   sitting a few pixels above the tier's. */
+.fee-group{margin:16px 0 0;padding:15px 0 0;border-top:1px solid var(--rail-line)}
+/* PRICING is a section heading like the tier headings above it, and reads the
+   same - it is only a separate rule because it sits inside a tier. */
+.fee-group-h{margin:0 0 11px;font-family:var(--f-num);font-size:11px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--rail-ink-3);line-height:1}
+/* ── the include-fees toggle (D52) ──
+   Off, it is the only thing under the Pricing label and the table has no fee
+   column; on, the schedule and the level unravel beneath it. The tick box
+   matches the tactical tilt's, which is the rail's other section switch. */
+.fee-toggle{display:grid;gap:4px}
+.fee-toggle .chk{margin:0}
+.fee-toggle.done label{color:var(--rail-ink)}
+.fee-toggle .chk-note{margin:0}
+.fee-body{display:block;margin:13px 0 0}
+/* Reveal and hide. The reveal plays on nodes that were just rendered, where a
+   transition would have nothing to move from, so both directions are keyframe
+   animations; the leave fills forwards because it has to hold the collapsed
+   state until the render that removes the block. max-height is the animatable
+   stand-in for auto height - 420px clears the block at every rate grid the
+   framework can serve, and the overflow only applies while it plays. */
+@keyframes feeunravel{from{opacity:0;max-height:0;transform:translateY(-6px)}
+  to{opacity:1;max-height:420px;transform:none}}
+@keyframes feeravel{from{opacity:1;max-height:420px}
+  to{opacity:0;max-height:0;transform:translateY(-6px)}}
+.fee-body.unravel{animation:feeunravel 360ms cubic-bezier(.4,0,.2,1);overflow:hidden}
+.fee-body.ravel{animation:feeravel 360ms cubic-bezier(.4,0,.2,1) both;overflow:hidden}
+@media (prefers-reduced-motion:reduce){
+  .fee-body.unravel,.fee-body.ravel{animation:none}}
+.fee-field{display:grid;gap:6px;margin:0 0 14px;padding:0 0 14px;
+  border-bottom:1px solid var(--rail-line)}
+.fee-group .fee-field:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.fee-field .fee-label{font-size:13px;font-weight:600;color:var(--rail-ink-2);line-height:1.3}
+.fee-field.done .fee-label{color:var(--rail-ink)}
+/* Two columns by default; the level's two controls set their own from the
+   schema's lists, so a framework with four points would still lay out. */
+.fee-seg{display:grid;grid-template-columns:1fr 1fr;
+  border:1px solid var(--rail-input-border,#52739C);border-radius:4px;overflow:hidden}
+.fee-seg button+button{border-left:1px solid var(--rail-input-border,#52739C)}
+.fee-seg button{font:inherit;font-size:13px;font-weight:600;padding:7px 6px;cursor:pointer;
+  background:var(--rail-input-bg,#1D2F4B);color:var(--rail-ink-2);border:0;line-height:1.2}
+.fee-seg button+button{border-left:1px solid var(--rail-input-border,#52739C)}
+.fee-seg button:hover{color:var(--rail-ink)}
+.fee-seg button[aria-pressed="true"]{background:var(--rail-accent,var(--accent));
+  color:var(--rail-accent-ink,#fff)}
+.fee-seg button:disabled{cursor:default;opacity:.6}
+.fee-seg button:focus-visible{outline:2px solid var(--rail-focus,#8FB4FF);outline-offset:-2px}
+/* the card's own line: delivery version, adjustments, and the way in (D55) */
+.fee-card{margin:6px 0 0;font-size:12px;color:var(--rail-ink-3);line-height:1.5}
+/* the way into the card, under the toggle that turns fees on */
+.fee-view{width:100%;margin:9px 0 0;font-size:12.5px;padding:6px 10px;
+  background:var(--rail-input-bg,#1D2F4B);border:1px solid var(--rail-input-border,#52739C);
+  color:var(--rail-ink);border-radius:4px;cursor:pointer}
+.fee-view:hover{border-color:var(--rail-accent,var(--accent))}
+.fee-view:focus-visible{outline:2px solid var(--rail-focus,#8FB4FF);outline-offset:2px}
+/* ── the rate card panel (D55) ──
+   The mandate dialog's chrome, widened for a six-column grid. A cell shows
+   the rate in force; amber means an adjustment is saved on top of the
+   delivered rate, blue means changed here and not yet saved. */
+.dialog.wide{width:min(940px,calc(100vw - 32px))}
+/* The card can be opened from inside the repository console (D58), so it
+   stacks above that dialog and its scrim rather than under them. */
+#feeDialog .scrim{z-index:94}
+#feeDialog .dialog{z-index:95}
+/* ── the fee card (D55), laid out to be read at a glance ──
+   A short head (what delivery this is), one row of controls (which way the
+   card is turned, and which slice), then the grid. Three things carry the
+   emphasis and nothing else does: the two source groups are visibly two
+   groups; the column of the level this proposal prices at is heavier and
+   tinted; and, pivoted by fee group, the one cell that is THIS mandate's rate
+   - its tier crossed with that level - wears a ring. Everything else is
+   quiet, so those three read first. */
+.dialog.rc{padding:22px 26px 20px}
+.rc-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin:0 0 16px;padding-right:36px}
+.dialog.rc .rc-head h2{margin:0}
+.rc-meta{display:flex;flex-wrap:wrap;gap:2px 14px;margin:0;font-family:var(--f-num);font-size:12.5px;
+  color:var(--ink-3)}
+.rc-meta b{color:var(--ink-2);font-weight:600}
+.rc-flag{font-family:var(--f-num);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#92600A;background:#FEF3C7;border:1px solid #F3D48A;border-radius:9px;padding:1px 8px;line-height:16px}
+.rc-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;margin:0 0 12px}
+.rc-seg{display:flex;border:1px solid var(--line-strong);border-radius:4px;overflow:hidden}
+.rc-seg button{appearance:none;border:0;border-left:1px solid var(--line-strong);background:var(--surface);
+  color:var(--ink-2);font:inherit;font-size:13px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.rc-seg button:first-child{border-left:0}
+.rc-seg button:hover{background:var(--surface-2);color:var(--ink)}
+.rc-seg button[aria-selected="true"]{background:#16243A;color:#fff;font-weight:600}
+.rc-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.rc-axis{width:auto;min-width:240px;font-size:13px}
+.rc-loading{color:var(--ink-3);font-size:13px;margin:12px 0}
+.rc-wrap{overflow-x:auto;border:1px solid var(--line-strong);border-radius:var(--radius)}
+.rate-grid{border-collapse:collapse;width:100%;font-size:13px}
+.rate-grid th,.rate-grid td{padding:0 12px;border-bottom:1px solid var(--line);white-space:nowrap;
+  height:38px;vertical-align:middle}
+.rate-grid thead th{font-family:var(--f-num);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);background:var(--surface-2);font-weight:700;text-align:right;height:30px}
+/* the two source groups: a spanning head with its own rule, and a stronger
+   line plus a little air where one group becomes the next */
+.rate-grid th.src{text-align:center;border-bottom:1px solid var(--line-strong);height:32px;
+  font-size:11.5px;letter-spacing:.14em;color:var(--ink-2)}
+.rate-grid th.src span{display:inline-block;padding:0 6px 3px;border-bottom:2px solid var(--ink-3)}
+/* its own name, not .grp: the page has a .grp + .grp rule for stacked
+   groups that would otherwise pad the second source head down */
+.rate-grid .rc-grp{border-left:2px solid var(--line-strong);padding-left:20px}
+.rate-grid thead th.rowhead{text-align:left;vertical-align:bottom;padding-bottom:8px}
+/* the row head: an id set as a small pill, the band beside it, a tag when it
+   is this mandate's own row */
+.rate-grid tbody th.rowhead{text-align:left;font-weight:500;color:var(--ink);min-width:220px;
+  display:flex;align-items:center;gap:9px;height:38px}
+.rc-id{font-family:var(--f-num);font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--ink-2);
+  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:4px;padding:1px 7px;line-height:17px;
+  min-width:34px;text-align:center}
+.rc-lbl{font-size:13px;color:var(--ink)}
+.rc-tag{margin-left:auto;font-family:var(--f-num);font-size:10.5px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:#1E4FA3;background:#E3EBFA;border-radius:8px;padding:0 7px;line-height:16px}
+/* the level this proposal prices at: heavier, tinted, named in its head */
+.rate-grid th.lvl{color:#1E4FA3;background:#E9F0FB}
+.rate-grid th.lvl small{display:block;font-size:9px;letter-spacing:.08em;font-weight:700;color:#1E4FA3;
+  opacity:.85;margin-top:1px}
+.rate-grid td.lvl{background:#F3F7FD;font-weight:700;color:#16243A}
+/* this mandate's own row */
+.rate-grid tr.mark td,.rate-grid tr.mark th.rowhead{background:#F0F4FB}
+.rate-grid tr.mark td.lvl{background:#E3EBFA}
+.rate-grid tr.mark th.rowhead{box-shadow:inset 3px 0 0 var(--accent)}
+.rate-grid tr.mark .rc-id{background:#fff;border-color:#B9CDF0;color:#1E4FA3}
+/* the one cell that is this mandate's rate */
+.rate-grid td.ring{box-shadow:inset 0 0 0 2px var(--accent);border-radius:3px;color:#1E4FA3}
+.rate-grid td.rate{font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right;
+  color:var(--ink-2);min-width:74px;font-size:13.5px}
+.rate-grid tbody tr:last-child td,.rate-grid tbody tr:last-child th{border-bottom:none}
+.rate-grid tbody tr:hover td:not(.lvl),.rate-grid tbody tr:hover th.rowhead{background:var(--row-hover,var(--surface-2))}
+.rate-grid tbody tr.mark:hover td:not(.lvl),.rate-grid tbody tr.mark:hover th.rowhead{background:#E9EFF9}
+/* the key: one swatch per emphasis, in the order they appear */
+.rc-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;font-size:12px;color:var(--ink-2)}
+.rc-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px;
+  border:1px solid var(--line-strong);background:var(--surface)}
+.rc-legend i.k-unit{border-style:dashed}
+.rc-legend i.k-lvl{background:#E9F0FB;border-color:#B9CDF0}
+.rc-legend i.k-mark{background:#F0F4FB;border-color:#B9CDF0;box-shadow:inset 3px 0 0 var(--accent)}
+.rc-legend i.k-ring{box-shadow:inset 0 0 0 2px var(--accent);background:#E3EBFA;border-color:transparent}
+.rc-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+
+/* ── how this mandate is priced (D84) ──
+   The build-up behind a marginal blend. It borrows the fee card's head, wrap
+   and actions; what is its own is the four-column sum and the level strip. */
+.dialog.pb{width:min(700px,calc(100vw - 32px));padding:22px 26px 20px}
+.pb-sub{margin:-8px 0 14px;font-size:13px;color:var(--ink-3);line-height:1.45}
+.pb-grid{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface)}
+.pb-grid th,.pb-grid td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:right}
+.pb-grid thead th{font-family:var(--f-num);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);background:var(--surface-2);font-weight:700}
+.pb-grid th:first-child,.pb-grid thead th:first-child{text-align:left}
+.pb-grid td{font-family:var(--f-num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.pb-grid tbody th{font-weight:400}
+.pb-id{font-family:var(--f-num);font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-2);
+  background:var(--surface-2);border:1px solid var(--line-strong);border-radius:3px;
+  padding:1px 6px;margin-right:9px}
+.pb-band{color:var(--ink-2);font-size:13px}
+.pb-grid tfoot th,.pb-grid tfoot td{border-top:2px solid #16243A;border-bottom:0;font-weight:700;
+  padding-top:11px;color:var(--ink)}
+.pb-eff{color:var(--accent);font-size:15px}
+.pb-how{margin:14px 0 0;font-size:13px;color:var(--ink-2);line-height:1.55}
+.pb-h{margin:18px 0 8px;font-family:var(--f-num);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3)}
+.pb-levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px}
+.pb-lv{border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:8px 10px;
+  background:var(--surface)}
+.pb-lv.on{border-color:var(--accent);background:#E9F0FB}
+.pb-lv b{display:block;font-family:var(--f-num);font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:700;margin-bottom:2px}
+.pb-lv.on b{color:#1E4FA3}
+.pb-lv span{font-family:var(--f-num);font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.pb-lv.on span{color:var(--accent)}
+.rc-note{font-family:var(--f-num);font-size:12px;color:var(--ink-3)}
+.dialog .md-err{margin-top:12px}
+/* placeholder pricing is flagged in the rail as long as fees.json says so */
+.fee-flag{margin:2px 0 0;font-size:12px;font-weight:600;color:#F3C46B;line-height:1.4}
+
+/* ── sleeve pickers in the rail ── */
+.sl-list{display:grid;gap:9px}
+.sl-row{display:grid;gap:5px}
+.sl-row .cat{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.sl-row .cat b{font-size:13px;font-weight:600;color:var(--rail-ink-2);line-height:1.3}
+.sl-row .cat span{font-family:var(--f-num);font-size:12px;color:var(--rail-ink-3);
+  font-variant-numeric:tabular-nums;flex-shrink:0}
+.sl-row.done .cat b{color:var(--rail-ink)}
+.sl-progress{margin:12px 0 0;font-size:13px;color:var(--rail-ink-2)}
+.sl-bar{height:4px;border-radius:2px;background:#22334E;overflow:hidden;margin:6px 0 0}
+.sl-bar i{display:block;height:100%;background:var(--rail-accent);transition:width .2s}
+@media (prefers-reduced-motion:reduce){.sl-bar i{transition:none}}
+
+/* ── implementation table ── */
+/* 30px below, matching .sec-head.stage-head - both steps open on the same
+   block and must stand off their tables identically. */
+.impl-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
+  flex-wrap:wrap;margin:0 0 30px}
+.impl-gate{margin:0;font-size:14px;color:var(--ink-2)}
+
+/* ── completion progress, from proposalToolv2's .completion-summary ──
+   Replaces the pill that only ever said one of two things. Sits opposite the
+   stage block, which .impl-head's space-between already positions. */
+.completion-summary{min-width:230px}
+.completion-line{display:flex;justify-content:space-between;gap:15px;
+  font-family:var(--f-num);color:var(--ink-2);font-size:12px;margin-bottom:5px}
+.completion-line strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.progress-track{height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.progress-track i{display:block;height:100%;width:var(--progress);background:#176A33;
+  transition:width .2s ease}
+.progress-track.is-done i{background:#176A33}
+@media (prefers-reduced-motion:reduce){.progress-track i{transition:none}}
+
+/* ── export card, from proposalToolv2 ──
+   Its structure verbatim; its greens, ambers and reds swapped for the ones
+   this page's badges already use, so the card reads as part of the document
+   rather than as a transplant. */
+.impl-viz{padding-bottom:44px;border-bottom:1px solid var(--line-strong)}
+.export-card{margin:44px 0 0;padding:24px 26px;display:grid;
+  grid-template-columns:60px 1fr auto;gap:20px;align-items:center;
+  background:var(--surface);border:1px solid var(--line-strong);
+  border-left:4px solid #176A33;border-radius:7px;box-shadow:var(--shadow)}
+.export-icon{width:50px;height:58px;display:grid;place-items:center;position:relative;
+  background:#E7F4EC;border:1px solid #B7E0C5;border-radius:4px;color:#176A33;
+  font-family:var(--f-num);font-size:20px;font-weight:750}
+.export-icon:after{content:"";position:absolute;right:0;top:0;border-style:solid;
+  border-width:0 0 12px 12px;border-color:transparent transparent #B7E0C5 transparent}
+.export-copy h3{margin:0;font-family:var(--f-num);font-size:23px;font-weight:520;
+  color:#16243A}
+.export-copy>p:not(.eyebrow){margin:4px 0;color:var(--ink-2);font-size:13px}
+/* Scoped through .export-copy rather than carrying v2's !important: the
+   generic paragraph rule above is (0,2,1) because of its :not(), so a bare
+   .export-gate.blocked at (0,2,0) loses the colour it is there to set. */
+.export-copy>p.export-gate{font-weight:650}
+.export-copy>p.export-gate.ready{color:#176A33}
+.export-copy>p.export-gate.blocked{color:#B45309}
+.export-copy>p.export-gate.error{color:#9B1C1C}
+.btn-export{background:#176A33;color:#fff;border-color:#176A33;min-width:180px}
+.btn-export:hover:not(:disabled){background:#12572a;border-color:#12572a}
+@media (max-width:719px){
+  .export-card{grid-template-columns:1fr;gap:14px}
+  .export-icon{display:none}
+  .btn-export{width:100%}
+}
+/* Narrower by the three fee columns when the proposal excludes them (D52).
+   The width is transitioned so the table closes up as the columns collapse
+   rather than snapping when the render lands. */
+/* Smaller type than the step 1 tables carry: this one is 23 columns wide and
+   read across, where those are read down. .tbl sets 15px for both. */
+.tbl.impl{min-width:1690px;transition:min-width var(--col-motion);font-size:13px}
+.tbl.impl.no-fees,.tbl.impl.fees-out{min-width:1340px}
+@media (prefers-reduced-motion:reduce){.tbl.impl{transition:none}}
+.tbl.impl td.txt{white-space:nowrap}
+/* both identity columns stay pinned while the attribute and money columns scroll */
+/* Column 1 sizes to its longest label rather than a fixed 248px. Column 2 is
+   pinned immediately after it, so its sticky offset has to follow: the
+   implementation renderer measures column 1 after each paint and publishes
+   the width as --impl-c1. The 248px fallback is the spec 9.3 value, used
+   until the first measurement lands. */
+.tbl.impl .rowhead{width:1%}
+.tbl.impl .prodcol{position:sticky;left:var(--impl-c1,248px);z-index:1;width:1%;
+  border-right:1px solid var(--line-strong)}
+.tbl.impl thead .prodcol{z-index:4;background:var(--head-bg)}
+.tbl.impl tr.asset .prodcol{background:var(--surface);color:var(--ink)}
+/* The products column bands with the row it is in, not against it - the green
+   was the only place on the page using that tint. */
+.tbl.impl tr.asset.alt .prodcol{background:var(--surface)}
+.tbl.impl tr.cat .prodcol{background:#E9EDF2}
+.tbl.impl tr.grand .prodcol{background:#16243A}
+/* The total row keeps its navy on hover: the row-hover tint washed the
+   white text off it. Every other row still lights up. */
+.tbl.impl tbody tr:not(.grand):hover .prodcol{background:var(--row-hover)}
+.tbl.impl td.txt,.tbl.impl th.txt{text-align:left}
+.tbl.impl .tick{font-family:var(--f-num);color:var(--ink-2);letter-spacing:.02em}
+.tbl.impl tr.cat td.num{font-weight:700}
+.tbl.impl tr.grand th,.tbl.impl tr.grand td{background:#16243A;color:#fff;font-weight:700;
+  border-top:2px solid #16243A}
+.tbl.impl tr.grand th{background:#16243A}
+.tbl.impl tbody tr.grand:hover th,.tbl.impl tbody tr.grand:hover td{background:#16243A;color:#fff}
+/* A position below its product's minimum: a hard block, so it reads as one
+   and the export says why. */
+.tbl.impl tr.below-min th,.tbl.impl tr.below-min td{background:#FDE8E8;color:#7A1D1D}
+/* The pinned products cell carries .asset here for the same reason the header
+   z-index fix carries its weight (D72): tr.asset.alt above is (0,5,1) and would
+   otherwise repaint every banded breaching row white while the rest of the row
+   went pink. Matched at equal weight and declared later, rather than escalated. */
+.tbl.impl tr.asset.below-min .prodcol{background:#FDE8E8}
+.tbl.impl tbody tr.below-min:hover th,.tbl.impl tbody tr.below-min:hover td,
+.tbl.impl tbody tr.below-min:hover .prodcol{background:#FBD9D9}
+.tbl.impl tr.below-min .bdg.b-breach{margin-left:8px;vertical-align:middle}
+.pill{display:inline-block;font-family:var(--f-num);font-size:11px;font-weight:700;
+  letter-spacing:.04em;padding:1px 7px;border-radius:9px;white-space:nowrap}
+.p-act{background:#E3EBFA;color:#1E4FA3;border:1px solid #B9CDF0}
+.p-pas{background:#EEF1F4;color:#5B6B7C;border:1px solid #D8DEE6}
+.p-sma{background:#E7F4EC;color:#176A33;border:1px solid #B7E0C5}
+.p-etf{background:#FEF3C7;color:#B45309;border:1px solid #F3D48A}
+.p-mf{background:#F3EDF9;color:#5B4380;border:1px solid #D9CCEA}
+.p-int{background:#E8EEF5;color:#1E4FA3;border:1px solid #C4D5E8}
+.p-ext{background:#F5F1E8;color:#7A5C2E;border:1px solid #E0D3BC}
+.p-ucits{background:#E4F1F4;color:#1C5A69;border:1px solid #BCDCE4}
+.p-icav{background:#EDEBF6;color:#453A7A;border:1px solid #CFC9E6}
+.p-sleeve{background:#EEF1F4;color:#5B6B7C;border:1px solid #D8DEE6}
+/* the fee group (D51): struck through, not removed, under a schedule that
+   does not read it - the column still says what the product is */
+.p-grp{background:#EEF1F4;color:#3E4E60;border:1px solid #D8DEE6}
+/* ── the fee columns arriving and leaving (D52) ──
+   A column has no width of its own: it takes it from the widest cell. So the
+   animation runs on two things at once - the cell's side padding, and a span
+   around the content whose max-width is what the column measures. Together
+   they open the column from nothing and close it back to nothing, with the
+   contents fading over the top. The leave fills forwards, because it has to
+   hold the collapsed state until the render that removes the cells. */
+.tbl.impl .fcw{display:inline-block;max-width:220px;overflow:hidden;
+  white-space:nowrap;vertical-align:middle}
+@keyframes feecolin{from{opacity:0;padding-left:0;padding-right:0}}
+@keyframes feecolout{to{opacity:0;padding-left:0;padding-right:0}}
+@keyframes feespanin{from{max-width:0;opacity:0}}
+@keyframes feespanout{to{max-width:0;opacity:0}}
+.tbl.impl.fees-in th.fee-col,.tbl.impl.fees-in td.fee-col{
+  animation:feecolin 360ms ease-out}
+.tbl.impl.fees-in .fcw{animation:feespanin 360ms cubic-bezier(.4,0,.2,1)}
+.tbl.impl.fees-out th.fee-col,.tbl.impl.fees-out td.fee-col{
+  animation:feecolout 360ms ease-in both}
+.tbl.impl.fees-out .fcw{animation:feespanout 360ms cubic-bezier(.4,0,.2,1) both}
+@media (prefers-reduced-motion:reduce){
+  .tbl.impl.fees-in th.fee-col,.tbl.impl.fees-in td.fee-col,.tbl.impl.fees-in .fcw,
+  .tbl.impl.fees-out th.fee-col,.tbl.impl.fees-out td.fee-col,
+  .tbl.impl.fees-out .fcw{animation:none}}
+/* Remove control inside the sleeve pill. Sized to stay inside an 11px pill
+   without stretching it, and given a real hit area by the negative margin
+   rather than by growing the pill. */
+.pill-x{appearance:none;border:0;background:none;cursor:pointer;padding:0 0 0 5px;
+  margin:0 -2px 0 1px;font:inherit;font-size:13px;line-height:1;color:inherit;
+  opacity:.65;vertical-align:-1px}
+.pill-x:hover{opacity:1;color:var(--neg,#B42318)}
+.pill-x:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:2px;
+  opacity:1}
+/* ── composition doughnuts, between the table and the download ── */
+.impl-viz{margin:46px 0 0}
+.impl-viz-head{margin:0 0 14px}
+.impl-viz-head h3{margin:0 0 3px;font-family:var(--f-display);font-size:17px;color:#16243A;
+  font-weight:600}
+.impl-viz-head .sec-note{margin:0}
+/* auto-fit rather than five fixed tracks: the row holds five across on a wide
+   document and folds to three, then two, without a breakpoint per step - and
+   it keeps working if a sixth attribute is ever added. */
+.dn-row{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
+.dn-card{background:var(--surface);border:1px solid var(--line-strong);
+  border-left:3px solid var(--accent);
+  border-radius:var(--radius);padding:14px 15px 12px;min-width:0;
+  display:flex;flex-direction:column;align-items:center}
+.dn-card h4{margin:0 0 10px;font-family:var(--f-num);font-size:11.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-2);font-weight:700;align-self:flex-start}
+.dn{width:118px;height:118px;display:block;transform:rotate(-90deg)}
+.dn-arc{transition:stroke-dasharray .25s ease,stroke-dashoffset .25s ease}
+@media (prefers-reduced-motion:reduce){.dn-arc{transition:none}}
+.dn-key{list-style:none;margin:11px 0 0;padding:0;width:100%;display:grid;gap:3px}
+.dn-key li{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);
+  line-height:1.35}
+.dn-sw{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
+.dn-nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dn-pc{font-family:var(--f-num);font-variant-numeric:tabular-nums;color:var(--ink);
+  flex:0 0 auto}
+.impl-empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--radius);
+  padding:clamp(28px,5vw,52px);text-align:center}
+.impl-empty h3{margin:0 0 7px;font-size:18.5px;color:#16243A;font-family:var(--f-display)}
+.impl-empty p{margin:0 auto;max-width:44ch;font-size:15px;color:var(--ink-2)}
+
+
+/* ── the sleeve repository console (D57) ──
+   A three-pane overlay on the dialog base: categories, the sleeves in one,
+   the editor for one. Sized to the viewport rather than to its content so
+   the panes scroll independently and the footer stays put. */
+.dialog.repo{width:min(1280px,calc(100vw - 32px));height:min(780px,calc(100vh - 32px));
+  padding:0;display:flex;flex-direction:column;overflow:hidden}
+/* A column of fixed bands around one band that takes the rest. Flex rather
+   than a grid template because two of the bands - the unsaved-changes notice,
+   the orphans notice - are only sometimes there, and a row template that
+   counts children hands the wrong track to the wrong band when one is missing. */
+.dialog.repo>.repo-h,.dialog.repo>.repo-f,.dialog.repo>.cat-tools,.dialog.repo>.repo-notice{flex:0 0 auto}
+.dialog.repo>.repo-b,.dialog.repo>.cat-b{flex:1 1 auto;min-height:0}
+.repo-h{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;
+  padding:12px 16px 12px 20px;border-bottom:1px solid var(--line-strong)}
+/* The header carries a title, two segmented controls, the source line and the
+   close button. Below full width there is not room for all of it: the source
+   line goes first (the footer says the same thing), and wrapping is the
+   backstop so a narrow window pushes a row down rather than clipping the last
+   implementation type off the end. */
+.dialog.repo .repo-h h2{margin:0;font-family:var(--f-num);font-size:13px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink)}
+.repo-seg{display:flex;border:1px solid var(--line-strong);border-radius:4px;overflow:hidden}
+.repo-seg button{appearance:none;border:0;border-left:1px solid var(--line-strong);
+  background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;padding:6px 12px;
+  cursor:pointer;white-space:nowrap}
+.repo-seg button:first-child{border-left:0}
+.repo-seg button:hover{background:var(--surface-2);color:var(--ink)}
+.repo-seg button[aria-selected="true"]{background:#16243A;color:#fff;font-weight:600}
+.repo-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.repo-src{font-family:var(--f-num);font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+.repo-h .repo-src{margin-left:auto}
+.dialog.repo .dlg-close{position:static;margin-left:4px}
+.repo-b{display:grid;grid-template-columns:232px 300px minmax(0,1fr);min-height:0}
+.repo-pane{border-right:1px solid var(--line);min-height:0;overflow:auto;display:flex;flex-direction:column}
+.repo-pane:last-child{border-right:0}
+.repo-pane-h{font-family:var(--f-num);font-size:11.5px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);padding:14px 16px 8px;display:flex;align-items:center;
+  gap:8px;flex:0 0 auto;min-height:44px}
+.repo-pane-h .btn{margin-left:auto;padding:5px 10px;font-size:11px}
+.repo-cat{display:flex;align-items:center;gap:6px;width:100%;text-align:left;appearance:none;
+  background:none;border:0;border-left:3px solid transparent;font:inherit;font-size:13.5px;
+  color:var(--ink);padding:9px 16px 9px 13px;cursor:pointer;line-height:1.3}
+.repo-cat:hover{background:var(--surface-2)}
+.repo-cat .n{margin-left:auto;font-family:var(--f-num);font-size:12px;color:var(--ink-3)}
+.repo-cat[aria-selected="true"]{background:#E3EBFA;border-left-color:var(--accent);color:#1E4FA3;font-weight:600}
+.repo-cat[aria-selected="true"] .n{color:#1E4FA3}
+.repo-fixed{display:inline-block;font-family:var(--f-num);font-size:10.5px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);background:var(--surface-2);
+  border-radius:8px;padding:0 6px;line-height:16px;vertical-align:middle}
+.repo-sleeve{display:grid;gap:2px;width:100%;text-align:left;appearance:none;background:none;
+  border:0;border-bottom:1px solid var(--line);font:inherit;padding:10px 16px;cursor:pointer;
+  color:var(--ink);line-height:1.35}
+.repo-sleeve:hover{background:var(--surface-2)}
+.repo-sleeve b{font-size:13.5px;font-weight:600}
+.repo-sleeve small{font-size:12px;color:var(--ink-2)}
+.repo-sleeve[aria-selected="true"],.repo-sleeve.new{background:#F0F4FB;box-shadow:inset 3px 0 0 var(--accent)}
+.repo-sleeve .warn,.repo-pick .warn{color:#B45309;font-weight:600}
+.repo-none{margin:10px 16px;font-size:13px;color:var(--ink-3)}
+.repo-ed{padding:14px 20px 12px;gap:12px}
+.repo-frow{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:14px}
+.repo-fld{display:grid;gap:5px}
+.repo-fld label{font-family:var(--f-num);font-size:12px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-2)}
+.repo-fld input[type=text]{border:1px solid var(--line-strong);border-radius:4px;padding:7px 10px;
+  font:inherit;font-size:13.5px;background:var(--surface);color:var(--ink);min-height:34px;width:100%}
+.repo-fld input[aria-invalid="true"]{border-color:#B42318}
+.repo-fld .ro{border:1px solid var(--line-strong);border-radius:4px;padding:7px 10px;font-size:13.5px;
+  color:var(--ink-3);background:var(--surface-2);min-height:34px;display:flex;align-items:center;gap:6px}
+.repo-prods{border:1px solid var(--line-strong);border-radius:6px}
+.repo-prods .ph,.repo-prods .pr{display:grid;grid-template-columns:minmax(0,1fr) 96px 32px;
+  align-items:center;gap:10px;padding:8px 12px}
+.repo-prods .ph{font-family:var(--f-num);font-size:11px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--line);background:var(--surface-2)}
+.repo-prods .pr{border-bottom:1px solid var(--line);position:relative}
+.repo-pick{appearance:none;background:none;border:1px solid transparent;border-radius:4px;
+  text-align:left;font:inherit;padding:4px 6px;display:grid;gap:1px;min-width:0;cursor:pointer;
+  color:var(--ink);line-height:1.3}
+.repo-pick:hover{border-color:var(--line-strong)}
+.repo-pick b{font-weight:500;font-size:13.5px}
+.repo-pick small{font-family:var(--f-num);font-size:12px;color:var(--ink-2)}
+.repo-pick.empty b{color:var(--ink-3);font-weight:400}
+.repo-w{font-family:var(--f-num);font-size:13.5px;text-align:right;border:1px solid var(--line-strong);
+  border-radius:4px;padding:5px 8px;width:96px;background:var(--surface);color:var(--ink)}
+.repo-rm{appearance:none;background:none;border:0;color:var(--ink-3);font-size:18px;line-height:1;
+  cursor:pointer;padding:4px}
+.repo-rm:hover{color:#9B1C1C}
+.repo-search{width:100%;border:1px solid var(--accent);border-radius:4px;padding:6px 10px;
+  font:inherit;font-size:13.5px;box-shadow:0 0 0 3px rgba(31,95,191,.18);background:var(--surface);color:var(--ink)}
+.repo-menu{position:absolute;left:12px;right:12px;top:calc(100% - 2px);background:var(--surface);
+  border:1px solid var(--line-strong);border-radius:6px;box-shadow:0 10px 30px rgba(12,24,44,.18);
+  z-index:5;max-height:280px;overflow:auto;margin:0;padding:0;list-style:none}
+.repo-menu li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:8px 12px;
+  border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;line-height:1.3}
+.repo-menu li:hover{background:var(--surface-2)}
+.repo-menu li[aria-selected="true"]{background:#E3EBFA}
+.repo-menu li b{font-weight:500}
+.repo-menu li small{display:block;color:var(--ink-2);font-family:var(--f-num);font-size:12px}
+.repo-menu .grp{font-family:var(--f-num);font-size:11.5px;color:#1E4FA3;background:#E3EBFA;
+  border-radius:9px;padding:1px 8px;align-self:center;white-space:nowrap}
+.repo-menu .hint{display:block;padding:6px 12px;font-family:var(--f-num);font-size:11.5px;
+  color:var(--ink-3);background:var(--surface-2);cursor:default;border-bottom:0}
+.repo-tot{display:grid;grid-template-columns:minmax(0,1fr) 96px 32px;gap:10px;padding:9px 12px;
+  font-family:var(--f-num);font-size:13px;font-weight:700;background:var(--surface-2)}
+.repo-tot .ok{color:#176A33;text-align:right}
+.repo-tot .bad{color:#9B1C1C;text-align:right}
+.repo-add{align-self:start;margin-top:8px}
+.repo-problems{margin:0;font-size:12.5px;color:#7A4A0A}
+.repo-prov{font-family:var(--f-num);font-size:12px;color:var(--ink-3);margin:auto 0 0;line-height:1.5}
+.repo-empty,.repo-loading{margin:20px;color:var(--ink-3);font-size:14px}
+.repo-notice{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 20px;
+  background:#FEF3C7;color:#7A4A0A;font-size:13px;border-bottom:1px solid #F3D48A}
+.repo-notice .btn{padding:5px 10px;font-size:11px}
+.repo-ed .repo-notice{border:1px solid #F3D48A;border-radius:4px;padding:9px 12px}
+.repo-f{display:flex;align-items:center;gap:10px;padding:10px 20px;border-top:1px solid var(--line-strong);
+  background:var(--surface-2)}
+.repo-f .spacer{flex:1}
+.repo-f .md-err{margin:0;padding:6px 10px}
+.btn.btn-danger{color:#9B1C1C;border-color:#F1B8B2;background:var(--surface)}
+.btn.btn-danger:hover{background:#FDE8E8}
+/* Create sits at the far left of the footer, away from Save and Delete: it
+   does not act on the sleeve being edited, it starts a different one (D61). */
+.btn.btn-create{background:#176A33;border-color:#176A33;color:#fff}
+.btn.btn-create:hover{background:#12572A;border-color:#12572A}
+.btn.btn-create:disabled{opacity:.5}
+/* the two answers only a new sleeve gives */
+.repo-fld select{border:1px solid var(--line-strong);border-radius:4px;padding:7px 10px;
+  font:inherit;font-size:13.5px;background:var(--surface);color:var(--ink);min-height:34px;width:100%}
+.repo-vars{display:flex;flex-wrap:wrap;gap:6px 14px}
+.repo-var{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer}
+.repo-var.off{color:var(--ink-3);cursor:not-allowed}
+/* the context menu on a sleeve: inside the dialog, clamped off its edges */
+.repo-ctx{position:absolute;z-index:8;min-width:238px;background:var(--surface);
+  border:1px solid var(--line-strong);border-radius:6px;box-shadow:0 12px 34px rgba(12,24,44,.24);
+  padding:6px 0;display:grid}
+.repo-ctx .h{margin:0;padding:7px 12px 6px;font-size:13.5px;font-weight:600;color:var(--ink);
+  border-bottom:1px solid var(--line)}
+.repo-ctx .h small{display:block;font-family:var(--f-num);font-size:11.5px;font-weight:400;color:var(--ink-3)}
+.repo-ctx .lbl{margin:0;padding:8px 12px 4px;font-family:var(--f-num);font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.repo-ctx .none{margin:0;padding:2px 12px 8px;font-size:12.5px;color:var(--ink-3)}
+.repo-ctx .sep{margin:5px 0;border-top:1px solid var(--line)}
+.repo-mi{appearance:none;background:none;border:0;text-align:left;font:inherit;font-size:13px;
+  color:var(--ink);padding:7px 12px;cursor:pointer;width:100%}
+.repo-mi:hover:not(:disabled){background:#E3EBFA;color:#1E4FA3}
+.repo-mi:disabled{color:var(--ink-3);cursor:not-allowed}
+.repo-mi.danger{color:#9B1C1C}
+.repo-mi.danger:hover:not(:disabled){background:#FDE8E8;color:#9B1C1C}
+.repo-mi:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* ── the record: history and removed sleeves (D65) ──
+   The history sits under the editor as a closed drawer, because most visits
+   are to change a sleeve rather than to read what it was. Open, it is a
+   ladder of revisions newest first: the change summary always visible, the
+   whole composition one click further. The version in force is marked, and
+   only the others offer to be put back - restoring what is already there is
+   not an action, it is a no-op with a button. */
+.repo-hist{margin:10px 0 0;border-top:1px solid var(--line)}
+.repo-histh{display:flex;align-items:center;gap:8px;width:100%;appearance:none;background:none;
+  border:0;font:inherit;font-family:var(--f-num);font-size:12px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  padding:10px 0 9px;cursor:pointer;text-align:left}
+.repo-histh:hover{color:var(--accent)}
+.repo-histh .n{margin-left:auto;letter-spacing:0;text-transform:none;font-weight:400;
+  font-size:12px;color:var(--ink-3)}
+.repo-histh .rev-caret{transition:transform .15s ease}
+.repo-hist.open .repo-histh .rev-caret{transform:rotate(90deg)}
+.repo-hist.open .repo-histh{color:var(--ink-2)}
+.repo-hist-b{max-height:260px;overflow-y:auto;margin:0 -20px;padding:0 20px 8px;
+  border-top:1px solid var(--line)}
+.rev{border-bottom:1px solid var(--line)}
+.rev:last-child{border-bottom:0}
+.rev-h{display:flex;align-items:center;gap:10px;width:100%;appearance:none;background:none;
+  border:0;font:inherit;color:var(--ink);padding:9px 0;cursor:pointer;text-align:left}
+.rev-h:hover{color:var(--accent)}
+.rev-n{font-family:var(--f-num);font-size:11.5px;font-weight:700;color:var(--ink-3);
+  background:var(--surface-2);border-radius:9px;padding:1px 7px;line-height:16px;flex:none}
+.rev.now .rev-n{background:#E3EBFA;color:#1E4FA3}
+.rev-what{display:grid;gap:1px;min-width:0}
+.rev-what b{font-size:13px;font-weight:600}
+.rev-what small{font-family:var(--f-num);font-size:11.5px;color:var(--ink-3)}
+.rev-now{margin-left:auto;font-family:var(--f-num);font-size:10.5px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:#176A33;background:#E7F4EC;
+  border-radius:8px;padding:0 6px;line-height:16px;flex:none}
+.rev-caret{margin-left:auto;color:var(--ink-3);font-size:15px;line-height:1;flex:none}
+.rev-now + .rev-caret{margin-left:8px}
+.rev.open .rev-caret{transform:rotate(90deg)}
+.rev-changes{margin:0 0 8px;padding:0 0 0 32px;list-style:none;display:grid;gap:2px}
+.rev-changes li{font-size:12px;color:var(--ink-2);line-height:1.4;position:relative}
+.rev-changes li::before{content:"";position:absolute;left:-11px;top:7px;width:4px;height:4px;
+  border-radius:50%;background:var(--line-strong)}
+.rev-b{padding:0 0 10px 32px}
+.rev-name{margin:0 0 6px;font-size:13px;font-weight:600}
+.rev-name small{font-weight:400;color:var(--ink-3);font-size:12px}
+.rev-products{margin:0;padding:0;list-style:none;display:grid;gap:3px}
+.rev-products li{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px;
+  font-size:12.5px;line-height:1.4}
+.rev-products .w{font-family:var(--f-num);font-weight:700;text-align:right;color:var(--ink-2)}
+.rev-products .warn{color:#B45309;font-weight:600}
+.rev-products.big li{font-size:13.5px;padding:3px 0;border-bottom:1px solid var(--line)}
+.rev-products.big li:last-child{border-bottom:0}
+.rev-put{margin-top:10px;padding:5px 11px;font-size:11.5px}
+/* ── the archive and the activity feed (D66) ──
+   Two more views on the same dialog, both wearing the catalogue's chrome so
+   that one set of habits serves all three tables. The archive is a filing
+   cabinet: a searchable table of what left the library, a batch tick, and a
+   drawer for one sleeve with its history and the way back. The feed is a
+   story: the record newest first, a day at a time, a sentence per change. */
+.repo-seg [role="tab"] .n{margin-left:6px;font-family:var(--f-num);font-size:11px;font-weight:700;
+  background:var(--surface-2);color:var(--ink-2);border-radius:8px;padding:0 6px;line-height:16px;
+  display:inline-block;vertical-align:middle}
+.repo-seg [role="tab"][aria-selected="true"] .n{background:rgba(255,255,255,.22);color:#FFF}
+
+.arc-tools .cat-search,.act-tools .cat-search{flex:0 1 300px;min-width:200px}
+.arc-sel{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-num);font-size:12px;
+  color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;
+  padding:0 4px 0 10px;height:28px}
+.arc-sel>span{white-space:nowrap}
+.arc-sel.on{border-color:var(--accent);background:#E3EBFA;color:#1E4FA3}
+.arc-sel select{appearance:none;-webkit-appearance:none;border:0;background:transparent;font:inherit;
+  font-size:12px;font-weight:700;color:inherit;padding:0 18px 0 2px;height:26px;cursor:pointer;
+  max-width:190px;text-overflow:ellipsis;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 10px) 11px,calc(100% - 6px) 11px;background-size:4px 4px,4px 4px;background-repeat:no-repeat}
+.arc-sel select:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:12px}
+.arc-export{margin-left:4px;padding:5px 10px;font-size:11px;text-decoration:none}
+.arc-b{display:flex;flex-direction:column;min-height:0;flex:1}
+.arc-tblwrap{flex:1;min-height:180px}
+.arc-tbl td b{font-weight:600}
+.arc-tbl td .mut,.arc-tbl td.mut{color:var(--ink-3)}
+.arc-tbl .pinc input{width:14px;height:14px;margin:0;vertical-align:middle;cursor:pointer;accent-color:var(--accent)}
+.arc-tbl tr.pin td{background:#F0F4FB}
+.arc-tbl tr.on td{background:#E3EBFA}
+.arc-tbl tr[data-arcrow]{cursor:pointer}
+.arc-status{white-space:nowrap}
+.arc-badge{font-family:var(--f-num);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  border-radius:8px;padding:1px 7px;line-height:16px;display:inline-block}
+.arc-badge.gone{background:#FDE8E8;color:#9B1C1C}
+.arc-badge.live{background:#E7F4EC;color:#176A33}
+.arc-detail{border-top:1px solid var(--line-strong);background:var(--surface);padding:14px 20px 12px;
+  max-height:44%;overflow-y:auto;flex:none}
+.arc-dh{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.arc-dh h3{margin:0;font-size:17px;font-weight:700}
+.arc-dh p{margin:2px 0 0;font-size:13px;color:var(--ink-2)}
+.arc-dh .repo-prov{margin:5px 0 0}
+.arc-dact{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.arc-dact .repo-problems{max-width:34ch;text-align:right}
+.arc-dclose{position:static;margin-left:4px}
+.arc-db{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:0 28px;margin-top:12px}
+.arc-db .repo-hist{margin-top:0;border-top:0}
+.arc-db .repo-hist-b{margin:0;padding:0 0 4px;max-height:220px}
+.arc-lbl{padding:0 0 6px;border-bottom:0}
+.arc-f .repo-src + .spacer{flex:1}
+/* the feed */
+.act-chips{display:inline-flex;gap:4px;flex-wrap:wrap}
+.act-chip{appearance:none;background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;
+  font:inherit;font-family:var(--f-num);font-size:12px;font-weight:700;color:var(--ink-2);padding:0 9px;
+  height:28px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.act-chip .n{font-weight:400;color:var(--ink-3)}
+.act-chip.on{background:#E3EBFA;border-color:var(--accent);color:#1E4FA3}
+.act-chip.on .n{color:#1E4FA3}
+.act-chip.off{opacity:.5}
+.act-chip:hover:not(.off){border-color:var(--accent)}
+.act-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.act-b{flex:1;overflow-y:auto;min-height:200px;background:var(--surface)}
+.act-day{position:sticky;top:0;z-index:1;margin:0;padding:11px 20px 6px;font-family:var(--f-num);font-size:11px;
+  font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);background:var(--surface-2);
+  border-bottom:1px solid var(--line)}
+.act-ev{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;padding:10px 20px;
+  border-bottom:1px solid var(--line);align-items:start}
+.act-ev .t{font-family:var(--f-num);font-size:12px;color:var(--ink-3);padding-top:2px}
+.act-ev .w p{margin:0;font-size:13.5px}
+.act-ev .w p b{font-weight:600}
+.act-ev .w .mut{color:var(--ink-2)}
+.act-ev .w small{display:block;font-family:var(--f-num);font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.act-changes{margin:5px 0 0;padding-left:14px}
+.act-changes li::before{left:-10px}
+.act-ev .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.act-btn{padding:4px 9px;font-size:11px}
+.act-badge{font-family:var(--f-num);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  border-radius:8px;padding:1px 7px;line-height:16px;display:inline-block;vertical-align:middle;margin:0 2px}
+.act-badge.created,.act-badge.imported,.act-badge.seeded,.act-badge.baseline{background:var(--surface-2);color:var(--ink-2)}
+.act-badge.updated{background:#E3EBFA;color:#1E4FA3}
+.act-badge.reverted,.act-badge.restored{background:#FEF3C7;color:#7A4A0A}
+.act-badge.deleted{background:#FDE8E8;color:#9B1C1C}
+.act-none{padding:24px 20px;margin:0}
+.act-more{padding:14px 20px 18px;text-align:center}
+/* ── the proposal register (D69) ──
+   A fifth table on the same dialog, in the catalogue's chrome. The list is
+   dense and named-column; the open proposal sits below it with its two
+   pictures behind a segmented toggle and the workbook one click away. The
+   pictures are indented tables in their own right, so a category reads as
+   a group head and its assets or products as the rows under it. */
+.dialog.repo.register{width:min(1400px,calc(100vw - 32px))}
+.reg-tools .cat-search{flex:0 1 280px;min-width:180px}
+.reg-tbl td b{font-weight:600}
+.reg-tbl td .mut,.reg-tbl .mut{color:var(--ink-3)}
+.reg-tbl tr[data-regrow]{cursor:pointer}
+.reg-tbl th.num,.reg-tbl td.num{padding-right:22px}
+.arc-badge.acc{background:#E3EBFA;color:#1E4FA3}
+.arc-badge.mute{background:var(--surface-2);color:var(--ink-2)}
+.arc-badge.warn{background:#FEF3C7;color:#7A4A0A}
+.reg-detail{max-height:52%}
+.reg-detail .arc-dact .repo-seg{margin-left:6px}
+.reg-detail .arc-dact .btn-primary{text-decoration:none}
+.reg-detail .repo-prov b.warn{color:#7A4A0A;font-weight:700}
+.reg-pic-wrap{margin-top:12px;overflow-x:auto}
+.reg-pic{width:100%}
+.reg-pic th{position:static}
+.reg-pic tr.grp td{background:var(--surface-2);font-weight:600}
+.reg-pic td.sub{padding-left:26px;color:var(--ink-2)}
+.reg-pic td.num{font-family:var(--f-num);text-align:right;white-space:nowrap}
+.reg-pic th.num{text-align:right}
+/* one portfolio, two columns: stretched to the drawer the weight sits a screen away
+   from its label. Outranks .cat-tbl's own width rule by specificity. */
+.reg-pic-wrap table.reg-pic-one{width:auto;min-width:480px;max-width:720px}
+.reg-f .repo-src + .spacer{flex:1}
+/* ── the admin entry points (D62) ──
+   Two glyphs, three places, one job each: the rail's utility bar is where the
+   tools LIVE, the icon on the sleeve tier is the shortcut from the thing that
+   needs fixing, and the landing tiles are for an admin who came to maintain
+   the library rather than write a proposal. All three hidden unless the
+   schema says canAdmin. */
+.rail-admin-bar{position:sticky;bottom:0;margin-top:auto;z-index:2;
+  display:flex;align-items:center;gap:8px;padding:9px 12px;
+  background:#0E1C33;border-top:1px solid var(--rail-line)}
+.rail-admin-cap{margin-right:auto;font-family:var(--f-num);font-size:10.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--rail-ink-3);white-space:nowrap}
+.rail-admin-btn{width:32px;height:32px;flex:0 0 auto;display:grid;place-items:center;
+  border:1px solid var(--rail-input-border,#52739C);border-radius:6px;
+  color:var(--rail-ink-2);text-decoration:none;background:transparent;
+  transition:background 120ms linear,color 120ms linear,border-color 120ms linear}
+.rail-admin-btn svg{width:17px;height:17px;display:block}
+.rail-admin-btn:hover{background:var(--rail-input-bg,#1D2F4B);color:#fff;border-color:#5590E4}
+.rail-admin-btn:focus-visible{outline:2px solid var(--rail-focus,#8FB4FF);outline-offset:2px}
+/* Collapsed, the bar is the only thing in the rail with anything to say: the
+   caption goes and the glyphs stack down the 48px strip. */
+body.rail-collapsed .rail-admin-cap{display:none}
+body.rail-collapsed .rail-admin-bar{flex-direction:column;gap:6px;padding:9px 0}
+body.rail-collapsed .rail-admin-btn{width:30px;height:30px}
+/* the shortcut on the sleeve tier's own heading */
+.tier-admin{width:24px;height:24px;flex:0 0 auto;display:grid;place-items:center;padding:0;
+  border:1px solid transparent;border-radius:5px;background:none;color:var(--rail-ink-3);cursor:pointer}
+.tier-admin svg{width:15px;height:15px;display:block}
+.tier-admin:hover{color:#fff;border-color:var(--rail-input-border,#52739C)}
+.tier-admin:focus-visible{outline:2px solid var(--rail-focus,#8FB4FF);outline-offset:1px}
+.tier-h-r{display:flex;align-items:center;gap:9px}
+@media (prefers-reduced-motion:reduce){.rail-admin-btn{transition:none}}
+/* ── the catalogue view (D58), laid out as the terminal (D63) ──
+   A facet rail, a dense table with the figures on the right, a tray of pins
+   that opens into a comparison, a side panel on demand. Density is the
+   point; colour is only ever a constraint (liquidity, a minimum above the
+   mandate, a product no sleeve holds) or a selection. */
+.dialog.repo.catalogue{width:min(1560px,calc(100vw - 32px))}
+.cat-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 16px;
+  border-bottom:1px solid var(--line);background:var(--surface-2)}
+.cat-search{display:flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:4px;
+  background:var(--surface);padding:0 8px;width:270px;color:var(--ink-3)}
+.cat-search input{border:0;background:none;font:inherit;font-size:13px;color:var(--ink);padding:6px 0;width:100%;outline:none}
+.cat-search input::-webkit-search-cancel-button{-webkit-appearance:none}
+.cat-search kbd{font-family:var(--f-num);font-size:10.5px;border:1px solid var(--line-strong);border-radius:3px;
+  padding:0 5px;color:var(--ink-3);background:var(--surface-2)}
+.cat-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,95,191,.18)}
+.cat-density button{font-family:var(--f-num);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px}
+.cat-chipwrap{position:relative}
+.cat-chip{appearance:none;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line-strong);
+  border-radius:14px;background:var(--surface);padding:3px 10px;font-family:var(--f-num);font-size:12px;
+  color:var(--ink-2);cursor:pointer;white-space:nowrap;line-height:1.4}
+.cat-chip:hover{border-color:var(--ink-3)}
+.cat-chip.on{background:#E3EBFA;border-color:#B9CDF0;color:#1E4FA3;font-weight:700}
+.cat-chip b{color:var(--ink);font-weight:700}
+.cat-chip .car{font-size:9px;color:var(--ink-3)}
+.cat-menu{position:absolute;left:0;top:calc(100% + 4px);min-width:210px;background:var(--surface);
+  border:1px solid var(--line-strong);border-radius:6px;box-shadow:0 10px 30px rgba(12,24,44,.18);
+  z-index:6;padding:6px 0;display:grid}
+.cat-opt{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;padding:4px 12px;
+  font-size:13px;cursor:pointer;color:var(--ink)}
+.cat-opt.fixed{color:var(--ink-3)}
+.cat-opt:hover{background:var(--surface-2)}
+.cat-clear{appearance:none;background:none;border:0;padding:0;font:inherit;font-family:var(--f-num);font-size:12px;
+  color:#1E4FA3;cursor:pointer;text-decoration:underline}
+.cat-menu .cat-clear{margin:6px 12px 2px;justify-self:start}
+.cat-count{margin-left:auto;font-family:var(--f-num);font-size:12px;color:var(--ink-3);white-space:nowrap}
+.cat-orphans{gap:6px 14px}
+.cat-orphan{font-size:12.5px}
+/* the body: rail, table (or comparison), and the panel over the right edge */
+.cat-b{display:grid;grid-template-columns:208px minmax(0,1fr);min-height:0;position:relative}
+.cat-facets{border-right:1px solid var(--line);overflow:auto;min-height:0;padding:6px 0 12px;background:var(--surface)}
+.cat-fh{margin:0;padding:10px 14px 4px;font-family:var(--f-num);font-size:10.5px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3)}
+.cat-fo{display:flex;align-items:center;gap:8px;padding:3px 14px;font-size:12.5px;color:var(--ink);cursor:pointer;line-height:1.35}
+.cat-fo:hover{background:var(--surface-2)}
+.cat-fo input{margin:0;width:12px;height:12px;flex:0 0 auto;accent-color:var(--accent)}
+.cat-fo .v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-fo .n{margin-left:auto;font-family:var(--f-num);font-size:11.5px;color:var(--ink-3)}
+.cat-fo.on{color:#1E4FA3;font-weight:600}
+.cat-fo.on .n{color:#1E4FA3}
+.cat-fo.off{color:var(--ink-3);cursor:not-allowed}
+.cat-facets-clear{margin:12px 14px 0}
+.cat-tblwrap{overflow:auto;min-height:0}
+.cat-tblwrap:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cat-tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
+.cat-tbl.comfortable{font-size:13px}
+.cat-tbl th{position:sticky;top:0;background:var(--surface-2);border-bottom:1px solid var(--line-strong);
+  padding:0;white-space:nowrap;z-index:2;text-align:left}
+.cat-tbl th.num,.cat-tbl td.num{text-align:right}
+.cat-tbl th.num .cat-sort{justify-content:flex-end}
+.cat-tbl th.pinc,.cat-tbl td.pinc{width:30px;padding:0 0 0 10px;position:sticky;left:0;z-index:3;background:var(--surface-2)}
+.cat-tbl td.pinc{background:var(--surface);z-index:1}
+.cat-sort{appearance:none;background:none;border:0;width:100%;display:flex;align-items:baseline;gap:4px;font-family:var(--f-num);
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700;padding:8px 10px;
+  cursor:pointer;text-align:inherit;line-height:1.2}
+.cat-sort small{font-size:9px;letter-spacing:.06em;color:var(--ink-3);font-weight:400}
+.cat-sort:hover{color:var(--ink)}
+.cat-sort.on{color:#1E4FA3}
+.cat-sort.drv{font-style:italic;color:var(--ink-2)}
+.cat-tbl td{padding:0 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle;color:var(--ink);
+  height:34px}
+.cat-tbl.comfortable td{height:40px}
+.cat-tbl td.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:12.5px}
+.cat-tbl.comfortable td.num{font-size:13px}
+.cat-tbl td.tk{font-family:var(--f-num);font-weight:700;letter-spacing:.02em}
+.cat-tbl td.nm{white-space:nowrap;min-width:200px;position:sticky;left:40px;background:var(--surface);z-index:1;
+  font-weight:500;box-shadow:inset -1px 0 0 var(--line)}
+.cat-tbl td.nm b{font-weight:500}
+.cat-tbl td.mute{color:var(--ink-3)}
+.cat-tbl tr[data-catrow]{cursor:pointer}
+.cat-tbl tr[data-catrow]:hover td{background:var(--row-hover,var(--surface-2))}
+.cat-tbl tr[data-catrow]:hover td.nm,.cat-tbl tr[data-catrow]:hover td.pinc{background:var(--row-hover,var(--surface-2))}
+.cat-tbl tr.pin td{background:#F0F4FB}
+.cat-tbl tr.pin td.pinc{box-shadow:inset 3px 0 0 var(--accent)}
+.cat-tbl tr.cur td{box-shadow:inset 0 -1px 0 var(--accent),inset 0 1px 0 var(--accent)}
+.cat-tbl tr.cur td.pinc{box-shadow:inset 3px 0 0 var(--accent),inset 0 -1px 0 var(--accent),inset 0 1px 0 var(--accent)}
+.cat-tbl tr.on td{background:#E3EBFA}
+.cat-tbl tr.dim td:not(.pinc){color:var(--ink-3)}
+.cat-tbl tr.dim td.nm b{color:var(--ink-2)}
+.cat-tbl td.pos{color:#176A33}
+.cat-tbl td.neg{color:#9B1C1C}
+.cat-tbl .veh{display:inline-block;font-family:var(--f-num);font-size:10.5px;font-weight:700;color:var(--ink-2);
+  background:var(--surface-2);border-radius:3px;padding:0 5px;line-height:16px;letter-spacing:.04em}
+.liq{display:inline-block;font-family:var(--f-num);font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-2);
+  background:var(--surface-2);border-radius:8px;padding:0 7px;line-height:16px}
+.liq.slow{color:#92600A;background:#FEF3C7}
+.liq.lock{color:#9B1C1C;background:#FDE8E8}
+.flag{display:inline-block;font-family:var(--f-num);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#92600A;background:#FEF3C7;border-radius:8px;padding:0 6px;line-height:15px;margin-left:6px;vertical-align:1px}
+.cat-tbl td.used.zero{color:#B45309;font-weight:700}
+.cat-tbl td.cat-empty{white-space:normal;padding:22px 16px;color:var(--ink-2);font-size:13.5px;position:static}
+.pinbox{appearance:none;width:14px;height:14px;border:1px solid var(--line-strong);border-radius:3px;background:var(--surface);
+  cursor:pointer;padding:0;display:block;position:relative}
+.pinbox.on{background:var(--accent);border-color:var(--accent)}
+.pinbox.on::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.pinbox:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* the tray, in the footer */
+.repo-f.cat-f{padding:8px 16px;gap:12px}
+.cat-tray{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.cat-tray .ttl{font-family:var(--f-num);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink)}
+.cat-tray .pins{display:flex;gap:6px;flex-wrap:wrap}
+.cat-tray .pn{appearance:none;border:1px solid #B9CDF0;background:#E3EBFA;color:#1E4FA3;border-radius:4px;padding:2px 8px;
+  font-family:var(--f-num);font-size:11.5px;font-weight:700;cursor:pointer}
+.cat-tray .pn:hover{background:#D3DFF7}
+.cat-tray .none{font-size:12.5px;color:var(--ink-3)}
+.cat-tray .none kbd{font-family:var(--f-num);font-size:10.5px;border:1px solid var(--line-strong);border-radius:3px;padding:0 4px}
+.cat-tray .cnt{font-family:var(--f-num);font-size:12px;color:var(--ink-3);white-space:nowrap}
+.cat-tray .spacer{flex:1}
+.cat-src{white-space:nowrap}
+/* the comparison, in the table's place */
+.cat-cmpwrap{overflow:auto;min-height:0;padding:14px 18px}
+.cat-cmp{border-collapse:collapse;font-size:12.5px;min-width:520px}
+.cat-cmp th{font-family:var(--f-num);font-size:11px;letter-spacing:.04em;color:var(--ink);padding:8px 12px;text-align:right;
+  border-bottom:1px solid var(--line-strong);vertical-align:bottom;position:relative;min-width:120px}
+.cat-cmp th:first-child{text-align:left;min-width:150px}
+.cat-cmp th .t{display:block;font-size:12.5px;font-weight:700}
+.cat-cmp th small{display:block;font-weight:400;color:var(--ink-3);font-size:10.5px;white-space:normal;max-width:160px;margin-left:auto}
+.cat-unpin{position:absolute;top:2px;right:2px;appearance:none;border:0;background:none;color:var(--ink-3);font-size:14px;cursor:pointer;line-height:1}
+.cat-unpin:hover{color:#9B1C1C}
+.cat-cmp td{padding:6px 12px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--f-num);
+  font-variant-numeric:tabular-nums;color:var(--ink)}
+.cat-cmp td:first-child{text-align:left;font-family:var(--f-body);color:var(--ink-2);font-size:12px}
+.cat-cmp td.best{font-weight:700;color:#1E4FA3;background:#F0F4FB}
+.cat-cmp tr.sec td{background:var(--surface-2);font-family:var(--f-num);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);padding-top:9px;text-align:left}
+.cat-cmp-key{margin:12px 0 0;font-size:12px;color:var(--ink-3);max-width:70ch}
+.cat-cmp-empty{padding:30px 20px;color:var(--ink-3);font-size:13.5px}
+/* the panel: over the right edge, not in the layout */
+.cat-detail{position:absolute;top:0;right:0;bottom:0;width:340px;background:var(--surface);border-left:1px solid var(--line-strong);
+  box-shadow:-12px 0 30px rgba(12,24,44,.14);padding:16px 18px;display:flex;flex-direction:column;gap:12px;font-size:12.5px;
+  overflow:auto;z-index:4}
+.cat-detail .dlg-close{top:8px;right:10px}
+.cat-detail .eyeb{font-family:var(--f-num);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.cat-detail h4{margin:0;font-size:16px;font-weight:600;line-height:1.25;color:var(--ink);padding-right:28px}
+.cat-detail .tk{font-family:var(--f-num);font-size:12px;color:var(--ink-2);word-break:break-all}
+.cat-mg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cat-mg .m{border:1px solid var(--line);border-radius:5px;padding:7px 9px}
+.cat-mg .m small{display:block;font-family:var(--f-num);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.cat-mg .m b{font-family:var(--f-num);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.cat-dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px;margin:0}
+.cat-dl dt{font-family:var(--f-num);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding-top:1px}
+.cat-dl dd{margin:0;color:var(--ink)}
+.cat-usedin{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.cat-usedin .h{font-family:var(--f-num);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);padding:7px 10px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.cat-usedin .r{display:grid;gap:2px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px}
+.cat-usedin .r:last-child{border-bottom:0}
+.cat-usedin .r b{font-weight:500;color:var(--ink)}
+.cat-usedin .r small{font-family:var(--f-num);font-size:11.5px;color:var(--ink-2)}
+.cat-usedin .r.none{color:var(--ink-3)}
+.cat-link{appearance:none;background:none;border:0;padding:0;font-family:var(--f-num);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:#1E4FA3;cursor:pointer;text-align:left;justify-self:start}
+.cat-link:hover{text-decoration:underline}
+.cat-detail .acts{display:flex;gap:8px;margin-top:auto;padding-top:6px;flex-wrap:wrap}
+@media (max-width:1320px){
+  .repo-h .repo-src{display:none}
+}
+@media (max-width:900px){
+  .repo-b{grid-template-columns:180px 220px minmax(0,1fr)}
+  .cat-b{grid-template-columns:180px minmax(0,1fr)}
+}
+
+.tbl thead th{border-bottom:1px solid var(--ink)}tr.band th{border-top:1px solid var(--accent);letter-spacing:.2em}.tblwrap{background:var(--surface);border:1px solid var(--line-strong)}tr.cat th,tr.cat td{border-top:none;border-bottom:1px solid var(--line-strong)}tr.total th,tr.total td{background:#F0F2F5}h2{color:#16243A}.base-tag{background:#E3EBFA;color:#1E4FA3;border:1px solid #B9CDF0;border-radius:9px;font-size:11.5px;font-weight:700;padding:1px 7px;letter-spacing:.03em}.rail-brand{border-bottom:1px solid #233754}.rail-brand>b{font-family:var(--f-num);font-weight:500;letter-spacing:.005em}.rail .grp-idx{letter-spacing:.18em}.rail .ta-hint{color:#7E90A8}.rail .is-disabled{opacity:.42}.bdg{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:9px;letter-spacing:.03em;white-space:nowrap}.b-ok{background:#E7F4EC;color:#176A33;border:1px solid #B7E0C5}.b-warn{background:#FEF3C7;color:#B45309;border:1px solid #F3D48A}.b-breach{background:#FDE8E8;color:#9B1C1C;border:1px solid #F1B8B2}.b-bind{background:#E3EBFA;color:#1E4FA3;border:1px solid #B9CDF0}.b-slack{background:#EEF1F4;color:#5B6B7C;border:1px solid #D8DEE6}.spec{margin:8px 0 0;background:#FFFBEB;border:1.5px dashed #D4A017;border-radius:6px;padding:13px 18px 15px;font-size:15px;color:#4A3B10}.spec h4{margin:0 0 8px;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:#92600A;font-family:var(--f-num);font-weight:700}.spec p{margin:0 0 9px;line-height:1.5}.spec p:last-child{margin-bottom:0}.spec .legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:10px 0 0}.spec .legend span.lbl{font-size:13px;color:#6B5716}.pos{color:#1A7F37}.neg{color:#B42318}.rail .is-disabled .field-note{color:#E0B25C}
