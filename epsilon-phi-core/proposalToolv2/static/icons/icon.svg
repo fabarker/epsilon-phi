@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Proposal Tool">
+  <rect width="512" height="512" fill="#12233f"/>
+  <path d="M112 118h288v276H112z" fill="none" stroke="#e8eef3" stroke-width="18"/>
+  <path d="M154 330h48V230h-48zm78 0h48V174h-48zm78 0h48V128h-48z" fill="#68c8d0"/>
+  <path d="M154 366h204" stroke="#e8eef3" stroke-width="14"/>
+</svg>

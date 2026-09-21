@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12233f">
+  <meta name="description" content="Create a portfolio mandate, compare epsilonPhi analytics, and build an implementation model.">
+  <title>PMG Proposal Tool</title>
+  <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+  <link rel="icon" href="static/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="static/icons/icon-192.png">
+  <link rel="stylesheet" href="static/css/proposalToolv2.css">
+</head>
+<body>
+  <script src="static/js/accessGate.js"></script>
+  <script src="static/js/globals.js"></script>
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <div id="live-polite" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <div id="live-assertive" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+
+  <header class="app-header" id="app-header">
+    <a class="brand" href="proposalToolv2.html" aria-label="Portfolio Management Group Proposal Tool home">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>Portfolio Management Group</strong><small>Proposal Tool</small></span>
+    </a>
+    <div class="header-actions">
+      <span class="network-state" id="network-state"><i aria-hidden="true"></i><span>Checking connection</span></span>
+      <button class="button button-quiet button-small" id="install-app" type="button" hidden>Install app</button>
+    </div>
+  </header>
+
+  <div id="alertArea" class="alert-area" aria-live="assertive"></div>
+
+  <main id="main-content">
+    <section class="fatal-state" id="schema-error" hidden aria-labelledby="schema-error-title">
+      <div class="state-illustration" aria-hidden="true">!</div>
+      <p class="eyebrow">Unable to initialise</p>
+      <h1 id="schema-error-title">The proposal workspace could not load</h1>
+      <p id="schema-error-detail">The field schema is unavailable. No scenario data has been changed.</p>
+      <button class="button button-primary" id="schema-retry" type="button">Try again</button>
+    </section>
+
+    <section class="landing" id="landing" aria-labelledby="landing-title">
+      <div class="landing-copy">
+        <p class="eyebrow">Portfolio design, in one considered flow</p>
+        <h1 id="landing-title">Move from mandate to an investible proposal.</h1>
+        <p class="landing-lede">Set the client context once. Build and compare allocations with real epsilonPhi analytics, then turn the selected base into a product-level implementation and workbook.</p>
+        <div class="landing-actions">
+          <button class="button button-primary button-large" id="start-scenario" type="button">Create a proposal <span aria-hidden="true">&#8594;</span></button>
+          <span class="landing-requirement" id="landing-floor">Mandates from $5 million</span>
+        </div>
+      </div>
+
+      <div class="journey-card" aria-label="Proposal workflow">
+        <div class="journey-head">
+          <span>Proposal workflow</span>
+          <span class="status-chip status-ready">One workspace</span>
+        </div>
+        <ol class="journey-list">
+          <li class="journey-item">
+            <span class="journey-number">01</span>
+            <span><strong>Frame the mandate</strong><small>Client scale, managed amount, adviser and basis</small></span>
+            <span class="journey-glyph" aria-hidden="true">&#8594;</span>
+          </li>
+          <li class="journey-item">
+            <span class="journey-number">02</span>
+            <span><strong>Test the allocation</strong><small>Compare up to four portfolios on one evidence set</small></span>
+            <span class="journey-glyph" aria-hidden="true">&#8594;</span>
+          </li>
+          <li class="journey-item">
+            <span class="journey-number">03</span>
+            <span><strong>Make it investible</strong><small>Attach product sleeves and export the implementation</small></span>
+            <span class="journey-glyph journey-check" aria-hidden="true">&#10003;</span>
+          </li>
+        </ol>
+        <div class="journey-chart" aria-hidden="true">
+          <span style="--h:31%"></span><span style="--h:46%"></span><span style="--h:39%"></span>
+          <span style="--h:66%"></span><span style="--h:58%"></span><span style="--h:82%"></span>
+          <i></i>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace" hidden aria-label="Proposal workspace">
+      <section class="context-bar" aria-label="Scenario context">
+        <div class="context-lead">
+          <span class="context-kicker">Active mandate</span>
+          <strong id="context-title">New proposal</strong>
+        </div>
+        <dl class="context-facts" id="context-facts"></dl>
+        <div class="context-actions">
+          <button class="button button-quiet button-small" id="edit-mandate" type="button">Edit mandate</button>
+          <button class="button button-quiet button-small" id="edit-basis" type="button">Change basis</button>
+        </div>
+      </section>
+
+      <nav class="stage-nav" aria-label="Proposal stages">
+        <button class="stage-tab" id="tab-allocation" type="button" aria-current="step" data-stage="allocation">
+          <span class="stage-index">1</span><span><strong>Allocation</strong><small>Build &amp; compare</small></span>
+        </button>
+        <span class="stage-connector" aria-hidden="true"></span>
+        <button class="stage-tab" id="tab-implementation" type="button" data-stage="implementation">
+          <span class="stage-index">2</span><span><strong>Implementation</strong><small>Sleeves &amp; export</small></span>
+        </button>
+      </nav>
+
+      <section class="stage-view allocation-stage" id="allocation-stage" aria-labelledby="allocation-heading">
+        <div class="stage-heading">
+          <div>
+            <p class="eyebrow">Step 1 of 2</p>
+            <h1 id="allocation-heading">Shape the strategic allocation</h1>
+            <p>Build a base, add focused alternatives, then inspect the differences from headline outcomes down to individual exposures.</p>
+          </div>
+          <span class="data-badge" id="data-badge" hidden></span>
+        </div>
+
+        <section class="builder-panel" id="base-builder" aria-labelledby="base-builder-title">
+          <div class="builder-intro">
+            <span class="builder-step">Base</span>
+            <div><h2 id="base-builder-title">Proposed portfolio</h2><p>This becomes the portfolio you implement.</p></div>
+          </div>
+          <div class="builder-fields" id="base-fields"></div>
+          <div class="builder-action" id="base-action"></div>
+        </section>
+
+        <section class="lineup-section" aria-labelledby="lineup-title">
+          <div class="section-title-row">
+            <div><p class="eyebrow">Current comparison</p><h2 id="lineup-title">Portfolio line-up</h2></div>
+            <span class="slot-count" id="slot-count">0 of 4</span>
+          </div>
+          <div class="portfolio-lineup" id="portfolio-lineup"></div>
+        </section>
+
+        <div id="allocation-results" hidden>
+          <section class="outcome-section" aria-labelledby="outcome-title">
+            <div class="section-title-row">
+              <div><p class="eyebrow">Decision view</p><h2 id="outcome-title">Headline outcomes</h2></div>
+              <p class="section-note">Comparable portfolio estimates on the selected basis.</p>
+            </div>
+            <div class="metric-grid" id="metric-grid"></div>
+          </section>
+
+          <section class="analysis-section" aria-labelledby="allocation-table-title">
+            <div class="section-title-row">
+              <div><p class="eyebrow">Composition</p><h2 id="allocation-table-title">Allocation detail</h2></div>
+              <p class="section-note">A blank means the category is outside that allocation. An em dash means it is present with no holding.</p>
+            </div>
+            <div class="table-scroll" tabindex="0" aria-label="Portfolio allocation table, horizontally scrollable">
+              <table class="data-table comparison-table" id="allocation-table"></table>
+            </div>
+          </section>
+
+          <section class="visual-section" aria-labelledby="visual-title">
+            <div class="section-title-row">
+              <div><p class="eyebrow">Pattern recognition</p><h2 id="visual-title">See the trade-offs</h2></div>
+              <p class="section-note">Use the tables for exact values; charts show shape and relative position.</p>
+            </div>
+            <div class="visual-grid">
+              <article class="chart-card"><div class="chart-card-head"><h3>Allocation by category</h3><p>Share of each portfolio</p></div><div id="composition-chart"></div></article>
+              <article class="chart-card"><div class="chart-card-head"><h3>Return against volatility</h3><p>Expected position on the risk-return plane</p></div><div id="risk-return-chart"></div></article>
+            </div>
+          </section>
+
+          <section class="analysis-section" aria-labelledby="risk-title">
+            <div class="section-title-row">
+              <div><p class="eyebrow">Downside &amp; factor view</p><h2 id="risk-title">Risk dashboard</h2></div>
+              <p class="section-note">Factor analytics span each portfolio; stress and risk premia separate nominal from real.</p>
+            </div>
+            <div class="table-scroll" tabindex="0" aria-label="Portfolio risk dashboard, horizontally scrollable">
+              <table class="data-table risk-table" id="risk-table"></table>
+            </div>
+          </section>
+
+          <div class="next-step-card">
+            <div><span class="next-number">2</span><span><strong>Ready to make the base investible?</strong><small>Move to Implementation to attach product sleeves.</small></span></div>
+            <button class="button button-primary" type="button" data-go-implementation>Continue to implementation <span aria-hidden="true">&#8594;</span></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage-view implementation-stage" id="implementation-stage" hidden aria-labelledby="implementation-heading">
+        <div class="stage-heading">
+          <div>
+            <p class="eyebrow">Step 2 of 2</p>
+            <h1 id="implementation-heading">Turn the base into products</h1>
+            <p>Choose the implementation route first, then attach one sleeve to every eligible category. All amounts reconcile to the printed weights.</p>
+          </div>
+          <button class="button button-quiet" type="button" data-go-allocation>&#8592; Review allocation</button>
+        </div>
+
+        <div id="implementation-empty" class="empty-card" hidden></div>
+        <div id="implementation-content" hidden>
+          <section class="variant-panel" id="variant-panel" aria-labelledby="variant-heading"></section>
+
+          <section class="sleeve-section" aria-labelledby="sleeve-heading">
+            <div class="section-title-row">
+              <div><p class="eyebrow">Implementation workbench</p><h2 id="sleeve-heading">Attach sleeves</h2></div>
+              <div class="completion-summary" id="completion-summary"></div>
+            </div>
+            <div class="sleeve-grid" id="sleeve-grid"></div>
+          </section>
+
+          <section class="analysis-section implementation-model" aria-labelledby="model-title">
+            <div class="section-title-row">
+              <div><p class="eyebrow">Product-level outcome</p><h2 id="model-title">Implementation model</h2></div>
+              <p class="section-note" id="implementation-caption"></p>
+            </div>
+            <div class="table-scroll" tabindex="0" aria-label="Implementation model, horizontally scrollable">
+              <table class="data-table implementation-table" id="implementation-table"></table>
+            </div>
+            <p class="calculation-note">Weights use largest-remainder rounding to total exactly 100.00%. Notional is calculated from each printed weight and rounded to the nearest $100. Weighted fee is (product cost + management fee) &times; weight, in basis points.</p>
+          </section>
+
+          <section class="export-card" id="export-card" aria-labelledby="export-title">
+            <div class="export-icon" aria-hidden="true"><span>X</span></div>
+            <div class="export-copy">
+              <p class="eyebrow">Final deliverable</p>
+              <h2 id="export-title">Download the proposal workbook</h2>
+              <p>Generates Portfolios, Risk Dashboard, and Implementation sheets from the persisted scenario and current epsilonPhi analytics.</p>
+              <p class="export-gate" id="export-gate"></p>
+            </div>
+            <button class="button button-export" id="export-workbook" type="button" disabled>Download Excel</button>
+          </section>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <p id="data-info"></p>
+        <p>Scenario changes are held for 24 hours. Authenticated API data is never stored by the offline shell.</p>
+      </footer>
+    </section>
+  </main>
+
+  <div id="modal-root"></div>
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="static/js/proposalToolv2.js"></script>
+</body>
+</html>
