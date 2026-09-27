@@ -57,6 +57,15 @@ single-library sleeve request shape.
 - Service workers require HTTPS in deployment; `localhost` is accepted as a secure development
   context.
 
+## Export
+
+Since D123 (`../proposal-tool/service/DEVIATIONS.md`) `POST /api/scenario/{id}/export` returns ONE
+zip — the Excel workbook and the PowerPoint deck of the proposal, both stamped with the Proposal UID
+in `X-Proposal-Id` — rather than a workbook alone. This page saves the response under the name in
+`Content-Disposition`, so it downloads the zip correctly without change. Its wording has not caught
+up: the button still reads *Download Excel*, the toast *Workbook downloaded*, and the fallback name
+used when no `Content-Disposition` arrives ends `.xlsx`.
+
 If shell filenames or assets change, update `CRITICAL_SHELL` and increment `CACHE_NAME` in
 `service-worker.js`. Browser developer tools can unregister the worker and clear site storage when
 testing a clean install.
